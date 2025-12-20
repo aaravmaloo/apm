@@ -1,0 +1,144 @@
+package main
+
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+)
+
+type Entry struct {
+	Account  string `json:"account"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type Vault struct {
+	Salt    []byte  `json:"salt"`
+	Entries []Entry `json:"entries"`
+}
+
+func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
+	plaintext, err := json.Marshal(vault)
+	if err != nil {
+		return nil, err
+	}
+
+	key := DeriveKey(masterPassword, vault.Salt)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+	return ciphertext, nil
+}
+
+func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
+	key := DeriveKey(masterPassword, salt)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, errors.New("decryption failed: incorrect password or corrupted data")
+	}
+
+	var vault Vault
+	if err := json.Unmarshal(plaintext, &vault); err != nil {
+		return nil, err
+	}
+
+	return &vault, nil
+}
+
+func (v *Vault) AddEntry(account, username, password string) {
+	for i, entry := range v.Entries {
+		if entry.Account == account {
+			v.Entries[i] = Entry{Account: account, Username: username, Password: password}
+			return
+		}
+	}
+	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
+}
+
+func (v *Vault) GetEntry(account string) (Entry, bool) {
+	for _, entry := range v.Entries {
+		if entry.Account == account {
+			return entry, true
+		}
+	}
+	return Entry{}, false
+}
+
+func (v *Vault) DeleteEntry(account string) bool {
+	for i, entry := range v.Entries {
+		if entry.Account == account {
+			v.Entries = append(v.Entries[:i], v.Entries[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) SearchEntries(query string) []Entry {
+	var results []Entry
+	for _, entry := range v.Entries {
+		if query == "" || fmt.Sprintf("%s %s", entry.Account, entry.Username) == query {
+			results = append(results, entry)
+		}
+	}
+	return results
+}
+
+func (v *Vault) FilterEntries(query string) []Entry {
+	var results []Entry
+	for _, entry := range v.Entries {
+		if query == "" ||
+			(contains(entry.Account, query) || contains(entry.Username, query)) {
+			results = append(results, entry)
+		}
+	}
+	return results
+}
+
+func contains(s, substr string) bool {
+
+	return len(s) >= len(substr) && match(s, substr)
+}
+
+func match(s, substr string) bool {
+
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
