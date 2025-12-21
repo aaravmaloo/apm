@@ -16,11 +16,12 @@ A secure, simple, and fast command-line password manager written in Go.
 
 ### Windows
 
-1. **Download the Executable**: You can find the `pm.exe` in the `src/` directory.
+1. **Download the Executable**: You can find the `pm.exe` in the releases tab and then move it to program files by create pm/pm.exe and then add an environment variable to use it globally.
+
 2. **Add to PATH (Optional)**: Move `pm.exe` to a folder in your system PATH to use it from anywhere.
 3. **Run**:
    ```powershell
-   .\pm.exe init
+   pm.exe init
    ```
 
 ### Linux / macOS
