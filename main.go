@@ -583,7 +583,586 @@ func main() {
 	listCmd.Flags().StringP("filter", "f", "", "Filter accounts by name or username")
 	genCmd.Flags().IntP("length", "l", 16, "Password length")
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, listCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd)
+	// Secure Notes
+	var notesCmd = &cobra.Command{
+		Use:   "notes",
+		Short: "Manage secure notes",
+	}
+
+	var notesAddCmd = &cobra.Command{
+		Use:   "add",
+		Short: "Add a new secure note",
+		Run: func(cmd *cobra.Command, args []string) {
+			name, _ := cmd.Flags().GetString("name")
+			if name == "" {
+				fmt.Print("Note Name: ")
+				name = readInput()
+			}
+			fmt.Print("Content (multi-line supported, end with empty line): ")
+			var contentLines []string
+			scanner := bufio.NewScanner(os.Stdin)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if line == "" {
+					break
+				}
+				contentLines = append(contentLines, line)
+			}
+			content := strings.Join(contentLines, "\n")
+
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			vault.AddSecureNote(name, content)
+			data, err := vault.Serialize(masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
+				return
+			}
+			src.SaveVault(vaultPath, data)
+			fmt.Printf("Note '%s' added.\n", name)
+		},
+	}
+
+	var notesGetCmd = &cobra.Command{
+		Use:   "get <name>",
+		Short: "Retrieve a secure note",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			note, ok := vault.GetSecureNote(name)
+			if !ok {
+				fmt.Printf("Note '%s' not found.\n", name)
+				return
+			}
+			fmt.Printf("Name: %s\nContent:\n%s\n", note.Name, note.Content)
+		},
+	}
+
+	var notesDelCmd = &cobra.Command{
+		Use:   "del <name>",
+		Short: "Delete a secure note",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if vault.DeleteSecureNote(name) {
+				data, err := vault.Serialize(masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
+					return
+				}
+				src.SaveVault(vaultPath, data)
+				fmt.Printf("Note '%s' deleted.\n", name)
+			} else {
+				fmt.Printf("Note '%s' not found.\n", name)
+			}
+		},
+	}
+
+	var notesListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all secure notes",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if len(vault.SecureNotes) == 0 {
+				fmt.Println("No notes found.")
+				return
+			}
+			for _, n := range vault.SecureNotes {
+				fmt.Println(n.Name)
+			}
+		},
+	}
+
+	notesAddCmd.Flags().StringP("name", "n", "", "Note name")
+	notesCmd.AddCommand(notesAddCmd, notesGetCmd, notesDelCmd, notesListCmd)
+
+	// API Keys
+	var apiCmd = &cobra.Command{
+		Use:   "api",
+		Short: "Manage API keys",
+	}
+
+	var apiAddCmd = &cobra.Command{
+		Use:   "add",
+		Short: "Add a new API key",
+		Run: func(cmd *cobra.Command, args []string) {
+			name, _ := cmd.Flags().GetString("name")
+			service, _ := cmd.Flags().GetString("service")
+			key, _ := cmd.Flags().GetString("key")
+
+			if name == "" {
+				fmt.Print("Key Label (e.g. OpenAI Personal): ")
+				name = readInput()
+			}
+			if service == "" {
+				fmt.Print("Service: ")
+				service = readInput()
+			}
+			if key == "" {
+				fmt.Print("API Key: ")
+				key = readInput()
+			}
+
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			vault.AddAPIKey(name, service, key)
+			data, err := vault.Serialize(masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
+				return
+			}
+			src.SaveVault(vaultPath, data)
+			fmt.Printf("API Key '%s' added.\n", name)
+		},
+	}
+
+	var apiGetCmd = &cobra.Command{
+		Use:   "get <name>",
+		Short: "Retrieve an API key",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			entry, ok := vault.GetAPIKey(name)
+			if !ok {
+				fmt.Printf("API Key '%s' not found.\n", name)
+				return
+			}
+			fmt.Printf("Label:   %s\nService: %s\nKey:     %s\n", entry.Name, entry.Service, entry.Key)
+		},
+	}
+
+	var apiDelCmd = &cobra.Command{
+		Use:   "del <name>",
+		Short: "Delete an API key",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if vault.DeleteAPIKey(name) {
+				data, err := vault.Serialize(masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
+					return
+				}
+				src.SaveVault(vaultPath, data)
+				fmt.Printf("API Key '%s' deleted.\n", name)
+			} else {
+				fmt.Printf("API Key '%s' not found.\n", name)
+			}
+		},
+	}
+
+	var apiListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all API keys",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if len(vault.APIKeys) == 0 {
+				fmt.Println("No API keys found.")
+				return
+			}
+			fmt.Printf("%-20s %-20s\n", "NAME", "SERVICE")
+			fmt.Println(strings.Repeat("-", 40))
+			for _, k := range vault.APIKeys {
+				fmt.Printf("%-20s %-20s\n", k.Name, k.Service)
+			}
+		},
+	}
+
+	apiAddCmd.Flags().StringP("name", "n", "", "Key label")
+	apiAddCmd.Flags().StringP("service", "s", "", "Service name")
+	apiAddCmd.Flags().StringP("key", "k", "", "API Key")
+	apiCmd.AddCommand(apiAddCmd, apiGetCmd, apiDelCmd, apiListCmd)
+
+	// SSH Keys
+	var sshCmd = &cobra.Command{
+		Use:   "ssh",
+		Short: "Manage SSH keys",
+	}
+
+	var sshAddCmd = &cobra.Command{
+		Use:   "add",
+		Short: "Add a new SSH private key",
+		Run: func(cmd *cobra.Command, args []string) {
+			name, _ := cmd.Flags().GetString("name")
+			file, _ := cmd.Flags().GetString("file")
+
+			if name == "" {
+				fmt.Print("Key Label (e.g. My GitHub Key): ")
+				name = readInput()
+			}
+
+			var privateKey string
+			if file != "" {
+				content, err := os.ReadFile(file)
+				if err != nil {
+					fmt.Printf("Error reading file: %v\n", err)
+					return
+				}
+				privateKey = string(content)
+			} else {
+				fmt.Println("Enter Private Key (multi-line, end with empty line):")
+				var keyLines []string
+				scanner := bufio.NewScanner(os.Stdin)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if line == "" {
+						break
+					}
+					keyLines = append(keyLines, line)
+				}
+				privateKey = strings.Join(keyLines, "\n")
+			}
+
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			vault.AddSSHKey(name, privateKey)
+			data, err := vault.Serialize(masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
+				return
+			}
+			src.SaveVault(vaultPath, data)
+			fmt.Printf("SSH Key '%s' added.\n", name)
+		},
+	}
+
+	var sshGetCmd = &cobra.Command{
+		Use:   "get <name>",
+		Short: "Retrieve an SSH private key",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			entry, ok := vault.GetSSHKey(name)
+			if !ok {
+				fmt.Printf("SSH Key '%s' not found.\n", name)
+				return
+			}
+			fmt.Printf("Name: %s\nPrivate Key:\n%s\n", entry.Name, entry.PrivateKey)
+		},
+	}
+
+	var sshDelCmd = &cobra.Command{
+		Use:   "del <name>",
+		Short: "Delete an SSH key",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if vault.DeleteSSHKey(name) {
+				data, err := vault.Serialize(masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
+					return
+				}
+				src.SaveVault(vaultPath, data)
+				fmt.Printf("SSH Key '%s' deleted.\n", name)
+			} else {
+				fmt.Printf("SSH Key '%s' not found.\n", name)
+			}
+		},
+	}
+
+	var sshListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all SSH keys",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if len(vault.SSHKeys) == 0 {
+				fmt.Println("No SSH keys found.")
+				return
+			}
+			for _, k := range vault.SSHKeys {
+				fmt.Println(k.Name)
+			}
+		},
+	}
+
+	sshAddCmd.Flags().StringP("name", "n", "", "Key label")
+	sshAddCmd.Flags().StringP("file", "f", "", "Path to SSH private key file")
+	sshCmd.AddCommand(sshAddCmd, sshGetCmd, sshDelCmd, sshListCmd)
+
+	// Wi-Fi
+	var wifiCmd = &cobra.Command{
+		Use:   "wifi",
+		Short: "Manage Wi-Fi credentials",
+	}
+
+	var wifiAddCmd = &cobra.Command{
+		Use:   "add",
+		Short: "Add Wi-Fi credentials",
+		Run: func(cmd *cobra.Command, args []string) {
+			ssid, _ := cmd.Flags().GetString("ssid")
+			pass, _ := cmd.Flags().GetString("pass")
+			sec, _ := cmd.Flags().GetString("sec")
+
+			if ssid == "" {
+				fmt.Print("SSID: ")
+				ssid = readInput()
+			}
+			if pass == "" {
+				fmt.Print("Password: ")
+				pass = readInput()
+			}
+			if sec == "" {
+				fmt.Print("Security Type (WPA2/WPA3/etc.): ")
+				sec = readInput()
+			}
+
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			vault.AddWiFi(ssid, pass, sec)
+			data, err := vault.Serialize(masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
+				return
+			}
+			src.SaveVault(vaultPath, data)
+			fmt.Printf("Wi-Fi '%s' added.\n", ssid)
+		},
+	}
+
+	var wifiGetCmd = &cobra.Command{
+		Use:   "get <ssid>",
+		Short: "Retrieve Wi-Fi credentials",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ssid := args[0]
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			entry, ok := vault.GetWiFi(ssid)
+			if !ok {
+				fmt.Printf("Wi-Fi '%s' not found.\n", ssid)
+				return
+			}
+			fmt.Printf("SSID:     %s\nPassword: %s\nSecurity: %s\n", entry.SSID, entry.Password, entry.SecurityType)
+		},
+	}
+
+	var wifiDelCmd = &cobra.Command{
+		Use:   "del <ssid>",
+		Short: "Delete Wi-Fi credentials",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ssid := args[0]
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if vault.DeleteWiFi(ssid) {
+				data, err := vault.Serialize(masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
+					return
+				}
+				src.SaveVault(vaultPath, data)
+				fmt.Printf("Wi-Fi '%s' deleted.\n", ssid)
+			} else {
+				fmt.Printf("Wi-Fi '%s' not found.\n", ssid)
+			}
+		},
+	}
+
+	var wifiListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all Wi-Fi credentials",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if len(vault.WiFiCredentials) == 0 {
+				fmt.Println("No Wi-Fi credentials found.")
+				return
+			}
+			fmt.Printf("%-20s %-20s\n", "SSID", "SECURITY")
+			fmt.Println(strings.Repeat("-", 40))
+			for _, w := range vault.WiFiCredentials {
+				fmt.Printf("%-20s %-20s\n", w.SSID, w.SecurityType)
+			}
+		},
+	}
+
+	wifiAddCmd.Flags().StringP("ssid", "s", "", "SSID")
+	wifiAddCmd.Flags().StringP("pass", "p", "", "Password")
+	wifiAddCmd.Flags().StringP("sec", "t", "WPA2", "Security Type")
+	wifiCmd.AddCommand(wifiAddCmd, wifiGetCmd, wifiDelCmd, wifiListCmd)
+
+	// Recovery Codes
+	var recCmd = &cobra.Command{
+		Use:   "recovery",
+		Short: "Manage recovery codes",
+	}
+
+	var recAddCmd = &cobra.Command{
+		Use:   "add",
+		Short: "Add recovery codes",
+		Run: func(cmd *cobra.Command, args []string) {
+			service, _ := cmd.Flags().GetString("service")
+			if service == "" {
+				fmt.Print("Service: ")
+				service = readInput()
+			}
+			fmt.Println("Enter Recovery Codes (one per line, end with empty line):")
+			var codes []string
+			scanner := bufio.NewScanner(os.Stdin)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if line == "" {
+					break
+				}
+				codes = append(codes, line)
+			}
+
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			vault.AddRecoveryCode(service, codes)
+			data, err := vault.Serialize(masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
+				return
+			}
+			src.SaveVault(vaultPath, data)
+			fmt.Printf("Recovery codes for '%s' added.\n", service)
+		},
+	}
+
+	var recGetCmd = &cobra.Command{
+		Use:   "get <service>",
+		Short: "Retrieve recovery codes",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			service := args[0]
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			entry, ok := vault.GetRecoveryCode(service)
+			if !ok {
+				fmt.Printf("Recovery codes for '%s' not found.\n", service)
+				return
+			}
+			fmt.Printf("Service: %s\nCodes:\n", entry.Service)
+			for _, c := range entry.Codes {
+				fmt.Printf("- %s\n", c)
+			}
+		},
+	}
+
+	var recDelCmd = &cobra.Command{
+		Use:   "del <service>",
+		Short: "Delete recovery codes",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			service := args[0]
+			masterPassword, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if vault.DeleteRecoveryCode(service) {
+				data, err := vault.Serialize(masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
+					return
+				}
+				src.SaveVault(vaultPath, data)
+				fmt.Printf("Recovery codes for '%s' deleted.\n", service)
+			} else {
+				fmt.Printf("Recovery codes for '%s' not found.\n", service)
+			}
+		},
+	}
+
+	var recListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all services with recovery codes",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if len(vault.RecoveryCodeItems) == 0 {
+				fmt.Println("No recovery codes found.")
+				return
+			}
+			for _, r := range vault.RecoveryCodeItems {
+				fmt.Println(r.Service)
+			}
+		},
+	}
+
+	recAddCmd.Flags().StringP("service", "s", "", "Service name")
+	recCmd.AddCommand(recAddCmd, recGetCmd, recDelCmd, recListCmd)
+
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, listCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd, notesCmd, apiCmd, sshCmd, wifiCmd, recCmd)
 	rootCmd.Execute()
 }
 
