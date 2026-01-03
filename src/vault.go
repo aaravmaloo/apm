@@ -16,6 +16,33 @@ type Entry struct {
 	Password string `json:"password"`
 }
 
+type SecureNoteEntry struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+type APIKeyEntry struct {
+	Name    string `json:"name"`
+	Service string `json:"service"`
+	Key     string `json:"key"`
+}
+
+type SSHKeyEntry struct {
+	Name       string `json:"name"`
+	PrivateKey string `json:"private_key"`
+}
+
+type WiFiEntry struct {
+	SSID         string `json:"ssid"`
+	Password     string `json:"password"`
+	SecurityType string `json:"security_type"`
+}
+
+type RecoveryCodeEntry struct {
+	Service string   `json:"service"`
+	Codes   []string `json:"codes"`
+}
+
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
 	ciphertext, err := EncryptVault(v, masterPassword)
 	if err != nil {
@@ -31,9 +58,14 @@ type TOTPEntry struct {
 }
 
 type Vault struct {
-	Salt        []byte      `json:"salt"`
-	Entries     []Entry     `json:"entries"`
-	TOTPEntries []TOTPEntry `json:"totp_entries"`
+	Salt              []byte              `json:"salt"`
+	Entries           []Entry             `json:"entries"`
+	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
+	SecureNotes       []SecureNoteEntry   `json:"secure_notes"`
+	APIKeys           []APIKeyEntry       `json:"api_keys"`
+	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
+	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
+	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
 }
 
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
@@ -230,13 +262,161 @@ func (v *Vault) FilterEntries(query string) []Entry {
 	return results
 }
 
-func contains(s, substr string) bool {
+// Secure Notes
+func (v *Vault) AddSecureNote(name, content string) {
+	for i, entry := range v.SecureNotes {
+		if entry.Name == name {
+			v.SecureNotes[i] = SecureNoteEntry{Name: name, Content: content}
+			return
+		}
+	}
+	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
+}
 
+func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
+	for _, entry := range v.SecureNotes {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+	return SecureNoteEntry{}, false
+}
+
+func (v *Vault) DeleteSecureNote(name string) bool {
+	for i, entry := range v.SecureNotes {
+		if entry.Name == name {
+			v.SecureNotes = append(v.SecureNotes[:i], v.SecureNotes[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// API Keys
+func (v *Vault) AddAPIKey(name, service, key string) {
+	for i, entry := range v.APIKeys {
+		if entry.Name == name {
+			v.APIKeys[i] = APIKeyEntry{Name: name, Service: service, Key: key}
+			return
+		}
+	}
+	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key})
+}
+
+func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
+	for _, entry := range v.APIKeys {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+	return APIKeyEntry{}, false
+}
+
+func (v *Vault) DeleteAPIKey(name string) bool {
+	for i, entry := range v.APIKeys {
+		if entry.Name == name {
+			v.APIKeys = append(v.APIKeys[:i], v.APIKeys[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// SSH Keys
+func (v *Vault) AddSSHKey(name, privateKey string) {
+	for i, entry := range v.SSHKeys {
+		if entry.Name == name {
+			v.SSHKeys[i] = SSHKeyEntry{Name: name, PrivateKey: privateKey}
+			return
+		}
+	}
+	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey})
+}
+
+func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
+	for _, entry := range v.SSHKeys {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+	return SSHKeyEntry{}, false
+}
+
+func (v *Vault) DeleteSSHKey(name string) bool {
+	for i, entry := range v.SSHKeys {
+		if entry.Name == name {
+			v.SSHKeys = append(v.SSHKeys[:i], v.SSHKeys[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// Wi-Fi Credentials
+func (v *Vault) AddWiFi(ssid, password, securityType string) {
+	for i, entry := range v.WiFiCredentials {
+		if entry.SSID == ssid {
+			v.WiFiCredentials[i] = WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType}
+			return
+		}
+	}
+	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType})
+}
+
+func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
+	for _, entry := range v.WiFiCredentials {
+		if entry.SSID == ssid {
+			return entry, true
+		}
+	}
+	return WiFiEntry{}, false
+}
+
+func (v *Vault) DeleteWiFi(ssid string) bool {
+	for i, entry := range v.WiFiCredentials {
+		if entry.SSID == ssid {
+			v.WiFiCredentials = append(v.WiFiCredentials[:i], v.WiFiCredentials[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// Recovery Codes
+func (v *Vault) AddRecoveryCode(service string, codes []string) {
+	for i, entry := range v.RecoveryCodeItems {
+		if entry.Service == service {
+			v.RecoveryCodeItems[i] = RecoveryCodeEntry{Service: service, Codes: codes}
+			return
+		}
+	}
+	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes})
+}
+
+func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
+	for _, entry := range v.RecoveryCodeItems {
+		if entry.Service == service {
+			return entry, true
+		}
+	}
+	return RecoveryCodeEntry{}, false
+}
+
+func (v *Vault) DeleteRecoveryCode(service string) bool {
+	for i, entry := range v.RecoveryCodeItems {
+		if entry.Service == service {
+			v.RecoveryCodeItems = append(v.RecoveryCodeItems[:i], v.RecoveryCodeItems[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func contains(s, substr string) bool {
 	return len(s) >= len(substr) && match(s, substr)
 }
 
 func match(s, substr string) bool {
-
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
 			return true
