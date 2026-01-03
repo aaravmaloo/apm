@@ -16,9 +16,15 @@ type Entry struct {
 	Password string `json:"password"`
 }
 
+type TOTPEntry struct {
+	Account string `json:"account"`
+	Secret  string `json:"secret"`
+}
+
 type Vault struct {
-	Salt    []byte  `json:"salt"`
-	Entries []Entry `json:"entries"`
+	Salt        []byte      `json:"salt"`
+	Entries     []Entry     `json:"entries"`
+	TOTPEntries []TOTPEntry `json:"totp_entries"`
 }
 
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
@@ -101,6 +107,35 @@ func (v *Vault) DeleteEntry(account string) bool {
 	for i, entry := range v.Entries {
 		if entry.Account == account {
 			v.Entries = append(v.Entries[:i], v.Entries[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddTOTPEntry(account, secret string) {
+	for i, entry := range v.TOTPEntries {
+		if entry.Account == account {
+			v.TOTPEntries[i] = TOTPEntry{Account: account, Secret: secret}
+			return
+		}
+	}
+	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret})
+}
+
+func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
+	for _, entry := range v.TOTPEntries {
+		if entry.Account == account {
+			return entry, true
+		}
+	}
+	return TOTPEntry{}, false
+}
+
+func (v *Vault) DeleteTOTPEntry(account string) bool {
+	for i, entry := range v.TOTPEntries {
+		if entry.Account == account {
+			v.TOTPEntries = append(v.TOTPEntries[:i], v.TOTPEntries[i+1:]...)
 			return true
 		}
 	}
