@@ -1,4 +1,4 @@
-package main
+package apm
 
 import (
 	"crypto/aes"
@@ -14,6 +14,15 @@ type Entry struct {
 	Account  string `json:"account"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
+	ciphertext, err := EncryptVault(v, masterPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(v.Salt, ciphertext...), nil
 }
 
 type TOTPEntry struct {
