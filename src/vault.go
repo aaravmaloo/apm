@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 )
 
 type Entry struct {
@@ -57,6 +58,14 @@ type TOTPEntry struct {
 	Secret  string `json:"secret"`
 }
 
+type HistoryEntry struct {
+	Timestamp  time.Time `json:"timestamp"`
+	Action     string    `json:"action"` // "ADD", "UPDATE", "DELETE"
+	Category   string    `json:"category"`
+	Identifier string    `json:"identifier"`
+	OldData    string    `json:"old_data,omitempty"` // JSON string of the previous state
+}
+
 type Vault struct {
 	Salt              []byte              `json:"salt"`
 	Entries           []Entry             `json:"entries"`
@@ -66,6 +75,7 @@ type Vault struct {
 	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
 	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
 	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
+	History           []HistoryEntry      `json:"history"`
 }
 
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
@@ -186,11 +196,24 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 func (v *Vault) AddEntry(account, username, password string) {
 	for i, entry := range v.Entries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.Entries[i])
 			v.Entries[i] = Entry{Account: account, Username: username, Password: password}
+			v.logHistory("UPDATE", "PASSWORD", account, string(oldData))
 			return
 		}
 	}
 	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
+	v.logHistory("ADD", "PASSWORD", account, "")
+}
+
+func (v *Vault) logHistory(action, category, identifier, oldData string) {
+	v.History = append(v.History, HistoryEntry{
+		Timestamp:  time.Now(),
+		Action:     action,
+		Category:   category,
+		Identifier: identifier,
+		OldData:    oldData,
+	})
 }
 
 func (v *Vault) GetEntry(account string) (Entry, bool) {
@@ -205,7 +228,9 @@ func (v *Vault) GetEntry(account string) (Entry, bool) {
 func (v *Vault) DeleteEntry(account string) bool {
 	for i, entry := range v.Entries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.Entries[i])
 			v.Entries = append(v.Entries[:i], v.Entries[i+1:]...)
+			v.logHistory("DELETE", "PASSWORD", account, string(oldData))
 			return true
 		}
 	}
@@ -215,11 +240,14 @@ func (v *Vault) DeleteEntry(account string) bool {
 func (v *Vault) AddTOTPEntry(account, secret string) {
 	for i, entry := range v.TOTPEntries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.TOTPEntries[i])
 			v.TOTPEntries[i] = TOTPEntry{Account: account, Secret: secret}
+			v.logHistory("UPDATE", "TOTP", account, string(oldData))
 			return
 		}
 	}
 	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret})
+	v.logHistory("ADD", "TOTP", account, "")
 }
 
 func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
@@ -234,7 +262,9 @@ func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
 func (v *Vault) DeleteTOTPEntry(account string) bool {
 	for i, entry := range v.TOTPEntries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.TOTPEntries[i])
 			v.TOTPEntries = append(v.TOTPEntries[:i], v.TOTPEntries[i+1:]...)
+			v.logHistory("DELETE", "TOTP", account, string(oldData))
 			return true
 		}
 	}
@@ -266,11 +296,14 @@ func (v *Vault) FilterEntries(query string) []Entry {
 func (v *Vault) AddSecureNote(name, content string) {
 	for i, entry := range v.SecureNotes {
 		if entry.Name == name {
+			oldData, _ := json.Marshal(v.SecureNotes[i])
 			v.SecureNotes[i] = SecureNoteEntry{Name: name, Content: content}
+			v.logHistory("UPDATE", "NOTE", name, string(oldData))
 			return
 		}
 	}
 	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
+	v.logHistory("ADD", "NOTE", name, "")
 }
 
 func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
@@ -285,7 +318,9 @@ func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
 func (v *Vault) DeleteSecureNote(name string) bool {
 	for i, entry := range v.SecureNotes {
 		if entry.Name == name {
+			oldData, _ := json.Marshal(v.SecureNotes[i])
 			v.SecureNotes = append(v.SecureNotes[:i], v.SecureNotes[i+1:]...)
+			v.logHistory("DELETE", "NOTE", name, string(oldData))
 			return true
 		}
 	}
@@ -296,11 +331,14 @@ func (v *Vault) DeleteSecureNote(name string) bool {
 func (v *Vault) AddAPIKey(name, service, key string) {
 	for i, entry := range v.APIKeys {
 		if entry.Name == name {
+			oldData, _ := json.Marshal(v.APIKeys[i])
 			v.APIKeys[i] = APIKeyEntry{Name: name, Service: service, Key: key}
+			v.logHistory("UPDATE", "API_KEY", name, string(oldData))
 			return
 		}
 	}
 	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key})
+	v.logHistory("ADD", "API_KEY", name, "")
 }
 
 func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
@@ -315,7 +353,9 @@ func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
 func (v *Vault) DeleteAPIKey(name string) bool {
 	for i, entry := range v.APIKeys {
 		if entry.Name == name {
+			oldData, _ := json.Marshal(v.APIKeys[i])
 			v.APIKeys = append(v.APIKeys[:i], v.APIKeys[i+1:]...)
+			v.logHistory("DELETE", "API_KEY", name, string(oldData))
 			return true
 		}
 	}
@@ -326,11 +366,14 @@ func (v *Vault) DeleteAPIKey(name string) bool {
 func (v *Vault) AddSSHKey(name, privateKey string) {
 	for i, entry := range v.SSHKeys {
 		if entry.Name == name {
+			oldData, _ := json.Marshal(v.SSHKeys[i])
 			v.SSHKeys[i] = SSHKeyEntry{Name: name, PrivateKey: privateKey}
+			v.logHistory("UPDATE", "SSH_KEY", name, string(oldData))
 			return
 		}
 	}
 	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey})
+	v.logHistory("ADD", "SSH_KEY", name, "")
 }
 
 func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
@@ -345,7 +388,9 @@ func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
 func (v *Vault) DeleteSSHKey(name string) bool {
 	for i, entry := range v.SSHKeys {
 		if entry.Name == name {
+			oldData, _ := json.Marshal(v.SSHKeys[i])
 			v.SSHKeys = append(v.SSHKeys[:i], v.SSHKeys[i+1:]...)
+			v.logHistory("DELETE", "SSH_KEY", name, string(oldData))
 			return true
 		}
 	}
@@ -356,11 +401,14 @@ func (v *Vault) DeleteSSHKey(name string) bool {
 func (v *Vault) AddWiFi(ssid, password, securityType string) {
 	for i, entry := range v.WiFiCredentials {
 		if entry.SSID == ssid {
+			oldData, _ := json.Marshal(v.WiFiCredentials[i])
 			v.WiFiCredentials[i] = WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType}
+			v.logHistory("UPDATE", "WIFI", ssid, string(oldData))
 			return
 		}
 	}
 	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType})
+	v.logHistory("ADD", "WIFI", ssid, "")
 }
 
 func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
@@ -375,7 +423,9 @@ func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
 func (v *Vault) DeleteWiFi(ssid string) bool {
 	for i, entry := range v.WiFiCredentials {
 		if entry.SSID == ssid {
+			oldData, _ := json.Marshal(v.WiFiCredentials[i])
 			v.WiFiCredentials = append(v.WiFiCredentials[:i], v.WiFiCredentials[i+1:]...)
+			v.logHistory("DELETE", "WIFI", ssid, string(oldData))
 			return true
 		}
 	}
@@ -386,11 +436,14 @@ func (v *Vault) DeleteWiFi(ssid string) bool {
 func (v *Vault) AddRecoveryCode(service string, codes []string) {
 	for i, entry := range v.RecoveryCodeItems {
 		if entry.Service == service {
+			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
 			v.RecoveryCodeItems[i] = RecoveryCodeEntry{Service: service, Codes: codes}
+			v.logHistory("UPDATE", "RECOVERY_CODE", service, string(oldData))
 			return
 		}
 	}
 	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes})
+	v.logHistory("ADD", "RECOVERY_CODE", service, "")
 }
 
 func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
@@ -405,7 +458,9 @@ func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
 func (v *Vault) DeleteRecoveryCode(service string) bool {
 	for i, entry := range v.RecoveryCodeItems {
 		if entry.Service == service {
+			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
 			v.RecoveryCodeItems = append(v.RecoveryCodeItems[:i], v.RecoveryCodeItems[i+1:]...)
+			v.logHistory("DELETE", "RECOVERY_CODE", service, string(oldData))
 			return true
 		}
 	}
