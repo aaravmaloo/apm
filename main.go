@@ -466,17 +466,23 @@ func main() {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			filename := args[0]
+			encryptPass, _ := cmd.Flags().GetString("encrypt-pass")
+
 			masterPassword, vault, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			ext := strings.ToLower(filename[strings.LastIndex(filename, ".")+1:])
+			ext := strings.ToLower(filepath.Ext(filename))
+			if ext != "" {
+				ext = ext[1:]
+			}
+
 			var importErr error
 			switch ext {
 			case "json":
-				importErr = src.ImportFromJSON(vault, filename)
+				importErr = src.ImportFromJSON(vault, filename, encryptPass)
 			case "csv":
 				importErr = src.ImportFromCSV(vault, filename)
 			case "txt":
@@ -484,6 +490,23 @@ func main() {
 			default:
 				fmt.Printf("Unsupported file extension: %s\n", ext)
 				return
+			}
+
+			if importErr != nil && encryptPass == "" {
+				// If it failed and no password was provided, it might be encrypted. Prompt and try once more.
+				fmt.Print("This file may be encrypted. Please enter the password to decrypt: ")
+				var err error
+				encryptPass, err = readPassword()
+				fmt.Println()
+				if err == nil && encryptPass != "" {
+					switch ext {
+					case "json":
+						importErr = src.ImportFromJSON(vault, filename, encryptPass)
+					case "csv":
+						// CSV/TXT don't currently support encryption in the same way, but we could add it
+					case "txt":
+					}
+				}
 			}
 
 			if importErr != nil {
@@ -511,6 +534,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			withoutPass, _ := cmd.Flags().GetBool("without-password")
 			output, _ := cmd.Flags().GetString("output")
+			encryptPass, _ := cmd.Flags().GetString("encrypt-pass")
 
 			_, vault, err := src_unlockVault()
 			if err != nil {
@@ -527,10 +551,13 @@ func main() {
 			}
 
 			var exportErr error
-			if withoutPass || strings.HasSuffix(strings.ToLower(output), ".txt") {
+			ext := strings.ToLower(filepath.Ext(output))
+			if withoutPass || ext == ".txt" {
 				exportErr = src.ExportToTXT(vault, output, withoutPass)
+			} else if ext == ".csv" {
+				exportErr = src.ExportToCSV(vault, output)
 			} else {
-				exportErr = src.ExportToJSON(vault, output)
+				exportErr = src.ExportToJSON(vault, output, encryptPass)
 			}
 
 			if exportErr != nil {
@@ -542,8 +569,9 @@ func main() {
 		},
 	}
 
-	importCmd.Flags().StringP("output", "o", "", "Output filename") // Wait, import doesn't need output.
+	importCmd.Flags().StringP("encrypt-pass", "e", "", "Password for decryption (if the import file is encrypted)")
 	exportCmd.Flags().StringP("output", "o", "", "Output filename")
+	exportCmd.Flags().StringP("encrypt-pass", "e", "", "Password for encryption (to protect the exported JSON)")
 	exportCmd.Flags().Bool("without-password", false, "Exclude passwords and secrets (generates .txt)")
 	exportCmd.Flags().Bool("without_password", false, "Exclude passwords and secrets (alias)")
 
