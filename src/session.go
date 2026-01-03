@@ -1,4 +1,4 @@
-package main
+package apm
 
 import (
 	"encoding/json"
