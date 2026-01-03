@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -14,7 +15,16 @@ import (
 	src "password-manager/src"
 )
 
-var vaultPath = "vault.dat"
+var vaultPath string
+
+func init() {
+	exe, err := os.Executable()
+	if err != nil {
+		fmt.Printf("Error getting executable path: %v\n", err)
+		os.Exit(1)
+	}
+	vaultPath = filepath.Join(filepath.Dir(exe), "vault.dat")
+}
 
 func main() {
 	var rootCmd = &cobra.Command{
