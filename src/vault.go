@@ -93,6 +93,64 @@ func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault
 	return &vault, nil
 }
 
+func EncryptData(plaintext []byte, password string) ([]byte, error) {
+	salt, err := GenerateSalt()
+	if err != nil {
+		return nil, err
+	}
+
+	key := DeriveKey(password, salt)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+	return append(salt, ciphertext...), nil
+}
+
+func DecryptData(data []byte, password string) ([]byte, error) {
+	if len(data) < 16 {
+		return nil, errors.New("invalid encrypted data: too short")
+	}
+	salt := data[:16]
+	ciphertext := data[16:]
+
+	key := DeriveKey(password, salt)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, errors.New("decryption failed: incorrect password or corrupted data")
+	}
+
+	return plaintext, nil
+}
+
 func (v *Vault) AddEntry(account, username, password string) {
 	for i, entry := range v.Entries {
 		if entry.Account == account {
