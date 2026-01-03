@@ -1162,7 +1162,64 @@ func main() {
 	recAddCmd.Flags().StringP("service", "s", "", "Service name")
 	recCmd.AddCommand(recAddCmd, recGetCmd, recDelCmd, recListCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, listCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd, notesCmd, apiCmd, sshCmd, wifiCmd, recCmd)
+	// Vault History
+	var historyCmd = &cobra.Command{
+		Use:   "vhistory",
+		Short: "View vault change history",
+	}
+
+	var historyListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all vault changes",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if len(vault.History) == 0 {
+				fmt.Println("No history found.")
+				return
+			}
+			fmt.Printf("%-5s %-20s %-10s %-15s %-20s\n", "ID", "TIMESTAMP", "ACTION", "CATEGORY", "IDENTIFIER")
+			fmt.Println(strings.Repeat("-", 75))
+			for i, h := range vault.History {
+				fmt.Printf("%-5d %-20s %-10s %-15s %-20s\n", i, h.Timestamp.Format("2006-01-02 15:04:05"), h.Action, h.Category, h.Identifier)
+			}
+		},
+	}
+
+	var historyShowCmd = &cobra.Command{
+		Use:   "show <id>",
+		Short: "Show details of a specific change",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			id := -1
+			fmt.Sscanf(args[0], "%d", &id)
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if id < 0 || id >= len(vault.History) {
+				fmt.Printf("Invalid history ID: %d\n", id)
+				return
+			}
+			h := vault.History[id]
+			fmt.Printf("ID:         %d\n", id)
+			fmt.Printf("Timestamp:  %s\n", h.Timestamp.Format("2006-01-02 15:04:05"))
+			fmt.Printf("Action:     %s\n", h.Action)
+			fmt.Printf("Category:   %s\n", h.Category)
+			fmt.Printf("Identifier: %s\n", h.Identifier)
+			if h.OldData != "" {
+				fmt.Printf("Previous Value (encoded):\n%s\n", h.OldData)
+			}
+		},
+	}
+
+	historyCmd.AddCommand(historyListCmd, historyShowCmd)
+
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, listCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd, notesCmd, apiCmd, sshCmd, wifiCmd, recCmd, historyCmd)
 	rootCmd.Execute()
 }
 
