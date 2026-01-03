@@ -1,9 +1,10 @@
-package main
+package apm
 
 import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -77,6 +78,7 @@ func ImportFromCSV(vault *Vault, filename string) error {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
+	reader.FieldsPerRecord = -1
 	records, err := reader.ReadAll()
 	if err != nil {
 		return err
@@ -90,11 +92,12 @@ func ImportFromCSV(vault *Vault, filename string) error {
 		dataType := strings.ToUpper(strings.TrimSpace(record[0]))
 		account := strings.TrimSpace(record[1])
 
-		if dataType == "ENTRY" || dataType == "PASSWORD" {
+		switch dataType {
+		case "ENTRY", "PASSWORD":
 			if len(record) >= 4 {
 				vault.AddEntry(account, strings.TrimSpace(record[2]), strings.TrimSpace(record[3]))
 			}
-		} else if dataType == "TOTP" {
+		case "TOTP":
 			vault.AddTOTPEntry(account, strings.TrimSpace(record[2]))
 		}
 	}
@@ -110,6 +113,27 @@ func ImportFromTXT(vault *Vault, filename string) error {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "APM Export") || strings.HasPrefix(line, "=") || strings.HasSuffix(line, ":") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "otpauth://") {
+			u, err := url.Parse(line)
+			if err != nil {
+				continue
+			}
+			label := strings.TrimPrefix(u.Path, "/")
+			if strings.HasPrefix(label, "totp/") {
+				label = strings.TrimPrefix(label, "totp/")
+			} else if strings.HasPrefix(label, "hotp/") {
+				label = strings.TrimPrefix(label, "hotp/")
+			}
+
+			label, _ = url.PathUnescape(label)
+
+			secret := u.Query().Get("secret")
+			if label != "" && secret != "" {
+				vault.AddTOTPEntry(label, secret)
+			}
 			continue
 		}
 
