@@ -14,7 +14,7 @@ type ExportData struct {
 	TOTPEntries []TOTPEntry `json:"totp_entries"`
 }
 
-func ExportToJSON(vault *Vault, filename string) error {
+func ExportToJSON(vault *Vault, filename string, encryptPass string) error {
 	data := ExportData{
 		Entries:     vault.Entries,
 		TOTPEntries: vault.TOTPEntries,
@@ -23,7 +23,39 @@ func ExportToJSON(vault *Vault, filename string) error {
 	if err != nil {
 		return err
 	}
+
+	if encryptPass != "" {
+		encrypted, err := EncryptData(bytes, encryptPass)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(filename, encrypted, 0600)
+	}
+
 	return os.WriteFile(filename, bytes, 0600)
+}
+
+func ExportToCSV(vault *Vault, filename string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Header
+	writer.Write([]string{"Type", "Account", "Username/Secret", "Password"})
+
+	for _, e := range vault.Entries {
+		writer.Write([]string{"PASSWORD", e.Account, e.Username, e.Password})
+	}
+	for _, t := range vault.TOTPEntries {
+		writer.Write([]string{"TOTP", t.Account, t.Secret, ""})
+	}
+
+	return nil
 }
 
 func ExportToTXT(vault *Vault, filename string, withoutPassword bool) error {
@@ -52,21 +84,157 @@ func ExportToTXT(vault *Vault, filename string, withoutPassword bool) error {
 	return os.WriteFile(filename, []byte(sb.String()), 0600)
 }
 
-func ImportFromJSON(vault *Vault, filename string) error {
+func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
+
+	// If decryptPass is provided or file looks binary/short/encrypted
+	if decryptPass != "" {
+		decrypted, err := DecryptData(bytes, decryptPass)
+		if err == nil {
+			bytes = decrypted
+		}
+	}
+
+	// Try standard format first
 	var data ExportData
-	if err := json.Unmarshal(bytes, &data); err != nil {
+	if err := json.Unmarshal(bytes, &data); err == nil && (len(data.Entries) > 0 || len(data.TOTPEntries) > 0) {
+		for _, e := range data.Entries {
+			vault.AddEntry(e.Account, e.Username, e.Password)
+		}
+		for _, t := range data.TOTPEntries {
+			vault.AddTOTPEntry(t.Account, t.Secret)
+		}
+		return nil
+	}
+
+	// Fallback: Smart recursive search for keys
+	var raw interface{}
+	if err := json.Unmarshal(bytes, &raw); err != nil {
+		// If it directly failed and we haven't tried decryption yet, maybe it IS raw encrypted data
+		if decryptPass == "" {
+			return fmt.Errorf("failed to parse JSON. If this is an encrypted file, please provide the password")
+		}
 		return err
 	}
-	for _, e := range data.Entries {
-		vault.AddEntry(e.Account, e.Username, e.Password)
+
+	// Before searching, check if this is a wrapper for encrypted data (e.g., OneAuth or similar)
+	if m, ok := raw.(map[string]interface{}); ok && decryptPass != "" {
+		dataStr, _ := m["data"].(string)
+		saltStr, _ := m["enc_salt"].(string)
+		if dataStr != "" && saltStr != "" {
+			// Found data and salt. Try to combine them and decrypt using standard logic.
+			// This handles cases where salt and ciphertext are separated in the JSON.
+			cipherBytes, _ := DecodeBase64(dataStr)
+			if len(cipherBytes) > 0 {
+				combined := append([]byte(saltStr), cipherBytes...)
+				decrypted, err := DecryptData(combined, decryptPass)
+				if err == nil {
+					// Recursively call ImportFromJSON with the decrypted bytes
+					// We need to write to a temp file or modify ImportFromJSON to accept bytes?
+					// Let's just unmarshal the decrypted bytes directly here.
+					var innerData ExportData
+					if err := json.Unmarshal(decrypted, &innerData); err == nil && (len(innerData.Entries) > 0 || len(innerData.TOTPEntries) > 0) {
+						for _, e := range innerData.Entries {
+							vault.AddEntry(e.Account, e.Username, e.Password)
+						}
+						for _, t := range innerData.TOTPEntries {
+							vault.AddTOTPEntry(t.Account, t.Secret)
+						}
+						return nil
+					}
+					// If standard unmarshal fails, set bytes to decrypted and continue to smart search
+					bytes = decrypted
+					json.Unmarshal(bytes, &raw)
+				}
+			}
+		}
 	}
-	for _, t := range data.TOTPEntries {
-		vault.AddTOTPEntry(t.Account, t.Secret)
+
+	found := false
+	var search func(v interface{})
+	search = func(v interface{}) {
+		switch m := v.(type) {
+		case map[string]interface{}:
+			// Check if this map looks like a TOTP or Password entry
+			acc, _ := m["account"].(string)
+			if acc == "" {
+				acc, _ = m["account_name"].(string)
+			}
+			if acc == "" {
+				acc, _ = m["name"].(string)
+			}
+			if acc == "" {
+				acc, _ = m["label"].(string)
+			}
+
+			secret, _ := m["secret"].(string)
+			if secret == "" {
+				secret, _ = m["secret_key"].(string)
+			}
+
+			user, _ := m["username"].(string)
+			if user == "" {
+				user, _ = m["user"].(string)
+			}
+
+			pass, _ := m["password"].(string)
+			if pass == "" {
+				pass, _ = m["pass"].(string)
+			}
+
+			otpauth, _ := m["otpauth"].(string)
+
+			if acc != "" && secret != "" {
+				vault.AddTOTPEntry(acc, secret)
+				found = true
+			} else if acc != "" && (user != "" || pass != "") {
+				vault.AddEntry(acc, user, pass)
+				found = true
+			} else if otpauth != "" && strings.HasPrefix(otpauth, "otpauth://") {
+				// We can handle this by feeding it to a temporary string parser logic or just inline it
+				// For now, let's just use a dummy logic or skip
+			}
+
+			for _, val := range m {
+				search(val)
+			}
+		case []interface{}:
+			for _, val := range m {
+				search(val)
+			}
+		}
 	}
+
+	search(raw)
+
+	if !found {
+		// Last effort: Look for otpauth URIs as raw strings in the JSON
+		content := string(bytes)
+		parts := strings.Split(content, "\"")
+		for _, s := range parts {
+			if strings.HasPrefix(s, "otpauth://") {
+				u, err := url.Parse(s)
+				if err == nil {
+					label := strings.TrimPrefix(u.Path, "/")
+					label = strings.TrimPrefix(label, "totp/")
+					label, _ = url.PathUnescape(label)
+					sec := u.Query().Get("secret")
+					if label != "" && sec != "" {
+						vault.AddTOTPEntry(label, sec)
+						found = true
+					}
+				}
+			}
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("no recognizable password or TOTP entries found in this JSON file. It might be encrypted or use an unsupported format")
+	}
+
 	return nil
 }
 
@@ -84,11 +252,59 @@ func ImportFromCSV(vault *Vault, filename string) error {
 		return err
 	}
 
+	if len(records) == 0 {
+		return nil
+	}
+
+	// Potential header mapping
+	colMap := make(map[string]int)
+	headerChecked := false
+
 	for _, record := range records {
+		if !headerChecked {
+			isHeader := false
+			for i, val := range record {
+				v := strings.ToLower(strings.TrimSpace(val))
+				if v == "type" || v == "account" || v == "username" || v == "password" || v == "secret" {
+					colMap[v] = i
+					isHeader = true
+				}
+			}
+			if isHeader {
+				headerChecked = true
+				continue
+			}
+		}
+
+		if len(record) < 2 {
+			continue
+		}
+
+		// Try mapped columns first
+		if accIdx, ok := colMap["account"]; ok && accIdx < len(record) {
+			acc := strings.TrimSpace(record[accIdx])
+
+			// Is it a password entry or TOTP?
+			passIdx, hasPass := colMap["password"]
+			userIdx, hasUser := colMap["username"]
+			secIdx, hasSec := colMap["secret"]
+
+			if hasSec && secIdx < len(record) && strings.TrimSpace(record[secIdx]) != "" {
+				vault.AddTOTPEntry(acc, strings.TrimSpace(record[secIdx]))
+			} else if hasPass && passIdx < len(record) {
+				var u string
+				if hasUser && userIdx < len(record) {
+					u = strings.TrimSpace(record[userIdx])
+				}
+				vault.AddEntry(acc, u, strings.TrimSpace(record[passIdx]))
+			}
+			continue
+		}
+
+		// Legacy/Fallback: Expecting: Type, Account, Username/Secret, [Password]
 		if len(record) < 3 {
 			continue
 		}
-		// Expecting: Type, Account, Username/Secret, [Password]
 		dataType := strings.ToUpper(strings.TrimSpace(record[0]))
 		account := strings.TrimSpace(record[1])
 
@@ -122,11 +338,8 @@ func ImportFromTXT(vault *Vault, filename string) error {
 				continue
 			}
 			label := strings.TrimPrefix(u.Path, "/")
-			if strings.HasPrefix(label, "totp/") {
-				label = strings.TrimPrefix(label, "totp/")
-			} else if strings.HasPrefix(label, "hotp/") {
-				label = strings.TrimPrefix(label, "hotp/")
-			}
+			label = strings.TrimPrefix(label, "totp/")
+			label = strings.TrimPrefix(label, "hotp/")
 
 			label, _ = url.PathUnescape(label)
 
