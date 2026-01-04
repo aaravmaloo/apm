@@ -11,7 +11,7 @@ When you enter your master password, it isn't used directly for encryption. Inst
 
 ## 2. AES-256-GCM: The Gold Standard for Encryption
 
-APM uses **AES-256** in **GCM (Galois/Counter Mode)**.
+APM uses **AES-256** in **GCM (Galois/Counter Mode)**. This is applied in a multi-layer encryption scheme to protect your data.
 
 - **256-bit Key**: The key is 256 bits long. Brute-forcing such a key would take billions of years with all the computing power on Earth.
 - **Authenticated Encryption (GCM)**: GCM doesn't just encrypt the data; it also creates a "tag" (MAC). If even a single bit of the encrypted file is changed, the decryption will fail immediately. This prevents "bit-flipping" attacks where an attacker tries to modify your data without knowing the password.
