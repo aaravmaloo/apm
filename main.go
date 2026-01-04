@@ -17,49 +17,7 @@ import (
 	src "password-manager/src"
 )
 
-var (
-	vaultPath string
-	vaultName string = "default"
-	appPath   string
-)
-
-func updateVaultPath() {
-	exeDir := filepath.Dir(appPath)
-	vaultPath = filepath.Join(exeDir, "vault_"+vaultName+".dat")
-}
-
-func copyToClipboard(val string) {
-	var cmd *exec.Cmd
-
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell", "-command", fmt.Sprintf("Set-Clipboard -Value '%s'", val))
-	} else if runtime.GOOS == "darwin" {
-		cmd = exec.Command("pbcopy")
-		cmd.Stdin = strings.NewReader(val)
-	} else {
-		cmd = exec.Command("xclip", "-selection", "clipboard")
-		cmd.Stdin = strings.NewReader(val)
-	}
-	cmd.Run()
-}
-
-func spawnClearClipboard(mins int) {
-	if mins <= 0 {
-		return
-	}
-	fmt.Printf("Password copied to clipboard. It will be cleared in %d minutes.\n", mins)
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command("powershell", "-WindowStyle", "Hidden", "-Command",
-			fmt.Sprintf("Start-Sleep -Seconds %d; Set-Clipboard -Value $null", mins*60))
-		cmd.Start()
-	} else {
-		// Simple background sleep for unix
-		go func() {
-			time.Sleep(time.Duration(mins) * time.Minute)
-			copyToClipboard("")
-		}()
-	}
-}
+var vaultPath string
 
 func init() {
 	exe, err := os.Executable()
@@ -67,30 +25,21 @@ func init() {
 		fmt.Printf("Error getting executable path: %v\n", err)
 		os.Exit(1)
 	}
-	appPath = exe
-	vaultPath = filepath.Join(filepath.Dir(exe), "vault_"+vaultName+".dat")
+	vaultPath = filepath.Join(filepath.Dir(exe), "vault.dat")
 }
 
 func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "pm",
 		Short: "A simple password manager CLI",
-		CompletionOptions: cobra.CompletionOptions{
-			DisableDefaultCmd: true,
-		},
 	}
 
 	var initCmd = &cobra.Command{
-		Use:   "init [vault_name]",
+		Use:   "init",
 		Short: "Initialize a new vault",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) > 0 {
-				vaultName = args[0]
-				updateVaultPath()
-			}
-
 			if src.VaultExists(vaultPath) {
-				fmt.Printf("Vault '%s' already exists.\n", vaultName)
+				fmt.Println("Vault already exists.")
 				return
 			}
 
@@ -130,7 +79,7 @@ func main() {
 				return
 			}
 
-			fmt.Printf("Vault '%s' initialized successfully.\n", vaultName)
+			fmt.Println("Vault initialized successfully.")
 		},
 	}
 
@@ -142,10 +91,12 @@ func main() {
 			fmt.Println("1. Password")
 			fmt.Println("2. TOTP")
 			fmt.Println("3. Token (GitHub, PyPI, etc.)")
-			fmt.Println("4. SSH Key")
-			fmt.Println("5. Wi-Fi Credentials")
-			fmt.Println("6. Recovery Codes")
-			fmt.Print("Selection (1-6): ")
+			fmt.Println("4. Secure Note")
+			fmt.Println("5. API Key")
+			fmt.Println("6. SSH Key")
+			fmt.Println("7. Wi-Fi Credentials")
+			fmt.Println("8. Recovery Codes")
+			fmt.Print("Selection (1-8): ")
 			choice := readInput()
 
 			masterPassword, vault, err := src_unlockVault()
@@ -156,41 +107,60 @@ func main() {
 
 			switch choice {
 			case "1":
-				fmt.Print("Account: ")
-				account := readInput()
+				fmt.Print("Account Name: ")
+				acc := readInput()
 				fmt.Print("Username: ")
-				username := readInput()
+				user := readInput()
 				fmt.Print("Password (leave blank to generate): ")
-				password, _ := readPassword()
+				pass, _ := readPassword()
 				fmt.Println()
-				if password == "" {
-					password, _ = src.GeneratePassword(16)
-					fmt.Printf("Generated password: %s\n", password)
+				if pass == "" {
+					pass, _ = src.GeneratePassword(16)
+					fmt.Printf("Generated password: %s\n", pass)
 				}
-				vault.AddEntry(account, username, password)
-				fmt.Printf("Added password for %s.\n", account)
+				vault.AddEntry(acc, user, pass)
 			case "2":
-				fmt.Print("Account: ")
-				account := readInput()
+				fmt.Print("Account Name: ")
+				acc := readInput()
 				fmt.Print("Secret: ")
-				secret := readInput()
-				vault.AddTOTPEntry(account, secret)
-				fmt.Printf("Added TOTP for %s.\n", account)
+				sec := readInput()
+				vault.AddTOTPEntry(acc, sec)
 			case "3":
-				fmt.Print("Name (e.g. My GitHub Token): ")
+				fmt.Print("Token Name: ")
 				name := readInput()
-				fmt.Print("Service (e.g. GitHub): ")
-				service := readInput()
+				fmt.Print("Service: ")
+				svc := readInput()
 				fmt.Print("Token: ")
-				token := readInput()
-				fmt.Print("Type (e.g. Personal Access Token): ")
-				tokenType := readInput()
-				vault.AddToken(name, service, token, tokenType)
-				fmt.Printf("Added token '%s'.\n", name)
+				tok := readInput()
+				fmt.Print("Type (e.g. GitHub): ")
+				tType := readInput()
+				vault.AddToken(name, svc, tok, tType)
 			case "4":
-				fmt.Print("Key Name: ")
+				fmt.Print("Note Name: ")
 				name := readInput()
-				fmt.Print("Private Key (end with empty line):\n")
+				fmt.Println("Content (end with empty line):")
+				var contentLines []string
+				scanner := bufio.NewScanner(os.Stdin)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if line == "" {
+						break
+					}
+					contentLines = append(contentLines, line)
+				}
+				vault.AddSecureNote(name, strings.Join(contentLines, "\n"))
+			case "5":
+				fmt.Print("Label: ")
+				name := readInput()
+				fmt.Print("Service: ")
+				svc := readInput()
+				fmt.Print("API Key: ")
+				key := readInput()
+				vault.AddAPIKey(name, svc, key)
+			case "6":
+				fmt.Print("Key Label: ")
+				name := readInput()
+				fmt.Println("Enter Private Key (end with empty line):")
 				var keyLines []string
 				scanner := bufio.NewScanner(os.Stdin)
 				for scanner.Scan() {
@@ -201,20 +171,18 @@ func main() {
 					keyLines = append(keyLines, line)
 				}
 				vault.AddSSHKey(name, strings.Join(keyLines, "\n"))
-				fmt.Printf("Added SSH key '%s'.\n", name)
-			case "5":
+			case "7":
 				fmt.Print("SSID: ")
 				ssid := readInput()
 				fmt.Print("Password: ")
 				pass := readInput()
-				fmt.Print("Security Type (e.g. WPA2): ")
+				fmt.Print("Security (WPA2/WPA3): ")
 				sec := readInput()
 				vault.AddWiFi(ssid, pass, sec)
-				fmt.Printf("Added Wi-Fi credentials for %s.\n", ssid)
-			case "6":
-				fmt.Print("Service Name: ")
-				name := readInput()
-				fmt.Print("Recovery Codes (one per line, end with empty line):\n")
+			case "8":
+				fmt.Print("Service: ")
+				svc := readInput()
+				fmt.Println("Enter Codes (one per line, end with empty line):")
 				var codes []string
 				scanner := bufio.NewScanner(os.Stdin)
 				for scanner.Scan() {
@@ -224,8 +192,7 @@ func main() {
 					}
 					codes = append(codes, line)
 				}
-				vault.AddRecoveryCode(name, codes)
-				fmt.Printf("Added recovery codes for %s.\n", name)
+				vault.AddRecoveryCode(svc, codes)
 			default:
 				fmt.Println("Invalid selection.")
 				return
@@ -237,23 +204,20 @@ func main() {
 				return
 			}
 			src.SaveVault(vaultPath, data)
+			fmt.Println("Entry saved.")
 		},
 	}
 
 	var getCmd = &cobra.Command{
-		Use:   "get",
+		Use:   "get [name]",
 		Short: "Retrieve an entry from the vault",
 		Run: func(cmd *cobra.Command, args []string) {
-			showPass, _ := cmd.Flags().GetBool("show_pass")
-			clearMins, _ := cmd.Flags().GetInt("clear")
-			if clearMins == 0 {
-				clearMins = 3 // Default
-			}
-
-			account, _ := cmd.Flags().GetString("account")
-			if account == "" {
-				fmt.Print("Account/Name: ")
-				account = readInput()
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			} else {
+				fmt.Print("Search Name/Account: ")
+				name = readInput()
 			}
 
 			_, vault, err := src_unlockVault()
@@ -262,79 +226,69 @@ func main() {
 				return
 			}
 
-			if entry, ok := vault.GetEntry(account); ok {
-				fmt.Printf("Account:  %s\n", entry.Account)
-				fmt.Printf("Username: %s\n", entry.Username)
-				if showPass {
-					fmt.Printf("Password: %s\n", entry.Password)
-				} else {
-					copyToClipboard(entry.Password)
-					spawnClearClipboard(clearMins)
+			// Try each type
+			if e, ok := vault.GetEntry(name); ok {
+				fmt.Printf("Type: Password\nAccount: %s\nUser: %s\n", e.Account, e.Username)
+				copyToClipboard(e.Password)
+				fmt.Println("Password copied to clipboard.")
+				return
+			}
+			if t, ok := vault.GetTOTPEntry(name); ok {
+				code, _ := src.GenerateTOTP(t.Secret)
+				fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
+				return
+			}
+			if tok, ok := vault.GetToken(name); ok {
+				fmt.Printf("Type: Token\nName: %s\nService: %s\n", tok.Name, tok.Service)
+				copyToClipboard(tok.Token)
+				fmt.Println("Token copied to clipboard.")
+				return
+			}
+			if n, ok := vault.GetSecureNote(name); ok {
+				fmt.Printf("Type: Secure Note\nName: %s\nContent:\n%s\n", n.Name, n.Content)
+				return
+			}
+			if k, ok := vault.GetAPIKey(name); ok {
+				fmt.Printf("Type: API Key\nLabel: %s\nService: %s\n", k.Name, k.Service)
+				copyToClipboard(k.Key)
+				fmt.Println("Key copied to clipboard.")
+				return
+			}
+			if s, ok := vault.GetSSHKey(name); ok {
+				fmt.Printf("Type: SSH Key\nLabel: %s\n", s.Name)
+				copyToClipboard(s.PrivateKey)
+				fmt.Println("Private Key copied to clipboard.")
+				return
+			}
+			if w, ok := vault.GetWiFi(name); ok {
+				fmt.Printf("Type: Wi-Fi\nSSID: %s\nSecurity: %s\n", w.SSID, w.SecurityType)
+				copyToClipboard(w.Password)
+				fmt.Println("Password copied to clipboard.")
+				return
+			}
+			if r, ok := vault.GetRecoveryCode(name); ok {
+				fmt.Printf("Type: Recovery Codes\nService: %s\nCodes:\n", r.Service)
+				for _, c := range r.Codes {
+					fmt.Printf("- %s\n", c)
 				}
 				return
 			}
 
-			if tok, ok := vault.GetToken(account); ok {
-				fmt.Printf("Name:    %s\n", tok.Name)
-				fmt.Printf("Service: %s\n", tok.Service)
-				fmt.Printf("Type:    %s\n", tok.Type)
-				if showPass {
-					fmt.Printf("Token:   %s\n", tok.Token)
-				} else {
-					copyToClipboard(tok.Token)
-					spawnClearClipboard(clearMins)
-				}
-				return
-			}
-
-			if key, ok := vault.GetSSHKey(account); ok {
-				fmt.Printf("Name: %s\n", key.Name)
-				if showPass {
-					fmt.Printf("Private Key:\n%s\n", key.PrivateKey)
-				} else {
-					copyToClipboard(key.PrivateKey)
-					spawnClearClipboard(clearMins)
-				}
-				return
-			}
-
-			if wifi, ok := vault.GetWiFi(account); ok {
-				fmt.Printf("SSID:     %s\n", wifi.SSID)
-				fmt.Printf("Security: %s\n", wifi.SecurityType)
-				if showPass {
-					fmt.Printf("Password: %s\n", wifi.Password)
-				} else {
-					copyToClipboard(wifi.Password)
-					spawnClearClipboard(clearMins)
-				}
-				return
-			}
-
-			if rec, ok := vault.GetRecoveryCode(account); ok {
-				fmt.Printf("Service: %s\n", rec.Service)
-				fmt.Println("Recovery Codes:")
-				for _, c := range rec.Codes {
-					fmt.Printf("  - %s\n", c)
-				}
-				return
-			}
-
-			fmt.Printf("Entry '%s' not found.\n", account)
+			fmt.Printf("Entry '%s' not found.\n", name)
 		},
 	}
 
 	var delCmd = &cobra.Command{
-		Use:   "del",
-		Short: "Delete an entry from the vault interactively",
+		Use:   "del [name]",
+		Short: "Delete an entry from the vault",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("1. Password")
-			fmt.Println("2. TOTP")
-			fmt.Println("3. Token")
-			fmt.Println("4. SSH Key")
-			fmt.Println("5. Wi-Fi")
-			fmt.Println("6. Recovery Codes")
-			fmt.Print("Selection (1-6): ")
-			choice := readInput()
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			} else {
+				fmt.Print("Delete Name/Account: ")
+				name = readInput()
+			}
 
 			masterPassword, vault, err := src_unlockVault()
 			if err != nil {
@@ -342,26 +296,23 @@ func main() {
 				return
 			}
 
-			fmt.Print("Enter Account/Name to delete: ")
-			target := readInput()
-
 			deleted := false
-			switch choice {
-			case "1":
-				deleted = vault.DeleteEntry(target)
-			case "2":
-				deleted = vault.DeleteTOTPEntry(target)
-			case "3":
-				deleted = vault.DeleteToken(target)
-			case "4":
-				deleted = vault.DeleteSSHKey(target)
-			case "5":
-				deleted = vault.DeleteWiFi(target)
-			case "6":
-				deleted = vault.DeleteRecoveryCode(target)
-			default:
-				fmt.Println("Invalid selection.")
-				return
+			if vault.DeleteEntry(name) {
+				deleted = true
+			} else if vault.DeleteTOTPEntry(name) {
+				deleted = true
+			} else if vault.DeleteToken(name) {
+				deleted = true
+			} else if vault.DeleteSecureNote(name) {
+				deleted = true
+			} else if vault.DeleteAPIKey(name) {
+				deleted = true
+			} else if vault.DeleteSSHKey(name) {
+				deleted = true
+			} else if vault.DeleteWiFi(name) {
+				deleted = true
+			} else if vault.DeleteRecoveryCode(name) {
+				deleted = true
 			}
 
 			if deleted {
@@ -371,26 +322,24 @@ func main() {
 					return
 				}
 				src.SaveVault(vaultPath, data)
-				fmt.Printf("Deleted entry '%s'.\n", target)
+				fmt.Printf("Deleted '%s'.\n", name)
 			} else {
-				fmt.Printf("Entry '%s' not found.\n", target)
+				fmt.Printf("Entry '%s' not found.\n", name)
 			}
 		},
 	}
 
 	var editCmd = &cobra.Command{
-		Use:   "edit",
-		Short: "Edit an existing entry interactively",
+		Use:   "edit [name]",
+		Short: "Edit an existing entry",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Select type to edit:")
-			fmt.Println("1. Password")
-			fmt.Println("2. TOTP")
-			fmt.Println("3. Token")
-			fmt.Println("4. SSH Key")
-			fmt.Println("5. Wi-Fi")
-			fmt.Println("6. Recovery Codes")
-			fmt.Print("Selection (1-6): ")
-			choice := readInput()
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			} else {
+				fmt.Print("Edit Name/Account: ")
+				name = readInput()
+			}
 
 			masterPassword, vault, err := src_unlockVault()
 			if err != nil {
@@ -398,63 +347,67 @@ func main() {
 				return
 			}
 
-			fmt.Print("Enter Account/Name to edit: ")
-			target := readInput()
-
-			switch choice {
-			case "1":
-				entry, ok := vault.GetEntry(target)
-				if !ok {
-					fmt.Println("Not found.")
-					return
-				}
-				fmt.Printf("Current User: %s | New (enter to keep): ", entry.Username)
+			// This is a bit complex due to different types, but we can detect type and prompt
+			if e, ok := vault.GetEntry(name); ok {
+				fmt.Printf("Editing Password Entry: %s\n", name)
+				fmt.Printf("New Username [%s]: ", e.Username)
 				if u := readInput(); u != "" {
-					entry.Username = u
+					e.Username = u
 				}
-				fmt.Print("New Password (enter to keep): ")
+				fmt.Print("New Password (leave blank to keep): ")
 				if p, _ := readPassword(); p != "" {
-					entry.Password = p
+					e.Password = p
 				}
 				fmt.Println()
-				vault.AddEntry(entry.Account, entry.Username, entry.Password)
-			case "2":
-				entry, ok := vault.GetTOTPEntry(target)
-				if !ok {
-					fmt.Println("Not found.")
-					return
-				}
-				fmt.Printf("Current Secret: %s | New (enter to keep): ", entry.Secret)
+				vault.AddEntry(e.Account, e.Username, e.Password)
+			} else if t, ok := vault.GetTOTPEntry(name); ok {
+				fmt.Printf("Editing TOTP Entry: %s\n", name)
+				fmt.Print("New Secret (leave blank to keep): ")
 				if s := readInput(); s != "" {
-					entry.Secret = s
+					t.Secret = s
 				}
-				vault.AddTOTPEntry(entry.Account, entry.Secret)
-			case "3":
-				entry, ok := vault.GetToken(target)
-				if !ok {
-					fmt.Println("Not found.")
-					return
-				}
-				fmt.Printf("Current Service: %s | New (enter to keep): ", entry.Service)
+				vault.AddTOTPEntry(t.Account, t.Secret)
+			} else if tok, ok := vault.GetToken(name); ok {
+				fmt.Printf("Editing Token Entry: %s\n", name)
+				fmt.Printf("New Service [%s]: ", tok.Service)
 				if s := readInput(); s != "" {
-					entry.Service = s
+					tok.Service = s
 				}
-				fmt.Printf("Current Token: %s | New (enter to keep): ", entry.Token)
+				fmt.Print("New Token (leave blank to keep): ")
 				if t := readInput(); t != "" {
-					entry.Token = t
+					tok.Token = t
 				}
-				fmt.Printf("Current Type: %s | New (enter to keep): ", entry.Type)
-				if t := readInput(); t != "" {
-					entry.Type = t
+				vault.AddToken(tok.Name, tok.Service, tok.Token, tok.Type)
+			} else if n, ok := vault.GetSecureNote(name); ok {
+				fmt.Printf("Editing Note: %s\n", name)
+				fmt.Println("Enter New Content (end with empty line, blank to keep):")
+				var contentLines []string
+				scanner := bufio.NewScanner(os.Stdin)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if line == "" {
+						break
+					}
+					contentLines = append(contentLines, line)
 				}
-				vault.AddToken(entry.Name, entry.Service, entry.Token, entry.Type)
-			case "4":
-				entry, ok := vault.GetSSHKey(target)
-				if !ok {
-					fmt.Println("Not found.")
-					return
+				if len(contentLines) > 0 {
+					n.Content = strings.Join(contentLines, "\n")
 				}
-				fmt.Println("New Private Key (enter to keep, end with empty line):")
+				vault.AddSecureNote(n.Name, n.Content)
+			} else if k, ok := vault.GetAPIKey(name); ok {
+				fmt.Printf("Editing API Key: %s\n", name)
+				fmt.Printf("New Service [%s]: ", k.Service)
+				if s := readInput(); s != "" {
+					k.Service = s
+				}
+				fmt.Print("Key (blank to keep): ")
+				if val := readInput(); val != "" {
+					k.Key = val
+				}
+				vault.AddAPIKey(k.Name, k.Service, k.Key)
+			} else if s, ok := vault.GetSSHKey(name); ok {
+				fmt.Printf("Editing SSH Key: %s\n", name)
+				fmt.Println("Enter New Private Key (end with empty line, blank to keep):")
 				var keyLines []string
 				scanner := bufio.NewScanner(os.Stdin)
 				for scanner.Scan() {
@@ -465,35 +418,23 @@ func main() {
 					keyLines = append(keyLines, line)
 				}
 				if len(keyLines) > 0 {
-					entry.PrivateKey = strings.Join(keyLines, "\n")
+					s.PrivateKey = strings.Join(keyLines, "\n")
 				}
-				vault.AddSSHKey(entry.Name, entry.PrivateKey)
-			case "5":
-				entry, ok := vault.GetWiFi(target)
-				if !ok {
-					fmt.Println("Not found.")
-					return
+				vault.AddSSHKey(s.Name, s.PrivateKey)
+			} else if w, ok := vault.GetWiFi(name); ok {
+				fmt.Printf("Editing Wi-Fi: %s\n", name)
+				fmt.Printf("New Password (blank to keep): ")
+				if val := readInput(); val != "" {
+					w.Password = val
 				}
-				fmt.Printf("Current SSID: %s | New (enter to keep): ", entry.SSID)
-				if s := readInput(); s != "" {
-					entry.SSID = s
+				fmt.Printf("New Security [%s]: ", w.SecurityType)
+				if val := readInput(); val != "" {
+					w.SecurityType = val
 				}
-				fmt.Printf("Current Security: %s | New (enter to keep): ", entry.SecurityType)
-				if s := readInput(); s != "" {
-					entry.SecurityType = s
-				}
-				fmt.Print("New Password (enter to keep): ")
-				if p := readInput(); p != "" {
-					entry.Password = p
-				}
-				vault.AddWiFi(entry.SSID, entry.Password, entry.SecurityType)
-			case "6":
-				entry, ok := vault.GetRecoveryCode(target)
-				if !ok {
-					fmt.Println("Not found.")
-					return
-				}
-				fmt.Println("Enter New Recovery Codes (enter to keep, end with empty line):")
+				vault.AddWiFi(w.SSID, w.Password, w.SecurityType)
+			} else if r, ok := vault.GetRecoveryCode(name); ok {
+				fmt.Printf("Editing Recovery Codes: %s\n", name)
+				fmt.Println("Enter New Codes (end with empty line, blank to keep):")
 				var codes []string
 				scanner := bufio.NewScanner(os.Stdin)
 				for scanner.Scan() {
@@ -504,9 +445,12 @@ func main() {
 					codes = append(codes, line)
 				}
 				if len(codes) > 0 {
-					entry.Codes = codes
+					r.Codes = codes
 				}
-				vault.AddRecoveryCode(entry.Service, entry.Codes)
+				vault.AddRecoveryCode(r.Service, r.Codes)
+			} else {
+				fmt.Printf("Entry '%s' not found.\n", name)
+				return
 			}
 
 			data, err := vault.Serialize(masterPassword)
@@ -515,83 +459,28 @@ func main() {
 				return
 			}
 			src.SaveVault(vaultPath, data)
-			fmt.Println("Entry updated.")
-		},
-	}
-
-	var vswitchCmd = &cobra.Command{
-		Use:   "vswitch [vault_name]",
-		Short: "Switch to a different vault",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				fmt.Printf("Current vault: %s\n", vaultName)
-				return
-			}
-			vaultName = args[0]
-			updateVaultPath()
-			fmt.Printf("Switched to vault: %s\n", vaultName)
-		},
-	}
-
-	var infoCmd = &cobra.Command{
-		Use:   "info",
-		Short: "Display application info",
-		Run: func(cmd *cobra.Command, args []string) {
-			user := os.Getenv("USERNAME")
-			if user == "" {
-				user = os.Getenv("USER")
-			}
-			user = strings.ReplaceAll(strings.ToLower(user), " ", "")
-			fmt.Println("Production-v4 (Stable)")
-			fmt.Printf("%s@pm\n", user)
-			fmt.Println("v4: Overhauled Commands and Security update")
-			fmt.Println("https://github.com/aaravmaloo/apm")
-			fmt.Println("Contact: aaravmaloo06@gmail.com")
-
-		},
-	}
-
-	var listCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all accounts in the vault",
-		Run: func(cmd *cobra.Command, args []string) {
-			filter, _ := cmd.Flags().GetString("filter")
-
-			_, vault, err := src_unlockVault()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			entries := vault.FilterEntries(filter)
-			if len(entries) == 0 {
-				fmt.Println("No accounts found.")
-				return
-			}
-
-			fmt.Printf("%-20s %-20s\n", "ACCOUNT", "USERNAME")
-			fmt.Println(strings.Repeat("-", 40))
-			for _, entry := range entries {
-				fmt.Printf("%-20s %-20s\n", entry.Account, entry.Username)
-			}
+			fmt.Println("Update successful.")
 		},
 	}
 
 	var modeCmd = &cobra.Command{
 		Use:   "mode",
-		Short: "Manage operation modes (open, close, compromise)",
+		Short: "Manage operational modes",
 	}
 
-	var openCmd = &cobra.Command{
-		Use:   "open [mins]",
-		Short: "Open the vault for a given duration (default: 5 mins)",
+	var sudoCmd = &cobra.Command{
+		Use:   "sudo <mins>",
+		Short: "Activate sudo mode for a given duration in minutes",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			mins := 5 // Default
-			if len(args) > 0 {
-				fmt.Sscanf(args[0], "%d", &mins)
+			mins := 0
+			_, err := fmt.Sscanf(args[0], "%d", &mins)
+			if err != nil || mins <= 0 {
+				fmt.Println("Please provide a valid number of minutes.")
+				return
 			}
 
-			fmt.Println("Confirming access...")
+			fmt.Println("Confirming access for sudo mode...")
 			masterPassword, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
@@ -600,63 +489,14 @@ func main() {
 
 			duration := time.Duration(mins) * time.Minute
 			if err := src.CreateSession(masterPassword, duration); err != nil {
-				fmt.Printf("Error opening vault: %v\n", err)
+				fmt.Printf("Error creating sudo session: %v\n", err)
 				return
 			}
 
-			fmt.Printf("Vault opened for %d minutes.\n", mins)
+			fmt.Printf("Sudo mode activated for %d minutes.\n", mins)
 		},
 	}
-
-	var closeCmd = &cobra.Command{
-		Use:   "close",
-		Short: "Close the vault immediately",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := src.KillSession(); err != nil {
-				fmt.Println("No active session to close.")
-				return
-			}
-			fmt.Println("Vault closed.")
-		},
-	}
-
-	var compromiseCmd = &cobra.Command{
-		Use:   "compromise",
-		Short: "URGENT: Permanently delete application and all vaults",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Print("WARNING: This will PERMANENTLY delete the application and all vaults. Type 'DELETE' to confirm: ")
-			if readInput() != "DELETE" {
-				fmt.Println("Cancelled.")
-				return
-			}
-
-			files, _ := filepath.Glob(filepath.Join(filepath.Dir(appPath), "vault_*.dat"))
-			for _, f := range files {
-				os.Remove(f)
-			}
-
-			if runtime.GOOS == "windows" {
-				cmd := exec.Command("cmd", "/c", fmt.Sprintf("timeout /t 1 /nobreak && del \"%s\"", appPath))
-				cmd.Start()
-			} else {
-				os.Remove(appPath)
-			}
-			fmt.Println("Compromise protocol active. Application and vaults will be deleted.")
-			os.Exit(0)
-		},
-	}
-
-	modeCmd.AddCommand(openCmd, closeCmd, compromiseCmd)
-
-	var vsettingsCmd = &cobra.Command{
-		Use:   "vsettings",
-		Short: "Configure vault settings (clear time, inactivity)",
-		Run: func(cmd *cobra.Command, args []string) {
-			// For now, using simple input prompts or flags if added later
-			fmt.Println("Currently settings are defaults (Clear: 3m, Inactivity: 5m).")
-			fmt.Println("This command will be expanded to persist settings in future updates.")
-		},
-	}
+	modeCmd.AddCommand(sudoCmd)
 
 	var genCmd = &cobra.Command{
 		Use:   "gen",
@@ -673,185 +513,71 @@ func main() {
 		Short: "Manage TOTP accounts",
 	}
 
-	var totpAddCmd = &cobra.Command{
-		Use:   "add",
-		Short: "Add a new TOTP account",
-		Run: func(cmd *cobra.Command, args []string) {
-			secret, _ := cmd.Flags().GetString("secret")
-			account, _ := cmd.Flags().GetString("account")
-
-			if secret == "" {
-				fmt.Print("Secret: ")
-				secret = readInput()
-			}
-			if account == "" {
-				fmt.Print("Account: ")
-				account = readInput()
-			}
-
-			masterPassword, vault, err := src_unlockVault()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			vault.AddTOTPEntry(account, secret)
-			data, err := vault.Serialize(masterPassword)
-			if err != nil {
-				fmt.Printf("Error encrypting vault: %v\n", err)
-				return
-			}
-
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				fmt.Printf("Error saving vault: %v\n", err)
-				return
-			}
-
-			fmt.Printf("Added TOTP for %s.\n", account)
-		},
-	}
-
 	var totpShowCmd = &cobra.Command{
 		Use:   "show [account]",
-		Short: "Show and copy TOTP code(s)",
+		Short: "Show TOTP code(s) with live updates",
 		Run: func(cmd *cobra.Command, args []string) {
+			company, _ := cmd.Flags().GetString("company")
+
 			_, vault, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			if len(args) == 0 {
-
-				fmt.Println("Choose account to copy (type 'copy_account: <name>'):")
-				for _, t := range vault.TOTPEntries {
-					code, _ := src.GenerateTOTP(t.Secret)
-					fmt.Printf("  %-20s : %s\n", t.Account, code)
+			var targets []src.TOTPEntry
+			if len(args) == 0 || args[0] == "all" {
+				targets = vault.TOTPEntries
+			} else {
+				entry, ok := vault.GetTOTPEntry(args[0])
+				if !ok {
+					fmt.Printf("TOTP account %s not found.\n", args[0])
+					return
 				}
-				input := readInput()
-				if strings.HasPrefix(input, "copy_account: ") {
-					acc := strings.TrimPrefix(input, "copy_account: ")
-					if t, ok := vault.GetTOTPEntry(acc); ok {
-						code, _ := src.GenerateTOTP(t.Secret)
-						copyToClipboard(code)
-						fmt.Printf("Copied code for %s.\n", acc)
+				targets = append(targets, entry)
+			}
+
+			if company != "" {
+				var filtered []src.TOTPEntry
+				for _, t := range targets {
+					if strings.Contains(strings.ToLower(t.Account), strings.ToLower(company)) {
+						filtered = append(filtered, t)
 					}
 				}
+				targets = filtered
+			}
+
+			if len(targets) == 0 {
+				fmt.Println("No matching TOTP accounts found.")
 				return
 			}
 
-			account := args[0]
-			entry, ok := vault.GetTOTPEntry(account)
-			if !ok {
-				fmt.Printf("TOTP account %s not found.\n", account)
-				return
-			}
+			fmt.Println("\x1b[?25lPress Ctrl+C to stop.") // Hide cursor
+			defer fmt.Print("\x1b[?25h")                  // Show cursor on exit
 
-			fmt.Printf("Monitoring TOTP for %s. Code copied to clipboard.\n", account)
-			var lastCode string
 			for {
-				code, _ := src.GenerateTOTP(entry.Secret)
-				if code != lastCode {
-					copyToClipboard(code)
-					lastCode = code
-				}
 				remaining := src.TimeRemaining()
-				fmt.Printf("\rCode: \x1b[1;32m%s\x1b[0m | Updating in %ds... ", code, remaining)
+				fmt.Printf("\r\x1b[KUpdating in %ds... (Progress: [", remaining)
+				for i := 0; i < 30; i++ {
+					if i < (30 - remaining) {
+						fmt.Print("=")
+					} else {
+						fmt.Print(" ")
+					}
+				}
+				fmt.Println("])")
+
+				for _, entry := range targets {
+					code, _ := src.GenerateTOTP(entry.Secret)
+					fmt.Printf("\r\x1b[K  %-40s : \x1b[1;32m%s\x1b[0m\n", entry.Account, code)
+				}
 				time.Sleep(1 * time.Second)
+				fmt.Printf("\033[%dA", len(targets)+1)
 			}
 		},
 	}
-
-	var totpDeleteCmd = &cobra.Command{
-		Use:   "delete <account>",
-		Short: "Delete a TOTP account",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			account := args[0]
-
-			masterPassword, vault, err := src_unlockVault()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			fmt.Printf("To delete TOTP for '%s', please type the account name again: ", account)
-			confirm := readInput()
-			if confirm != account {
-				fmt.Println("Account name does not match. Deletion cancelled.")
-				return
-			}
-
-			if vault.DeleteTOTPEntry(account) {
-				data, err := vault.Serialize(masterPassword)
-				if err != nil {
-					fmt.Printf("Error encrypting vault: %v\n", err)
-					return
-				}
-				if err := src.SaveVault(vaultPath, data); err != nil {
-					fmt.Printf("Error saving vault: %v\n", err)
-					return
-				}
-				fmt.Printf("Deleted TOTP for %s.\n", account)
-			} else {
-				fmt.Printf("TOTP account %s not found.\n", account)
-			}
-		},
-	}
-
-	var totpEditCmd = &cobra.Command{
-		Use:   "edit <account>",
-		Short: "Edit a TOTP account",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			oldAccount := args[0]
-			newAccount, _ := cmd.Flags().GetString("account")
-			newSecret, _ := cmd.Flags().GetString("secret")
-
-			masterPassword, vault, err := src_unlockVault()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			entry, ok := vault.GetTOTPEntry(oldAccount)
-			if !ok {
-				fmt.Printf("TOTP account %s not found.\n", oldAccount)
-				return
-			}
-
-			if newAccount != "" {
-				entry.Account = newAccount
-			}
-			if newSecret != "" {
-				entry.Secret = newSecret
-			}
-
-			vault.DeleteTOTPEntry(oldAccount)
-			vault.AddTOTPEntry(entry.Account, entry.Secret)
-
-			data, err := vault.Serialize(masterPassword)
-			if err != nil {
-				fmt.Printf("Error encrypting vault: %v\n", err)
-				return
-			}
-
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				fmt.Printf("Error saving vault: %v\n", err)
-				return
-			}
-
-			fmt.Printf("Updated TOTP for %s.\n", entry.Account)
-		},
-	}
-
-	totpAddCmd.Flags().StringP("secret", "s", "", "TOTP Secret")
-	totpAddCmd.Flags().StringP("account", "a", "", "Account name")
-	totpEditCmd.Flags().StringP("secret", "s", "", "New TOTP Secret")
-	totpEditCmd.Flags().StringP("account", "a", "", "New account name")
-
 	totpShowCmd.Flags().StringP("company", "c", "", "Filter by company name")
-	totpCmd.AddCommand(totpAddCmd, totpShowCmd, totpDeleteCmd, totpEditCmd)
+	totpCmd.AddCommand(totpShowCmd)
 
 	var importCmd = &cobra.Command{
 		Use:   "import <file>",
@@ -885,23 +611,6 @@ func main() {
 				return
 			}
 
-			if importErr != nil && encryptPass == "" {
-
-				fmt.Print("This file may be encrypted. Please enter the password to decrypt: ")
-				var err error
-				encryptPass, err = readPassword()
-				fmt.Println()
-				if err == nil && encryptPass != "" {
-					switch ext {
-					case "json":
-						importErr = src.ImportFromJSON(vault, filename, encryptPass)
-					case "csv":
-
-					case "txt":
-					}
-				}
-			}
-
 			if importErr != nil {
 				fmt.Printf("Error during import: %v\n", importErr)
 				return
@@ -912,11 +621,7 @@ func main() {
 				fmt.Printf("Error encrypting vault: %v\n", err)
 				return
 			}
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				fmt.Printf("Error saving vault: %v\n", err)
-				return
-			}
-
+			src.SaveVault(vaultPath, data)
 			fmt.Printf("Successfully imported data from %s.\n", filename)
 		},
 	}
@@ -936,10 +641,9 @@ func main() {
 			}
 
 			if output == "" {
+				output = "export.json"
 				if withoutPass {
 					output = "export.txt"
-				} else {
-					output = "export.json"
 				}
 			}
 
@@ -962,79 +666,14 @@ func main() {
 		},
 	}
 
-	importCmd.Flags().StringP("encrypt-pass", "e", "", "Password for decryption (if the import file is encrypted)")
+	importCmd.Flags().StringP("encrypt-pass", "e", "", "Password for decryption")
 	exportCmd.Flags().StringP("output", "o", "", "Output filename")
-	exportCmd.Flags().StringP("encrypt-pass", "e", "", "Password for encryption (to protect the exported JSON)")
-	exportCmd.Flags().Bool("without-password", false, "Exclude passwords and secrets (generates .txt)")
-	exportCmd.Flags().Bool("without_password", false, "Exclude passwords and secrets (alias)")
+	exportCmd.Flags().StringP("encrypt-pass", "e", "", "Password for encryption")
+	exportCmd.Flags().Bool("without-password", false, "Exclude secrets")
 
-	getCmd.Flags().Bool("show_pass", false, "Show password instead of copying to clipboard")
-	getCmd.Flags().Int("clear", 3, "Minutes to clear clipboard after copying")
-	addCmd.Flags().StringP("account", "a", "", "Account name")
-	addCmd.Flags().StringP("user", "u", "", "Username")
-	addCmd.Flags().StringP("password", "p", "", "Password")
-	getCmd.Flags().StringP("account", "a", "", "Account name")
-	delCmd.Flags().StringP("account", "a", "", "Account name")
-	listCmd.Flags().StringP("filter", "f", "", "Filter accounts by name or username")
 	genCmd.Flags().IntP("length", "l", 16, "Password length")
 
-	var historyCmd = &cobra.Command{
-		Use:   "vhistory",
-		Short: "View vault change history",
-	}
-
-	var historyListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all vault changes",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, err := src_unlockVault()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if len(vault.History) == 0 {
-				fmt.Println("No history found.")
-				return
-			}
-			fmt.Printf("%-5s %-20s %-10s %-15s %-20s\n", "ID", "TIMESTAMP", "ACTION", "CATEGORY", "IDENTIFIER")
-			fmt.Println(strings.Repeat("-", 75))
-			for i, h := range vault.History {
-				fmt.Printf("%-5d %-20s %-10s %-15s %-20s\n", i, h.Timestamp.Format("2006-01-02 15:04:05"), h.Action, h.Category, h.Identifier)
-			}
-		},
-	}
-
-	var historyShowCmd = &cobra.Command{
-		Use:   "show <id>",
-		Short: "Show details of a specific change",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			id := -1
-			fmt.Sscanf(args[0], "%d", &id)
-			_, vault, err := src_unlockVault()
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if id < 0 || id >= len(vault.History) {
-				fmt.Printf("Invalid history ID: %d\n", id)
-				return
-			}
-			h := vault.History[id]
-			fmt.Printf("ID:         %d\n", id)
-			fmt.Printf("Timestamp:  %s\n", h.Timestamp.Format("2006-01-02 15:04:05"))
-			fmt.Printf("Action:     %s\n", h.Action)
-			fmt.Printf("Category:   %s\n", h.Category)
-			fmt.Printf("Identifier: %s\n", h.Identifier)
-			if h.OldData != "" {
-				fmt.Printf("Previous Value (encoded):\n%s\n", h.OldData)
-			}
-		},
-	}
-
-	historyCmd.AddCommand(historyListCmd, historyShowCmd)
-
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, listCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd, vswitchCmd, infoCmd, vsettingsCmd, historyCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd)
 	rootCmd.Execute()
 }
 
@@ -1052,6 +691,26 @@ func readPassword() (string, error) {
 	return strings.TrimSpace(string(bytePassword)), nil
 }
 
+func copyToClipboard(text string) {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("powershell", "Set-Clipboard", "-Value", fmt.Sprintf("'%s'", strings.ReplaceAll(text, "'", "''")))
+		cmd.Run()
+	} else if runtime.GOOS == "darwin" {
+		cmd := exec.Command("pbcopy")
+		cmd.Stdin = strings.NewReader(text)
+		cmd.Run()
+	} else {
+		// Try xclip or xsel for linux
+		cmd := exec.Command("xclip", "-selection", "clipboard")
+		cmd.Stdin = strings.NewReader(text)
+		if err := cmd.Run(); err != nil {
+			cmd = exec.Command("xsel", "--clipboard", "--input")
+			cmd.Stdin = strings.NewReader(text)
+			cmd.Run()
+		}
+	}
+}
+
 func src_unlockVault() (string, *src.Vault, error) {
 	if !src.VaultExists(vaultPath) {
 		return "", nil, fmt.Errorf("Vault does not exist. Run 'pm init' first.")
@@ -1062,9 +721,6 @@ func src_unlockVault() (string, *src.Vault, error) {
 		return "", nil, err
 	}
 
-	if len(data) < 16 {
-		return "", nil, fmt.Errorf("Invalid vault file.")
-	}
 	salt := data[:16]
 	ciphertext := data[16:]
 
@@ -1073,7 +729,6 @@ func src_unlockVault() (string, *src.Vault, error) {
 		if err == nil {
 			return sessionPass, vault, nil
 		}
-
 		src.KillSession()
 	}
 
