@@ -11,23 +11,6 @@ import (
 	"time"
 )
 
-type Entry struct {
-	Account  string `json:"account"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type SecureNoteEntry struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-}
-
-type APIKeyEntry struct {
-	Name    string `json:"name"`
-	Service string `json:"service"`
-	Key     string `json:"key"`
-}
-
 type SSHKeyEntry struct {
 	Name       string `json:"name"`
 	PrivateKey string `json:"private_key"`
@@ -42,6 +25,13 @@ type WiFiEntry struct {
 type RecoveryCodeEntry struct {
 	Service string   `json:"service"`
 	Codes   []string `json:"codes"`
+}
+
+type TokenEntry struct {
+	Name    string `json:"name"`
+	Service string `json:"service"`
+	Token   string `json:"token"`
+	Type    string `json:"type"` // e.g., "GitHub", "PyPI", etc.
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -66,12 +56,17 @@ type HistoryEntry struct {
 	OldData    string    `json:"old_data,omitempty"` // JSON string of the previous state
 }
 
+type Entry struct {
+	Account  string `json:"account"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Vault struct {
 	Salt              []byte              `json:"salt"`
 	Entries           []Entry             `json:"entries"`
 	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
-	SecureNotes       []SecureNoteEntry   `json:"secure_notes"`
-	APIKeys           []APIKeyEntry       `json:"api_keys"`
+	Tokens            []TokenEntry        `json:"tokens"`
 	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
 	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
 	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
@@ -84,45 +79,18 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	key := DeriveKey(masterPassword, vault.Salt)
-	block, err := aes.NewCipher(key)
+	k1, k2 := DeriveKeys(masterPassword, vault.Salt)
+	ciphertext, err := EncryptMultiLayer(plaintext, k1, k2)
 	if err != nil {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
 	return ciphertext, nil
 }
 
 func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
-	key := DeriveKey(masterPassword, salt)
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	k1, k2 := DeriveKeys(masterPassword, salt)
+	plaintext, err := DecryptMultiLayer(ciphertext, k1, k2)
 	if err != nil {
 		return nil, errors.New("decryption failed: incorrect password or corrupted data")
 	}
@@ -292,70 +260,35 @@ func (v *Vault) FilterEntries(query string) []Entry {
 	return results
 }
 
-// Secure Notes
-func (v *Vault) AddSecureNote(name, content string) {
-	for i, entry := range v.SecureNotes {
+// Tokens
+func (v *Vault) AddToken(name, service, token, tokenType string) {
+	for i, entry := range v.Tokens {
 		if entry.Name == name {
-			oldData, _ := json.Marshal(v.SecureNotes[i])
-			v.SecureNotes[i] = SecureNoteEntry{Name: name, Content: content}
-			v.logHistory("UPDATE", "NOTE", name, string(oldData))
+			oldData, _ := json.Marshal(v.Tokens[i])
+			v.Tokens[i] = TokenEntry{Name: name, Service: service, Token: token, Type: tokenType}
+			v.logHistory("UPDATE", "TOKEN", name, string(oldData))
 			return
 		}
 	}
-	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
-	v.logHistory("ADD", "NOTE", name, "")
+	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Service: service, Token: token, Type: tokenType})
+	v.logHistory("ADD", "TOKEN", name, "")
 }
 
-func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
-	for _, entry := range v.SecureNotes {
+func (v *Vault) GetToken(name string) (TokenEntry, bool) {
+	for _, entry := range v.Tokens {
 		if entry.Name == name {
 			return entry, true
 		}
 	}
-	return SecureNoteEntry{}, false
+	return TokenEntry{}, false
 }
 
-func (v *Vault) DeleteSecureNote(name string) bool {
-	for i, entry := range v.SecureNotes {
+func (v *Vault) DeleteToken(name string) bool {
+	for i, entry := range v.Tokens {
 		if entry.Name == name {
-			oldData, _ := json.Marshal(v.SecureNotes[i])
-			v.SecureNotes = append(v.SecureNotes[:i], v.SecureNotes[i+1:]...)
-			v.logHistory("DELETE", "NOTE", name, string(oldData))
-			return true
-		}
-	}
-	return false
-}
-
-// API Keys
-func (v *Vault) AddAPIKey(name, service, key string) {
-	for i, entry := range v.APIKeys {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.APIKeys[i])
-			v.APIKeys[i] = APIKeyEntry{Name: name, Service: service, Key: key}
-			v.logHistory("UPDATE", "API_KEY", name, string(oldData))
-			return
-		}
-	}
-	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key})
-	v.logHistory("ADD", "API_KEY", name, "")
-}
-
-func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
-	for _, entry := range v.APIKeys {
-		if entry.Name == name {
-			return entry, true
-		}
-	}
-	return APIKeyEntry{}, false
-}
-
-func (v *Vault) DeleteAPIKey(name string) bool {
-	for i, entry := range v.APIKeys {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.APIKeys[i])
-			v.APIKeys = append(v.APIKeys[:i], v.APIKeys[i+1:]...)
-			v.logHistory("DELETE", "API_KEY", name, string(oldData))
+			oldData, _ := json.Marshal(v.Tokens[i])
+			v.Tokens = append(v.Tokens[:i], v.Tokens[i+1:]...)
+			v.logHistory("DELETE", "TOKEN", name, string(oldData))
 			return true
 		}
 	}
