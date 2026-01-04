@@ -46,10 +46,9 @@ type RecoveryCodeEntry struct {
 }
 
 type TokenEntry struct {
-	Name    string `json:"name"`
-	Service string `json:"service"`
-	Token   string `json:"token"`
-	Type    string `json:"type"` // e.g., "GitHub", "PyPI", etc.
+	Name  string `json:"name"`
+	Token string `json:"token"`
+	Type  string `json:"type"` // e.g., "GitHub", "PyPI", etc.
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -549,19 +548,19 @@ func (v *Vault) DeleteRecoveryCode(service string) bool {
 }
 
 // Tokens
-func (v *Vault) AddToken(name, service, token, tokenType string) error {
+func (v *Vault) AddToken(name, token, tokenType string) error {
 	if v.EntryExistsWithOtherType(name, "TOKEN") {
 		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
 	}
 	for i, entry := range v.Tokens {
 		if entry.Name == name {
 			oldData, _ := json.Marshal(v.Tokens[i])
-			v.Tokens[i] = TokenEntry{Name: name, Service: service, Token: token, Type: tokenType}
+			v.Tokens[i] = TokenEntry{Name: name, Token: token, Type: tokenType}
 			v.logHistory("UPDATE", "TOKEN", name, string(oldData))
 			return nil
 		}
 	}
-	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Service: service, Token: token, Type: tokenType})
+	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Token: token, Type: tokenType})
 	v.logHistory("ADD", "TOKEN", name, "")
 	return nil
 }
@@ -602,7 +601,7 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 		}
 	}
 	for _, tok := range v.Tokens {
-		if query == "" || strings.Contains(strings.ToLower(tok.Name), query) || strings.Contains(strings.ToLower(tok.Service), query) {
+		if query == "" || strings.Contains(strings.ToLower(tok.Name), query) {
 			results = append(results, SearchResult{Type: "Token", Identifier: tok.Name, Data: tok})
 		}
 	}
