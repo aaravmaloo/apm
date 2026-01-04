@@ -10,13 +10,13 @@ func TestNewSecretTypes(t *testing.T) {
 	vault := &src.Vault{}
 
 	// Test Generic Tokens (Notes/API Keys)
-	vault.AddToken("Test Note", "Note", "Test Content", "SecureNote")
+	vault.AddToken("Test Note", "Test Content", "SecureNote")
 	tok, ok := vault.GetToken("Test Note")
 	if !ok || tok.Token != "Test Content" {
 		t.Errorf("Token (Note) failed: expected Test Content, got %s", tok.Token)
 	}
 
-	vault.AddToken("Test API", "Test Service", "Test Key", "APIKey")
+	vault.AddToken("Test API", "Test Key", "APIKey")
 	tok2, ok := vault.GetToken("Test API")
 	if !ok || tok2.Token != "Test Key" {
 		t.Errorf("Token (API) failed: expected Test Key, got %s", tok2.Token)
