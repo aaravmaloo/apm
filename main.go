@@ -136,13 +136,11 @@ func main() {
 			case "3":
 				fmt.Print("Token Name: ")
 				name := readInput()
-				fmt.Print("Service: ")
-				svc := readInput()
 				fmt.Print("Token: ")
 				tok := readInput()
 				fmt.Print("Type (e.g. GitHub): ")
 				tType := readInput()
-				if err := vault.AddToken(name, svc, tok, tType); err != nil {
+				if err := vault.AddToken(name, tok, tType); err != nil {
 					fmt.Printf("Error: %v\n", err)
 					return
 				}
@@ -488,11 +486,6 @@ func main() {
 				if newName == "" {
 					newName = tok.Name
 				}
-				fmt.Printf("New Service [%s]: ", tok.Service)
-				newSvc := readInput()
-				if newSvc == "" {
-					newSvc = tok.Service
-				}
 				fmt.Printf("New Token (blank to keep): ")
 				newTok := readInput()
 				if newTok == "" {
@@ -503,7 +496,7 @@ func main() {
 				if newType == "" {
 					newType = tok.Type
 				}
-				if err := vault.AddToken(newName, newSvc, newTok, newType); err != nil {
+				if err := vault.AddToken(newName, newTok, newType); err != nil {
 					fmt.Printf("Error: %v\n", err)
 					return
 				}
@@ -959,9 +952,9 @@ func main() {
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
 
-			fmt.Println("APM Alpha (Not Stable)")
-			fmt.Println(processedHomeName)
-			fmt.Println("v4 -- Command Overhaul and Security FIxes")
+			fmt.Println("APM Alpha v5 (Insider Preview)")
+			fmt.Println(processedHomeName, "@apm")
+			fmt.Println("v5 -- better get and and edit commands")
 			fmt.Printf("Installed: %s\n", installDir)
 			fmt.Printf("Vault Path: %s\n", vaultPath)
 			fmt.Println("https://github.com/aaravmaloo/apm")
@@ -1023,7 +1016,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 		fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
 	case "Token":
 		tok := res.Data.(src.TokenEntry)
-		fmt.Printf("Type: Token\nName: %s\nService: %s\n", tok.Name, tok.Service)
+		fmt.Printf("Type: Token\nName: %s\n", tok.Name)
 		if showPass {
 			fmt.Printf("Token: %s\n", tok.Token)
 		}
