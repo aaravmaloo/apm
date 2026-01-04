@@ -8,14 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 )
 
-<<<<<<< Updated upstream
-type Entry struct {
-	Account  string `json:"account"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-=======
 type SSHKeyEntry struct {
 	Name       string `json:"name"`
 	PrivateKey string `json:"private_key"`
@@ -36,8 +31,7 @@ type TokenEntry struct {
 	Name    string `json:"name"`
 	Service string `json:"service"`
 	Token   string `json:"token"`
-	Type    string `json:"type"`
->>>>>>> Stashed changes
+	Type    string `json:"type"` // e.g., "GitHub", "PyPI", etc.
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -54,14 +48,12 @@ type TOTPEntry struct {
 	Secret  string `json:"secret"`
 }
 
-<<<<<<< Updated upstream
-=======
 type HistoryEntry struct {
 	Timestamp  time.Time `json:"timestamp"`
 	Action     string    `json:"action"` // "ADD", "UPDATE", "DELETE"
 	Category   string    `json:"category"`
 	Identifier string    `json:"identifier"`
-	OldData    string    `json:"old_data,omitempty"`
+	OldData    string    `json:"old_data,omitempty"` // JSON string of the previous state
 }
 
 type Entry struct {
@@ -70,11 +62,15 @@ type Entry struct {
 	Password string `json:"password"`
 }
 
->>>>>>> Stashed changes
 type Vault struct {
-	Salt        []byte      `json:"salt"`
-	Entries     []Entry     `json:"entries"`
-	TOTPEntries []TOTPEntry `json:"totp_entries"`
+	Salt              []byte              `json:"salt"`
+	Entries           []Entry             `json:"entries"`
+	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
+	Tokens            []TokenEntry        `json:"tokens"`
+	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
+	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
+	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
+	History           []HistoryEntry      `json:"history"`
 }
 
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
@@ -83,45 +79,18 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	key := DeriveKey(masterPassword, vault.Salt)
-	block, err := aes.NewCipher(key)
+	k1, k2 := DeriveKeys(masterPassword, vault.Salt)
+	ciphertext, err := EncryptMultiLayer(plaintext, k1, k2)
 	if err != nil {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
 	return ciphertext, nil
 }
 
 func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
-	key := DeriveKey(masterPassword, salt)
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	k1, k2 := DeriveKeys(masterPassword, salt)
+	plaintext, err := DecryptMultiLayer(ciphertext, k1, k2)
 	if err != nil {
 		return nil, errors.New("decryption failed: incorrect password or corrupted data")
 	}
@@ -195,11 +164,24 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 func (v *Vault) AddEntry(account, username, password string) {
 	for i, entry := range v.Entries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.Entries[i])
 			v.Entries[i] = Entry{Account: account, Username: username, Password: password}
+			v.logHistory("UPDATE", "PASSWORD", account, string(oldData))
 			return
 		}
 	}
 	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
+	v.logHistory("ADD", "PASSWORD", account, "")
+}
+
+func (v *Vault) logHistory(action, category, identifier, oldData string) {
+	v.History = append(v.History, HistoryEntry{
+		Timestamp:  time.Now(),
+		Action:     action,
+		Category:   category,
+		Identifier: identifier,
+		OldData:    oldData,
+	})
 }
 
 func (v *Vault) GetEntry(account string) (Entry, bool) {
@@ -214,7 +196,9 @@ func (v *Vault) GetEntry(account string) (Entry, bool) {
 func (v *Vault) DeleteEntry(account string) bool {
 	for i, entry := range v.Entries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.Entries[i])
 			v.Entries = append(v.Entries[:i], v.Entries[i+1:]...)
+			v.logHistory("DELETE", "PASSWORD", account, string(oldData))
 			return true
 		}
 	}
@@ -224,11 +208,14 @@ func (v *Vault) DeleteEntry(account string) bool {
 func (v *Vault) AddTOTPEntry(account, secret string) {
 	for i, entry := range v.TOTPEntries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.TOTPEntries[i])
 			v.TOTPEntries[i] = TOTPEntry{Account: account, Secret: secret}
+			v.logHistory("UPDATE", "TOTP", account, string(oldData))
 			return
 		}
 	}
 	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret})
+	v.logHistory("ADD", "TOTP", account, "")
 }
 
 func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
@@ -243,7 +230,9 @@ func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
 func (v *Vault) DeleteTOTPEntry(account string) bool {
 	for i, entry := range v.TOTPEntries {
 		if entry.Account == account {
+			oldData, _ := json.Marshal(v.TOTPEntries[i])
 			v.TOTPEntries = append(v.TOTPEntries[:i], v.TOTPEntries[i+1:]...)
+			v.logHistory("DELETE", "TOTP", account, string(oldData))
 			return true
 		}
 	}
@@ -271,13 +260,151 @@ func (v *Vault) FilterEntries(query string) []Entry {
 	return results
 }
 
-func contains(s, substr string) bool {
+// Tokens
+func (v *Vault) AddToken(name, service, token, tokenType string) {
+	for i, entry := range v.Tokens {
+		if entry.Name == name {
+			oldData, _ := json.Marshal(v.Tokens[i])
+			v.Tokens[i] = TokenEntry{Name: name, Service: service, Token: token, Type: tokenType}
+			v.logHistory("UPDATE", "TOKEN", name, string(oldData))
+			return
+		}
+	}
+	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Service: service, Token: token, Type: tokenType})
+	v.logHistory("ADD", "TOKEN", name, "")
+}
 
+func (v *Vault) GetToken(name string) (TokenEntry, bool) {
+	for _, entry := range v.Tokens {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+	return TokenEntry{}, false
+}
+
+func (v *Vault) DeleteToken(name string) bool {
+	for i, entry := range v.Tokens {
+		if entry.Name == name {
+			oldData, _ := json.Marshal(v.Tokens[i])
+			v.Tokens = append(v.Tokens[:i], v.Tokens[i+1:]...)
+			v.logHistory("DELETE", "TOKEN", name, string(oldData))
+			return true
+		}
+	}
+	return false
+}
+
+// SSH Keys
+func (v *Vault) AddSSHKey(name, privateKey string) {
+	for i, entry := range v.SSHKeys {
+		if entry.Name == name {
+			oldData, _ := json.Marshal(v.SSHKeys[i])
+			v.SSHKeys[i] = SSHKeyEntry{Name: name, PrivateKey: privateKey}
+			v.logHistory("UPDATE", "SSH_KEY", name, string(oldData))
+			return
+		}
+	}
+	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey})
+	v.logHistory("ADD", "SSH_KEY", name, "")
+}
+
+func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
+	for _, entry := range v.SSHKeys {
+		if entry.Name == name {
+			return entry, true
+		}
+	}
+	return SSHKeyEntry{}, false
+}
+
+func (v *Vault) DeleteSSHKey(name string) bool {
+	for i, entry := range v.SSHKeys {
+		if entry.Name == name {
+			oldData, _ := json.Marshal(v.SSHKeys[i])
+			v.SSHKeys = append(v.SSHKeys[:i], v.SSHKeys[i+1:]...)
+			v.logHistory("DELETE", "SSH_KEY", name, string(oldData))
+			return true
+		}
+	}
+	return false
+}
+
+// Wi-Fi Credentials
+func (v *Vault) AddWiFi(ssid, password, securityType string) {
+	for i, entry := range v.WiFiCredentials {
+		if entry.SSID == ssid {
+			oldData, _ := json.Marshal(v.WiFiCredentials[i])
+			v.WiFiCredentials[i] = WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType}
+			v.logHistory("UPDATE", "WIFI", ssid, string(oldData))
+			return
+		}
+	}
+	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType})
+	v.logHistory("ADD", "WIFI", ssid, "")
+}
+
+func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
+	for _, entry := range v.WiFiCredentials {
+		if entry.SSID == ssid {
+			return entry, true
+		}
+	}
+	return WiFiEntry{}, false
+}
+
+func (v *Vault) DeleteWiFi(ssid string) bool {
+	for i, entry := range v.WiFiCredentials {
+		if entry.SSID == ssid {
+			oldData, _ := json.Marshal(v.WiFiCredentials[i])
+			v.WiFiCredentials = append(v.WiFiCredentials[:i], v.WiFiCredentials[i+1:]...)
+			v.logHistory("DELETE", "WIFI", ssid, string(oldData))
+			return true
+		}
+	}
+	return false
+}
+
+// Recovery Codes
+func (v *Vault) AddRecoveryCode(service string, codes []string) {
+	for i, entry := range v.RecoveryCodeItems {
+		if entry.Service == service {
+			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
+			v.RecoveryCodeItems[i] = RecoveryCodeEntry{Service: service, Codes: codes}
+			v.logHistory("UPDATE", "RECOVERY_CODE", service, string(oldData))
+			return
+		}
+	}
+	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes})
+	v.logHistory("ADD", "RECOVERY_CODE", service, "")
+}
+
+func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
+	for _, entry := range v.RecoveryCodeItems {
+		if entry.Service == service {
+			return entry, true
+		}
+	}
+	return RecoveryCodeEntry{}, false
+}
+
+func (v *Vault) DeleteRecoveryCode(service string) bool {
+	for i, entry := range v.RecoveryCodeItems {
+		if entry.Service == service {
+			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
+			v.RecoveryCodeItems = append(v.RecoveryCodeItems[:i], v.RecoveryCodeItems[i+1:]...)
+			v.logHistory("DELETE", "RECOVERY_CODE", service, string(oldData))
+			return true
+		}
+	}
+	return false
+}
+
+func contains(s, substr string) bool {
 	return len(s) >= len(substr) && match(s, substr)
 }
 
 func match(s, substr string) bool {
-
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
 			return true
