@@ -9,18 +9,17 @@ import (
 func TestNewSecretTypes(t *testing.T) {
 	vault := &src.Vault{}
 
-	// Test Secure Notes
-	vault.AddSecureNote("Test Note", "Test Content")
-	note, ok := vault.GetSecureNote("Test Note")
-	if !ok || note.Content != "Test Content" {
-		t.Errorf("Secure Note failed: expected Test Content, got %s", note.Content)
+	// Test Generic Tokens (Notes/API Keys)
+	vault.AddToken("Test Note", "Note", "Test Content", "SecureNote")
+	tok, ok := vault.GetToken("Test Note")
+	if !ok || tok.Token != "Test Content" {
+		t.Errorf("Token (Note) failed: expected Test Content, got %s", tok.Token)
 	}
 
-	// Test API Keys
-	vault.AddAPIKey("Test API", "Test Service", "Test Key")
-	apiKey, ok := vault.GetAPIKey("Test API")
-	if !ok || apiKey.Key != "Test Key" {
-		t.Errorf("API Key failed: expected Test Key, got %s", apiKey.Key)
+	vault.AddToken("Test API", "Test Service", "Test Key", "APIKey")
+	tok2, ok := vault.GetToken("Test API")
+	if !ok || tok2.Token != "Test Key" {
+		t.Errorf("Token (API) failed: expected Test Key, got %s", tok2.Token)
 	}
 
 	// Test SSH Keys
