@@ -4,8 +4,9 @@ A secure, simple, and fast command-line password manager written in Go.
 
 ## Features
 
-- **AES-GCM Encryption**: Uses 256-bit AES-GCM to ensure your data is secure.
-- **Argon2id Key Derivation**: Protects your master password against brute-force attacks.
+- **Encryption Layers**:
+  - **AES-GCM Encryption**: Uses 256-bit AES-GCM to ensure your data is secure.
+  - **Argon2id Key Derivation**: Protects your master password against brute-force attacks.
 - **3-Attempt Limit**: Prevents accidental lockouts or local brute-force attempts.
 - **Sudo Mode**: Temporarily store a session for passwordless access using `pm mode sudo <mins>`.
 - **CLI Commands**: Manage your passwords easily with `add`, `get`, `list`, and `del`.
