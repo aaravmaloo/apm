@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 )
 
@@ -510,15 +511,60 @@ func (v *Vault) DeleteToken(name string) bool {
 	return false
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && match(s, substr)
-}
+func (v *Vault) SearchAll(query string) []SearchResult {
+	var results []SearchResult
+	query = strings.ToLower(query)
 
-func match(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
+	for _, e := range v.Entries {
+		if query == "" || strings.Contains(strings.ToLower(e.Account), query) || strings.Contains(strings.ToLower(e.Username), query) {
+			results = append(results, SearchResult{Type: "Password", Identifier: e.Account, Data: e})
 		}
 	}
-	return false
+	for _, t := range v.TOTPEntries {
+		if query == "" || strings.Contains(strings.ToLower(t.Account), query) {
+			results = append(results, SearchResult{Type: "TOTP", Identifier: t.Account, Data: t})
+		}
+	}
+	for _, tok := range v.Tokens {
+		if query == "" || strings.Contains(strings.ToLower(tok.Name), query) || strings.Contains(strings.ToLower(tok.Service), query) {
+			results = append(results, SearchResult{Type: "Token", Identifier: tok.Name, Data: tok})
+		}
+	}
+	for _, n := range v.SecureNotes {
+		if query == "" || strings.Contains(strings.ToLower(n.Name), query) {
+			results = append(results, SearchResult{Type: "Note", Identifier: n.Name, Data: n})
+		}
+	}
+	for _, k := range v.APIKeys {
+		if query == "" || strings.Contains(strings.ToLower(k.Name), query) || strings.Contains(strings.ToLower(k.Service), query) {
+			results = append(results, SearchResult{Type: "API Key", Identifier: k.Name, Data: k})
+		}
+	}
+	for _, s := range v.SSHKeys {
+		if query == "" || strings.Contains(strings.ToLower(s.Name), query) {
+			results = append(results, SearchResult{Type: "SSH Key", Identifier: s.Name, Data: s})
+		}
+	}
+	for _, w := range v.WiFiCredentials {
+		if query == "" || strings.Contains(strings.ToLower(w.SSID), query) {
+			results = append(results, SearchResult{Type: "Wi-Fi", Identifier: w.SSID, Data: w})
+		}
+	}
+	for _, r := range v.RecoveryCodeItems {
+		if query == "" || strings.Contains(strings.ToLower(r.Service), query) {
+			results = append(results, SearchResult{Type: "Recovery Codes", Identifier: r.Service, Data: r})
+		}
+	}
+
+	return results
+}
+
+type SearchResult struct {
+	Type       string
+	Identifier string
+	Data       interface{}
+}
+
+func contains(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
