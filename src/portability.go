@@ -67,7 +67,7 @@ func ExportToCSV(vault *Vault, filename string) error {
 		writer.Write([]string{"TOTP", t.Account, t.Secret, ""})
 	}
 	for _, tok := range vault.Tokens {
-		writer.Write([]string{"TOKEN", tok.Name, tok.Service, tok.Token})
+		writer.Write([]string{"TOKEN", tok.Name, tok.Token, ""})
 	}
 	for _, n := range vault.SecureNotes {
 		writer.Write([]string{"NOTE", n.Name, n.Content, ""})
@@ -114,9 +114,9 @@ func ExportToTXT(vault *Vault, filename string, withoutPassword bool) error {
 	sb.WriteString("\nTOKENS:\n")
 	for _, t := range vault.Tokens {
 		if withoutPassword {
-			sb.WriteString(fmt.Sprintf("Name: %s | Service: %s\n", t.Name, t.Service))
+			sb.WriteString(fmt.Sprintf("Name: %s\n", t.Name))
 		} else {
-			sb.WriteString(fmt.Sprintf("Name: %s | Service: %s | Token: %s\n", t.Name, t.Service, t.Token))
+			sb.WriteString(fmt.Sprintf("Name: %s | Token: %s\n", t.Name, t.Token))
 		}
 	}
 
@@ -188,7 +188,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 			vault.AddTOTPEntry(t.Account, t.Secret)
 		}
 		for _, tok := range data.Tokens {
-			vault.AddToken(tok.Name, tok.Service, tok.Token, tok.Type)
+			vault.AddToken(tok.Name, tok.Token, tok.Type)
 		}
 		for _, n := range data.SecureNotes {
 			vault.AddSecureNote(n.Name, n.Content)
@@ -242,7 +242,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 							vault.AddTOTPEntry(t.Account, t.Secret)
 						}
 						for _, tok := range innerData.Tokens {
-							vault.AddToken(tok.Name, tok.Service, tok.Token, tok.Type)
+							vault.AddToken(tok.Name, tok.Token, tok.Type)
 						}
 						for _, n := range innerData.SecureNotes {
 							vault.AddSecureNote(n.Name, n.Content)
