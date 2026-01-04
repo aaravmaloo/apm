@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"os/exec"
@@ -468,9 +469,9 @@ func main() {
 		Short: "Manage operational modes",
 	}
 
-	var sudoCmd = &cobra.Command{
-		Use:   "sudo <mins>",
-		Short: "Activate sudo mode for a given duration in minutes",
+	var openCmd = &cobra.Command{
+		Use:   "open <mins>",
+		Short: "Activate session mode for a given duration in minutes",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			mins := 0
@@ -480,7 +481,7 @@ func main() {
 				return
 			}
 
-			fmt.Println("Confirming access for sudo mode...")
+			fmt.Println("Confirming access for open mode...")
 			masterPassword, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
@@ -489,14 +490,60 @@ func main() {
 
 			duration := time.Duration(mins) * time.Minute
 			if err := src.CreateSession(masterPassword, duration); err != nil {
-				fmt.Printf("Error creating sudo session: %v\n", err)
+				fmt.Printf("Error creating session: %v\n", err)
 				return
 			}
 
-			fmt.Printf("Sudo mode activated for %d minutes.\n", mins)
+			fmt.Printf("Open mode activated for %d minutes.\n", mins)
 		},
 	}
-	modeCmd.AddCommand(sudoCmd)
+
+	var lockCmd = &cobra.Command{
+		Use:   "lock",
+		Short: "Immediately lock the vault (terminate session)",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := src.KillSession(); err != nil {
+				fmt.Println("No active session to lock.")
+			} else {
+				fmt.Println("Vault locked. Session terminated.")
+			}
+		},
+	}
+
+	var compromiseCmd = &cobra.Command{
+		Use:   "compromise",
+		Short: "EMERGENCY: Permanently delete the vault and all traces",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Print("WARNING: This will PERMANENTLY DELETE your vault. Are you sure? (type 'DESTROY' to confirm): ")
+			confirm := readInput()
+			if confirm != "DESTROY" {
+				fmt.Println("Aborted.")
+				return
+			}
+
+			// Securely erase vault.dat
+			if src.VaultExists(vaultPath) {
+				f, err := os.OpenFile(vaultPath, os.O_WRONLY, 0)
+				if err == nil {
+					info, _ := f.Stat()
+					size := info.Size()
+					randomData := make([]byte, size)
+					rand.Read(randomData)
+					f.Write(randomData)
+					f.Sync()
+					f.Close()
+				}
+				os.Remove(vaultPath)
+				fmt.Println("Vault file securely erased.")
+			}
+
+			src.KillSession()
+			fmt.Println("Session terminated.")
+			fmt.Println("Emergency lockdown complete.")
+		},
+	}
+
+	modeCmd.AddCommand(openCmd, lockCmd, compromiseCmd)
 
 	var genCmd = &cobra.Command{
 		Use:   "gen",
@@ -673,7 +720,54 @@ func main() {
 
 	genCmd.Flags().IntP("length", "l", 16, "Password length")
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd)
+	var vhistoryCmd = &cobra.Command{
+		Use:   "vhistory",
+		Short: "Show the history of changes made to the vault",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if len(vault.History) == 0 {
+				fmt.Println("No history found.")
+				return
+			}
+
+			fmt.Println("Vault History:")
+			for _, h := range vault.History {
+				fmt.Printf("[%s] %s %s: %s\n", h.Timestamp.Format("2006-01-02 15:04:05"), h.Action, h.Category, h.Identifier)
+			}
+		},
+	}
+
+	var infoCmd = &cobra.Command{
+		Use:   "info",
+		Short: "Show information about APM",
+		Run: func(cmd *cobra.Command, args []string) {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Printf("Error getting home directory: %v\n", err)
+				return
+			}
+			homeName := filepath.Base(homeDir)
+			processedHomeName := strings.ToLower(strings.ReplaceAll(homeName, " ", ""))
+
+			exe, _ := os.Executable()
+			installDir := filepath.Dir(exe)
+
+			fmt.Println("APM Alpha (Not Stable)")
+			fmt.Println(processedHomeName)
+			fmt.Println("v4 -- Command Overhaul and Security FIxes")
+			fmt.Printf("Installed: %s\n", installDir)
+			fmt.Printf("Vault Path: %s\n", vaultPath)
+			fmt.Println("https://github.com/aaravmaloo/apm")
+			fmt.Println("Contact: aaravmaloo06@gmail.com")
+		},
+	}
+
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, totpCmd, importCmd, exportCmd, infoCmd, vhistoryCmd)
 	rootCmd.Execute()
 }
 
