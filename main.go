@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -216,10 +217,9 @@ func main() {
 			name := ""
 			if len(args) > 0 {
 				name = args[0]
-			} else {
-				fmt.Print("Search Name/Account: ")
-				name = readInput()
 			}
+
+			showPass, _ := cmd.Flags().GetBool("show-pass")
 
 			_, vault, err := src_unlockVault()
 			if err != nil {
@@ -227,55 +227,116 @@ func main() {
 				return
 			}
 
-			// Try each type
-			if e, ok := vault.GetEntry(name); ok {
-				fmt.Printf("Type: Password\nAccount: %s\nUser: %s\n", e.Account, e.Username)
-				copyToClipboard(e.Password)
-				fmt.Println("Password copied to clipboard.")
-				return
-			}
-			if t, ok := vault.GetTOTPEntry(name); ok {
-				code, _ := src.GenerateTOTP(t.Secret)
-				fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
-				return
-			}
-			if tok, ok := vault.GetToken(name); ok {
-				fmt.Printf("Type: Token\nName: %s\nService: %s\n", tok.Name, tok.Service)
-				copyToClipboard(tok.Token)
-				fmt.Println("Token copied to clipboard.")
-				return
-			}
-			if n, ok := vault.GetSecureNote(name); ok {
-				fmt.Printf("Type: Secure Note\nName: %s\nContent:\n%s\n", n.Name, n.Content)
-				return
-			}
-			if k, ok := vault.GetAPIKey(name); ok {
-				fmt.Printf("Type: API Key\nLabel: %s\nService: %s\n", k.Name, k.Service)
-				copyToClipboard(k.Key)
-				fmt.Println("Key copied to clipboard.")
-				return
-			}
-			if s, ok := vault.GetSSHKey(name); ok {
-				fmt.Printf("Type: SSH Key\nLabel: %s\n", s.Name)
-				copyToClipboard(s.PrivateKey)
-				fmt.Println("Private Key copied to clipboard.")
-				return
-			}
-			if w, ok := vault.GetWiFi(name); ok {
-				fmt.Printf("Type: Wi-Fi\nSSID: %s\nSecurity: %s\n", w.SSID, w.SecurityType)
-				copyToClipboard(w.Password)
-				fmt.Println("Password copied to clipboard.")
-				return
-			}
-			if r, ok := vault.GetRecoveryCode(name); ok {
-				fmt.Printf("Type: Recovery Codes\nService: %s\nCodes:\n", r.Service)
-				for _, c := range r.Codes {
-					fmt.Printf("- %s\n", c)
+			if name != "" {
+				// Try exact match first
+				if e, ok := vault.GetEntry(name); ok {
+					displayEntry(src.SearchResult{Type: "Password", Identifier: e.Account, Data: e}, showPass)
+					return
 				}
+				if t, ok := vault.GetTOTPEntry(name); ok {
+					displayEntry(src.SearchResult{Type: "TOTP", Identifier: t.Account, Data: t}, showPass)
+					return
+				}
+				if tok, ok := vault.GetToken(name); ok {
+					displayEntry(src.SearchResult{Type: "Token", Identifier: tok.Name, Data: tok}, showPass)
+					return
+				}
+				if n, ok := vault.GetSecureNote(name); ok {
+					displayEntry(src.SearchResult{Type: "Note", Identifier: n.Name, Data: n}, showPass)
+					return
+				}
+				if k, ok := vault.GetAPIKey(name); ok {
+					displayEntry(src.SearchResult{Type: "API Key", Identifier: k.Name, Data: k}, showPass)
+					return
+				}
+				if s, ok := vault.GetSSHKey(name); ok {
+					displayEntry(src.SearchResult{Type: "SSH Key", Identifier: s.Name, Data: s}, showPass)
+					return
+				}
+				if w, ok := vault.GetWiFi(name); ok {
+					displayEntry(src.SearchResult{Type: "Wi-Fi", Identifier: w.SSID, Data: w}, showPass)
+					return
+				}
+				if r, ok := vault.GetRecoveryCode(name); ok {
+					displayEntry(src.SearchResult{Type: "Recovery Codes", Identifier: r.Service, Data: r}, showPass)
+					return
+				}
+			}
+
+			// No exact match or no name provided, ask for type
+			fmt.Println("Select type to search (or 'all'):")
+			fmt.Println("1. Password        2. TOTP")
+			fmt.Println("3. Token           4. Secure Note")
+			fmt.Println("5. API Key         6. SSH Key")
+			fmt.Println("7. Wi-Fi           8. Recovery Codes")
+			fmt.Println("9. All")
+			fmt.Print("Choice (1-9) [9]: ")
+			typeChoice := readInput()
+			if typeChoice == "" {
+				typeChoice = "9"
+			}
+
+			query := name
+			if query == "" {
+				fmt.Print("Search Query (leave blank for all): ")
+				query = readInput()
+			}
+
+			typeName := ""
+			switch typeChoice {
+			case "1":
+				typeName = "Password"
+			case "2":
+				typeName = "TOTP"
+			case "3":
+				typeName = "Token"
+			case "4":
+				typeName = "Note"
+			case "5":
+				typeName = "API Key"
+			case "6":
+				typeName = "SSH Key"
+			case "7":
+				typeName = "Wi-Fi"
+			case "8":
+				typeName = "Recovery Codes"
+			}
+
+			allResults := vault.SearchAll(query)
+			var results []src.SearchResult
+			if typeName != "" {
+				for _, res := range allResults {
+					if res.Type == typeName {
+						results = append(results, res)
+					}
+				}
+			} else {
+				results = allResults
+			}
+
+			if len(results) == 0 {
+				fmt.Println("No matching entries found.")
 				return
 			}
 
-			fmt.Printf("Entry '%s' not found.\n", name)
+			if len(results) == 1 {
+				displayEntry(results[0], showPass)
+				return
+			}
+
+			fmt.Println("\nMatching entries:")
+			for i, res := range results {
+				fmt.Printf("[%d] %s (%s)\n", i+1, res.Identifier, res.Type)
+			}
+			fmt.Print("Select a number: ")
+			choiceStr := readInput()
+			choice, err := strconv.Atoi(choiceStr)
+			if err != nil || choice < 1 || choice > len(results) {
+				fmt.Println("Invalid selection.")
+				return
+			}
+			fmt.Println()
+			displayEntry(results[choice-1], showPass)
 		},
 	}
 
@@ -348,39 +409,82 @@ func main() {
 				return
 			}
 
-			// This is a bit complex due to different types, but we can detect type and prompt
+			updated := false
 			if e, ok := vault.GetEntry(name); ok {
 				fmt.Printf("Editing Password Entry: %s\n", name)
+				fmt.Printf("New Account [%s]: ", e.Account)
+				newAcc := readInput()
+				if newAcc == "" {
+					newAcc = e.Account
+				}
 				fmt.Printf("New Username [%s]: ", e.Username)
-				if u := readInput(); u != "" {
-					e.Username = u
+				newUser := readInput()
+				if newUser == "" {
+					newUser = e.Username
 				}
 				fmt.Print("New Password (leave blank to keep): ")
-				if p, _ := readPassword(); p != "" {
-					e.Password = p
-				}
+				newPass, _ := readPassword()
 				fmt.Println()
-				vault.AddEntry(e.Account, e.Username, e.Password)
+				if newPass == "" {
+					newPass = e.Password
+				}
+
+				if newAcc != e.Account {
+					vault.DeleteEntry(e.Account)
+				}
+				vault.AddEntry(newAcc, newUser, newPass)
+				updated = true
 			} else if t, ok := vault.GetTOTPEntry(name); ok {
 				fmt.Printf("Editing TOTP Entry: %s\n", name)
-				fmt.Print("New Secret (leave blank to keep): ")
-				if s := readInput(); s != "" {
-					t.Secret = s
+				fmt.Printf("New Account [%s]: ", t.Account)
+				newAcc := readInput()
+				if newAcc == "" {
+					newAcc = t.Account
 				}
-				vault.AddTOTPEntry(t.Account, t.Secret)
+				fmt.Printf("New Secret (leave blank to keep): ")
+				newSec := readInput()
+				if newSec == "" {
+					newSec = t.Secret
+				}
+				if newAcc != t.Account {
+					vault.DeleteTOTPEntry(t.Account)
+				}
+				vault.AddTOTPEntry(newAcc, newSec)
+				updated = true
 			} else if tok, ok := vault.GetToken(name); ok {
 				fmt.Printf("Editing Token Entry: %s\n", name)
+				fmt.Printf("New Name [%s]: ", tok.Name)
+				newName := readInput()
+				if newName == "" {
+					newName = tok.Name
+				}
 				fmt.Printf("New Service [%s]: ", tok.Service)
-				if s := readInput(); s != "" {
-					tok.Service = s
+				newSvc := readInput()
+				if newSvc == "" {
+					newSvc = tok.Service
 				}
-				fmt.Print("New Token (leave blank to keep): ")
-				if t := readInput(); t != "" {
-					tok.Token = t
+				fmt.Printf("New Token (blank to keep): ")
+				newTok := readInput()
+				if newTok == "" {
+					newTok = tok.Token
 				}
-				vault.AddToken(tok.Name, tok.Service, tok.Token, tok.Type)
+				fmt.Printf("New Type [%s]: ", tok.Type)
+				newType := readInput()
+				if newType == "" {
+					newType = tok.Type
+				}
+				if newName != tok.Name {
+					vault.DeleteToken(tok.Name)
+				}
+				vault.AddToken(newName, newSvc, newTok, newType)
+				updated = true
 			} else if n, ok := vault.GetSecureNote(name); ok {
 				fmt.Printf("Editing Note: %s\n", name)
+				fmt.Printf("New Name [%s]: ", n.Name)
+				newName := readInput()
+				if newName == "" {
+					newName = n.Name
+				}
 				fmt.Println("Enter New Content (end with empty line, blank to keep):")
 				var contentLines []string
 				scanner := bufio.NewScanner(os.Stdin)
@@ -391,23 +495,44 @@ func main() {
 					}
 					contentLines = append(contentLines, line)
 				}
+				newContent := n.Content
 				if len(contentLines) > 0 {
-					n.Content = strings.Join(contentLines, "\n")
+					newContent = strings.Join(contentLines, "\n")
 				}
-				vault.AddSecureNote(n.Name, n.Content)
+				if newName != n.Name {
+					vault.DeleteSecureNote(n.Name)
+				}
+				vault.AddSecureNote(newName, newContent)
+				updated = true
 			} else if k, ok := vault.GetAPIKey(name); ok {
 				fmt.Printf("Editing API Key: %s\n", name)
+				fmt.Printf("New Label [%s]: ", k.Name)
+				newName := readInput()
+				if newName == "" {
+					newName = k.Name
+				}
 				fmt.Printf("New Service [%s]: ", k.Service)
-				if s := readInput(); s != "" {
-					k.Service = s
+				newSvc := readInput()
+				if newSvc == "" {
+					newSvc = k.Service
 				}
-				fmt.Print("Key (blank to keep): ")
-				if val := readInput(); val != "" {
-					k.Key = val
+				fmt.Print("New Key (blank to keep): ")
+				newKey := readInput()
+				if newKey == "" {
+					newKey = k.Key
 				}
-				vault.AddAPIKey(k.Name, k.Service, k.Key)
+				if newName != k.Name {
+					vault.DeleteAPIKey(k.Name)
+				}
+				vault.AddAPIKey(newName, newSvc, newKey)
+				updated = true
 			} else if s, ok := vault.GetSSHKey(name); ok {
 				fmt.Printf("Editing SSH Key: %s\n", name)
+				fmt.Printf("New Label [%s]: ", s.Name)
+				newName := readInput()
+				if newName == "" {
+					newName = s.Name
+				}
 				fmt.Println("Enter New Private Key (end with empty line, blank to keep):")
 				var keyLines []string
 				scanner := bufio.NewScanner(os.Stdin)
@@ -418,23 +543,44 @@ func main() {
 					}
 					keyLines = append(keyLines, line)
 				}
+				newKey := s.PrivateKey
 				if len(keyLines) > 0 {
-					s.PrivateKey = strings.Join(keyLines, "\n")
+					newKey = strings.Join(keyLines, "\n")
 				}
-				vault.AddSSHKey(s.Name, s.PrivateKey)
+				if newName != s.Name {
+					vault.DeleteSSHKey(s.Name)
+				}
+				vault.AddSSHKey(newName, newKey)
+				updated = true
 			} else if w, ok := vault.GetWiFi(name); ok {
 				fmt.Printf("Editing Wi-Fi: %s\n", name)
+				fmt.Printf("New SSID [%s]: ", w.SSID)
+				newSSID := readInput()
+				if newSSID == "" {
+					newSSID = w.SSID
+				}
 				fmt.Printf("New Password (blank to keep): ")
-				if val := readInput(); val != "" {
-					w.Password = val
+				newPass := readInput()
+				if newPass == "" {
+					newPass = w.Password
 				}
 				fmt.Printf("New Security [%s]: ", w.SecurityType)
-				if val := readInput(); val != "" {
-					w.SecurityType = val
+				newSec := readInput()
+				if newSec == "" {
+					newSec = w.SecurityType
 				}
-				vault.AddWiFi(w.SSID, w.Password, w.SecurityType)
+				if newSSID != w.SSID {
+					vault.DeleteWiFi(w.SSID)
+				}
+				vault.AddWiFi(newSSID, newPass, newSec)
+				updated = true
 			} else if r, ok := vault.GetRecoveryCode(name); ok {
 				fmt.Printf("Editing Recovery Codes: %s\n", name)
+				fmt.Printf("New Service [%s]: ", r.Service)
+				newSvc := readInput()
+				if newSvc == "" {
+					newSvc = r.Service
+				}
 				fmt.Println("Enter New Codes (end with empty line, blank to keep):")
 				var codes []string
 				scanner := bufio.NewScanner(os.Stdin)
@@ -445,22 +591,29 @@ func main() {
 					}
 					codes = append(codes, line)
 				}
+				newCodes := r.Codes
 				if len(codes) > 0 {
-					r.Codes = codes
+					newCodes = codes
 				}
-				vault.AddRecoveryCode(r.Service, r.Codes)
+				if newSvc != r.Service {
+					vault.DeleteRecoveryCode(r.Service)
+				}
+				vault.AddRecoveryCode(newSvc, newCodes)
+				updated = true
 			} else {
 				fmt.Printf("Entry '%s' not found.\n", name)
 				return
 			}
 
-			data, err := vault.Serialize(masterPassword)
-			if err != nil {
-				fmt.Printf("Error encrypting vault: %v\n", err)
-				return
+			if updated {
+				data, err := vault.Serialize(masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
+					return
+				}
+				src.SaveVault(vaultPath, data)
+				fmt.Println("Update successful.")
 			}
-			src.SaveVault(vaultPath, data)
-			fmt.Println("Update successful.")
 		},
 	}
 
@@ -719,6 +872,7 @@ func main() {
 	exportCmd.Flags().Bool("without-password", false, "Exclude secrets")
 
 	genCmd.Flags().IntP("length", "l", 16, "Password length")
+	getCmd.Flags().Bool("show-pass", false, "Show password in output")
 
 	var vhistoryCmd = &cobra.Command{
 		Use:   "vhistory",
@@ -801,6 +955,64 @@ func copyToClipboard(text string) {
 			cmd = exec.Command("xsel", "--clipboard", "--input")
 			cmd.Stdin = strings.NewReader(text)
 			cmd.Run()
+		}
+	}
+}
+
+func displayEntry(res src.SearchResult, showPass bool) {
+	switch res.Type {
+	case "Password":
+		e := res.Data.(src.Entry)
+		fmt.Printf("Type: Password\nAccount: %s\nUser: %s\n", e.Account, e.Username)
+		if showPass {
+			fmt.Printf("Password: %s\n", e.Password)
+		}
+		copyToClipboard(e.Password)
+		fmt.Println("Password copied to clipboard.")
+	case "TOTP":
+		t := res.Data.(src.TOTPEntry)
+		code, _ := src.GenerateTOTP(t.Secret)
+		fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
+	case "Token":
+		tok := res.Data.(src.TokenEntry)
+		fmt.Printf("Type: Token\nName: %s\nService: %s\n", tok.Name, tok.Service)
+		if showPass {
+			fmt.Printf("Token: %s\n", tok.Token)
+		}
+		copyToClipboard(tok.Token)
+		fmt.Println("Token copied to clipboard.")
+	case "Note":
+		n := res.Data.(src.SecureNoteEntry)
+		fmt.Printf("Type: Secure Note\nName: %s\nContent:\n%s\n", n.Name, n.Content)
+	case "API Key":
+		k := res.Data.(src.APIKeyEntry)
+		fmt.Printf("Type: API Key\nLabel: %s\nService: %s\n", k.Name, k.Service)
+		if showPass {
+			fmt.Printf("Key: %s\n", k.Key)
+		}
+		copyToClipboard(k.Key)
+		fmt.Println("Key copied to clipboard.")
+	case "SSH Key":
+		s := res.Data.(src.SSHKeyEntry)
+		fmt.Printf("Type: SSH Key\nLabel: %s\n", s.Name)
+		if showPass {
+			fmt.Printf("Private Key:\n%s\n", s.PrivateKey)
+		}
+		copyToClipboard(s.PrivateKey)
+		fmt.Println("Private Key copied to clipboard.")
+	case "Wi-Fi":
+		w := res.Data.(src.WiFiEntry)
+		fmt.Printf("Type: Wi-Fi\nSSID: %s\nSecurity: %s\n", w.SSID, w.SecurityType)
+		if showPass {
+			fmt.Printf("Password: %s\n", w.Password)
+		}
+		copyToClipboard(w.Password)
+		fmt.Println("Password copied to clipboard.")
+	case "Recovery Codes":
+		r := res.Data.(src.RecoveryCodeEntry)
+		fmt.Printf("Type: Recovery Codes\nService: %s\nCodes:\n", r.Service)
+		for _, c := range r.Codes {
+			fmt.Printf("- %s\n", c)
 		}
 	}
 }
