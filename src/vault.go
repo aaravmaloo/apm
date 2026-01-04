@@ -10,10 +10,34 @@ import (
 	"io"
 )
 
+<<<<<<< Updated upstream
 type Entry struct {
 	Account  string `json:"account"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+=======
+type SSHKeyEntry struct {
+	Name       string `json:"name"`
+	PrivateKey string `json:"private_key"`
+}
+
+type WiFiEntry struct {
+	SSID         string `json:"ssid"`
+	Password     string `json:"password"`
+	SecurityType string `json:"security_type"`
+}
+
+type RecoveryCodeEntry struct {
+	Service string   `json:"service"`
+	Codes   []string `json:"codes"`
+}
+
+type TokenEntry struct {
+	Name    string `json:"name"`
+	Service string `json:"service"`
+	Token   string `json:"token"`
+	Type    string `json:"type"`
+>>>>>>> Stashed changes
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -30,6 +54,23 @@ type TOTPEntry struct {
 	Secret  string `json:"secret"`
 }
 
+<<<<<<< Updated upstream
+=======
+type HistoryEntry struct {
+	Timestamp  time.Time `json:"timestamp"`
+	Action     string    `json:"action"` // "ADD", "UPDATE", "DELETE"
+	Category   string    `json:"category"`
+	Identifier string    `json:"identifier"`
+	OldData    string    `json:"old_data,omitempty"`
+}
+
+type Entry struct {
+	Account  string `json:"account"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+>>>>>>> Stashed changes
 type Vault struct {
 	Salt        []byte      `json:"salt"`
 	Entries     []Entry     `json:"entries"`
