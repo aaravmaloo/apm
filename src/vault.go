@@ -202,17 +202,65 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 	return plaintext, nil
 }
 
-func (v *Vault) AddEntry(account, username, password string) {
+func (v *Vault) EntryExistsWithOtherType(name, currentType string) bool {
+	for _, e := range v.Entries {
+		if e.Account == name && currentType != "PASSWORD" {
+			return true
+		}
+	}
+	for _, t := range v.TOTPEntries {
+		if t.Account == name && currentType != "TOTP" {
+			return true
+		}
+	}
+	for _, tok := range v.Tokens {
+		if tok.Name == name && currentType != "TOKEN" {
+			return true
+		}
+	}
+	for _, n := range v.SecureNotes {
+		if n.Name == name && currentType != "NOTE" {
+			return true
+		}
+	}
+	for _, k := range v.APIKeys {
+		if k.Name == name && currentType != "API_KEY" {
+			return true
+		}
+	}
+	for _, s := range v.SSHKeys {
+		if s.Name == name && currentType != "SSH_KEY" {
+			return true
+		}
+	}
+	for _, w := range v.WiFiCredentials {
+		if w.SSID == name && currentType != "WIFI" {
+			return true
+		}
+	}
+	for _, r := range v.RecoveryCodeItems {
+		if r.Service == name && currentType != "RECOVERY_CODE" {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddEntry(account, username, password string) error {
+	if v.EntryExistsWithOtherType(account, "PASSWORD") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", account)
+	}
 	for i, entry := range v.Entries {
 		if entry.Account == account {
 			oldData, _ := json.Marshal(v.Entries[i])
 			v.Entries[i] = Entry{Account: account, Username: username, Password: password}
 			v.logHistory("UPDATE", "PASSWORD", account, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
 	v.logHistory("ADD", "PASSWORD", account, "")
+	return nil
 }
 
 func (v *Vault) logHistory(action, category, identifier, oldData string) {
@@ -246,17 +294,21 @@ func (v *Vault) DeleteEntry(account string) bool {
 	return false
 }
 
-func (v *Vault) AddTOTPEntry(account, secret string) {
+func (v *Vault) AddTOTPEntry(account, secret string) error {
+	if v.EntryExistsWithOtherType(account, "TOTP") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", account)
+	}
 	for i, entry := range v.TOTPEntries {
 		if entry.Account == account {
 			oldData, _ := json.Marshal(v.TOTPEntries[i])
 			v.TOTPEntries[i] = TOTPEntry{Account: account, Secret: secret}
 			v.logHistory("UPDATE", "TOTP", account, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret})
 	v.logHistory("ADD", "TOTP", account, "")
+	return nil
 }
 
 func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
@@ -302,17 +354,21 @@ func (v *Vault) FilterEntries(query string) []Entry {
 }
 
 // Secure Notes
-func (v *Vault) AddSecureNote(name, content string) {
+func (v *Vault) AddSecureNote(name, content string) error {
+	if v.EntryExistsWithOtherType(name, "NOTE") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
+	}
 	for i, entry := range v.SecureNotes {
 		if entry.Name == name {
 			oldData, _ := json.Marshal(v.SecureNotes[i])
 			v.SecureNotes[i] = SecureNoteEntry{Name: name, Content: content}
 			v.logHistory("UPDATE", "NOTE", name, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
 	v.logHistory("ADD", "NOTE", name, "")
+	return nil
 }
 
 func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
@@ -337,17 +393,21 @@ func (v *Vault) DeleteSecureNote(name string) bool {
 }
 
 // API Keys
-func (v *Vault) AddAPIKey(name, service, key string) {
+func (v *Vault) AddAPIKey(name, service, key string) error {
+	if v.EntryExistsWithOtherType(name, "API_KEY") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
+	}
 	for i, entry := range v.APIKeys {
 		if entry.Name == name {
 			oldData, _ := json.Marshal(v.APIKeys[i])
 			v.APIKeys[i] = APIKeyEntry{Name: name, Service: service, Key: key}
 			v.logHistory("UPDATE", "API_KEY", name, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key})
 	v.logHistory("ADD", "API_KEY", name, "")
+	return nil
 }
 
 func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
@@ -372,17 +432,21 @@ func (v *Vault) DeleteAPIKey(name string) bool {
 }
 
 // SSH Keys
-func (v *Vault) AddSSHKey(name, privateKey string) {
+func (v *Vault) AddSSHKey(name, privateKey string) error {
+	if v.EntryExistsWithOtherType(name, "SSH_KEY") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
+	}
 	for i, entry := range v.SSHKeys {
 		if entry.Name == name {
 			oldData, _ := json.Marshal(v.SSHKeys[i])
 			v.SSHKeys[i] = SSHKeyEntry{Name: name, PrivateKey: privateKey}
 			v.logHistory("UPDATE", "SSH_KEY", name, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey})
 	v.logHistory("ADD", "SSH_KEY", name, "")
+	return nil
 }
 
 func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
@@ -407,17 +471,21 @@ func (v *Vault) DeleteSSHKey(name string) bool {
 }
 
 // Wi-Fi Credentials
-func (v *Vault) AddWiFi(ssid, password, securityType string) {
+func (v *Vault) AddWiFi(ssid, password, securityType string) error {
+	if v.EntryExistsWithOtherType(ssid, "WIFI") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", ssid)
+	}
 	for i, entry := range v.WiFiCredentials {
 		if entry.SSID == ssid {
 			oldData, _ := json.Marshal(v.WiFiCredentials[i])
 			v.WiFiCredentials[i] = WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType}
 			v.logHistory("UPDATE", "WIFI", ssid, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType})
 	v.logHistory("ADD", "WIFI", ssid, "")
+	return nil
 }
 
 func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
@@ -442,17 +510,21 @@ func (v *Vault) DeleteWiFi(ssid string) bool {
 }
 
 // Recovery Codes
-func (v *Vault) AddRecoveryCode(service string, codes []string) {
+func (v *Vault) AddRecoveryCode(service string, codes []string) error {
+	if v.EntryExistsWithOtherType(service, "RECOVERY_CODE") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", service)
+	}
 	for i, entry := range v.RecoveryCodeItems {
 		if entry.Service == service {
 			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
 			v.RecoveryCodeItems[i] = RecoveryCodeEntry{Service: service, Codes: codes}
 			v.logHistory("UPDATE", "RECOVERY_CODE", service, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes})
 	v.logHistory("ADD", "RECOVERY_CODE", service, "")
+	return nil
 }
 
 func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
@@ -477,17 +549,21 @@ func (v *Vault) DeleteRecoveryCode(service string) bool {
 }
 
 // Tokens
-func (v *Vault) AddToken(name, service, token, tokenType string) {
+func (v *Vault) AddToken(name, service, token, tokenType string) error {
+	if v.EntryExistsWithOtherType(name, "TOKEN") {
+		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
+	}
 	for i, entry := range v.Tokens {
 		if entry.Name == name {
 			oldData, _ := json.Marshal(v.Tokens[i])
 			v.Tokens[i] = TokenEntry{Name: name, Service: service, Token: token, Type: tokenType}
 			v.logHistory("UPDATE", "TOKEN", name, string(oldData))
-			return
+			return nil
 		}
 	}
 	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Service: service, Token: token, Type: tokenType})
 	v.logHistory("ADD", "TOKEN", name, "")
+	return nil
 }
 
 func (v *Vault) GetToken(name string) (TokenEntry, bool) {

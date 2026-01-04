@@ -120,13 +120,19 @@ func main() {
 					pass, _ = src.GeneratePassword(16)
 					fmt.Printf("Generated password: %s\n", pass)
 				}
-				vault.AddEntry(acc, user, pass)
+				if err := vault.AddEntry(acc, user, pass); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "2":
 				fmt.Print("Account Name: ")
 				acc := readInput()
 				fmt.Print("Secret: ")
 				sec := readInput()
-				vault.AddTOTPEntry(acc, sec)
+				if err := vault.AddTOTPEntry(acc, sec); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "3":
 				fmt.Print("Token Name: ")
 				name := readInput()
@@ -136,7 +142,10 @@ func main() {
 				tok := readInput()
 				fmt.Print("Type (e.g. GitHub): ")
 				tType := readInput()
-				vault.AddToken(name, svc, tok, tType)
+				if err := vault.AddToken(name, svc, tok, tType); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "4":
 				fmt.Print("Note Name: ")
 				name := readInput()
@@ -150,7 +159,10 @@ func main() {
 					}
 					contentLines = append(contentLines, line)
 				}
-				vault.AddSecureNote(name, strings.Join(contentLines, "\n"))
+				if err := vault.AddSecureNote(name, strings.Join(contentLines, "\n")); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "5":
 				fmt.Print("Label: ")
 				name := readInput()
@@ -158,7 +170,10 @@ func main() {
 				svc := readInput()
 				fmt.Print("API Key: ")
 				key := readInput()
-				vault.AddAPIKey(name, svc, key)
+				if err := vault.AddAPIKey(name, svc, key); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "6":
 				fmt.Print("Key Label: ")
 				name := readInput()
@@ -172,7 +187,10 @@ func main() {
 					}
 					keyLines = append(keyLines, line)
 				}
-				vault.AddSSHKey(name, strings.Join(keyLines, "\n"))
+				if err := vault.AddSSHKey(name, strings.Join(keyLines, "\n")); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "7":
 				fmt.Print("SSID: ")
 				ssid := readInput()
@@ -180,7 +198,10 @@ func main() {
 				pass := readInput()
 				fmt.Print("Security (WPA2/WPA3): ")
 				sec := readInput()
-				vault.AddWiFi(ssid, pass, sec)
+				if err := vault.AddWiFi(ssid, pass, sec); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			case "8":
 				fmt.Print("Service: ")
 				svc := readInput()
@@ -194,7 +215,10 @@ func main() {
 					}
 					codes = append(codes, line)
 				}
-				vault.AddRecoveryCode(svc, codes)
+				if err := vault.AddRecoveryCode(svc, codes); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 			default:
 				fmt.Println("Invalid selection.")
 				return
@@ -429,10 +453,13 @@ func main() {
 					newPass = e.Password
 				}
 
+				if err := vault.AddEntry(newAcc, newUser, newPass); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newAcc != e.Account {
 					vault.DeleteEntry(e.Account)
 				}
-				vault.AddEntry(newAcc, newUser, newPass)
 				updated = true
 			} else if t, ok := vault.GetTOTPEntry(name); ok {
 				fmt.Printf("Editing TOTP Entry: %s\n", name)
@@ -446,10 +473,13 @@ func main() {
 				if newSec == "" {
 					newSec = t.Secret
 				}
+				if err := vault.AddTOTPEntry(newAcc, newSec); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newAcc != t.Account {
 					vault.DeleteTOTPEntry(t.Account)
 				}
-				vault.AddTOTPEntry(newAcc, newSec)
 				updated = true
 			} else if tok, ok := vault.GetToken(name); ok {
 				fmt.Printf("Editing Token Entry: %s\n", name)
@@ -473,10 +503,13 @@ func main() {
 				if newType == "" {
 					newType = tok.Type
 				}
+				if err := vault.AddToken(newName, newSvc, newTok, newType); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newName != tok.Name {
 					vault.DeleteToken(tok.Name)
 				}
-				vault.AddToken(newName, newSvc, newTok, newType)
 				updated = true
 			} else if n, ok := vault.GetSecureNote(name); ok {
 				fmt.Printf("Editing Note: %s\n", name)
@@ -499,10 +532,13 @@ func main() {
 				if len(contentLines) > 0 {
 					newContent = strings.Join(contentLines, "\n")
 				}
+				if err := vault.AddSecureNote(newName, newContent); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newName != n.Name {
 					vault.DeleteSecureNote(n.Name)
 				}
-				vault.AddSecureNote(newName, newContent)
 				updated = true
 			} else if k, ok := vault.GetAPIKey(name); ok {
 				fmt.Printf("Editing API Key: %s\n", name)
@@ -521,10 +557,13 @@ func main() {
 				if newKey == "" {
 					newKey = k.Key
 				}
+				if err := vault.AddAPIKey(newName, newSvc, newKey); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newName != k.Name {
 					vault.DeleteAPIKey(k.Name)
 				}
-				vault.AddAPIKey(newName, newSvc, newKey)
 				updated = true
 			} else if s, ok := vault.GetSSHKey(name); ok {
 				fmt.Printf("Editing SSH Key: %s\n", name)
@@ -547,10 +586,13 @@ func main() {
 				if len(keyLines) > 0 {
 					newKey = strings.Join(keyLines, "\n")
 				}
+				if err := vault.AddSSHKey(newName, newKey); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newName != s.Name {
 					vault.DeleteSSHKey(s.Name)
 				}
-				vault.AddSSHKey(newName, newKey)
 				updated = true
 			} else if w, ok := vault.GetWiFi(name); ok {
 				fmt.Printf("Editing Wi-Fi: %s\n", name)
@@ -569,10 +611,13 @@ func main() {
 				if newSec == "" {
 					newSec = w.SecurityType
 				}
+				if err := vault.AddWiFi(newSSID, newPass, newSec); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newSSID != w.SSID {
 					vault.DeleteWiFi(w.SSID)
 				}
-				vault.AddWiFi(newSSID, newPass, newSec)
 				updated = true
 			} else if r, ok := vault.GetRecoveryCode(name); ok {
 				fmt.Printf("Editing Recovery Codes: %s\n", name)
@@ -595,10 +640,13 @@ func main() {
 				if len(codes) > 0 {
 					newCodes = codes
 				}
+				if err := vault.AddRecoveryCode(newSvc, newCodes); err != nil {
+					fmt.Printf("Error: %v\n", err)
+					return
+				}
 				if newSvc != r.Service {
 					vault.DeleteRecoveryCode(r.Service)
 				}
-				vault.AddRecoveryCode(newSvc, newCodes)
 				updated = true
 			} else {
 				fmt.Printf("Entry '%s' not found.\n", name)
