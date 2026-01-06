@@ -26,7 +26,7 @@ var inputReader *bufio.Reader
 func init() {
 	exe, err := os.Executable()
 	if err != nil {
-		fmt.Printf("Error getting executable path: %v\n", err)
+		color.Red("Error getting executable path: %v\n", err)
 		os.Exit(1)
 	}
 	vaultPath = filepath.Join(filepath.Dir(exe), "vault.dat")
@@ -44,7 +44,7 @@ func main() {
 		Short: "Initialize a new vault",
 		Run: func(cmd *cobra.Command, args []string) {
 			if src.VaultExists(vaultPath) {
-				fmt.Println("Vault already exists.")
+				color.Red("Vault already exists.\n")
 				return
 			}
 
@@ -54,13 +54,13 @@ func main() {
 				var err error
 				masterPassword, err = readPassword()
 				if err != nil {
-					fmt.Printf("\nError reading password: %v\n", err)
+					color.Red("\nError reading password: %v\n", err)
 					return
 				}
 				fmt.Println()
 
 				if err := src.ValidateMasterPassword(masterPassword); err != nil {
-					fmt.Printf("Invalid password: %v\n", err)
+					color.Red("Invalid password: %v\n", err)
 					continue
 				}
 				break
@@ -68,7 +68,7 @@ func main() {
 
 			salt, err := src.GenerateSalt()
 			if err != nil {
-				fmt.Printf("Error generating salt: %v\n", err)
+				color.Red("Error generating salt: %v\n", err)
 				return
 			}
 
@@ -80,11 +80,11 @@ func main() {
 			}
 
 			if err := src.SaveVault(vaultPath, data); err != nil {
-				fmt.Printf("Error saving vault: %v\n", err)
+				color.Red("Error saving vault: %v\n", err)
 				return
 			}
 
-			fmt.Println("Vault initialized successfully.")
+			color.Green("Vault initialized successfully.\n")
 		},
 	}
 
@@ -124,7 +124,7 @@ func main() {
 					fmt.Printf("Generated password: %s\n", pass)
 				}
 				if err := vault.AddEntry(acc, user, pass); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "2":
@@ -132,8 +132,10 @@ func main() {
 				acc := readInput()
 				fmt.Print("Secret: ")
 				sec := readInput()
+				sec = strings.ReplaceAll(sec, " ", "")
+				sec = strings.ToUpper(sec)
 				if err := vault.AddTOTPEntry(acc, sec); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "3":
@@ -144,7 +146,7 @@ func main() {
 				fmt.Print("Type (e.g. GitHub): ")
 				tType := readInput()
 				if err := vault.AddToken(name, tok, tType); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "4":
@@ -160,7 +162,7 @@ func main() {
 					contentLines = append(contentLines, line)
 				}
 				if err := vault.AddSecureNote(name, strings.Join(contentLines, "\n")); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "5":
@@ -171,7 +173,7 @@ func main() {
 				fmt.Print("API Key: ")
 				key := readInput()
 				if err := vault.AddAPIKey(name, svc, key); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "6":
@@ -187,7 +189,7 @@ func main() {
 					keyLines = append(keyLines, line)
 				}
 				if err := vault.AddSSHKey(name, strings.Join(keyLines, "\n")); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "7":
@@ -198,7 +200,7 @@ func main() {
 				fmt.Print("Security (WPA2/WPA3): ")
 				sec := readInput()
 				if err := vault.AddWiFi(ssid, pass, sec); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			case "8":
@@ -214,21 +216,21 @@ func main() {
 					codes = append(codes, line)
 				}
 				if err := vault.AddRecoveryCode(svc, codes); err != nil {
-					fmt.Printf("Error: %v\n", err)
+					color.Red("Error: %v\n", err)
 					return
 				}
 			default:
-				fmt.Println("Invalid selection.")
+				color.Red("Invalid selection.\n")
 				return
 			}
 
 			data, err := vault.Serialize(masterPassword)
 			if err != nil {
-				fmt.Printf("Error encrypting vault: %v\n", err)
+				color.Red("Error encrypting vault: %v\n", err)
 				return
 			}
 			src.SaveVault(vaultPath, data)
-			fmt.Println("Entry saved.")
+			color.Green("Entry saved.\n")
 		},
 	}
 
@@ -406,9 +408,9 @@ func main() {
 					return
 				}
 				src.SaveVault(vaultPath, data)
-				fmt.Printf("Deleted '%s'.\n", name)
+				color.Green("Deleted '%s'.\n", name)
 			} else {
-				fmt.Printf("Entry '%s' not found.\n", name)
+				color.Red("Entry '%s' not found.\n", name)
 			}
 		},
 	}
@@ -471,6 +473,8 @@ func main() {
 				if newSec == "" {
 					newSec = t.Secret
 				}
+				newSec = strings.ReplaceAll(newSec, " ", "")
+				newSec = strings.ToUpper(newSec)
 				if err := vault.AddTOTPEntry(newAcc, newSec); err != nil {
 					fmt.Printf("Error: %v\n", err)
 					return
@@ -650,7 +654,7 @@ func main() {
 					return
 				}
 				src.SaveVault(vaultPath, data)
-				fmt.Println("Update successful.")
+				color.Green("Update successful.")
 			}
 		},
 	}
@@ -806,8 +810,12 @@ func main() {
 				fmt.Println("])")
 
 				for _, entry := range targets {
-					code, _ := src.GenerateTOTP(entry.Secret)
-					fmt.Printf("\r\x1b[K  %-40s : \x1b[1;32m%s\x1b[0m\n", entry.Account, code)
+					code, err := src.GenerateTOTP(entry.Secret)
+					if err != nil {
+						fmt.Printf("\r\x1b[K  %-40s : \x1b[1;31mInvalid Secret\x1b[0m\n", entry.Account)
+					} else {
+						fmt.Printf("\r\x1b[K  %-40s : \x1b[1;32m%s\x1b[0m\n", entry.Account, code)
+					}
 				}
 				time.Sleep(1 * time.Second)
 				fmt.Printf("\033[%dA", len(targets)+1)
@@ -860,7 +868,7 @@ func main() {
 				return
 			}
 			src.SaveVault(vaultPath, data)
-			fmt.Printf("Successfully imported data from %s.\n", filename)
+			color.Green("Successfully imported data from %s.\n", filename)
 		},
 	}
 
@@ -900,7 +908,7 @@ func main() {
 				return
 			}
 
-			fmt.Printf("Successfully exported vault data to %s.\n", output)
+			color.Green("Successfully exported vault data to %s.\n", output)
 		},
 	}
 
@@ -1013,11 +1021,15 @@ func displayEntry(res src.SearchResult, showPass bool) {
 			fmt.Printf("Password: %s\n", e.Password)
 		}
 		copyToClipboard(e.Password)
-		fmt.Println("Password copied to clipboard.")
+		color.Green("Password copied to clipboard.")
 	case "TOTP":
 		t := res.Data.(src.TOTPEntry)
-		code, _ := src.GenerateTOTP(t.Secret)
-		fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
+		code, err := src.GenerateTOTP(t.Secret)
+		if err != nil {
+			fmt.Printf("Type: TOTP\nAccount: %s\nCode: \x1b[1;31mInvalid Secret\x1b[0m\n", t.Account)
+		} else {
+			fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
+		}
 	case "Token":
 		tok := res.Data.(src.TokenEntry)
 		fmt.Printf("Type: Token\nName: %s\n", tok.Name)
@@ -1025,7 +1037,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 			fmt.Printf("Token: %s\n", tok.Token)
 		}
 		copyToClipboard(tok.Token)
-		fmt.Println("Token copied to clipboard.")
+		color.Green("Token copied to clipboard.")
 	case "Note":
 		n := res.Data.(src.SecureNoteEntry)
 		fmt.Printf("Type: Secure Note\nName: %s\nContent:\n%s\n", n.Name, n.Content)
@@ -1036,7 +1048,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 			fmt.Printf("Key: %s\n", k.Key)
 		}
 		copyToClipboard(k.Key)
-		fmt.Println("Key copied to clipboard.")
+		color.Green("Key copied to clipboard.")
 	case "SSH Key":
 		s := res.Data.(src.SSHKeyEntry)
 		fmt.Printf("Type: SSH Key\nLabel: %s\n", s.Name)
@@ -1044,7 +1056,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 			fmt.Printf("Private Key:\n%s\n", s.PrivateKey)
 		}
 		copyToClipboard(s.PrivateKey)
-		fmt.Println("Private Key copied to clipboard.")
+		color.Green("Private Key copied to clipboard.")
 	case "Wi-Fi":
 		w := res.Data.(src.WiFiEntry)
 		fmt.Printf("Type: Wi-Fi\nSSID: %s\nSecurity: %s\n", w.SSID, w.SecurityType)
@@ -1052,7 +1064,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 			fmt.Printf("Password: %s\n", w.Password)
 		}
 		copyToClipboard(w.Password)
-		fmt.Println("Password copied to clipboard.")
+		color.Green("Password copied to clipboard.")
 	case "Recovery Codes":
 		r := res.Data.(src.RecoveryCodeEntry)
 		fmt.Printf("Type: Recovery Codes\nService: %s\nCodes:\n", r.Service)
@@ -1089,8 +1101,6 @@ func src_unlockVault() (string, *src.Vault, error) {
 		if err != nil {
 			return "", nil, err
 		}
-		// Consume the newline character left in the buffer by readPassword
-		inputReader.ReadString('\n')
 
 		fmt.Println()
 
