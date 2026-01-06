@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
@@ -20,6 +21,7 @@ import (
 )
 
 var vaultPath string
+var inputReader *bufio.Reader
 
 func init() {
 	exe, err := os.Executable()
@@ -28,6 +30,7 @@ func init() {
 		os.Exit(1)
 	}
 	vaultPath = filepath.Join(filepath.Dir(exe), "vault.dat")
+	inputReader = bufio.NewReader(os.Stdin)
 }
 
 func main() {
@@ -149,9 +152,8 @@ func main() {
 				name := readInput()
 				fmt.Println("Content (end with empty line):")
 				var contentLines []string
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					line := scanner.Text()
+				for {
+					line := readInput()
 					if line == "" {
 						break
 					}
@@ -177,9 +179,8 @@ func main() {
 				name := readInput()
 				fmt.Println("Enter Private Key (end with empty line):")
 				var keyLines []string
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					line := scanner.Text()
+				for {
+					line := readInput()
 					if line == "" {
 						break
 					}
@@ -205,9 +206,8 @@ func main() {
 				svc := readInput()
 				fmt.Println("Enter Codes (one per line, end with empty line):")
 				var codes []string
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					line := scanner.Text()
+				for {
+					line := readInput()
 					if line == "" {
 						break
 					}
@@ -513,9 +513,8 @@ func main() {
 				}
 				fmt.Println("Enter New Content (end with empty line, blank to keep):")
 				var contentLines []string
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					line := scanner.Text()
+				for {
+					line := readInput()
 					if line == "" {
 						break
 					}
@@ -567,9 +566,8 @@ func main() {
 				}
 				fmt.Println("Enter New Private Key (end with empty line, blank to keep):")
 				var keyLines []string
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					line := scanner.Text()
+				for {
+					line := readInput()
 					if line == "" {
 						break
 					}
@@ -621,9 +619,8 @@ func main() {
 				}
 				fmt.Println("Enter New Codes (end with empty line, blank to keep):")
 				var codes []string
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					line := scanner.Text()
+				for {
+					line := readInput()
 					if line == "" {
 						break
 					}
@@ -952,13 +949,21 @@ func main() {
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
 
-			fmt.Println("APM Alpha v5 (Insider Preview)")
+			fmt.Println("APM Alpha v5.1 (Stable Release )")
 			fmt.Println(processedHomeName, "@apm")
 			fmt.Println("v5 -- better get and and edit commands")
 			fmt.Printf("Installed: %s\n", installDir)
 			fmt.Printf("Vault Path: %s\n", vaultPath)
 			fmt.Println("https://github.com/aaravmaloo/apm")
 			fmt.Println("Contact: aaravmaloo06@gmail.com")
+			release_type := "stable"
+
+			if strings.Contains(release_type, "alpha") || strings.Contains(release_type, "beta") {
+
+				color.Red("the version you are currently using is in beta and alpha. Consider switching to the latest stable version of apm.")
+			} else {
+				color.Green("no version issues; enjoy your day!")
+			}
 		},
 	}
 
@@ -967,8 +972,7 @@ func main() {
 }
 
 func readInput() string {
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
+	input, _ := inputReader.ReadString('\n')
 	return strings.TrimSpace(input)
 }
 
@@ -1085,6 +1089,9 @@ func src_unlockVault() (string, *src.Vault, error) {
 		if err != nil {
 			return "", nil, err
 		}
+		// Consume the newline character left in the buffer by readPassword
+		inputReader.ReadString('\n')
+
 		fmt.Println()
 
 		vault, err := src.DecryptVault(ciphertext, masterPassword, salt)
