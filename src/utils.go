@@ -1,7 +1,10 @@
 package apm
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"math/big"
@@ -10,8 +13,69 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-func DeriveKey(password string, salt []byte) []byte {
+// Fixed Argon2id parameters for deterministic security
+const (
+	ArgonTime        = 3
+	ArgonMemory      = 128 * 1024 // 128 MB
+	ArgonParallelism = 4
+	KeyLength        = 32
+)
+
+type Keys struct {
+	EncryptionKey []byte
+	AuthKey       []byte
+	Validator     []byte
+}
+
+// DeriveKeys generates all necessary keys from the master password and salt
+// We generate 96 bytes: 32 enc + 32 auth + 32 validator
+func DeriveKeys(password string, salt []byte) *Keys {
+	keyMaterial := argon2.IDKey([]byte(password), salt, ArgonTime, ArgonMemory, ArgonParallelism, 96)
+
+	keys := &Keys{
+		EncryptionKey: make([]byte, 32),
+		AuthKey:       make([]byte, 32),
+		Validator:     make([]byte, 32),
+	}
+
+	copy(keys.EncryptionKey, keyMaterial[0:32])
+	copy(keys.AuthKey, keyMaterial[32:64])
+	copy(keys.Validator, keyMaterial[64:96])
+
+	// Zero out the keyMaterial buffer immediately after copying (best effort)
+	Wipe(keyMaterial)
+
+	return keys
+}
+
+// DeriveLegacyKey supports the old format migration
+func DeriveLegacyKey(password string, salt []byte) []byte {
 	return argon2.IDKey([]byte(password), salt, 1, 256*1024, 4, 32)
+}
+
+// Wipe attempts to zero out a byte slice
+func Wipe(b []byte) {
+	for i := range b {
+		b[i] = 0
+	}
+}
+
+// CalculateHMAC computes the HMAC-SHA256 of the data using the AuthKey
+func CalculateHMAC(data, key []byte) []byte {
+	h := hmac.New(sha256.New, key)
+	h.Write(data)
+	return h.Sum(nil)
+}
+
+// VerifyHMAC checks if the data matches the provided signature (constant time)
+func VerifyHMAC(data, signature, key []byte) bool {
+	expectedMAC := CalculateHMAC(data, key)
+	return subtle.ConstantTimeCompare(signature, expectedMAC) == 1
+}
+
+// VerifyPasswordValidator checks if the derived validator matches the stored one (constant time)
+func VerifyPasswordValidator(derived, stored []byte) bool {
+	return subtle.ConstantTimeCompare(derived, stored) == 1
 }
 
 func GenerateSalt() ([]byte, error) {
