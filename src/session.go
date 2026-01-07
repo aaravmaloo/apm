@@ -48,10 +48,10 @@ func cleanupCmd(duration time.Duration) {
 	seconds := int(duration.Seconds())
 	var cmd *exec.Cmd
 	if filepath.Separator == '\\' {
-		// Windows
+
 		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
 	} else {
-		// Linux/Unix
+
 		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, sessionFile))
 	}
 
