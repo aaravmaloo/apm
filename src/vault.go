@@ -391,15 +391,6 @@ func (v *Vault) GetToken(name string) (TokenEntry, bool) {
 	return TokenEntry{}, false
 }
 
-func (v *Vault) GetToken(name string) (TokenEntry, bool) {
-	for _, e := range v.Tokens {
-		if e.Name == name {
-			return e, true
-		}
-	}
-	return TokenEntry{}, false
-}
-
 func (v *Vault) DeleteToken(name string) bool {
 	for i, e := range v.Tokens {
 		if e.Name == name {
@@ -421,15 +412,6 @@ func (v *Vault) AddSecureNote(name, content string) error {
 	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
 	v.logHistory("ADD", "NOTE", name)
 	return nil
-}
-
-func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
-	for _, e := range v.SecureNotes {
-		if e.Name == name {
-			return e, true
-		}
-	}
-	return SecureNoteEntry{}, false
 }
 
 func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
@@ -473,15 +455,6 @@ func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
 	return APIKeyEntry{}, false
 }
 
-func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
-	for _, e := range v.APIKeys {
-		if e.Name == name {
-			return e, true
-		}
-	}
-	return APIKeyEntry{}, false
-}
-
 func (v *Vault) DeleteAPIKey(name string) bool {
 	for i, e := range v.APIKeys {
 		if e.Name == name {
@@ -514,15 +487,6 @@ func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
 	return SSHKeyEntry{}, false
 }
 
-func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
-	for _, e := range v.SSHKeys {
-		if e.Name == name {
-			return e, true
-		}
-	}
-	return SSHKeyEntry{}, false
-}
-
 func (v *Vault) DeleteSSHKey(name string) bool {
 	for i, e := range v.SSHKeys {
 		if e.Name == name {
@@ -544,15 +508,6 @@ func (v *Vault) AddWiFi(ssid, password, security string) error {
 	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: security})
 	v.logHistory("ADD", "WIFI", ssid)
 	return nil
-}
-
-func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
-	for _, e := range v.WiFiCredentials {
-		if e.SSID == ssid {
-			return e, true
-		}
-	}
-	return WiFiEntry{}, false
 }
 
 func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
