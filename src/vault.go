@@ -12,10 +12,27 @@ import (
 	"time"
 )
 
+// VaultHeader is the magic bytes to identify the new vault format
+const VaultHeader = "APMVAULT"
+
+// CurrentVersion is the version of the vault format
+const CurrentVersion = 1
+
 type Entry struct {
 	Account  string `json:"account"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type TOTPEntry struct {
+	Account string `json:"account"`
+	Secret  string `json:"secret"`
+}
+
+type TokenEntry struct {
+	Name  string `json:"name"`
+	Token string `json:"token"`
+	Type  string `json:"type"`
 }
 
 type SecureNoteEntry struct {
@@ -45,36 +62,15 @@ type RecoveryCodeEntry struct {
 	Codes   []string `json:"codes"`
 }
 
-type TokenEntry struct {
-	Name  string `json:"name"`
-	Token string `json:"token"`
-	Type  string `json:"type"` // e.g., "GitHub", "PyPI", etc.
-}
-
-func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
-	ciphertext, err := EncryptVault(v, masterPassword)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(v.Salt, ciphertext...), nil
-}
-
-type TOTPEntry struct {
-	Account string `json:"account"`
-	Secret  string `json:"secret"`
-}
-
 type HistoryEntry struct {
 	Timestamp  time.Time `json:"timestamp"`
-	Action     string    `json:"action"` // "ADD", "UPDATE", "DELETE"
+	Action     string    `json:"action"` // ADD, UPDATE, DEL, VIEW
 	Category   string    `json:"category"`
 	Identifier string    `json:"identifier"`
-	OldData    string    `json:"old_data,omitempty"` // JSON string of the previous state
 }
 
 type Vault struct {
-	Salt              []byte              `json:"salt"`
+	Salt              []byte              `json:"salt"` // Legacy
 	Entries           []Entry             `json:"entries"`
 	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
 	Tokens            []TokenEntry        `json:"tokens"`
@@ -86,14 +82,29 @@ type Vault struct {
 	History           []HistoryEntry      `json:"history"`
 }
 
+// --- Crypto & File I/O ---
+
+func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
+	return EncryptVault(v, masterPassword)
+}
+
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
-	plaintext, err := json.Marshal(vault)
+	salt, err := GenerateSalt()
 	if err != nil {
 		return nil, err
 	}
 
-	key := DeriveKey(masterPassword, vault.Salt)
-	block, err := aes.NewCipher(key)
+	keys := DeriveKeys(masterPassword, salt)
+	defer Wipe(keys.EncryptionKey)
+	defer Wipe(keys.AuthKey)
+	defer Wipe(keys.Validator)
+
+	jsonData, err := json.Marshal(vault)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -108,38 +119,119 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
-	return ciphertext, nil
+	ciphertext := gcm.Seal(nil, nonce, jsonData, nil)
+
+	var payload []byte
+	payload = append(payload, []byte(VaultHeader)...)
+	payload = append(payload, byte(CurrentVersion))
+	payload = append(payload, salt...)
+	payload = append(payload, keys.Validator...)
+	payload = append(payload, nonce...)
+	payload = append(payload, ciphertext...)
+
+	signature := CalculateHMAC(payload, keys.AuthKey)
+	finalData := append(payload, signature...)
+
+	return finalData, nil
 }
 
-func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
-	key := DeriveKey(masterPassword, salt)
-	block, err := aes.NewCipher(key)
+func DecryptVault(data []byte, masterPassword string) (*Vault, error) {
+	if len(data) > len(VaultHeader) && string(data[:len(VaultHeader)]) == VaultHeader {
+		return decryptNewVault(data, masterPassword)
+	}
+	if len(data) < 16 {
+		return nil, errors.New("invalid vault data")
+	}
+	salt := data[:16]
+	ciphertext := data[16:]
+	return decryptOldVault(ciphertext, masterPassword, salt)
+}
+
+func decryptNewVault(data []byte, masterPassword string) (*Vault, error) {
+	minLen := len(VaultHeader) + 1 + 16 + 32 + 12 + 32
+	if len(data) < minLen {
+		return nil, errors.New("vault file corrupted (too short)")
+	}
+
+	offset := len(VaultHeader)
+	version := data[offset]
+	offset++
+	if version != CurrentVersion {
+		return nil, fmt.Errorf("unsupported vault version: %d", version)
+	}
+
+	salt := data[offset : offset+16]
+	offset += 16
+	storedValidator := data[offset : offset+32]
+	offset += 32
+	nonce := data[offset : offset+12]
+	offset += 12
+
+	rest := data[offset:]
+	if len(rest) < 32 {
+		return nil, errors.New("vault file corrupted (missing HMAC)")
+	}
+	ciphertext := rest[:len(rest)-32]
+	storedHMAC := rest[len(rest)-32:]
+
+	keys := DeriveKeys(masterPassword, salt)
+	defer Wipe(keys.EncryptionKey)
+	defer Wipe(keys.AuthKey)
+	defer Wipe(keys.Validator)
+
+	if !VerifyPasswordValidator(keys.Validator, storedValidator) {
+		return nil, errors.New("incorrect password")
+	}
+
+	payloadForHMAC := data[:len(data)-32]
+	if !VerifyHMAC(payloadForHMAC, storedHMAC, keys.AuthKey) {
+		return nil, errors.New("vault file has been tampered with or corrupted")
+	}
+
+	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
 
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return nil, errors.New("decryption failed: incorrect password or corrupted data")
+		return nil, errors.New("decryption failed despite valid password")
 	}
 
 	var vault Vault
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
 	}
+	return &vault, nil
+}
 
+func decryptOldVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
+	key := DeriveLegacyKey(masterPassword, salt)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, errors.New("decryption failed: incorrect password or corrupted data")
+	}
+	var vault Vault
+	if err := json.Unmarshal(plaintext, &vault); err != nil {
+		return nil, err
+	}
 	return &vault, nil
 }
 
@@ -148,243 +240,212 @@ func EncryptData(plaintext []byte, password string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	keys := DeriveKeys(password, salt)
+	defer Wipe(keys.EncryptionKey)
 
-	key := DeriveKey(password, salt)
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
-
 	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
 	return append(salt, ciphertext...), nil
 }
 
 func DecryptData(data []byte, password string) ([]byte, error) {
-	if len(data) < 16 {
-		return nil, errors.New("invalid encrypted data: too short")
+	if len(data) < 16+12 {
+		return nil, errors.New("data too short")
 	}
 	salt := data[:16]
 	ciphertext := data[16:]
 
-	key := DeriveKey(password, salt)
-	block, err := aes.NewCipher(key)
+	keys := DeriveKeys(password, salt)
+	block, err := aes.NewCipher(keys.EncryptionKey)
+	if err == nil {
+		gcm, err := cipher.NewGCM(block)
+		if err == nil {
+			nonceSize := gcm.NonceSize()
+			if len(ciphertext) >= nonceSize {
+				nonce, ct := ciphertext[:nonceSize], ciphertext[nonceSize:]
+				plaintext, err := gcm.Open(nil, nonce, ct, nil)
+				if err == nil {
+					return plaintext, nil
+				}
+			}
+		}
+	}
+	legacyKey := DeriveLegacyKey(password, salt)
+	block, err = aes.NewCipher(legacyKey)
 	if err != nil {
 		return nil, err
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-
 	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, errors.New("decryption failed: incorrect password or corrupted data")
-	}
-
-	return plaintext, nil
+	nonce, ct := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	return gcm.Open(nil, nonce, ct, nil)
 }
 
-func (v *Vault) EntryExistsWithOtherType(name, currentType string) bool {
-	for _, e := range v.Entries {
-		if e.Account == name && currentType != "PASSWORD" {
-			return true
-		}
-	}
-	for _, t := range v.TOTPEntries {
-		if t.Account == name && currentType != "TOTP" {
-			return true
-		}
-	}
-	for _, tok := range v.Tokens {
-		if tok.Name == name && currentType != "TOKEN" {
-			return true
-		}
-	}
-	for _, n := range v.SecureNotes {
-		if n.Name == name && currentType != "NOTE" {
-			return true
-		}
-	}
-	for _, k := range v.APIKeys {
-		if k.Name == name && currentType != "API_KEY" {
-			return true
-		}
-	}
-	for _, s := range v.SSHKeys {
-		if s.Name == name && currentType != "SSH_KEY" {
-			return true
-		}
-	}
-	for _, w := range v.WiFiCredentials {
-		if w.SSID == name && currentType != "WIFI" {
-			return true
-		}
-	}
-	for _, r := range v.RecoveryCodeItems {
-		if r.Service == name && currentType != "RECOVERY_CODE" {
-			return true
-		}
-	}
-	return false
-}
+// --- CRUD Methods ---
 
-func (v *Vault) AddEntry(account, username, password string) error {
-	if v.EntryExistsWithOtherType(account, "PASSWORD") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", account)
-	}
-	for i, entry := range v.Entries {
-		if entry.Account == account {
-			oldData, _ := json.Marshal(v.Entries[i])
-			v.Entries[i] = Entry{Account: account, Username: username, Password: password}
-			v.logHistory("UPDATE", "PASSWORD", account, string(oldData))
-			return nil
-		}
-	}
-	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
-	v.logHistory("ADD", "PASSWORD", account, "")
-	return nil
-}
-
-func (v *Vault) logHistory(action, category, identifier, oldData string) {
+func (v *Vault) logHistory(action, category, identifier string) {
 	v.History = append(v.History, HistoryEntry{
 		Timestamp:  time.Now(),
 		Action:     action,
 		Category:   category,
 		Identifier: identifier,
-		OldData:    oldData,
 	})
 }
 
+// Password Entries
+func (v *Vault) AddEntry(account, username, password string) error {
+	for _, e := range v.Entries {
+		if e.Account == account {
+			return errors.New("account already exists")
+		}
+	}
+	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
+	v.logHistory("ADD", "PASSWORD", account)
+	return nil
+}
+
 func (v *Vault) GetEntry(account string) (Entry, bool) {
-	for _, entry := range v.Entries {
-		if entry.Account == account {
-			return entry, true
+	for _, e := range v.Entries {
+		if e.Account == account {
+			return e, true
 		}
 	}
 	return Entry{}, false
 }
 
 func (v *Vault) DeleteEntry(account string) bool {
-	for i, entry := range v.Entries {
-		if entry.Account == account {
-			oldData, _ := json.Marshal(v.Entries[i])
+	for i, e := range v.Entries {
+		if e.Account == account {
 			v.Entries = append(v.Entries[:i], v.Entries[i+1:]...)
-			v.logHistory("DELETE", "PASSWORD", account, string(oldData))
+			v.logHistory("DEL", "PASSWORD", account)
 			return true
 		}
 	}
 	return false
 }
 
+// TOTP Entries
 func (v *Vault) AddTOTPEntry(account, secret string) error {
-	if v.EntryExistsWithOtherType(account, "TOTP") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", account)
-	}
-	for i, entry := range v.TOTPEntries {
-		if entry.Account == account {
-			oldData, _ := json.Marshal(v.TOTPEntries[i])
-			v.TOTPEntries[i] = TOTPEntry{Account: account, Secret: secret}
-			v.logHistory("UPDATE", "TOTP", account, string(oldData))
-			return nil
+	for _, e := range v.TOTPEntries {
+		if e.Account == account {
+			return errors.New("TOTP account already exists")
 		}
 	}
 	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret})
-	v.logHistory("ADD", "TOTP", account, "")
+	v.logHistory("ADD", "TOTP", account)
 	return nil
 }
 
 func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
-	for _, entry := range v.TOTPEntries {
-		if entry.Account == account {
-			return entry, true
+	for _, e := range v.TOTPEntries {
+		if e.Account == account {
+			return e, true
 		}
 	}
 	return TOTPEntry{}, false
 }
 
 func (v *Vault) DeleteTOTPEntry(account string) bool {
-	for i, entry := range v.TOTPEntries {
-		if entry.Account == account {
-			oldData, _ := json.Marshal(v.TOTPEntries[i])
+	for i, e := range v.TOTPEntries {
+		if e.Account == account {
 			v.TOTPEntries = append(v.TOTPEntries[:i], v.TOTPEntries[i+1:]...)
-			v.logHistory("DELETE", "TOTP", account, string(oldData))
+			v.logHistory("DEL", "TOTP", account)
 			return true
 		}
 	}
 	return false
 }
 
-func (v *Vault) SearchEntries(query string) []Entry {
-	var results []Entry
-	for _, entry := range v.Entries {
-		if query == "" || fmt.Sprintf("%s %s", entry.Account, entry.Username) == query {
-			results = append(results, entry)
+// Tokens
+func (v *Vault) AddToken(name, token, tType string) error {
+	for _, e := range v.Tokens {
+		if e.Name == name {
+			return errors.New("token already exists")
 		}
 	}
-	return results
+	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Token: token, Type: tType})
+	v.logHistory("ADD", "TOKEN", name)
+	return nil
 }
 
-func (v *Vault) FilterEntries(query string) []Entry {
-	var results []Entry
-	for _, entry := range v.Entries {
-		if query == "" ||
-			(contains(entry.Account, query) || contains(entry.Username, query)) {
-			results = append(results, entry)
+func (v *Vault) GetToken(name string) (TokenEntry, bool) {
+	for _, e := range v.Tokens {
+		if e.Name == name {
+			return e, true
 		}
 	}
-	return results
+	return TokenEntry{}, false
+}
+
+func (v *Vault) GetToken(name string) (TokenEntry, bool) {
+	for _, e := range v.Tokens {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return TokenEntry{}, false
+}
+
+func (v *Vault) DeleteToken(name string) bool {
+	for i, e := range v.Tokens {
+		if e.Name == name {
+			v.Tokens = append(v.Tokens[:i], v.Tokens[i+1:]...)
+			v.logHistory("DEL", "TOKEN", name)
+			return true
+		}
+	}
+	return false
 }
 
 // Secure Notes
 func (v *Vault) AddSecureNote(name, content string) error {
-	if v.EntryExistsWithOtherType(name, "NOTE") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
-	}
-	for i, entry := range v.SecureNotes {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.SecureNotes[i])
-			v.SecureNotes[i] = SecureNoteEntry{Name: name, Content: content}
-			v.logHistory("UPDATE", "NOTE", name, string(oldData))
-			return nil
+	for _, e := range v.SecureNotes {
+		if e.Name == name {
+			return errors.New("note already exists")
 		}
 	}
 	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
-	v.logHistory("ADD", "NOTE", name, "")
+	v.logHistory("ADD", "NOTE", name)
 	return nil
 }
 
 func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
-	for _, entry := range v.SecureNotes {
-		if entry.Name == name {
-			return entry, true
+	for _, e := range v.SecureNotes {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return SecureNoteEntry{}, false
+}
+
+func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
+	for _, e := range v.SecureNotes {
+		if e.Name == name {
+			return e, true
 		}
 	}
 	return SecureNoteEntry{}, false
 }
 
 func (v *Vault) DeleteSecureNote(name string) bool {
-	for i, entry := range v.SecureNotes {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.SecureNotes[i])
+	for i, e := range v.SecureNotes {
+		if e.Name == name {
 			v.SecureNotes = append(v.SecureNotes[:i], v.SecureNotes[i+1:]...)
-			v.logHistory("DELETE", "NOTE", name, string(oldData))
+			v.logHistory("DEL", "NOTE", name)
 			return true
 		}
 	}
@@ -393,37 +454,39 @@ func (v *Vault) DeleteSecureNote(name string) bool {
 
 // API Keys
 func (v *Vault) AddAPIKey(name, service, key string) error {
-	if v.EntryExistsWithOtherType(name, "API_KEY") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
-	}
-	for i, entry := range v.APIKeys {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.APIKeys[i])
-			v.APIKeys[i] = APIKeyEntry{Name: name, Service: service, Key: key}
-			v.logHistory("UPDATE", "API_KEY", name, string(oldData))
-			return nil
+	for _, e := range v.APIKeys {
+		if e.Name == name {
+			return errors.New("API key already exists")
 		}
 	}
 	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key})
-	v.logHistory("ADD", "API_KEY", name, "")
+	v.logHistory("ADD", "APIKEY", name)
 	return nil
 }
 
 func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
-	for _, entry := range v.APIKeys {
-		if entry.Name == name {
-			return entry, true
+	for _, e := range v.APIKeys {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return APIKeyEntry{}, false
+}
+
+func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
+	for _, e := range v.APIKeys {
+		if e.Name == name {
+			return e, true
 		}
 	}
 	return APIKeyEntry{}, false
 }
 
 func (v *Vault) DeleteAPIKey(name string) bool {
-	for i, entry := range v.APIKeys {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.APIKeys[i])
+	for i, e := range v.APIKeys {
+		if e.Name == name {
 			v.APIKeys = append(v.APIKeys[:i], v.APIKeys[i+1:]...)
-			v.logHistory("DELETE", "API_KEY", name, string(oldData))
+			v.logHistory("DEL", "APIKEY", name)
 			return true
 		}
 	}
@@ -432,76 +495,80 @@ func (v *Vault) DeleteAPIKey(name string) bool {
 
 // SSH Keys
 func (v *Vault) AddSSHKey(name, privateKey string) error {
-	if v.EntryExistsWithOtherType(name, "SSH_KEY") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
-	}
-	for i, entry := range v.SSHKeys {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.SSHKeys[i])
-			v.SSHKeys[i] = SSHKeyEntry{Name: name, PrivateKey: privateKey}
-			v.logHistory("UPDATE", "SSH_KEY", name, string(oldData))
-			return nil
+	for _, e := range v.SSHKeys {
+		if e.Name == name {
+			return errors.New("SSH key already exists")
 		}
 	}
 	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey})
-	v.logHistory("ADD", "SSH_KEY", name, "")
+	v.logHistory("ADD", "SSHKEY", name)
 	return nil
 }
 
 func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
-	for _, entry := range v.SSHKeys {
-		if entry.Name == name {
-			return entry, true
+	for _, e := range v.SSHKeys {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return SSHKeyEntry{}, false
+}
+
+func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
+	for _, e := range v.SSHKeys {
+		if e.Name == name {
+			return e, true
 		}
 	}
 	return SSHKeyEntry{}, false
 }
 
 func (v *Vault) DeleteSSHKey(name string) bool {
-	for i, entry := range v.SSHKeys {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.SSHKeys[i])
+	for i, e := range v.SSHKeys {
+		if e.Name == name {
 			v.SSHKeys = append(v.SSHKeys[:i], v.SSHKeys[i+1:]...)
-			v.logHistory("DELETE", "SSH_KEY", name, string(oldData))
+			v.logHistory("DEL", "SSHKEY", name)
 			return true
 		}
 	}
 	return false
 }
 
-// Wi-Fi Credentials
-func (v *Vault) AddWiFi(ssid, password, securityType string) error {
-	if v.EntryExistsWithOtherType(ssid, "WIFI") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", ssid)
-	}
-	for i, entry := range v.WiFiCredentials {
-		if entry.SSID == ssid {
-			oldData, _ := json.Marshal(v.WiFiCredentials[i])
-			v.WiFiCredentials[i] = WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType}
-			v.logHistory("UPDATE", "WIFI", ssid, string(oldData))
-			return nil
+// WiFi
+func (v *Vault) AddWiFi(ssid, password, security string) error {
+	for _, e := range v.WiFiCredentials {
+		if e.SSID == ssid {
+			return errors.New("WiFi already exists")
 		}
 	}
-	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: securityType})
-	v.logHistory("ADD", "WIFI", ssid, "")
+	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: security})
+	v.logHistory("ADD", "WIFI", ssid)
 	return nil
 }
 
 func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
-	for _, entry := range v.WiFiCredentials {
-		if entry.SSID == ssid {
-			return entry, true
+	for _, e := range v.WiFiCredentials {
+		if e.SSID == ssid {
+			return e, true
+		}
+	}
+	return WiFiEntry{}, false
+}
+
+func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
+	for _, e := range v.WiFiCredentials {
+		if e.SSID == ssid {
+			return e, true
 		}
 	}
 	return WiFiEntry{}, false
 }
 
 func (v *Vault) DeleteWiFi(ssid string) bool {
-	for i, entry := range v.WiFiCredentials {
-		if entry.SSID == ssid {
-			oldData, _ := json.Marshal(v.WiFiCredentials[i])
+	for i, e := range v.WiFiCredentials {
+		if e.SSID == ssid {
 			v.WiFiCredentials = append(v.WiFiCredentials[:i], v.WiFiCredentials[i+1:]...)
-			v.logHistory("DELETE", "WIFI", ssid, string(oldData))
+			v.logHistory("DEL", "WIFI", ssid)
 			return true
 		}
 	}
@@ -510,80 +577,41 @@ func (v *Vault) DeleteWiFi(ssid string) bool {
 
 // Recovery Codes
 func (v *Vault) AddRecoveryCode(service string, codes []string) error {
-	if v.EntryExistsWithOtherType(service, "RECOVERY_CODE") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", service)
-	}
-	for i, entry := range v.RecoveryCodeItems {
-		if entry.Service == service {
-			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
-			v.RecoveryCodeItems[i] = RecoveryCodeEntry{Service: service, Codes: codes}
-			v.logHistory("UPDATE", "RECOVERY_CODE", service, string(oldData))
-			return nil
+	for _, e := range v.RecoveryCodeItems {
+		if e.Service == service {
+			return errors.New("recovery codes for service already exist")
 		}
 	}
 	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes})
-	v.logHistory("ADD", "RECOVERY_CODE", service, "")
+	v.logHistory("ADD", "RECOVERY", service)
 	return nil
 }
 
 func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
-	for _, entry := range v.RecoveryCodeItems {
-		if entry.Service == service {
-			return entry, true
+	for _, e := range v.RecoveryCodeItems {
+		if e.Service == service {
+			return e, true
 		}
 	}
 	return RecoveryCodeEntry{}, false
 }
 
 func (v *Vault) DeleteRecoveryCode(service string) bool {
-	for i, entry := range v.RecoveryCodeItems {
-		if entry.Service == service {
-			oldData, _ := json.Marshal(v.RecoveryCodeItems[i])
+	for i, e := range v.RecoveryCodeItems {
+		if e.Service == service {
 			v.RecoveryCodeItems = append(v.RecoveryCodeItems[:i], v.RecoveryCodeItems[i+1:]...)
-			v.logHistory("DELETE", "RECOVERY_CODE", service, string(oldData))
+			v.logHistory("DEL", "RECOVERY", service)
 			return true
 		}
 	}
 	return false
 }
 
-// Tokens
-func (v *Vault) AddToken(name, token, tokenType string) error {
-	if v.EntryExistsWithOtherType(name, "TOKEN") {
-		return fmt.Errorf("an entry with the name '%s' already exists in another category", name)
-	}
-	for i, entry := range v.Tokens {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.Tokens[i])
-			v.Tokens[i] = TokenEntry{Name: name, Token: token, Type: tokenType}
-			v.logHistory("UPDATE", "TOKEN", name, string(oldData))
-			return nil
-		}
-	}
-	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Token: token, Type: tokenType})
-	v.logHistory("ADD", "TOKEN", name, "")
-	return nil
-}
-
-func (v *Vault) GetToken(name string) (TokenEntry, bool) {
-	for _, entry := range v.Tokens {
-		if entry.Name == name {
-			return entry, true
-		}
-	}
-	return TokenEntry{}, false
-}
-
-func (v *Vault) DeleteToken(name string) bool {
-	for i, entry := range v.Tokens {
-		if entry.Name == name {
-			oldData, _ := json.Marshal(v.Tokens[i])
-			v.Tokens = append(v.Tokens[:i], v.Tokens[i+1:]...)
-			v.logHistory("DELETE", "TOKEN", name, string(oldData))
-			return true
-		}
-	}
-	return false
+// Search
+type SearchResult struct {
+	Type       string
+	Identifier string
+	Data       interface{}
 }
 
 func (v *Vault) SearchAll(query string) []SearchResult {
@@ -591,55 +619,44 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 	query = strings.ToLower(query)
 
 	for _, e := range v.Entries {
-		if query == "" || strings.Contains(strings.ToLower(e.Account), query) || strings.Contains(strings.ToLower(e.Username), query) {
-			results = append(results, SearchResult{Type: "Password", Identifier: e.Account, Data: e})
+		if query == "" || strings.Contains(strings.ToLower(e.Account), query) {
+			results = append(results, SearchResult{"Password", e.Account, e})
 		}
 	}
-	for _, t := range v.TOTPEntries {
-		if query == "" || strings.Contains(strings.ToLower(t.Account), query) {
-			results = append(results, SearchResult{Type: "TOTP", Identifier: t.Account, Data: t})
+	for _, e := range v.TOTPEntries {
+		if query == "" || strings.Contains(strings.ToLower(e.Account), query) {
+			results = append(results, SearchResult{"TOTP", e.Account, e})
 		}
 	}
-	for _, tok := range v.Tokens {
-		if query == "" || strings.Contains(strings.ToLower(tok.Name), query) {
-			results = append(results, SearchResult{Type: "Token", Identifier: tok.Name, Data: tok})
+	for _, e := range v.Tokens {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Token", e.Name, e})
 		}
 	}
-	for _, n := range v.SecureNotes {
-		if query == "" || strings.Contains(strings.ToLower(n.Name), query) {
-			results = append(results, SearchResult{Type: "Note", Identifier: n.Name, Data: n})
+	for _, e := range v.SecureNotes {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Note", e.Name, e})
 		}
 	}
-	for _, k := range v.APIKeys {
-		if query == "" || strings.Contains(strings.ToLower(k.Name), query) || strings.Contains(strings.ToLower(k.Service), query) {
-			results = append(results, SearchResult{Type: "API Key", Identifier: k.Name, Data: k})
+	for _, e := range v.APIKeys {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"API Key", e.Name, e})
 		}
 	}
-	for _, s := range v.SSHKeys {
-		if query == "" || strings.Contains(strings.ToLower(s.Name), query) {
-			results = append(results, SearchResult{Type: "SSH Key", Identifier: s.Name, Data: s})
+	for _, e := range v.SSHKeys {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"SSH Key", e.Name, e})
 		}
 	}
-	for _, w := range v.WiFiCredentials {
-		if query == "" || strings.Contains(strings.ToLower(w.SSID), query) {
-			results = append(results, SearchResult{Type: "Wi-Fi", Identifier: w.SSID, Data: w})
+	for _, e := range v.WiFiCredentials {
+		if query == "" || strings.Contains(strings.ToLower(e.SSID), query) {
+			results = append(results, SearchResult{"Wi-Fi", e.SSID, e})
 		}
 	}
-	for _, r := range v.RecoveryCodeItems {
-		if query == "" || strings.Contains(strings.ToLower(r.Service), query) {
-			results = append(results, SearchResult{Type: "Recovery Codes", Identifier: r.Service, Data: r})
+	for _, e := range v.RecoveryCodeItems {
+		if query == "" || strings.Contains(strings.ToLower(e.Service), query) {
+			results = append(results, SearchResult{"Recovery Codes", e.Service, e})
 		}
 	}
-
 	return results
-}
-
-type SearchResult struct {
-	Type       string
-	Identifier string
-	Data       interface{}
-}
-
-func contains(s, substr string) bool {
-	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
