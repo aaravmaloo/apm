@@ -240,11 +240,6 @@ func main() {
 		Use:   "get [query]",
 		Short: "Fuzzy search and retrieve an entry",
 		Run: func(cmd *cobra.Command, args []string) {
-			query := ""
-			if len(args) > 0 {
-				query = args[0]
-			}
-
 			showPass, _ := cmd.Flags().GetBool("show-pass")
 
 			_, vault, _, err := src_unlockVault()
@@ -253,10 +248,98 @@ func main() {
 				return
 			}
 
-			results := vault.SearchAll("")
+			if len(args) == 0 {
+				fmt.Println("Select type to retrieve:")
+				fmt.Println("1. Password")
+				fmt.Println("2. TOTP")
+				fmt.Println("3. Token")
+				fmt.Println("4. Secure Note")
+				fmt.Println("5. API Key")
+				fmt.Println("6. SSH Key")
+				fmt.Println("7. Wi-Fi Credentials")
+				fmt.Println("8. Recovery Codes")
+				fmt.Print("Selection (1-8): ")
+				choice := readInput()
+
+				var results []src.SearchResult
+				var category string
+				switch choice {
+				case "1":
+					category = "Password"
+					for _, e := range vault.Entries {
+						results = append(results, src.SearchResult{Type: "Password", Identifier: e.Account, Data: e})
+					}
+				case "2":
+					category = "TOTP"
+					for _, e := range vault.TOTPEntries {
+						results = append(results, src.SearchResult{Type: "TOTP", Identifier: e.Account, Data: e})
+					}
+				case "3":
+					category = "Token"
+					for _, e := range vault.Tokens {
+						results = append(results, src.SearchResult{Type: "Token", Identifier: e.Name, Data: e})
+					}
+				case "4":
+					category = "Note"
+					for _, e := range vault.SecureNotes {
+						results = append(results, src.SearchResult{Type: "Note", Identifier: e.Name, Data: e})
+					}
+				case "5":
+					category = "API Key"
+					for _, e := range vault.APIKeys {
+						results = append(results, src.SearchResult{Type: "API Key", Identifier: e.Name, Data: e})
+					}
+				case "6":
+					category = "SSH Key"
+					for _, e := range vault.SSHKeys {
+						results = append(results, src.SearchResult{Type: "SSH Key", Identifier: e.Name, Data: e})
+					}
+				case "7":
+					category = "Wi-Fi"
+					for _, e := range vault.WiFiCredentials {
+						results = append(results, src.SearchResult{Type: "Wi-Fi", Identifier: e.SSID, Data: e})
+					}
+				case "8":
+					category = "Recovery Codes"
+					for _, e := range vault.RecoveryCodeItems {
+						results = append(results, src.SearchResult{Type: "Recovery Codes", Identifier: e.Service, Data: e})
+					}
+				default:
+					color.Red("Invalid selection.\n")
+					return
+				}
+
+				if len(results) == 0 {
+					color.Yellow("No entries found for %s.\n", category)
+					return
+				}
+
+				sort.Slice(results, func(i, j int) bool {
+					return results[i].Identifier < results[j].Identifier
+				})
+
+				fmt.Printf("\nExisting %s entries:\n", category)
+				for i, res := range results {
+					fmt.Printf("[%d] %s\n", i+1, res.Identifier)
+				}
+				fmt.Print("Select a number: ")
+				choiceStr := readInput()
+				choiceIdx, err := strconv.Atoi(choiceStr)
+				if err != nil || choiceIdx < 1 || choiceIdx > len(results) {
+					fmt.Println("Invalid selection.")
+					return
+				}
+				fmt.Println()
+				displayEntry(results[choiceIdx-1], showPass)
+				return
+			}
+
+			// Case: args provided, use fuzzy search
+			query := args[0]
+			allResults := vault.SearchAll("")
 			var scoredResults []ScoredResult
 
-			for _, res := range results {
+			for _, res := range allResults {
 				score := rankMatch(query, res.Identifier)
 				if score > 0 {
 					scoredResults = append(scoredResults, ScoredResult{res, score})
@@ -276,7 +359,7 @@ func main() {
 				return scoredResults[i].Score > scoredResults[j].Score
 			})
 
-			if len(scoredResults) == 1 && query != "" {
+			if len(scoredResults) == 1 {
 				displayEntry(scoredResults[0].Result, showPass)
 				return
 			}
