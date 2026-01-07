@@ -10,7 +10,6 @@ import (
 func TestPortabilityParsers(t *testing.T) {
 	vault := &apm.Vault{}
 
-	// Test CSV Import
 	csvData := "ENTRY,google,user@gmail.com,secretpass\nTOTP,github,GITHUBSECRET"
 	os.WriteFile("test.csv", []byte(csvData), 0600)
 	defer os.Remove("test.csv")
@@ -31,7 +30,6 @@ func TestPortabilityParsers(t *testing.T) {
 		t.Errorf("Expected TOTP account 'github', got '%s'", vault.TOTPEntries[0].Account)
 	}
 
-	// Test TXT Export/Import
 	os.Remove("test.txt")
 	if err := apm.ExportToTXT(vault, "test.txt", false); err != nil {
 		t.Fatalf("TXT Export function error: %v", err)

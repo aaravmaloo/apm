@@ -7,7 +7,7 @@ import (
 )
 
 func TestGenerateTOTP(t *testing.T) {
-	secret := "JBSWY3DPEHPK3PXP" // Standard test secret (base32)
+	secret := "JBSWY3DPEHPK3PXP"
 	code, err := apm.GenerateTOTP(secret)
 	if err != nil {
 		t.Fatalf("Failed to generate TOTP: %v", err)
