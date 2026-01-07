@@ -12,10 +12,8 @@ import (
 	"time"
 )
 
-// VaultHeader is the magic bytes to identify the new vault format
 const VaultHeader = "APMVAULT"
 
-// CurrentVersion is the version of the vault format
 const CurrentVersion = 1
 
 type Entry struct {
@@ -64,13 +62,13 @@ type RecoveryCodeEntry struct {
 
 type HistoryEntry struct {
 	Timestamp  time.Time `json:"timestamp"`
-	Action     string    `json:"action"` // ADD, UPDATE, DEL, VIEW
+	Action     string    `json:"action"`
 	Category   string    `json:"category"`
 	Identifier string    `json:"identifier"`
 }
 
 type Vault struct {
-	Salt              []byte              `json:"salt"` // Legacy
+	Salt              []byte              `json:"salt"`
 	Entries           []Entry             `json:"entries"`
 	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
 	Tokens            []TokenEntry        `json:"tokens"`
@@ -80,9 +78,9 @@ type Vault struct {
 	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
 	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
 	History           []HistoryEntry      `json:"history"`
+	FailedAttempts    uint8               `json:"failed_attempts,omitempty"`
+	EmergencyMode     bool                `json:"emergency_mode,omitempty"`
 }
-
-// --- Crypto & File I/O ---
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
 	return EncryptVault(v, masterPassword)
@@ -94,7 +92,7 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	keys := DeriveKeys(masterPassword, salt)
+	keys := DeriveKeys(masterPassword, salt, 1)
 	defer Wipe(keys.EncryptionKey)
 	defer Wipe(keys.AuthKey)
 	defer Wipe(keys.Validator)
@@ -135,9 +133,9 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	return finalData, nil
 }
 
-func DecryptVault(data []byte, masterPassword string) (*Vault, error) {
+func DecryptVault(data []byte, masterPassword string, costMultiplier int) (*Vault, error) {
 	if len(data) > len(VaultHeader) && string(data[:len(VaultHeader)]) == VaultHeader {
-		return decryptNewVault(data, masterPassword)
+		return decryptNewVault(data, masterPassword, costMultiplier)
 	}
 	if len(data) < 16 {
 		return nil, errors.New("invalid vault data")
@@ -147,7 +145,7 @@ func DecryptVault(data []byte, masterPassword string) (*Vault, error) {
 	return decryptOldVault(ciphertext, masterPassword, salt)
 }
 
-func decryptNewVault(data []byte, masterPassword string) (*Vault, error) {
+func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*Vault, error) {
 	minLen := len(VaultHeader) + 1 + 16 + 32 + 12 + 32
 	if len(data) < minLen {
 		return nil, errors.New("vault file corrupted (too short)")
@@ -174,7 +172,7 @@ func decryptNewVault(data []byte, masterPassword string) (*Vault, error) {
 	ciphertext := rest[:len(rest)-32]
 	storedHMAC := rest[len(rest)-32:]
 
-	keys := DeriveKeys(masterPassword, salt)
+	keys := DeriveKeys(masterPassword, salt, costMultiplier)
 	defer Wipe(keys.EncryptionKey)
 	defer Wipe(keys.AuthKey)
 	defer Wipe(keys.Validator)
@@ -240,7 +238,7 @@ func EncryptData(plaintext []byte, password string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	keys := DeriveKeys(password, salt)
+	keys := DeriveKeys(password, salt, 1)
 	defer Wipe(keys.EncryptionKey)
 
 	block, err := aes.NewCipher(keys.EncryptionKey)
@@ -266,7 +264,7 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 	salt := data[:16]
 	ciphertext := data[16:]
 
-	keys := DeriveKeys(password, salt)
+	keys := DeriveKeys(password, salt, 1)
 	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err == nil {
 		gcm, err := cipher.NewGCM(block)
@@ -295,8 +293,6 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 	return gcm.Open(nil, nonce, ct, nil)
 }
 
-// --- CRUD Methods ---
-
 func (v *Vault) logHistory(action, category, identifier string) {
 	v.History = append(v.History, HistoryEntry{
 		Timestamp:  time.Now(),
@@ -306,7 +302,6 @@ func (v *Vault) logHistory(action, category, identifier string) {
 	})
 }
 
-// Password Entries
 func (v *Vault) AddEntry(account, username, password string) error {
 	for _, e := range v.Entries {
 		if e.Account == account {
@@ -338,7 +333,6 @@ func (v *Vault) DeleteEntry(account string) bool {
 	return false
 }
 
-// TOTP Entries
 func (v *Vault) AddTOTPEntry(account, secret string) error {
 	for _, e := range v.TOTPEntries {
 		if e.Account == account {
@@ -370,7 +364,6 @@ func (v *Vault) DeleteTOTPEntry(account string) bool {
 	return false
 }
 
-// Tokens
 func (v *Vault) AddToken(name, token, tType string) error {
 	for _, e := range v.Tokens {
 		if e.Name == name {
@@ -402,7 +395,6 @@ func (v *Vault) DeleteToken(name string) bool {
 	return false
 }
 
-// Secure Notes
 func (v *Vault) AddSecureNote(name, content string) error {
 	for _, e := range v.SecureNotes {
 		if e.Name == name {
@@ -434,7 +426,6 @@ func (v *Vault) DeleteSecureNote(name string) bool {
 	return false
 }
 
-// API Keys
 func (v *Vault) AddAPIKey(name, service, key string) error {
 	for _, e := range v.APIKeys {
 		if e.Name == name {
@@ -466,7 +457,6 @@ func (v *Vault) DeleteAPIKey(name string) bool {
 	return false
 }
 
-// SSH Keys
 func (v *Vault) AddSSHKey(name, privateKey string) error {
 	for _, e := range v.SSHKeys {
 		if e.Name == name {
@@ -498,7 +488,6 @@ func (v *Vault) DeleteSSHKey(name string) bool {
 	return false
 }
 
-// WiFi
 func (v *Vault) AddWiFi(ssid, password, security string) error {
 	for _, e := range v.WiFiCredentials {
 		if e.SSID == ssid {
@@ -530,7 +519,6 @@ func (v *Vault) DeleteWiFi(ssid string) bool {
 	return false
 }
 
-// Recovery Codes
 func (v *Vault) AddRecoveryCode(service string, codes []string) error {
 	for _, e := range v.RecoveryCodeItems {
 		if e.Service == service {
@@ -562,7 +550,6 @@ func (v *Vault) DeleteRecoveryCode(service string) bool {
 	return false
 }
 
-// Search
 type SearchResult struct {
 	Type       string
 	Identifier string
