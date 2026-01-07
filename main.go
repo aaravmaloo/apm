@@ -67,8 +67,7 @@ func main() {
 				break
 			}
 
-			// Initial encryption (Salt is generated inside EncryptVault)
-			vault := &src.Vault{} // Empty vault
+			vault := &src.Vault{}
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
 				fmt.Printf("Error encrypting vault: %v\n", err)
@@ -334,7 +333,6 @@ func main() {
 				return
 			}
 
-			// Case: args provided, use fuzzy search
 			query := args[0]
 			allResults := vault.SearchAll("")
 			var scoredResults []ScoredResult
@@ -351,7 +349,6 @@ func main() {
 				return
 			}
 
-			// Sort by score desc, then identifier asc
 			sort.Slice(scoredResults, func(i, j int) bool {
 				if scoredResults[i].Score == scoredResults[j].Score {
 					return scoredResults[i].Result.Identifier < scoredResults[j].Result.Identifier
@@ -901,7 +898,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			// Search targets
+
 			var targets []src.TOTPEntry
 			if len(args) == 0 || args[0] == "all" {
 				targets = vault.TOTPEntries
@@ -927,12 +924,12 @@ func main() {
 				return
 			}
 
-			fmt.Println("\x1b[?25lPress Ctrl+C to stop.") // Hide cursor
-			defer fmt.Print("\x1b[?25h")                  // Show cursor on exit
+			fmt.Println("\x1b[?25lPress Ctrl+C to stop.")
+			defer fmt.Print("\x1b[?25h")
 			for {
 				remaining := 30 - (time.Now().Unix() % 30)
 				fmt.Printf("\r\x1b[KUpdating in %ds... [", remaining)
-				// Bar
+
 				for i := 0; i < 30; i++ {
 					if i < int(remaining) {
 						fmt.Print("=")
@@ -1103,7 +1100,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 	if session, err := src.GetSession(); err == nil {
 		data, err := src.LoadVault(vaultPath)
 		if err == nil {
-			vault, err := src.DecryptVault(data, session.MasterPassword)
+			vault, err := src.DecryptVault(data, session.MasterPassword, 1)
 			if err == nil {
 				return session.MasterPassword, vault, session.ReadOnly, nil
 			}
@@ -1117,14 +1114,35 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 	}
 
 	for i := 0; i < 3; i++ {
+		localFailures := src.GetFailureCount()
+		costMultiplier := 1
+		if localFailures >= 6 {
+			costMultiplier = 4
+			time.Sleep(5 * time.Second)
+		}
+
 		fmt.Printf("Master Password (attempt %d/3): ", i+1)
 		pass, _ := readPassword()
 		fmt.Println()
 
-		vault, err := src.DecryptVault(data, pass)
+		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
+
+			if vault.EmergencyMode || localFailures >= 6 {
+				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
+			}
+			vault.FailedAttempts = 0
+			vault.EmergencyMode = false
+			src.ClearFailures()
+
+			updatedData, _ := src.EncryptVault(vault, pass)
+			src.SaveVault(vaultPath, updatedData)
+
 			return pass, vault, false, nil
 		}
+
+		src.TrackFailure()
+
 		fmt.Printf("Error: %v\n", err)
 	}
 
