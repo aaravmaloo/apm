@@ -1,6 +1,7 @@
 package apm
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -10,6 +11,13 @@ import (
 	"io"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/argon2"
+)
+
+const (
+	VaultHeader  = "APMVAULT"
+	VaultVersion = 1
 )
 
 type Entry struct {
@@ -51,15 +59,6 @@ type TokenEntry struct {
 	Type  string `json:"type"` // e.g., "GitHub", "PyPI", etc.
 }
 
-func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
-	ciphertext, err := EncryptVault(v, masterPassword)
-	if err != nil {
-		return nil, err
-	}
-
-	return append(v.Salt, ciphertext...), nil
-}
-
 type TOTPEntry struct {
 	Account string `json:"account"`
 	Secret  string `json:"secret"`
@@ -74,7 +73,7 @@ type HistoryEntry struct {
 }
 
 type Vault struct {
-	Salt              []byte              `json:"salt"`
+	// Salt is removed from struct as it is now part of the file header
 	Entries           []Entry             `json:"entries"`
 	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
 	Tokens            []TokenEntry        `json:"tokens"`
@@ -86,34 +85,167 @@ type Vault struct {
 	History           []HistoryEntry      `json:"history"`
 }
 
+func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
+	return EncryptVault(v, masterPassword)
+}
+
+// EncryptVault encrypts the vault with the new secure format:
+// Header (8) | Version (1) | Salt (16) | Validator (32) | IV (12) | Ciphertext (...) | HMAC (32)
+// Total Header Overhead: 8 + 1 + 16 + 32 + 12 = 69 bytes
+// Trailer: 32 bytes (HMAC)
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
+	// 1. Prepare JSON
 	plaintext, err := json.Marshal(vault)
 	if err != nil {
 		return nil, err
 	}
 
-	key := DeriveKey(masterPassword, vault.Salt)
-	block, err := aes.NewCipher(key)
+	// 2. Generate Salt & Derive Keys
+	salt, err := GenerateSalt()
 	if err != nil {
 		return nil, err
 	}
+	keys := DeriveKeys(masterPassword, salt)
+	defer Wipe(keys.EncryptionKey)
+	defer Wipe(keys.AuthKey)
+	defer Wipe(keys.Validator)
 
+	// 3. Encrypt
+	block, err := aes.NewCipher(keys.EncryptionKey)
+	if err != nil {
+		return nil, err
+	}
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
+	ciphertext := gcm.Seal(nil, nonce, plaintext, nil)
 
-	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
-	return ciphertext, nil
+	// 4. Construct Payload for HMAC
+	// Payload = Header + Version + Salt + Validator + IV + Ciphertext
+	var buffer bytes.Buffer
+	buffer.WriteString(VaultHeader)
+	buffer.WriteByte(VaultVersion)
+	buffer.Write(salt)
+	buffer.Write(keys.Validator)
+	buffer.Write(nonce)
+	buffer.Write(ciphertext)
+
+	payload := buffer.Bytes()
+
+	// 5. Calculate HMAC (Tamper Detection)
+	mac := CalculateHMAC(payload, keys.AuthKey)
+
+	// 6. Final Output: Payload + HMAC
+	return append(payload, mac...), nil
 }
 
-func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
-	key := DeriveKey(masterPassword, salt)
+// DecryptVault decrypts the vault table handling both new and old formats
+func DecryptVault(data []byte, masterPassword string) (*Vault, error) {
+	// Check for magic header to detect new format
+	if len(data) > len(VaultHeader) && string(data[:len(VaultHeader)]) == VaultHeader {
+		return decryptNewVault(data, masterPassword)
+	}
+	// Fallback to old format
+	return decryptOldVault(data, masterPassword)
+}
+
+func decryptNewVault(data []byte, masterPassword string) (*Vault, error) {
+	minLen := len(VaultHeader) + 1 + SaltSize + ValidatorSize + NonceSize + 32 // + HMAC(32)
+	if len(data) < minLen {
+		return nil, errors.New("corrupted file: too short")
+	}
+
+	// Parse pieces
+	offset := 0
+
+	// Header
+	header := string(data[offset : offset+len(VaultHeader)])
+	offset += len(VaultHeader)
+	if header != VaultHeader {
+		return nil, errors.New("invalid file header")
+	}
+
+	// Version
+	version := data[offset]
+	offset += 1
+	if version != VaultVersion {
+		return nil, fmt.Errorf("unsupported vault version: %d", version)
+	}
+
+	// Salt
+	salt := data[offset : offset+SaltSize]
+	offset += SaltSize
+
+	// Validator
+	storedValidator := data[offset : offset+ValidatorSize]
+	offset += ValidatorSize
+
+	// Derive Keys
+	keys := DeriveKeys(masterPassword, salt)
+	defer Wipe(keys.EncryptionKey)
+	defer Wipe(keys.AuthKey)
+	defer Wipe(keys.Validator)
+
+	// Verify Password (Constant Time)
+	// If this fails, it is definitely a "Wrong Password" error
+	if !VerifyPasswordValidator(keys.Validator, storedValidator) {
+		return nil, errors.New("wrong password")
+	}
+
+	// Split HMAC from the end
+	macOffset := len(data) - 32
+	payload := data[:macOffset]
+	storedHMAC := data[macOffset:]
+
+	// Verify HMAC (Tamper Detection)
+	if !VerifyHMAC(payload, storedHMAC, keys.AuthKey) {
+		return nil, errors.New("tampered file: integrity check failed")
+	}
+
+	// Extract IV and Ciphertext for decryption
+	nonce := data[offset : offset+NonceSize]
+	offset += NonceSize
+	ciphertext := data[offset:macOffset]
+
+	// Decrypt
+	block, err := aes.NewCipher(keys.EncryptionKey)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, errors.New("decryption failed")
+	}
+
+	var vault Vault
+	if err := json.Unmarshal(plaintext, &vault); err != nil {
+		return nil, err
+	}
+	return &vault, nil
+}
+
+// decryptOldVault handles the legacy JSON format
+func decryptOldVault(data []byte, masterPassword string) (*Vault, error) {
+	// Old format: [Salt (16)] [IV (12) + Ciphertext + Tag]
+	if len(data) < 16+12 {
+		return nil, errors.New("invalid legacy data")
+	}
+
+	salt := data[:16]
+	ciphertext := data[16:]
+
+	// Legacy key derivation: Argon2id, Time=1, Mem=256MB, Parallelism=4, KeyLen=32
+	key := argon2.IDKey([]byte(masterPassword), salt, 1, 256*1024, 4, 32)
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -126,20 +258,19 @@ func DecryptVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault
 
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return nil, errors.New("ciphertext too short")
+		return nil, errors.New("legacy ciphertext too short")
 	}
 
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	nonce, actualCiphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, actualCiphertext, nil)
 	if err != nil {
-		return nil, errors.New("decryption failed: incorrect password or corrupted data")
+		return nil, errors.New("legacy decryption failed: wrong password or corrupted data")
 	}
 
 	var vault Vault
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
 	}
-
 	return &vault, nil
 }
 
@@ -148,57 +279,49 @@ func EncryptData(plaintext []byte, password string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	keys := DeriveKeys(password, salt)
+	defer Wipe(keys.EncryptionKey)
 
-	key := DeriveKey(password, salt)
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
-
 	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
 	return append(salt, ciphertext...), nil
 }
 
 func DecryptData(data []byte, password string) ([]byte, error) {
 	if len(data) < 16 {
-		return nil, errors.New("invalid encrypted data: too short")
+		return nil, errors.New("invalid data")
 	}
 	salt := data[:16]
 	ciphertext := data[16:]
 
-	key := DeriveKey(password, salt)
-	block, err := aes.NewCipher(key)
+	keys := DeriveKeys(password, salt)
+	defer Wipe(keys.EncryptionKey)
+
+	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
-
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
 		return nil, errors.New("ciphertext too short")
 	}
-
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, errors.New("decryption failed: incorrect password or corrupted data")
-	}
-
-	return plaintext, nil
+	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
 func (v *Vault) EntryExistsWithOtherType(name, currentType string) bool {
