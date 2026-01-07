@@ -876,7 +876,7 @@ func main() {
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
 
-			fmt.Println("APM Alpha v5.1 (Stable Release )")
+			fmt.Println("APM Alpha v6 (Stable Release )")
 			fmt.Println(processedHomeName, "@apm")
 			fmt.Println("v5 -- better get and and edit commands")
 			fmt.Printf("Installed: %s\n", installDir)
@@ -885,8 +885,6 @@ func main() {
 			fmt.Println("Contact: aaravmaloo06@gmail.com")
 		},
 	}
-
-	// --- Restored Commands ---
 
 	var totpCmd = &cobra.Command{
 		Use:   "totp",
