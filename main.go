@@ -861,6 +861,31 @@ func main() {
 		},
 	}
 
+	var infoCmd = &cobra.Command{
+		Use:   "info",
+		Short: "Show information about APM",
+		Run: func(cmd *cobra.Command, args []string) {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Printf("Error getting home directory: %v\n", err)
+				return
+			}
+			homeName := filepath.Base(homeDir)
+			processedHomeName := strings.ToLower(strings.ReplaceAll(homeName, " ", ""))
+
+			exe, _ := os.Executable()
+			installDir := filepath.Dir(exe)
+
+			fmt.Println("APM Alpha v5.1 (Stable Release )")
+			fmt.Println(processedHomeName, "@apm")
+			fmt.Println("v5 -- better get and and edit commands")
+			fmt.Printf("Installed: %s\n", installDir)
+			fmt.Printf("Vault Path: %s\n", vaultPath)
+			fmt.Println("https://github.com/aaravmaloo/apm")
+			fmt.Println("Contact: aaravmaloo06@gmail.com")
+		},
+	}
+
 	// --- Restored Commands ---
 
 	var totpCmd = &cobra.Command{
@@ -1033,7 +1058,7 @@ func main() {
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, unlockCmd, readonlyCmd, lockCmd, totpCmd, importCmd, exportCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, unlockCmd, readonlyCmd, lockCmd, totpCmd, importCmd, exportCmd, infoCmd)
 	rootCmd.Execute()
 }
 
