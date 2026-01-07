@@ -12,14 +12,16 @@ import (
 
 type Session struct {
 	MasterPassword string    `json:"master_password"`
+	ReadOnly       bool      `json:"readonly"`
 	Expiry         time.Time `json:"expiry"`
 }
 
 var sessionFile = filepath.Join(os.TempDir(), "pm_session.json")
 
-func CreateSession(password string, duration time.Duration) error {
+func CreateSession(password string, duration time.Duration, readonly bool) error {
 	session := Session{
 		MasterPassword: password,
+		ReadOnly:       readonly,
 		Expiry:         time.Now().Add(duration),
 	}
 
@@ -31,6 +33,8 @@ func CreateSession(password string, duration time.Duration) error {
 	if err := os.WriteFile(sessionFile, data, 0600); err != nil {
 		return err
 	}
+
+	// Windows-specific hidden file attribute could be added here, but keeping it simple
 
 	go func() {
 		time.Sleep(duration)
@@ -46,10 +50,10 @@ func cleanupCmd(duration time.Duration) {
 	seconds := int(duration.Seconds())
 	var cmd *exec.Cmd
 	if filepath.Separator == '\\' {
-
+		// Windows
 		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
 	} else {
-
+		// Linux/Unix
 		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, sessionFile))
 	}
 
@@ -59,27 +63,27 @@ func cleanupCmd(duration time.Duration) {
 	}
 }
 
-func GetSession() (string, error) {
+func GetSession() (*Session, error) {
 	if _, err := os.Stat(sessionFile); os.IsNotExist(err) {
-		return "", errors.New("no active session")
+		return nil, errors.New("no active session")
 	}
 
 	data, err := os.ReadFile(sessionFile)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var session Session
 	if err := json.Unmarshal(data, &session); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if time.Now().After(session.Expiry) {
 		os.Remove(sessionFile)
-		return "", errors.New("session expired")
+		return nil, errors.New("session expired")
 	}
 
-	return session.MasterPassword, nil
+	return &session, nil
 }
 
 func KillSession() error {
