@@ -8,15 +8,17 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
 
-// Fixed Argon2id parameters for deterministic security
 const (
 	ArgonTime        = 3
-	ArgonMemory      = 128 * 1024 // 128 MB
+	ArgonMemory      = 128 * 1024
 	ArgonParallelism = 4
 	KeyLength        = 32
 )
@@ -27,10 +29,16 @@ type Keys struct {
 	Validator     []byte
 }
 
-// DeriveKeys generates all necessary keys from the master password and salt
-// We generate 96 bytes: 32 enc + 32 auth + 32 validator
-func DeriveKeys(password string, salt []byte) *Keys {
-	keyMaterial := argon2.IDKey([]byte(password), salt, ArgonTime, ArgonMemory, ArgonParallelism, 96)
+func DeriveKeys(password string, salt []byte, costMultiplier int) *Keys {
+	timeParam := uint32(ArgonTime)
+	memoryParam := uint32(ArgonMemory)
+
+	if costMultiplier > 1 {
+		timeParam *= uint32(costMultiplier)
+		memoryParam *= uint32(costMultiplier)
+	}
+
+	keyMaterial := argon2.IDKey([]byte(password), salt, timeParam, memoryParam, ArgonParallelism, 96)
 
 	keys := &Keys{
 		EncryptionKey: make([]byte, 32),
@@ -42,38 +50,32 @@ func DeriveKeys(password string, salt []byte) *Keys {
 	copy(keys.AuthKey, keyMaterial[32:64])
 	copy(keys.Validator, keyMaterial[64:96])
 
-	// Zero out the keyMaterial buffer immediately after copying (best effort)
 	Wipe(keyMaterial)
 
 	return keys
 }
 
-// DeriveLegacyKey supports the old format migration
 func DeriveLegacyKey(password string, salt []byte) []byte {
 	return argon2.IDKey([]byte(password), salt, 1, 256*1024, 4, 32)
 }
 
-// Wipe attempts to zero out a byte slice
 func Wipe(b []byte) {
 	for i := range b {
 		b[i] = 0
 	}
 }
 
-// CalculateHMAC computes the HMAC-SHA256 of the data using the AuthKey
 func CalculateHMAC(data, key []byte) []byte {
 	h := hmac.New(sha256.New, key)
 	h.Write(data)
 	return h.Sum(nil)
 }
 
-// VerifyHMAC checks if the data matches the provided signature (constant time)
 func VerifyHMAC(data, signature, key []byte) bool {
 	expectedMAC := CalculateHMAC(data, key)
 	return subtle.ConstantTimeCompare(signature, expectedMAC) == 1
 }
 
-// VerifyPasswordValidator checks if the derived validator matches the stored one (constant time)
 func VerifyPasswordValidator(derived, stored []byte) bool {
 	return subtle.ConstantTimeCompare(derived, stored) == 1
 }
@@ -138,4 +140,28 @@ func ValidateMasterPassword(password string) error {
 	}
 
 	return nil
+}
+
+func GetFailureCount() int {
+	exe, _ := os.Executable()
+	path := filepath.Join(filepath.Dir(exe), ".apm_lock")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+	count, _ := strconv.Atoi(strings.TrimSpace(string(data)))
+	return count
+}
+
+func TrackFailure() {
+	exe, _ := os.Executable()
+	path := filepath.Join(filepath.Dir(exe), ".apm_lock")
+	count := GetFailureCount()
+	os.WriteFile(path, []byte(strconv.Itoa(count+1)), 0600)
+}
+
+func ClearFailures() {
+	exe, _ := os.Executable()
+	path := filepath.Join(filepath.Dir(exe), ".apm_lock")
+	os.Remove(path)
 }
