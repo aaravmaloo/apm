@@ -438,16 +438,8 @@ func main() {
 
 	var editCmd = &cobra.Command{
 		Use:   "edit [name]",
-		Short: "Edit an existing entry",
+		Short: "Edit an existing entry interactively",
 		Run: func(cmd *cobra.Command, args []string) {
-			name := ""
-			if len(args) > 0 {
-				name = args[0]
-			} else {
-				fmt.Print("Edit Name/Account: ")
-				name = readInput()
-			}
-
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
@@ -458,52 +450,225 @@ func main() {
 				return
 			}
 
-			updated := false
-			if e, ok := vault.GetEntry(name); ok {
-				fmt.Printf("Editing Password Entry: %s\n", name)
-				fmt.Printf("New Account [%s]: ", e.Account)
-				newAcc := readInput()
-				if newAcc == "" {
-					newAcc = e.Account
-				}
-				fmt.Printf("New Username [%s]: ", e.Username)
-				newUser := readInput()
-				if newUser == "" {
-					newUser = e.Username
-				}
-				fmt.Print("New Password (blank to keep): ")
-				newPass, _ := readPassword()
-				fmt.Println()
-				if newPass == "" {
-					newPass = e.Password
-				}
-				vault.DeleteEntry(e.Account)
-				vault.AddEntry(newAcc, newUser, newPass)
-				updated = true
-			} else if t, ok := vault.GetTOTPEntry(name); ok {
-				fmt.Printf("Editing TOTP: %s\n", name)
-				fmt.Printf("New Secret (blank to keep): ")
-				s := readInput()
-				if s == "" {
-					s = t.Secret
-				}
-				vault.DeleteTOTPEntry(t.Account)
-				vault.AddTOTPEntry(t.Account, s)
-				updated = true
+			fmt.Println("Select type to edit:")
+			fmt.Println("1. Password")
+			fmt.Println("2. TOTP")
+			fmt.Println("3. Token")
+			fmt.Println("4. Secure Note")
+			fmt.Println("5. API Key")
+			fmt.Println("6. SSH Key")
+			fmt.Println("7. Wi-Fi Credentials")
+			fmt.Println("8. Recovery Codes")
+			fmt.Print("Selection (1-8): ")
+			choice := readInput()
+
+			identifier := ""
+			if len(args) > 0 {
+				identifier = args[0]
 			} else {
-				color.Red("Edit not fully supported for this type in this version, or entry not found.\n")
+				fmt.Print("Enter Name/Account to edit: ")
+				identifier = readInput()
+			}
+
+			updated := false
+			switch choice {
+			case "1":
+				if e, ok := vault.GetEntry(identifier); ok {
+					fmt.Printf("Editing Password: %s\n", identifier)
+					fmt.Printf("New Account [%s]: ", e.Account)
+					newAcc := readInput()
+					if newAcc == "" {
+						newAcc = e.Account
+					}
+					fmt.Printf("New Username [%s]: ", e.Username)
+					newUser := readInput()
+					if newUser == "" {
+						newUser = e.Username
+					}
+					fmt.Print("New Password (blank to keep): ")
+					newPass, _ := readPassword()
+					fmt.Println()
+					if newPass == "" {
+						newPass = e.Password
+					}
+					vault.DeleteEntry(e.Account)
+					vault.AddEntry(newAcc, newUser, newPass)
+					updated = true
+				}
+			case "2":
+				if e, ok := vault.GetTOTPEntry(identifier); ok {
+					fmt.Printf("Editing TOTP: %s\n", identifier)
+					fmt.Printf("New Account [%s]: ", e.Account)
+					newAcc := readInput()
+					if newAcc == "" {
+						newAcc = e.Account
+					}
+					fmt.Printf("New Secret [%s]: ", e.Secret)
+					newSec := readInput()
+					if newSec == "" {
+						newSec = e.Secret
+					}
+					vault.DeleteTOTPEntry(e.Account)
+					vault.AddTOTPEntry(newAcc, newSec)
+					updated = true
+				}
+			case "3":
+				if e, ok := vault.GetToken(identifier); ok {
+					fmt.Printf("Editing Token: %s\n", identifier)
+					fmt.Printf("New Name [%s]: ", e.Name)
+					newName := readInput()
+					if newName == "" {
+						newName = e.Name
+					}
+					fmt.Printf("New Token [%s]: ", e.Token)
+					newTok := readInput()
+					if newTok == "" {
+						newTok = e.Token
+					}
+					fmt.Printf("New Type [%s]: ", e.Type)
+					newType := readInput()
+					if newType == "" {
+						newType = e.Type
+					}
+					vault.DeleteToken(e.Name)
+					vault.AddToken(newName, newTok, newType)
+					updated = true
+				}
+			case "4":
+				if e, ok := vault.GetSecureNote(identifier); ok {
+					fmt.Printf("Editing Note: %s\n", identifier)
+					fmt.Printf("New Name [%s]: ", e.Name)
+					newName := readInput()
+					if newName == "" {
+						newName = e.Name
+					}
+					fmt.Println("New Content (end with empty line, blank to keep current):")
+					var contentLines []string
+					for {
+						line := readInput()
+						if line == "" {
+							break
+						}
+						contentLines = append(contentLines, line)
+					}
+					newContent := strings.Join(contentLines, "\n")
+					if newContent == "" {
+						newContent = e.Content
+					}
+					vault.DeleteSecureNote(e.Name)
+					vault.AddSecureNote(newName, newContent)
+					updated = true
+				}
+			case "5":
+				if e, ok := vault.GetAPIKey(identifier); ok {
+					fmt.Printf("Editing API Key: %s\n", identifier)
+					fmt.Printf("New Label [%s]: ", e.Name)
+					newName := readInput()
+					if newName == "" {
+						newName = e.Name
+					}
+					fmt.Printf("New Service [%s]: ", e.Service)
+					newSvc := readInput()
+					if newSvc == "" {
+						newSvc = e.Service
+					}
+					fmt.Printf("New Key [%s]: ", e.Key)
+					newKey := readInput()
+					if newKey == "" {
+						newKey = e.Key
+					}
+					vault.DeleteAPIKey(e.Name)
+					vault.AddAPIKey(newName, newSvc, newKey)
+					updated = true
+				}
+			case "6":
+				if e, ok := vault.GetSSHKey(identifier); ok {
+					fmt.Printf("Editing SSH Key: %s\n", identifier)
+					fmt.Printf("New Label [%s]: ", e.Name)
+					newName := readInput()
+					if newName == "" {
+						newName = e.Name
+					}
+					fmt.Println("Enter New Private Key (end with empty line, blank to keep current):")
+					var keyLines []string
+					for {
+						line := readInput()
+						if line == "" {
+							break
+						}
+						keyLines = append(keyLines, line)
+					}
+					newKey := strings.Join(keyLines, "\n")
+					if newKey == "" {
+						newKey = e.PrivateKey
+					}
+					vault.DeleteSSHKey(e.Name)
+					vault.AddSSHKey(newName, newKey)
+					updated = true
+				}
+			case "7":
+				if e, ok := vault.GetWiFi(identifier); ok {
+					fmt.Printf("Editing Wi-Fi: %s\n", identifier)
+					fmt.Printf("New SSID [%s]: ", e.SSID)
+					newSSID := readInput()
+					if newSSID == "" {
+						newSSID = e.SSID
+					}
+					fmt.Printf("New Password [%s]: ", e.Password)
+					newPass := readInput()
+					if newPass == "" {
+						newPass = e.Password
+					}
+					fmt.Printf("New Security [%s]: ", e.SecurityType)
+					newSec := readInput()
+					if newSec == "" {
+						newSec = e.SecurityType
+					}
+					vault.DeleteWiFi(e.SSID)
+					vault.AddWiFi(newSSID, newPass, newSec)
+					updated = true
+				}
+			case "8":
+				if e, ok := vault.GetRecoveryCode(identifier); ok {
+					fmt.Printf("Editing Recovery Codes: %s\n", identifier)
+					fmt.Printf("New Service [%s]: ", e.Service)
+					newSvc := readInput()
+					if newSvc == "" {
+						newSvc = e.Service
+					}
+					fmt.Println("Enter New Codes (one per line, end with empty line, blank to keep current):")
+					var codes []string
+					for {
+						line := readInput()
+						if line == "" {
+							break
+						}
+						codes = append(codes, line)
+					}
+					newCodes := codes
+					if len(newCodes) == 0 {
+						newCodes = e.Codes
+					}
+					vault.DeleteRecoveryCode(e.Service)
+					vault.AddRecoveryCode(newSvc, newCodes)
+					updated = true
+				}
+			}
+
+			if !updated {
+				color.Red("Entry not found or selection invalid.\n")
 				return
 			}
 
-			if updated {
-				data, err := src.EncryptVault(vault, masterPassword)
-				if err != nil {
-					fmt.Printf("Save error: %v\n", err)
-					return
-				}
-				src.SaveVault(vaultPath, data)
-				color.Green("Update successful.")
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				color.Red("Error encrypting vault: %v\n", err)
+				return
 			}
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+			}
+			color.Green("Entry updated successfully.\n")
 		},
 	}
 
@@ -890,12 +1055,7 @@ func copyToClipboardWithExpiry(text string) {
 		return
 	}
 	copyToClipboard(text)
-	color.Green("Copied to clipboard.")
-	color.Yellow("Warning: Clipboard will auto-clear in 20 seconds.")
-	go func() {
-		time.Sleep(20 * time.Second)
-		copyToClipboard("")
-	}()
+	color.Green("Secret copied to clipboard.")
 }
 
 func copyToClipboard(text string) {
