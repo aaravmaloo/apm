@@ -57,7 +57,6 @@ func ExportToCSV(vault *Vault, filename string) error {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	// Header
 	writer.Write([]string{"Type", "Account", "Username/Secret", "Password"})
 
 	for _, e := range vault.Entries {
@@ -170,7 +169,6 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 		return err
 	}
 
-	// If decryptPass is provided or file looks binary/short/encrypted
 	if decryptPass != "" {
 		decrypted, err := DecryptData(bytes, decryptPass)
 		if err == nil {
@@ -178,7 +176,6 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 		}
 	}
 
-	// Try standard format first
 	var data ExportData
 	if err := json.Unmarshal(bytes, &data); err == nil && (len(data.Entries) > 0 || len(data.TOTPEntries) > 0 || len(data.SecureNotes) > 0 || len(data.APIKeys) > 0 || len(data.SSHKeys) > 0 || len(data.WiFiCredentials) > 0 || len(data.RecoveryCodeItems) > 0) {
 		for _, e := range data.Entries {
@@ -208,31 +205,26 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 		return nil
 	}
 
-	// Fallback: Smart recursive search for keys
 	var raw interface{}
 	if err := json.Unmarshal(bytes, &raw); err != nil {
-		// If it directly failed and we haven't tried decryption yet, maybe it IS raw encrypted data
+
 		if decryptPass == "" {
 			return fmt.Errorf("failed to parse JSON. If this is an encrypted file, please provide the password")
 		}
 		return err
 	}
 
-	// Before searching, check if this is a wrapper for encrypted data (e.g., OneAuth or similar)
 	if m, ok := raw.(map[string]interface{}); ok && decryptPass != "" {
 		dataStr, _ := m["data"].(string)
 		saltStr, _ := m["enc_salt"].(string)
 		if dataStr != "" && saltStr != "" {
-			// Found data and salt. Try to combine them and decrypt using standard logic.
-			// This handles cases where salt and ciphertext are separated in the JSON.
+
 			cipherBytes, _ := DecodeBase64(dataStr)
 			if len(cipherBytes) > 0 {
 				combined := append([]byte(saltStr), cipherBytes...)
 				decrypted, err := DecryptData(combined, decryptPass)
 				if err == nil {
-					// Recursively call ImportFromJSON with the decrypted bytes
-					// We need to write to a temp file or modify ImportFromJSON to accept bytes?
-					// Let's just unmarshal the decrypted bytes directly here.
+
 					var innerData ExportData
 					if err := json.Unmarshal(decrypted, &innerData); err == nil && (len(innerData.Entries) > 0 || len(innerData.TOTPEntries) > 0 || len(innerData.SecureNotes) > 0 || len(innerData.APIKeys) > 0 || len(innerData.SSHKeys) > 0 || len(innerData.WiFiCredentials) > 0 || len(innerData.RecoveryCodeItems) > 0) {
 						for _, e := range innerData.Entries {
@@ -261,7 +253,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 						}
 						return nil
 					}
-					// If standard unmarshal fails, set bytes to decrypted and continue to smart search
+
 					bytes = decrypted
 					json.Unmarshal(bytes, &raw)
 				}
@@ -274,7 +266,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	search = func(v interface{}) {
 		switch m := v.(type) {
 		case map[string]interface{}:
-			// Check if this map looks like a TOTP or Password entry
+
 			acc, _ := m["account"].(string)
 			if acc == "" {
 				acc, _ = m["account_name"].(string)
@@ -310,8 +302,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 				vault.AddEntry(acc, user, pass)
 				found = true
 			} else if otpauth != "" && strings.HasPrefix(otpauth, "otpauth://") {
-				// We can handle this by feeding it to a temporary string parser logic or just inline it
-				// For now, let's just use a dummy logic or skip
+
 			}
 
 			for _, val := range m {
@@ -327,7 +318,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	search(raw)
 
 	if !found {
-		// Last effort: Look for otpauth URIs as raw strings in the JSON
+
 		content := string(bytes)
 		parts := strings.Split(content, "\"")
 		for _, s := range parts {
@@ -372,7 +363,6 @@ func ImportFromCSV(vault *Vault, filename string) error {
 		return nil
 	}
 
-	// Potential header mapping
 	colMap := make(map[string]int)
 	headerChecked := false
 
@@ -396,11 +386,9 @@ func ImportFromCSV(vault *Vault, filename string) error {
 			continue
 		}
 
-		// Try mapped columns first
 		if accIdx, ok := colMap["account"]; ok && accIdx < len(record) {
 			acc := strings.TrimSpace(record[accIdx])
 
-			// Is it a password entry or TOTP?
 			passIdx, hasPass := colMap["password"]
 			userIdx, hasUser := colMap["username"]
 			secIdx, hasSec := colMap["secret"]
@@ -417,7 +405,6 @@ func ImportFromCSV(vault *Vault, filename string) error {
 			continue
 		}
 
-		// Legacy/Fallback: Expecting: Type, Account, Username/Secret, [Password]
 		if len(record) < 3 {
 			continue
 		}
@@ -467,7 +454,7 @@ func ImportFromTXT(vault *Vault, filename string) error {
 		}
 
 		if strings.Contains(line, "Password:") {
-			// Account: ... | Username: ... | Password: ...
+
 			parts := strings.Split(line, "|")
 			var acc, user, pass string
 			for _, p := range parts {
@@ -484,7 +471,7 @@ func ImportFromTXT(vault *Vault, filename string) error {
 				vault.AddEntry(strings.TrimSpace(acc), strings.TrimSpace(user), strings.TrimSpace(pass))
 			}
 		} else if strings.Contains(line, "Secret:") {
-			// Account: ... | Secret: ...
+
 			parts := strings.Split(line, "|")
 			var acc, secret string
 			for _, p := range parts {
