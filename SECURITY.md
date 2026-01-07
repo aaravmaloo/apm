@@ -6,25 +6,29 @@ The APM vault uses industry-standard, high-performance cryptographic primitives 
 
 When you enter your master password, it isn't used directly for encryption. Instead, it passes through **Argon2id**, the winner of the Password Hashing Competition.
 
-- **Resistant to GPU/ASIC Cracking**: Unlike older methods like SHA-256 or PBKDF2, Argon2 is "memory-hard." It requires a significant amount of RAM (64MB in our current config) to compute. This makes it extremely expensive for hackers to use GPUs or specialized hardware to brute-force your password.
-- **Argon2id Variant**: This specific variant provides the best of both worlds: resistance to side-channel attacks and resistance to GPU cracking.
+- **Resistant to GPU/ASIC Cracking**: Unlike older methods like SHA-256 or PBKDF2, Argon2 is "memory-hard." APM is configured to use **128MB** of RAM, 3 iterations, and 4 threads to compute the keys. This makes it prohibitively expensive to brute-force using specialized hardware.
+- **Three-Layer Derivation**: APM derives 96 bytes of key material from your password, splitting it into three distinct 32-byte keys:
+  1. **Encryption Key**: For AES-256-GCM data encryption.
+  2. **Authentication Key**: For HMAC-SHA256 integrity verification.
+  3. **Validator Key**: For constant-time password verification without attempting decryption.
 
 ## 2. AES-256-GCM: The Gold Standard for Encryption
 
-APM uses **AES-256** in **GCM (Galois/Counter Mode)**. This is applied in a multi-layer encryption scheme to protect your data.
+APM uses **AES-256** in **GCM (Galois/Counter Mode)**. This provides both confidentiality and built-in authentication.
 
-- **256-bit Key**: The key is 256 bits long. Brute-forcing such a key would take billions of years with all the computing power on Earth.
-- **Authenticated Encryption (GCM)**: GCM doesn't just encrypt the data; it also creates a "tag" (MAC). If even a single bit of the encrypted file is changed, the decryption will fail immediately. This prevents "bit-flipping" attacks where an attacker tries to modify your data without knowing the password.
+- **256-bit Key**: Resistance to all known brute-force attacks.
+- **Authenticated Encryption**: GCM ensures that data hasn't been modified. APM further strengthens this with an **Encrypt-then-MAC** approach using a separate HMAC-SHA256 signature over the entire vault file.
 
 ## 3. High-Entropy Salts and Nonces
 
-- **Random 16-byte Salt**: Every vault has a unique, randomly generated salt. Even if two people use the exact same master password, their encrypted vaults will look completely different, preventing "Rainbow Table" attacks.
-- **Unique Nonce for Every Save**: Every time you save your vault, a new random **nonce** (Number used ONCE) is generated. This ensures that the same data encrypted twice results in different ciphertext.
+- **Random 16-byte Salt**: Every vault has a unique, randomly generated salt. Even if two people use the exact same master password, their encrypted vaults will look completely different.
+- **Unique Nonce for Every Save**: Every time you save your vault, a new random **nonce** is generated. This ensures that the same data encrypted twice results in different ciphertext.
 
-## 4. Zero-Knowledge and Security on Disk
+## 4. Zero-Knowledge and Secure Handling
 
-- **0600 Permissions**: On Linux and Windows, the vault and session files are saved with restricted permissions (Windows uses ACLs, but Go's `WriteFile` with `0600` maps to restricted access where possible).
-- **No Master Password Storage**: Your master password is never saved to disk in plaintext. It only stays in memory or in a temporary session file during an active "sudo" session (using `pm_session.json` which is also permission-restricted and automatically deleted).
+- **Vault Structure**: The vault is identified by a magic header `APMVAULT` and includes versioning for smooth migrations.
+- **Memory Security**: Sensitive keys and buffers are wiped (`Wipe()`) from memory as soon as they are no longer needed.
+- **No Master Password Storage**: Your master password is never saved to disk. It exists only in volatile memory or within a permission-restricted session file if using `pm unlock`.
 
 ## The Brute Force Reality Check
 

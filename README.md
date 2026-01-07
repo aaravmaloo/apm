@@ -7,7 +7,8 @@ APM is a secure, modern, and transparent CLI password manager built for professi
 - **Robust Cryptography**: Uses **Argon2id** for key derivation, **AES-256-GCM** for encryption, and **HMAC-SHA256** for tamper detection.
 - **Deterministic Security**: Locked-down crypto parameters ensure consistent, verifiable security.
 - **Tamper Evident**: Relentless integrity checks prevent corrupted or malicious file modifications.
-- **Fuzzy Search**: Find what you need instantly with smart, ranked search (`apm get git`).
+- **Improved Get Flow**: Use interactive type selection (`pm get`) or instant fuzzy search (`pm get <query>`).
+- **Diverse Secret Types**: Support for Passwords, TOTP, Tokens (API/Service), Secure Notes, API Keys, SSH Keys, Wi-Fi, and Recovery Codes.
 - **Health Scanning**: Offline analysis of your password strength, reuse, and entropy (`apm scan`).
 - **Audit Logging**: Secure, encrypted history of all vault access (`apm audit`).
 - **Clipboard Hygiene**: Auto-clears your clipboard after 20 seconds to prevent leaks.
@@ -27,14 +28,22 @@ Add passwords, TOTP secrets, API keys, SSH keys, notes, and more.
 pm add
 ```
 
-### Retrieving Entries
-Search for entries using fuzzy matching.
+Search and retrieve entries.
+
+**Interactive Mode**:
+Run without arguments to select by type:
 ```bash
-pm get <query>
-# Example:
+pm get
+```
+This shows a menu (Password, TOTP, Token, etc.) and lists all available entries for that category.
+
+**Fuzzy Search**:
+Provide a query to search across all entries instantly:
+```bash
 pm get git      # Matches 'github', 'digitalocean', 'git'
 pm get --show-pass github
 ```
+If only one match is found, it is displayed immediately. Otherwise, a ranked list is shown for selection.
 
 ### OTP Generation
 Generate TOTP codes live.
