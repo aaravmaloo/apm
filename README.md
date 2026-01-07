@@ -1,109 +1,94 @@
-# Go Password Manager (APM)
+# APM - Advanced Password Manager
 
-APM is a secure, simple, and fast command-line password manager written in Go.
+APM is a secure, modern, and transparent CLI password manager built for professionals who value cryptography and usability.
 
-## Features
+## Core Features
 
-- **Multi-Type Vault**: Store Passwords, TOTPs, API Keys, SSH Keys, Wi-Fi Credentials, Recovery Codes, and Secure Notes.
-- **Interactive CLI**: Easy-to-use interactive prompts for adding and editing entries.
-- **Encryption**: Uses AES-256-GCM and Argon2id for state-of-the-art security.
-- **Session Management**: Keep your vault unlocked temporarily with `pm mode open`.
-- **Emergency Lockdown**: Instantly secure your data with `pm mode lock` or `pm mode compromise`.
-- **Import/Export**: Move your data easily with JSON, CSV, and TXT support.
+- **Robust Cryptography**: Uses **Argon2id** for key derivation, **AES-256-GCM** for encryption, and **HMAC-SHA256** for tamper detection.
+- **Deterministic Security**: Locked-down crypto parameters ensure consistent, verifiable security.
+- **Tamper Evident**: Relentless integrity checks prevent corrupted or malicious file modifications.
+- **Fuzzy Search**: Find what you need instantly with smart, ranked search (`apm get git`).
+- **Health Scanning**: Offline analysis of your password strength, reuse, and entropy (`apm scan`).
+- **Audit Logging**: Secure, encrypted history of all vault access (`apm audit`).
+- **Clipboard Hygiene**: Auto-clears your clipboard after 20 seconds to prevent leaks.
+- **Read-Only Mode**: Open your vault safely in untrusted environments (`apm open 5 --readonly`).
 
-## Installation
+## Getting Started
 
-### Windows
-1. Download `pm.exe`.
-2. (Optional) Add the directory containing `pm.exe` to your system `PATH`.
-3. Initialize your vault:
-   ```powershell
-   pm init
-   ```
-
-### Build from Source
-```bash
-go build -o pm .
-```
-
-## Usage
-
-### 1. Initialize
+### Initialization
+Initialize a new vault. You will be prompted to create a strong Master Password.
 ```bash
 pm init
 ```
-Sets up your encrypted vault with a Master Password.
 
-### 2. Add Entry
+### Adding Entries
+Add passwords, TOTP secrets, API keys, SSH keys, notes, and more.
 ```bash
 pm add
 ```
-Launch an interactive prompt to select the entry type and fill in details.
 
-### 3. Retrieve Entry
+### Retrieving Entries
+Search for entries using fuzzy matching.
 ```bash
-pm get [name]
-```
-Retrieves an entry. Passwords, Tokens, API Keys, and SSH Private Keys are automatically copied to your clipboard.
-- **Show Secret**: Use `--show-pass` to display the secret in the console:
-  ```bash
-  pm get google.com --show-pass
-  ```
-
-### 4. Edit Entry
-```bash
-pm edit [name]
-```
-Interactively edit all fields of an entry, including its name/identifier.
-
-### 5. Delete Entry
-```bash
-pm del [name]
-```
-Permanently remove an entry from the vault.
-
-### 6. Vault History
-```bash
-pm vhistory
-```
-View a chronological log of all changes (ADD, UPDATE, DELETE) made to your vault.
-
-### 7. Operational Modes
-- **Open Session**: Unlock your vault for a specified duration (to avoid re-entering your master password).
-  ```bash
-  pm mode open 15
-  ```
-- **Lock**: Immediately terminates any active session.
-  ```bash
-  pm mode lock
-  ```
-- **Compromise (Emergency)**: Securely erase the vault file and all traces from the disk. **IRREVERSIBLE.**
-  ```bash
-  pm mode compromise
-  ```
-
-### 8. Import & Export
-- **Export**:
-  ```bash
-  pm export -o my_backup.json
-  ```
-- **Import**:
-  ```bash
-  pm import my_backup.json
-  ```
-
-### 9. Generation
-```bash
-pm gen --length 32
+pm get <query>
+# Example:
+pm get git      # Matches 'github', 'digitalocean', 'git'
+pm get --show-pass github
 ```
 
-## Security Design
-- **Key Derivation**: Argon2id ensures your master password remains resilient to brute-force attacks.
-- **Encryption**: AES-256-GCM provides top-tier confidentiality and integrity.
-- **Secure Erase**: The `compromise` command overwrites the vault file with random data multiple times before deletion.
-
-## Version Info
+### OTP Generation
+Generate TOTP codes live.
 ```bash
-pm info
+pm totp show <account>
+# or show all
+pm totp show all
 ```
-Shows installation paths and project information.
+
+## Security Commands
+
+### Crypto Info (`cinfo`)
+View the exact cryptographic parameters used by APM.
+```bash
+pm cinfo
+```
+
+### Health Scan (`scan`)
+Run a local, offline analysis of your vault to find weak or reused passwords.
+```bash
+pm scan
+```
+
+### Audit Log (`audit`)
+View the encrypted access history of your vault.
+```bash
+pm audit
+```
+
+## Advanced Usage
+
+### Sessions (`open` / `unlock`)
+Unlock the vault for a specific duration to avoid repeated password prompts.
+```bash
+pm open 15           # Unlock for 15 minutes
+pm open 15 --readonly # Unlock in Read-Only mode (safety)
+```
+
+### Import / Export
+Move your data in and out securely.
+```bash
+pm export --output backup.json --encrypt-pass <backup-password>
+pm import backup.json --encrypt-pass <backup-password>
+```
+
+## Technical Details
+
+**Vault Format (v1)**:
+`Header (8B) | Version (1B) | Salt (16B) | Validator (32B) | IV (12B) | AES-GCM Ciphertext | HMAC (32B)`
+
+- **KDF**: Argon2id (Time=3, Memory=128MB, Parallelism=4)
+- **Encryption**: AES-256-GCM
+- **Integrity**: HMAC-SHA256 (Encrypt-then-MAC)
+- **Validation**: Constant-time key validation (Hash-based)
+
+## Zero Trust
+APM never connects to the network. All operations are local. Memory buffers are wiped after use.
