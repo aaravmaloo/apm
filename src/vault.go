@@ -67,6 +67,30 @@ type HistoryEntry struct {
 	Identifier string    `json:"identifier"`
 }
 
+type CertificateEntry struct {
+	Label      string    `json:"label"`
+	CertData   string    `json:"cert_data"`
+	PrivateKey string    `json:"private_key"`
+	Issuer     string    `json:"issuer"`
+	Expiry     time.Time `json:"expiry"`
+}
+
+type BankingEntry struct {
+	Label    string `json:"label"`
+	Type     string `json:"type"` // "Card", "IBAN", "SWIFT"
+	Details  string `json:"details"`
+	CVV      string `json:"cvv,omitempty"`
+	Expiry   string `json:"expiry,omitempty"`
+	Redacted bool   `json:"redacted,omitempty"`
+}
+
+type DocumentEntry struct {
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Password string `json:"password"` // Secondary password for the document
+}
+
 type Vault struct {
 	Salt              []byte              `json:"salt"`
 	Entries           []Entry             `json:"entries"`
@@ -77,6 +101,9 @@ type Vault struct {
 	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
 	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
 	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
+	Certificates      []CertificateEntry  `json:"certificates"`
+	BankingItems      []BankingEntry      `json:"banking_items"`
+	Documents         []DocumentEntry     `json:"documents"`
 	History           []HistoryEntry      `json:"history"`
 	FailedAttempts    uint8               `json:"failed_attempts,omitempty"`
 	EmergencyMode     bool                `json:"emergency_mode,omitempty"`
@@ -550,6 +577,99 @@ func (v *Vault) DeleteRecoveryCode(service string) bool {
 	return false
 }
 
+func (v *Vault) AddCertificate(label, cert, key, issuer string, expiry time.Time) error {
+	for _, e := range v.Certificates {
+		if e.Label == label {
+			return errors.New("certificate already exists")
+		}
+	}
+	v.Certificates = append(v.Certificates, CertificateEntry{Label: label, CertData: cert, PrivateKey: key, Issuer: issuer, Expiry: expiry})
+	v.logHistory("ADD", "CERTIFICATE", label)
+	return nil
+}
+
+func (v *Vault) GetCertificate(label string) (CertificateEntry, bool) {
+	for _, e := range v.Certificates {
+		if e.Label == label {
+			return e, true
+		}
+	}
+	return CertificateEntry{}, false
+}
+
+func (v *Vault) DeleteCertificate(label string) bool {
+	for i, e := range v.Certificates {
+		if e.Label == label {
+			v.Certificates = append(v.Certificates[:i], v.Certificates[i+1:]...)
+			v.logHistory("DEL", "CERTIFICATE", label)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddBankingItem(label, bType, details, cvv, expiry string) error {
+	for _, e := range v.BankingItems {
+		if e.Label == label {
+			return errors.New("banking item already exists")
+		}
+	}
+	v.BankingItems = append(v.BankingItems, BankingEntry{Label: label, Type: bType, Details: details, CVV: cvv, Expiry: expiry})
+	v.logHistory("ADD", "BANKING", label)
+	return nil
+}
+
+func (v *Vault) GetBankingItem(label string) (BankingEntry, bool) {
+	for _, e := range v.BankingItems {
+		if e.Label == label {
+			return e, true
+		}
+	}
+	return BankingEntry{}, false
+}
+
+func (v *Vault) DeleteBankingItem(label string) bool {
+	for i, e := range v.BankingItems {
+		if e.Label == label {
+			v.BankingItems = append(v.BankingItems[:i], v.BankingItems[i+1:]...)
+			v.logHistory("DEL", "BANKING", label)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddDocument(name, fileName string, content []byte, password string) error {
+	for _, e := range v.Documents {
+		if e.Name == name {
+			return errors.New("document already exists")
+		}
+	}
+	v.Documents = append(v.Documents, DocumentEntry{Name: name, FileName: fileName, Content: content, Password: password})
+	v.logHistory("ADD", "DOCUMENT", name)
+	return nil
+}
+
+func (v *Vault) GetDocument(name string) (DocumentEntry, bool) {
+	for _, e := range v.Documents {
+		if e.Name == name {
+			return e, true
+		}
+	}
+	return DocumentEntry{}, false
+}
+
+func (v *Vault) DeleteDocument(name string) bool {
+	for i, e := range v.Documents {
+		if e.Name == name {
+			v.Documents = append(v.Documents[:i], v.Documents[i+1:]...)
+			v.logHistory("DEL", "DOCUMENT", name)
+			return true
+		}
+	}
+	return false
+}
+
 type SearchResult struct {
 	Type       string
 	Identifier string
@@ -598,6 +718,21 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 	for _, e := range v.RecoveryCodeItems {
 		if query == "" || strings.Contains(strings.ToLower(e.Service), query) {
 			results = append(results, SearchResult{"Recovery Codes", e.Service, e})
+		}
+	}
+	for _, e := range v.Certificates {
+		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
+			results = append(results, SearchResult{"Certificate", e.Label, e})
+		}
+	}
+	for _, e := range v.BankingItems {
+		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
+			results = append(results, SearchResult{"Banking", e.Label, e})
+		}
+	}
+	for _, e := range v.Documents {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Document", e.Name, e})
 		}
 	}
 	return results
