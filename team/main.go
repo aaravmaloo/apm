@@ -2,7 +2,11 @@ package main
 
 import (
 	"bufio"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha1"
+	"encoding/base32"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -799,7 +803,7 @@ func main() {
 		Use:   "info",
 		Short: "Display organization information",
 		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
+			_, err := GetSession()
 			if err != nil {
 				color.Red("No active session.\n")
 				return
@@ -1048,11 +1052,26 @@ func generatePassword(length int) string {
 }
 
 func generateTOTP(secret string) string {
-	// Simple TOTP implementation (30-second window)
-	timeCounter := time.Now().Unix() / 30
+	secret = strings.ToUpper(strings.ReplaceAll(secret, " ", ""))
+	key, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(secret)
+	if err != nil {
+		return "INVALID SECRET"
+	}
 
-	// This is a simplified version - in production, use a proper TOTP library
-	// For now, return a placeholder
-	hash := fmt.Sprintf("%06d", (timeCounter*7919)%1000000)
-	return hash
+	timestamp := time.Now().Unix() / 30
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(timestamp))
+
+	h := hmac.New(sha1.New, key)
+	h.Write(buf)
+	sum := h.Sum(nil)
+
+	offset := sum[len(sum)-1] & 0xf
+	value := int64(((int(sum[offset]) & 0x7f) << 24) |
+		((int(sum[offset+1]) & 0xff) << 16) |
+		((int(sum[offset+2]) & 0xff) << 8) |
+		(int(sum[offset+3]) & 0xff))
+
+	l6 := value % 1000000
+	return fmt.Sprintf("%06d", l6)
 }
