@@ -4,7 +4,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -85,55 +84,6 @@ type BankingEntry struct {
 	Redacted bool   `json:"redacted,omitempty"`
 }
 
-type Role string
-
-const (
-	RoleAdmin     Role = "ADMIN"
-	RoleManager   Role = "MANAGER"
-	RoleUser      Role = "USER"
-	RoleSecurity  Role = "SECURITY"
-	RoleOperator  Role = "OPERATOR"
-	RoleAuditor   Role = "AUDITOR"
-	RoleTemporary Role = "TEMPORARY"
-	RoleService   Role = "SERVICE"
-)
-
-type TeamUser struct {
-	ID                 string            `json:"id"`
-	Username           string            `json:"username"`
-	Role               Role              `json:"role"`
-	ActiveDepartmentID string            `json:"active_department_id"`
-	WrappedKeys        map[string][]byte `json:"wrapped_keys"`
-	Expiration         *time.Time        `json:"expiration,omitempty"`
-}
-
-type TeamAuditEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	User      string    `json:"user"`
-	Action    string    `json:"action"`
-	Details   string    `json:"details"`
-	PrevHash  []byte    `json:"prev_hash"`
-	Hash      []byte    `json:"hash"`
-}
-
-type Department struct {
-	ID           string            `json:"id"`
-	Name         string            `json:"name"`
-	EncryptedKey []byte            `json:"encrypted_key"`
-	Entries      []Entry           `json:"entries"`
-	TOTP         []TOTPEntry       `json:"totp"`
-	Tokens       []TokenEntry      `json:"tokens"`
-	Notes        []SecureNoteEntry `json:"notes"`
-}
-
-type TeamVault struct {
-	OrganizationID string           `json:"org_id"`
-	Departments    []Department     `json:"departments"`
-	Users          []TeamUser       `json:"users"`
-	AuditTrail     []TeamAuditEntry `json:"audit_trail"`
-	Salt           []byte           `json:"salt"`
-}
-
 type DocumentEntry struct {
 	Name     string `json:"name"`
 	FileName string `json:"file_name"`
@@ -161,91 +111,6 @@ type Vault struct {
 	CloudToken        []byte              `json:"cloud_token,omitempty"`
 	FailedAttempts    uint8               `json:"failed_attempts,omitempty"`
 	EmergencyMode     bool                `json:"emergency_mode,omitempty"`
-}
-
-func GenerateRandomKey() ([]byte, error) {
-	k := make([]byte, 32)
-	if _, err := rand.Read(k); err != nil {
-		return nil, err
-	}
-	return k, nil
-}
-
-func (tv *TeamVault) AddAuditEntry(user, action, details string) error {
-	var prevHash []byte
-	if len(tv.AuditTrail) > 0 {
-		prevHash = tv.AuditTrail[len(tv.AuditTrail)-1].Hash
-	}
-
-	entry := TeamAuditEntry{
-		Timestamp: time.Now(),
-		User:      user,
-		Action:    action,
-		Details:   details,
-		PrevHash:  prevHash,
-	}
-
-	h := sha256.New()
-	h.Write([]byte(entry.Timestamp.String()))
-	h.Write([]byte(entry.User))
-	h.Write([]byte(entry.Action))
-	h.Write([]byte(entry.Details))
-	h.Write(entry.PrevHash)
-	entry.Hash = h.Sum(nil)
-
-	tv.AuditTrail = append(tv.AuditTrail, entry)
-	return nil
-}
-
-func WrapKey(key, secret []byte) ([]byte, error) {
-	block, err := aes.NewCipher(secret)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-	return gcm.Seal(nonce, nonce, key, nil), nil
-}
-
-func UnwrapKey(wrappedKey, secret []byte) ([]byte, error) {
-	block, err := aes.NewCipher(secret)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonceSize := gcm.NonceSize()
-	if len(wrappedKey) < nonceSize {
-		return nil, errors.New("invalid wrapped key")
-	}
-	nonce, ct := wrappedKey[:nonceSize], wrappedKey[nonceSize:]
-	return gcm.Open(nil, nonce, ct, nil)
-}
-
-func (r Role) HasPermission(action string) bool {
-	switch r {
-	case RoleAdmin:
-		return true
-	case RoleManager:
-		return action != "DEPT_CREATE" && action != "DEPT_DELETE" && action != "USER_PROMOTE"
-	case RoleUser, RoleTemporary:
-		return action == "VAULT_GET" || action == "WHOAMI"
-	case RoleSecurity:
-		return action == "AUDIT_LOG" || action == "WHOAMI"
-	case RoleAuditor:
-		return action == "VAULT_GET_REDACTED" || action == "WHOAMI"
-	case RoleOperator:
-		return action == "VAULT_GET" || action == "VAULT_EDIT" || action == "WHOAMI"
-	}
-	return false
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
