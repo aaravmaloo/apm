@@ -105,6 +105,7 @@ type Vault struct {
 	BankingItems      []BankingEntry      `json:"banking_items"`
 	Documents         []DocumentEntry     `json:"documents"`
 	History           []HistoryEntry      `json:"history"`
+	RetrievalKey      string              `json:"retrieval_key,omitempty"`
 	FailedAttempts    uint8               `json:"failed_attempts,omitempty"`
 	EmergencyMode     bool                `json:"emergency_mode,omitempty"`
 }
