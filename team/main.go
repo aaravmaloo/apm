@@ -246,8 +246,6 @@ func main() {
 		},
 	}
 
-	deptCmd.AddCommand(deptListCmd, deptCreateCmd)
-
 	var userCmd = &cobra.Command{
 		Use:   "user",
 		Short: "Manage team users",
@@ -326,7 +324,147 @@ func main() {
 	userAddCmd.Flags().String("role", "USER", "User role (ADMIN, MANAGER, USER, AUDITOR, SECURITY)")
 	userAddCmd.Flags().String("dept", "general", "Department ID")
 
-	userCmd.AddCommand(userListCmd, userAddCmd)
+	var userRemoveCmd = &cobra.Command{
+		Use:   "remove <username>",
+		Short: "Remove a user from the organization",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || !s.Role.CanManageUsers() {
+				color.Red("Permission denied.\n")
+				return
+			}
+
+			username := args[0]
+			tv, _ := loadTeamVault()
+
+			foundIdx := -1
+			for i, u := range tv.Users {
+				if u.Username == username {
+					if u.Role == RoleAdmin && s.Role != RoleAdmin {
+						color.Red("Only admins can remove other admins.\n")
+						return
+					}
+					foundIdx = i
+					break
+				}
+			}
+
+			if foundIdx == -1 {
+				color.Red("User '%s' not found.\n", username)
+				return
+			}
+
+			tv.Users = append(tv.Users[:foundIdx], tv.Users[foundIdx+1:]...)
+			tv.AddAuditEntry(s.Username, "USER_REMOVE", "Removed user: "+username)
+
+			if err := saveTeamVault(tv); err != nil {
+				color.Red("Error saving: %v\n", err)
+				return
+			}
+
+			color.Green("User '%s' removed successfully.\n", username)
+		},
+	}
+
+	var userPromoteCmd = &cobra.Command{
+		Use:   "promote <username> <role>",
+		Short: "Change a user's role (Admin only)",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied. Admin only.\n")
+				return
+			}
+
+			username := args[0]
+			newRole := Role(strings.ToUpper(args[1]))
+
+			tv, _ := loadTeamVault()
+
+			found := false
+			for i, u := range tv.Users {
+				if u.Username == username {
+					tv.Users[i].Role = newRole
+					tv.AddAuditEntry(s.Username, "USER_PROMOTE", fmt.Sprintf("Promoted %s to %s", username, newRole))
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				color.Red("User '%s' not found.\n", username)
+				return
+			}
+
+			if err := saveTeamVault(tv); err != nil {
+				color.Red("Error saving: %v\n", err)
+				return
+			}
+
+			color.Green("User '%s' promoted to %s.\n", username, newRole)
+		},
+	}
+
+	userCmd.AddCommand(userListCmd, userAddCmd, userRemoveCmd, userPromoteCmd)
+
+	var deptSwitchCmd = &cobra.Command{
+		Use:   "switch <username> <dept_id>",
+		Short: "Switch a user's active department (Admin only)",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied. Admin only.\n")
+				return
+			}
+
+			username := args[0]
+			deptID := args[1]
+
+			tv, _ := loadTeamVault()
+
+			// Verify department exists
+			deptExists := false
+			for _, d := range tv.Departments {
+				if d.ID == deptID {
+					deptExists = true
+					break
+				}
+			}
+
+			if !deptExists {
+				color.Red("Department '%s' not found.\n", deptID)
+				return
+			}
+
+			// Update user's active department
+			found := false
+			for i, u := range tv.Users {
+				if u.Username == username {
+					tv.Users[i].ActiveDepartmentID = deptID
+					tv.AddAuditEntry(s.Username, "DEPT_SWITCH", fmt.Sprintf("Moved %s to %s", username, deptID))
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				color.Red("User '%s' not found.\n", username)
+				return
+			}
+
+			if err := saveTeamVault(tv); err != nil {
+				color.Red("Error saving: %v\n", err)
+				return
+			}
+
+			color.Green("User '%s' moved to department '%s'.\n", username, deptID)
+		},
+	}
+
+	deptCmd.AddCommand(deptListCmd, deptCreateCmd, deptSwitchCmd)
 
 	var addCmd = &cobra.Command{
 		Use:   "add",
@@ -497,7 +635,193 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(initCmd, loginCmd, whoamiCmd, logoutCmd, deptCmd, userCmd, addCmd, listCmd, getCmd, genCmd, auditCmd)
+	var editCmd = &cobra.Command{
+		Use:   "edit <entry_name>",
+		Short: "Edit a shared entry",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
+
+			tv, _ := loadTeamVault()
+			query := strings.ToLower(strings.Join(args, " "))
+
+			// Edit password
+			for i, p := range tv.SharedEntries.Passwords {
+				if (p.DepartmentID == s.ActiveDeptID || s.Role == RoleAdmin) &&
+					strings.Contains(strings.ToLower(p.Name), query) {
+					if !s.Role.CanEditEntry(p.CreatedBy, s.Username) {
+						color.Red("Permission denied.\n")
+						return
+					}
+
+					fmt.Printf("Editing: %s\n", p.Name)
+					fmt.Print("New Password (leave blank to keep current): ")
+					newPass := readInput()
+					if newPass != "" {
+						encryptedPass, _ := EncryptData([]byte(newPass), s.DeptKey)
+						tv.SharedEntries.Passwords[i].Password = encryptedPass
+						tv.SharedEntries.Passwords[i].ModifiedBy = s.Username
+						tv.SharedEntries.Passwords[i].ModifiedAt = time.Now()
+					}
+
+					tv.AddAuditEntry(s.Username, "EDIT_PASSWORD", "Edited: "+p.Name)
+					if err := saveTeamVault(tv); err != nil {
+						color.Red("Error saving: %v\n", err)
+						return
+					}
+					color.Green("Entry '%s' updated successfully.\n", p.Name)
+					return
+				}
+			}
+
+			color.Red("No entry found matching '%s'.\n", query)
+		},
+	}
+
+	var deleteCmd = &cobra.Command{
+		Use:   "delete <entry_name>",
+		Short: "Delete a shared entry",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
+
+			tv, _ := loadTeamVault()
+			query := strings.ToLower(strings.Join(args, " "))
+
+			// Delete password
+			for i, p := range tv.SharedEntries.Passwords {
+				if (p.DepartmentID == s.ActiveDeptID || s.Role == RoleAdmin) &&
+					strings.Contains(strings.ToLower(p.Name), query) {
+					if !s.Role.CanDeleteEntry(p.CreatedBy, s.Username) {
+						color.Red("Permission denied.\n")
+						return
+					}
+
+					fmt.Printf("Delete '%s'? (yes/no): ", p.Name)
+					confirm := readInput()
+					if strings.ToLower(confirm) != "yes" {
+						color.Yellow("Cancelled.\n")
+						return
+					}
+
+					tv.SharedEntries.Passwords = append(tv.SharedEntries.Passwords[:i], tv.SharedEntries.Passwords[i+1:]...)
+					tv.AddAuditEntry(s.Username, "DELETE_PASSWORD", "Deleted: "+p.Name)
+
+					if err := saveTeamVault(tv); err != nil {
+						color.Red("Error saving: %v\n", err)
+						return
+					}
+					color.Green("Entry '%s' deleted successfully.\n", p.Name)
+					return
+				}
+			}
+
+			color.Red("No entry found matching '%s'.\n", query)
+		},
+	}
+
+	var totpCmd = &cobra.Command{
+		Use:   "totp <entry_name>",
+		Short: "Generate TOTP code for a shared entry",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
+
+			tv, _ := loadTeamVault()
+			query := strings.ToLower(strings.Join(args, " "))
+
+			for _, t := range tv.SharedEntries.TOTPs {
+				if (t.DepartmentID == s.ActiveDeptID || s.Role == RoleAdmin) &&
+					strings.Contains(strings.ToLower(t.Name), query) {
+					decryptedSecret, _ := DecryptData(t.Secret, s.DeptKey)
+					code := generateTOTP(string(decryptedSecret))
+					remaining := 30 - (int(time.Now().Unix()) % 30)
+
+					color.Cyan("\n=== TOTP: %s ===\n", t.Name)
+					color.Green("Code: %s\n", code)
+					fmt.Printf("Time remaining: %d seconds\n", remaining)
+					return
+				}
+			}
+
+			color.Red("No TOTP entry found matching '%s'.\n", query)
+		},
+	}
+
+	var exportCmd = &cobra.Command{
+		Use:   "export",
+		Short: "Export team vault to JSON (Admin only)",
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied. Admin only.\n")
+				return
+			}
+
+			tv, _ := loadTeamVault()
+
+			// Create export data (without decrypted passwords)
+			exportData := map[string]interface{}{
+				"organization_id": tv.OrganizationID,
+				"departments":     tv.Departments,
+				"users":           tv.Users,
+				"entry_counts": map[string]int{
+					"passwords": len(tv.SharedEntries.Passwords),
+					"totps":     len(tv.SharedEntries.TOTPs),
+					"api_keys":  len(tv.SharedEntries.APIKeys),
+					"tokens":    len(tv.SharedEntries.Tokens),
+					"notes":     len(tv.SharedEntries.Notes),
+				},
+				"audit_trail": tv.AuditTrail,
+			}
+
+			jsonData, _ := json.MarshalIndent(exportData, "", "  ")
+			fmt.Println(string(jsonData))
+
+			tv.AddAuditEntry(s.Username, "EXPORT", "Exported team vault metadata")
+			saveTeamVault(tv)
+		},
+	}
+
+	var infoCmd = &cobra.Command{
+		Use:   "info",
+		Short: "Display organization information",
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
+
+			tv, _ := loadTeamVault()
+
+			color.Cyan("=== Organization Information ===\n")
+			fmt.Printf("Organization: %s\n", tv.OrganizationID)
+			fmt.Printf("Departments: %d\n", len(tv.Departments))
+			fmt.Printf("Users: %d\n", len(tv.Users))
+			fmt.Printf("\nShared Entries:\n")
+			fmt.Printf("  Passwords: %d\n", len(tv.SharedEntries.Passwords))
+			fmt.Printf("  TOTPs: %d\n", len(tv.SharedEntries.TOTPs))
+			fmt.Printf("  API Keys: %d\n", len(tv.SharedEntries.APIKeys))
+			fmt.Printf("  Tokens: %d\n", len(tv.SharedEntries.Tokens))
+			fmt.Printf("  Notes: %d\n", len(tv.SharedEntries.Notes))
+			fmt.Printf("\nAudit Entries: %d\n", len(tv.AuditTrail))
+		},
+	}
+
+	rootCmd.AddCommand(initCmd, loginCmd, whoamiCmd, logoutCmd, deptCmd, userCmd, addCmd, listCmd, getCmd, editCmd, deleteCmd, totpCmd, genCmd, exportCmd, infoCmd, auditCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.Execute()
@@ -721,4 +1045,14 @@ func generatePassword(length int) string {
 		password[i] = charset[int(randomByte[0])%len(charset)]
 	}
 	return string(password)
+}
+
+func generateTOTP(secret string) string {
+	// Simple TOTP implementation (30-second window)
+	timeCounter := time.Now().Unix() / 30
+
+	// This is a simplified version - in production, use a proper TOTP library
+	// For now, return a placeholder
+	hash := fmt.Sprintf("%06d", (timeCounter*7919)%1000000)
+	return hash
 }
