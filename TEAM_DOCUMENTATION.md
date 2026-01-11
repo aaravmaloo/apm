@@ -809,5 +809,5 @@ For issues, questions, or feature requests:
 
 ---
 
-**Version**: 1.0  
+**Version**: v7 
 **Last Updated**: 2026-01-11
