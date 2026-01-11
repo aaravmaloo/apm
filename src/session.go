@@ -14,15 +14,9 @@ type Session struct {
 	MasterPassword string    `json:"master_password"`
 	ReadOnly       bool      `json:"readonly"`
 	Expiry         time.Time `json:"expiry"`
-	IsTeam         bool      `json:"is_team,omitempty"`
-	UserID         string    `json:"user_id,omitempty"`
-	Username       string    `json:"username,omitempty"`
-	Role           string    `json:"role,omitempty"`
-	ActiveDeptID   string    `json:"active_dept_id,omitempty"`
-	DeptKey        []byte    `json:"dept_key,omitempty"`
 }
 
-var SessionFile = filepath.Join(os.TempDir(), "pm_session.json")
+var sessionFile = filepath.Join(os.TempDir(), "pm_session.json")
 
 func CreateSession(password string, duration time.Duration, readonly bool) error {
 	session := Session{
@@ -36,13 +30,13 @@ func CreateSession(password string, duration time.Duration, readonly bool) error
 		return err
 	}
 
-	if err := os.WriteFile(SessionFile, data, 0600); err != nil {
+	if err := os.WriteFile(sessionFile, data, 0600); err != nil {
 		return err
 	}
 
 	go func() {
 		time.Sleep(duration)
-		os.Remove(SessionFile)
+		os.Remove(sessionFile)
 	}()
 
 	cleanupCmd(duration)
@@ -55,10 +49,10 @@ func cleanupCmd(duration time.Duration) {
 	var cmd *exec.Cmd
 	if filepath.Separator == '\\' {
 
-		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, SessionFile))
+		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
 	} else {
 
-		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, SessionFile))
+		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, sessionFile))
 	}
 
 	err := cmd.Start()
@@ -68,11 +62,11 @@ func cleanupCmd(duration time.Duration) {
 }
 
 func GetSession() (*Session, error) {
-	if _, err := os.Stat(SessionFile); os.IsNotExist(err) {
+	if _, err := os.Stat(sessionFile); os.IsNotExist(err) {
 		return nil, errors.New("no active session")
 	}
 
-	data, err := os.ReadFile(SessionFile)
+	data, err := os.ReadFile(sessionFile)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +77,7 @@ func GetSession() (*Session, error) {
 	}
 
 	if time.Now().After(session.Expiry) {
-		os.Remove(SessionFile)
+		os.Remove(sessionFile)
 		return nil, errors.New("session expired")
 	}
 
@@ -91,5 +85,5 @@ func GetSession() (*Session, error) {
 }
 
 func KillSession() error {
-	return os.Remove(SessionFile)
+	return os.Remove(sessionFile)
 }
