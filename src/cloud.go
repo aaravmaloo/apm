@@ -60,50 +60,6 @@ func NewCloudManager(ctx context.Context, credsJSON []byte, tokenJSON []byte) (*
 	return &CloudManager{Service: srv}, nil
 }
 
-func (cm *CloudManager) EnsureFolder(name string, parentID string) (string, error) {
-	query := fmt.Sprintf("name = '%s' and '%s' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false", name, parentID)
-	list, err := cm.Service.Files.List().Q(query).Do()
-	if err != nil {
-		return "", err
-	}
-	if len(list.Files) > 0 {
-		return list.Files[0].Id, nil
-	}
-	f := &drive.File{
-		Name:     name,
-		MimeType: "application/vnd.google-apps.folder",
-		Parents:  []string{parentID},
-	}
-	res, err := cm.Service.Files.Create(f).Do()
-	if err != nil {
-		return "", err
-	}
-	return res.Id, nil
-}
-
-func (cm *CloudManager) UploadVaultToPath(vaultPath string, parentID string, fileName string) (string, error) {
-	f, err := os.Open(vaultPath)
-	if err != nil {
-		return "", fmt.Errorf("unable to open vault file: %v", err)
-	}
-	defer f.Close()
-
-	driveFile := &drive.File{
-		Name:    fileName,
-		Parents: []string{parentID},
-	}
-
-	res, err := cm.Service.Files.Create(driveFile).Media(f).Do()
-	if err != nil {
-		return "", fmt.Errorf("unable to upload vault: %v", err)
-	}
-
-	permission := &drive.Permission{Type: "anyone", Role: "reader"}
-	_, _ = cm.Service.Permissions.Create(res.Id, permission).Do()
-
-	return res.Id, nil
-}
-
 func (cm *CloudManager) UploadVault(vaultPath string) (string, error) {
 	f, err := os.Open(vaultPath)
 	if err != nil {
