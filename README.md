@@ -1,4 +1,3 @@
-@ -1,96 +0,0 @@
 # APM - Advanced Password Manager
 
 APM is a secure, modern, and transparent CLI password manager built for professionals who value cryptography and usability.
