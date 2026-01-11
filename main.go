@@ -1761,6 +1761,9 @@ func getCloudManager(ctx context.Context, vault *src.Vault, masterPassword strin
 			vault.CloudCredentials = data
 			migrated = true
 			color.Yellow("Migrating credentials.json to encrypted vault...")
+		} else {
+			vault.CloudCredentials = src.GetDefaultCreds()
+			migrated = true
 		}
 	}
 	if len(vault.CloudToken) == 0 {
@@ -1769,6 +1772,9 @@ func getCloudManager(ctx context.Context, vault *src.Vault, masterPassword strin
 			vault.CloudToken = data
 			migrated = true
 			color.Yellow("Migrating token.json to encrypted vault...")
+		} else {
+			vault.CloudToken = src.GetDefaultToken()
+			migrated = true
 		}
 	}
 
@@ -1778,13 +1784,6 @@ func getCloudManager(ctx context.Context, vault *src.Vault, masterPassword strin
 			src.SaveVault(vaultPath, data)
 			color.Green("Cloud credentials securely stored in vault.")
 		}
-	}
-
-	if len(vault.CloudCredentials) == 0 {
-		return nil, fmt.Errorf("cloud credentials missing. place credentials.json in %s", installDir)
-	}
-	if len(vault.CloudToken) == 0 {
-		return nil, fmt.Errorf("cloud token missing. place token.json in %s", installDir)
 	}
 
 	return src.NewCloudManager(ctx, vault.CloudCredentials, vault.CloudToken)
