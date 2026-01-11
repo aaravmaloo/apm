@@ -14,11 +14,13 @@ import (
 	"syscall"
 	"time"
 
+	"context"
+	src "password-manager/src"
+
 	"github.com/fatih/color"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
-
-	src "password-manager/src"
 )
 
 var vaultPath string
@@ -1006,7 +1008,7 @@ func main() {
 
 	var infoCmd = &cobra.Command{
 		Use:   "info",
-		Short: "Show information about APM",
+		Short: "Show information about your current version of APM",
 		Run: func(cmd *cobra.Command, args []string) {
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
@@ -1019,9 +1021,8 @@ func main() {
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
 
-			fmt.Println("APM Alpha v6 (Stable Release )")
+			fmt.Println("APM Stable v7")
 			fmt.Println(processedHomeName, "@apm")
-			fmt.Println("v5 -- better get and and edit commands")
 			fmt.Printf("Installed: %s\n", installDir)
 			fmt.Printf("Vault Path: %s\n", vaultPath)
 			fmt.Println("https://github.com/aaravmaloo/apm")
@@ -1196,10 +1197,309 @@ func main() {
 	exportCmd.Flags().StringP("encrypt-pass", "e", "", "Password for encryption")
 	exportCmd.Flags().Bool("without-password", false, "Exclude secrets")
 
+	var cloudCmd = &cobra.Command{
+		Use:   "cloud",
+		Short: "Sync and retrieve vaults from Google Drive",
+	}
+
+	var cloudInitCmd = &cobra.Command{
+		Use:   "init",
+		Short: "Setup cloud sync and generate retrieval key",
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPassword, vault, _, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if vault.RetrievalKey != "" {
+				color.Yellow("Cloud sync already initialized. Key: %s\n", vault.RetrievalKey)
+				return
+			}
+
+			// Upload to cloud and get File ID as key
+			exe, _ := os.Executable()
+			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
+			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			if err != nil {
+				color.Red("Cloud Error: %v\n", err)
+				return
+			}
+
+			fileID, err := cm.UploadVault(vaultPath)
+			if err != nil {
+				color.Red("Upload failed: %v\n", err)
+				return
+			}
+
+			vault.RetrievalKey = fileID
+			// Save locally again with the new key
+			data, _ := src.EncryptVault(vault, masterPassword)
+			src.SaveVault(vaultPath, data)
+
+			color.Green("Cloud sync initialized!")
+			color.HiCyan("Retrieval Key: %s\n", fileID)
+			color.Yellow("Keep this key safe! It's required to pull your vault on other devices (no login required).")
+		},
+	}
+
+	var cloudSyncCmd = &cobra.Command{
+		Use:   "sync",
+		Short: "Manually sync current vault to cloud",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if vault.RetrievalKey == "" {
+				color.Red("Cloud sync not initialized. Run 'pm cloud init'.")
+				return
+			}
+
+			exe, _ := os.Executable()
+			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
+			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			if err != nil {
+				color.Red("Cloud Error: %v\n", err)
+				return
+			}
+
+			err = cm.SyncVault(vaultPath, vault.RetrievalKey)
+			if err != nil {
+				color.Red("Sync failed: %v\n", err)
+				return
+			}
+			color.Green("Vault synced to cloud.")
+		},
+	}
+
+	var cloudAutoSyncCmd = &cobra.Command{
+		Use:   "auto-sync",
+		Short: "Start background auto-sync watcher",
+		Run: func(cmd *cobra.Command, args []string) {
+			enabled, _ := cmd.Flags().GetBool("true")
+			if !enabled {
+				fmt.Println("Usage: pm cloud auto-sync --true")
+				return
+			}
+
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if vault.RetrievalKey == "" {
+				color.Red("Cloud sync not initialized.")
+				return
+			}
+
+			key := vault.RetrievalKey
+			exe, _ := os.Executable()
+			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
+			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			if err != nil {
+				color.Red("Cloud Error: %v\n", err)
+				return
+			}
+
+			watcher, err := fsnotify.NewWatcher()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer watcher.Close()
+
+			done := make(chan bool)
+			go func() {
+				lastSync := time.Now()
+				for {
+					select {
+					case event, ok := <-watcher.Events:
+						if !ok {
+							return
+						}
+						if event.Op&fsnotify.Write == fsnotify.Write {
+							if time.Since(lastSync) > 5*time.Second {
+								fmt.Printf("[%s] Change detected, syncing...\n", time.Now().Format("15:04:05"))
+								err := cm.SyncVault(vaultPath, key)
+								if err != nil {
+									color.Red("Auto-sync failed: %v\n", err)
+								} else {
+									color.Green("Auto-sync successful.")
+									lastSync = time.Now()
+								}
+							}
+						}
+					case err, ok := <-watcher.Errors:
+						if !ok {
+							return
+						}
+						fmt.Println("error:", err)
+					}
+				}
+			}()
+
+			err = watcher.Add(vaultPath)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			color.Cyan("Auto-sync watcher started for %s. Press Ctrl+C to stop.", vaultPath)
+			<-done
+		},
+	}
+	cloudAutoSyncCmd.Flags().Bool("true", false, "Enable auto-sync")
+
+	var cloudGetCmd = &cobra.Command{
+		Use:   "get [retrieval_key]",
+		Short: "Download vault from cloud",
+		Run: func(cmd *cobra.Command, args []string) {
+			var key string
+			if len(args) > 0 {
+				key = args[0]
+			} else {
+				fmt.Print("Enter Retrieval Key: ")
+				key = readInput()
+			}
+
+			data, err := src.DownloadPublicVault(key)
+			if err != nil {
+				color.Red("Download failed: %v\n", err)
+				color.Yellow("Note: Only uploader needs credentials.json. For public retrieval, ensure the key is correct.")
+				return
+			}
+
+			// Verify it's a valid vault before saving
+			fmt.Print("Verify Master Password for downloaded vault: ")
+			pass, _ := readPassword()
+			fmt.Println()
+			_, err = src.DecryptVault(data, pass, 1)
+			if err != nil {
+				color.Red("Decryption failed. Vault not saved locally: %v\n", err)
+				return
+			}
+
+			err = src.SaveVault(vaultPath, data)
+			if err != nil {
+				color.Red("Error saving vault: %v\n", err)
+				return
+			}
+			color.Green("Vault retrieved and saved successfully.")
+		},
+	}
+
+	var cloudDeleteCmd = &cobra.Command{
+		Use:   "delete",
+		Short: "Permanently delete vault from cloud",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if vault.RetrievalKey == "" {
+				color.Red("Cloud sync not initialized.")
+				return
+			}
+
+			fmt.Printf("ARE YOU SURE? This will delete the vault '%s' from Drive. (y/n): ", vault.RetrievalKey)
+			if strings.ToLower(readInput()) != "y" {
+				return
+			}
+
+			exe, _ := os.Executable()
+			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
+			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			if err != nil {
+				color.Red("Cloud Error: %v\n", err)
+				return
+			}
+
+			err = cm.DeleteVault(vault.RetrievalKey)
+			if err != nil {
+				color.Red("Deletion failed: %v\n", err)
+				return
+			}
+			color.Green("Cloud vault deleted.")
+		},
+	}
+
+	var cloudListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all vault blobs on cloud",
+		Run: func(cmd *cobra.Command, args []string) {
+			exe, _ := os.Executable()
+			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
+			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			if err != nil {
+				color.Red("Cloud Error: %v\n", err)
+				return
+			}
+
+			vaults, err := cm.ListVaults()
+			if err != nil {
+				color.Red("List failed: %v\n", err)
+				return
+			}
+
+			fmt.Println("Cloud Vaults:")
+			for _, v := range vaults {
+				fmt.Println("-", v)
+			}
+		},
+	}
+
+	var cloudResetCmd = &cobra.Command{
+		Use:   "reset",
+		Short: "Clear local cloud metadata (Retrieval Key)",
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPassword, vault, readonly, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if readonly {
+				color.Red("Vault is READ-ONLY. Cannot reset cloud metadata.")
+				return
+			}
+
+			if vault.RetrievalKey == "" {
+				color.Yellow("Cloud sync is not initialized (no key found).")
+				return
+			}
+
+			fmt.Printf("This will clear the local Retrieval Key: %s\n", vault.RetrievalKey)
+			fmt.Print("Are you sure? (y/n): ")
+			if strings.ToLower(readInput()) != "y" {
+				return
+			}
+
+			vault.RetrievalKey = ""
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				color.Red("Error encrypting vault: %v\n", err)
+				return
+			}
+
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+				return
+			}
+
+			color.Green("Cloud metadata reset successfully. You can now run 'pm cloud init' again.")
+		},
+	}
+
+	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudListCmd, cloudResetCmd)
+
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, unlockCmd, readonlyCmd, lockCmd, totpCmd, importCmd, exportCmd, infoCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, unlockCmd, readonlyCmd, lockCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd)
 	rootCmd.Execute()
 }
 
@@ -1401,7 +1701,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 		b := res.Data.(src.BankingEntry)
 		fmt.Printf("Type: Banking (%s)\nLabel: %s\n", b.Type, b.Label)
 		displayDetails := b.Details
-		// Simple redaction logic for Cards (last 4 digits shown)
+
 		if b.Type == "Card" && len(displayDetails) > 4 {
 			displayDetails = "**** **** **** " + displayDetails[len(displayDetails)-4:]
 		} else if len(displayDetails) > 4 {
