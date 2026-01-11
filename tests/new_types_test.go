@@ -41,7 +41,7 @@ func TestNewSecretTypes(t *testing.T) {
 		t.Errorf("Recovery Code failed")
 	}
 
-	// Test Certificate
+
 	expiry := time.Now().Add(24 * time.Hour)
 	vault.AddCertificate("Test Cert", "CERT DATA", "KEY DATA", "Test Issuer", expiry)
 	cert, ok := vault.GetCertificate("Test Cert")
@@ -49,14 +49,14 @@ func TestNewSecretTypes(t *testing.T) {
 		t.Errorf("Certificate failed")
 	}
 
-	// Test Banking
+
 	vault.AddBankingItem("Test Card", "Card", "1234567812345678", "123", "12/25")
 	bank, ok := vault.GetBankingItem("Test Card")
 	if !ok || bank.Details != "1234567812345678" {
 		t.Errorf("Banking item failed")
 	}
 
-	// Test Document
+
 	vault.AddDocument("Test Doc", "test.pdf", []byte("pdf content"), "docpass")
 	doc, ok := vault.GetDocument("Test Doc")
 	if !ok || string(doc.Content) != "pdf content" {
