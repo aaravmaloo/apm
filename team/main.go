@@ -68,7 +68,7 @@ func main() {
 			salt, _ := GenerateSalt()
 			dk, _ := GenerateRandomKey()
 
-			ukKeys := DeriveKeys(pass, salt, 1)
+			ukKeys := DeriveKeys(pass, salt, 3)
 			wrappedDK, _ := WrapKey(dk, ukKeys.EncryptionKey)
 
 			dept := Department{
@@ -133,7 +133,7 @@ func main() {
 			pass, _ := readPassword()
 			fmt.Println()
 
-			ukKeys := DeriveKeys(pass, tv.Salt, 1)
+			ukKeys := DeriveKeys(pass, tv.Salt, 3)
 
 			wrappedDK, ok := targetUser.WrappedKeys[targetUser.ActiveDepartmentID]
 			if !ok {
@@ -298,7 +298,7 @@ func main() {
 			tv, _ := loadTeamVault()
 
 			userSalt, _ := GenerateSalt()
-			ukKeys := DeriveKeys(pass, userSalt, 1)
+			ukKeys := DeriveKeys(pass, userSalt, 3)
 
 			wrappedDK, err := WrapKey(s.DeptKey, ukKeys.EncryptionKey)
 			if err != nil {
@@ -1055,7 +1055,7 @@ func generateTOTP(secret string) string {
 	secret = strings.ToUpper(strings.ReplaceAll(secret, " ", ""))
 	key, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(secret)
 	if err != nil {
-		return "INVALID SECRET"
+		return "INVALID"
 	}
 
 	timestamp := time.Now().Unix() / 30
