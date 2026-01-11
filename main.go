@@ -3,8 +3,6 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -518,10 +516,12 @@ func main() {
 			}
 
 			if deleted {
-				if err := src_saveVault(vault, masterPassword); err != nil {
-					fmt.Printf("Error saving vault: %v\n", err)
+				data, err := src.EncryptVault(vault, masterPassword)
+				if err != nil {
+					fmt.Printf("Error encrypting vault: %v\n", err)
 					return
 				}
+				src.SaveVault(vaultPath, data)
 				color.Green("Deleted '%s'.\n", name)
 			} else {
 				color.Red("Entry '%s' not found.\n", name)
@@ -1143,10 +1143,12 @@ func main() {
 				return
 			}
 
-			if err := src_saveVault(vault, masterPassword); err != nil {
-				fmt.Printf("Error saving vault: %v\n", err)
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
 				return
 			}
+			src.SaveVault(vaultPath, data)
 			color.Green("Successfully imported data from %s.\n", filename)
 		},
 	}
@@ -1218,7 +1220,7 @@ func main() {
 			color.Cyan("\n--- Cloud Setup Tips ---")
 			fmt.Println("1. Use a retrieval key that is easy for you to remember but impossible for others to guess.")
 			fmt.Println("2. Something personal like 'MyOldLibraryID-2024' or a unique passphrase is good.")
-			fmt.Println("3. LEAVE BLANK to generate a random secure ID (recommended for maximum security).\n")
+			fmt.Println("3. LEAVE BLANK to generate a random secure ID (recommended for maximum security). \n")
 
 			fmt.Print("Enter custom Retrieval Key (or ENTER for random): ")
 			customKey := readInput()
@@ -1485,505 +1487,12 @@ func main() {
 		},
 	}
 
-	var teamCmd = &cobra.Command{Use: "team", Short: "Manage team organization"}
-	var deptCmd = &cobra.Command{Use: "dept", Short: "Manage departments"}
-	var userCmd = &cobra.Command{Use: "user", Short: "Manage team users"}
-
-	var teamInitCmd = &cobra.Command{
-		Use:   "init <org_name> <admin_username>",
-		Short: "Initialize a new team organization",
-		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			orgName := args[0]
-			adminUser := args[1]
-
-			fmt.Print("Create Master Password for Team Admin: ")
-			pass, _ := readPassword()
-			fmt.Println()
-			if err := src.ValidateMasterPassword(pass); err != nil {
-				color.Red("Error: %v\n", err)
-				return
-			}
-			fmt.Print("Confirm Password: ")
-			confirm, _ := readPassword()
-			fmt.Println()
-			if pass != confirm {
-				color.Red("Passwords do not match.")
-				return
-			}
-
-			salt, _ := src.GenerateSalt()
-			dk, _ := src.GenerateRandomKey()
-
-			ukKeys := src.DeriveKeys(pass, salt, 1)
-			wrappedDK, _ := src.WrapKey(dk, ukKeys.EncryptionKey)
-
-			dept := src.Department{
-				ID:           "general",
-				Name:         "General",
-				EncryptedKey: nil, // Entries in this struct won't be used for DK storage
-			}
-
-			user := src.TeamUser{
-				ID:                 "admin",
-				Username:           adminUser,
-				Role:               src.RoleAdmin,
-				ActiveDepartmentID: "general",
-				WrappedKeys:        map[string][]byte{"general": wrappedDK},
-			}
-
-			tv := src.TeamVault{
-				OrganizationID: orgName,
-				Departments:    []src.Department{dept},
-				Users:          []src.TeamUser{user},
-				Salt:           salt,
-			}
-			tv.AddAuditEntry(adminUser, "INIT_TEAM", "Organization created")
-
-			jsonData, _ := json.Marshal(tv)
-			// Encrypt the metadata vault with a fixed-length header or reuse single-user style
-			// For team vaults, we use a different prefix to distinguish
-			payload := append([]byte("APMTEAMV"), jsonData...)
-
-			err := os.WriteFile("team_vault.dat", payload, 0600)
-			if err != nil {
-				color.Red("Error saving team vault: %v\n", err)
-				return
-			}
-			color.Green("Team Organization '%s' initialized. Admin: %s\n", orgName, adminUser)
-		},
-	}
-
-	var teamLoginCmd = &cobra.Command{
-		Use:   "login <username>",
-		Short: "Login to a team organization",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
-			data, err := os.ReadFile("team_vault.dat")
-			if err != nil {
-				color.Red("Team vault not found.")
-				return
-			}
-
-			if string(data[:8]) != "APMTEAMV" {
-				color.Red("Invalid team vault format.")
-				return
-			}
-
-			var tv src.TeamVault
-			if err := json.Unmarshal(data[8:], &tv); err != nil {
-				color.Red("Error parsing team vault.")
-				return
-			}
-
-			var targetUser *src.TeamUser
-			for _, u := range tv.Users {
-				if u.Username == username {
-					targetUser = &u
-					break
-				}
-			}
-
-			if targetUser == nil {
-				color.Red("User '%s' not found.", username)
-				return
-			}
-
-			fmt.Printf("Team Master Password for %s: ", username)
-			pass, _ := readPassword()
-			fmt.Println()
-
-			ukKeys := src.DeriveKeys(pass, tv.Salt, 1)
-
-			wrappedDK, ok := targetUser.WrappedKeys[targetUser.ActiveDepartmentID]
-			if !ok {
-				color.Red("No key found for active department.")
-				return
-			}
-
-			dk, err := src.UnwrapKey(wrappedDK, ukKeys.EncryptionKey)
-			if err != nil {
-				color.Red("Authentication failed: %v", err)
-				return
-			}
-
-			session := src.Session{
-				IsTeam:       true,
-				UserID:       targetUser.ID,
-				Username:     targetUser.Username,
-				Role:         string(targetUser.Role),
-				ActiveDeptID: targetUser.ActiveDepartmentID,
-				DeptKey:      dk,
-				Expiry:       time.Now().Add(1 * time.Hour),
-			}
-
-			sessionData, _ := json.Marshal(session)
-			os.WriteFile(src.SessionFile, sessionData, 0600)
-
-			tv.AddAuditEntry(username, "LOGIN", "Successful login")
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-
-			color.Green("Logged in as %s (%s) | Dept: %s", username, targetUser.Role, targetUser.ActiveDepartmentID)
-		},
-	}
-
-	var whoamiCmd = &cobra.Command{
-		Use:   "whoami",
-		Short: "Display current team session info",
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil {
-				color.Red("No active session. Run 'pm team login'.")
-				return
-			}
-			if !s.IsTeam {
-				color.Yellow("Active session is for a personal vault.")
-				return
-			}
-			fmt.Printf("User: %s\nRole: %s\nDept: %s\nExpiry: %v\n", s.Username, s.Role, s.ActiveDeptID, s.Expiry.Format(time.RFC1123))
-		},
-	}
-
-	var teamSyncCmd = &cobra.Command{
-		Use:   "sync",
-		Short: "Synchronize team vault to cloud",
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || src.Role(s.Role) != src.RoleAdmin {
-				color.Red("Only Admin can sync root organization metadata.")
-				return
-			}
-
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			ctx := context.Background()
-			// For simplicity, we assume the admin has the cloud credentials in their local vault or environment
-			// Reusing existing getCloudManager logic if possible
-			// But for team mode, we might need a dedicated way to load cloud creds
-			// For now, I'll mock the CloudManager initialization or assume defaults
-			cm, err := src.NewCloudManager(ctx, src.GetDefaultCreds(), src.GetDefaultToken())
-			if err != nil {
-				color.Red("Cloud initialization failed: %v", err)
-				return
-			}
-
-			color.Cyan("Synchronizing organization '%s' to cloud...", tv.OrganizationID)
-
-			teamsRoot, _ := cm.EnsureFolder("teams", src.DriveFolderID)
-			orgRoot, _ := cm.EnsureFolder(tv.OrganizationID, teamsRoot)
-
-			// Upload root metadata
-			fileID, err := cm.UploadVaultToPath("team_vault.dat", orgRoot, "metadata.bin")
-			if err != nil {
-				color.Red("Sync failed: %v", err)
-				return
-			}
-
-			color.Green("Organization metadata synced. Root ID: %s", fileID)
-			tv.AddAuditEntry(s.Username, "TEAM_SYNC", "Metadata synced to cloud")
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-		},
-	}
-
-	var teamGetCmd = &cobra.Command{
-		Use:   "get <fileID>",
-		Short: "Download organization metadata from cloud",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			fileID := args[0]
-			color.Cyan("Downloading organization metadata from cloud (ID: %s)...", fileID)
-
-			// Reusing public download logic
-			data, err := src.DownloadPublicVault(fileID)
-			if err != nil {
-				color.Red("Download failed: %v", err)
-				return
-			}
-
-			if string(data[:8]) != "APMTEAMV" {
-				color.Red("Invalid organization data received.")
-				return
-			}
-
-			err = os.WriteFile("team_vault.dat", data, 0600)
-			if err != nil {
-				color.Red("Error saving metadata: %v", err)
-				return
-			}
-			color.Green("Organization metadata imported. You can now 'pm team login'.")
-		},
-	}
-
-	var teamAuditCmd = &cobra.Command{
-		Use:   "audit",
-		Short: "View team organization audit trail (Security/Admin Only)",
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || !src.Role(s.Role).HasPermission("AUDIT_LOG") {
-				color.Red("Permission denied.")
-				return
-			}
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			color.Cyan("Audit Trail for %s:", tv.OrganizationID)
-			for _, e := range tv.AuditTrail {
-				fmt.Printf("[%v] %s | %s: %s\n", e.Timestamp.Format("2006-01-02 15:04:05"), e.User, e.Action, e.Details)
-			}
-		},
-	}
-
-	teamCmd.AddCommand(teamInitCmd, teamLoginCmd, whoamiCmd, teamSyncCmd, teamGetCmd, teamAuditCmd)
-	var deptListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all departments",
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam {
-				color.Red("No active team session.")
-				return
-			}
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			color.Cyan("Departments in %s:", tv.OrganizationID)
-			for _, d := range tv.Departments {
-				if src.Role(s.Role) == src.RoleAdmin || s.ActiveDeptID == d.ID {
-					fmt.Printf("- %s (ID: %s)\n", d.Name, d.ID)
-				}
-			}
-		},
-	}
-
-	var deptCreateCmd = &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create a new department (Admin Only)",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || !src.Role(s.Role).HasPermission("DEPT_CREATE") {
-				color.Red("Permission denied.")
-				return
-			}
-			name := args[0]
-			id := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
-
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			for _, d := range tv.Departments {
-				if d.ID == id {
-					color.Red("Department ID '%s' already exists.", id)
-					return
-				}
-			}
-
-			tv.Departments = append(tv.Departments, src.Department{ID: id, Name: name})
-			tv.AddAuditEntry(s.Username, "DEPT_CREATE", "Created department: "+name)
-
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-			color.Green("Department '%s' created.", name)
-		},
-	}
-
-	var deptSwitchCmd = &cobra.Command{
-		Use:   "switch <username> <dept_id>",
-		Short: "Switch a user's active department (Admin Only)",
-		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || !src.Role(s.Role).HasPermission("DEPT_SWITCH") {
-				color.Red("Permission denied.")
-				return
-			}
-			targetUser := args[0]
-			targetDept := args[1]
-
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			foundUser := -1
-			for i, u := range tv.Users {
-				if u.Username == targetUser {
-					foundUser = i
-					break
-				}
-			}
-			if foundUser == -1 {
-				color.Red("User not found.")
-				return
-			}
-
-			foundDept := false
-			for _, d := range tv.Departments {
-				if d.ID == targetDept {
-					foundDept = true
-					break
-				}
-			}
-			if !foundDept {
-				color.Red("Department not found.")
-				return
-			}
-
-			tv.Users[foundUser].ActiveDepartmentID = targetDept
-			tv.AddAuditEntry(s.Username, "DEPT_SWITCH", fmt.Sprintf("Moved %s to %s", targetUser, targetDept))
-
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-			color.Green("User '%s' moved to department '%s'.", targetUser, targetDept)
-		},
-	}
-
-	deptCmd.AddCommand(deptListCmd, deptCreateCmd, deptSwitchCmd)
-	var userAddCmd = &cobra.Command{
-		Use:   "add <username>",
-		Short: "Add a new user to the organization",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || !src.Role(s.Role).HasPermission("USER_ADD") {
-				color.Red("Permission denied.")
-				return
-			}
-			username := args[0]
-			roleStr, _ := cmd.Flags().GetString("role")
-			deptID, _ := cmd.Flags().GetString("dept")
-
-			fmt.Printf("Set Temporary Password for %s: ", username)
-			pass, _ := readPassword()
-			fmt.Println()
-
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			// Admin/Manager needs to have the DK for the target dept decrypted to wrap it for the new user
-			// In this simplistic session model, we assume the admin has the DK for the dept they are adding users to
-			if s.ActiveDeptID != deptID && src.Role(s.Role) != src.RoleAdmin {
-				color.Red("You must be in the department to add users to it.")
-				return
-			}
-
-			userSalt, _ := src.GenerateSalt()
-			ukKeys := src.DeriveKeys(pass, userSalt, 1)
-
-			wrappedDK, err := src.WrapKey(s.DeptKey, ukKeys.EncryptionKey)
-			if err != nil {
-				color.Red("Key wrapping failed: %v", err)
-				return
-			}
-
-			newUser := src.TeamUser{
-				ID:                 fmt.Sprintf("user_%d", time.Now().Unix()),
-				Username:           username,
-				Role:               src.Role(strings.ToUpper(roleStr)),
-				ActiveDepartmentID: deptID,
-				WrappedKeys:        map[string][]byte{deptID: wrappedDK},
-			}
-
-			tv.Users = append(tv.Users, newUser)
-			tv.AddAuditEntry(s.Username, "USER_ADD", fmt.Sprintf("Added %s as %s in %s", username, roleStr, deptID))
-
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-			color.Green("User '%s' added successfully.", username)
-		},
-	}
-	userAddCmd.Flags().String("role", "USER", "User role (ADMIN, MANAGER, USER, etc.)")
-	userAddCmd.Flags().String("dept", "general", "Initial department ID")
-
-	var userRemoveCmd = &cobra.Command{
-		Use:   "remove <username>",
-		Short: "Remove a user from the organization",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || !src.Role(s.Role).HasPermission("USER_REMOVE") {
-				color.Red("Permission denied.")
-				return
-			}
-			username := args[0]
-
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			foundIdx := -1
-			for i, u := range tv.Users {
-				if u.Username == username {
-					if u.Role == src.RoleAdmin && s.Username != "admin" {
-						color.Red("Cannot remove other admins.")
-						return
-					}
-					foundIdx = i
-					break
-				}
-			}
-
-			if foundIdx == -1 {
-				color.Red("User not found.")
-				return
-			}
-
-			tv.Users = append(tv.Users[:foundIdx], tv.Users[foundIdx+1:]...)
-			tv.AddAuditEntry(s.Username, "USER_REMOVE", "Removed user: "+username)
-
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-			color.Green("User '%s' removed.", username)
-		},
-	}
-
-	var userPromoteCmd = &cobra.Command{
-		Use:   "promote <username> <new_role>",
-		Short: "Change a user's role (Admin Only)",
-		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := src.GetSession()
-			if err != nil || !s.IsTeam || !src.Role(s.Role).HasPermission("USER_PROMOTE") {
-				color.Red("Permission denied.")
-				return
-			}
-			username := args[0]
-			newRole := args[1]
-
-			data, _ := os.ReadFile("team_vault.dat")
-			var tv src.TeamVault
-			json.Unmarshal(data[8:], &tv)
-
-			for i, u := range tv.Users {
-				if u.Username == username {
-					tv.Users[i].Role = src.Role(strings.ToUpper(newRole))
-					tv.AddAuditEntry(s.Username, "USER_PROMOTE", fmt.Sprintf("Promoted %s to %s", username, newRole))
-					break
-				}
-			}
-
-			updatedData, _ := json.Marshal(tv)
-			os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-			color.Green("User '%s' promoted to %s.", username, newRole)
-		},
-	}
-
-	userCmd.AddCommand(userAddCmd, userRemoveCmd, userPromoteCmd)
-
 	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudResetCmd)
 
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, teamCmd, deptCmd, userCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.Execute()
@@ -2024,79 +1533,17 @@ func copyToClipboard(text string) {
 	cmd.Run()
 }
 
-func src_saveVault(vault *src.Vault, pass string) error {
-	s, err := src.GetSession()
-	if err == nil && s.IsTeam {
-		data, _ := os.ReadFile("team_vault.dat")
-		var tv src.TeamVault
-		json.Unmarshal(data[8:], &tv)
-
-		for i, d := range tv.Departments {
-			if d.ID == s.ActiveDeptID {
-				tv.Departments[i].Entries = vault.Entries
-				tv.Departments[i].TOTP = vault.TOTPEntries
-				tv.Departments[i].Tokens = vault.Tokens
-				tv.Departments[i].Notes = vault.SecureNotes
-				break
-			}
-		}
-
-		updatedData, _ := json.Marshal(tv)
-		return os.WriteFile("team_vault.dat", append([]byte("APMTEAMV"), updatedData...), 0600)
-	}
-
-	data, err := src.EncryptVault(vault, pass)
-	if err != nil {
-		return err
-	}
-	return src.SaveVault(vaultPath, data)
-}
-
 func src_unlockVault() (string, *src.Vault, bool, error) {
-	s, err := src.GetSession()
-	if err == nil && s.IsTeam {
-		data, err := os.ReadFile("team_vault.dat")
-		if err != nil {
-			return "", nil, false, errors.New("team vault not found")
-		}
-		var tv src.TeamVault
-		json.Unmarshal(data[8:], &tv)
-
-		var dept *src.Department
-		for _, d := range tv.Departments {
-			if d.ID == s.ActiveDeptID {
-				dept = &d
-				break
-			}
-		}
-
-		if dept == nil {
-			return "", nil, false, errors.New("department not found")
-		}
-
-		v := &src.Vault{
-			Entries:     dept.Entries,
-			TOTPEntries: dept.TOTP,
-			Tokens:      dept.Tokens,
-			SecureNotes: dept.Notes,
-		}
-
-		if !src.Role(s.Role).HasPermission("VAULT_EDIT") {
-			return string(s.DeptKey), v, true, nil
-		}
-		return string(s.DeptKey), v, s.ReadOnly, nil
-	}
-
 	if !src.VaultExists(vaultPath) {
 		return "", nil, false, fmt.Errorf("Vault not found. Run 'pm init'.")
 	}
 
-	if err == nil {
+	if session, err := src.GetSession(); err == nil {
 		data, err := src.LoadVault(vaultPath)
 		if err == nil {
-			vault, err := src.DecryptVault(data, s.MasterPassword, 1)
+			vault, err := src.DecryptVault(data, session.MasterPassword, 1)
 			if err == nil {
-				return s.MasterPassword, vault, s.ReadOnly, nil
+				return session.MasterPassword, vault, session.ReadOnly, nil
 			}
 		}
 		src.KillSession()
