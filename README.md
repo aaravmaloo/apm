@@ -5,14 +5,13 @@ APM is a secure, modern, and transparent CLI password manager built for professi
 ## Core Features
 
 - **Robust Cryptography**: Uses **Argon2id** for key derivation, **AES-256-GCM** for encryption, and **HMAC-SHA256** for tamper detection.
+- **Secure Cloud Sync**: Sync your encrypted vault to Google Drive with custom retrieval keys and public sharing capabilities.
+- **Encrypted Credentials**: Cloud API credentials (JSON) are stored securely inside your encrypted vault, not in plain text on disk.
 - **Deterministic Security**: Locked-down crypto parameters ensure consistent, verifiable security.
-- **Tamper Evident**: Relentless integrity checks prevent corrupted or malicious file modifications.
-- **Improved Get Flow**: Use interactive type selection (`pm get`) or instant fuzzy search (`pm get <query>`).
 - **Diverse Secret Types**: Support for Passwords, TOTP, Tokens (API/Service), Secure Notes, API Keys, SSH Keys, Wi-Fi, and Recovery Codes.
 - **Health Scanning**: Offline analysis of your password strength, reuse, and entropy (`apm scan`).
 - **Audit Logging**: Secure, encrypted history of all vault access (`apm audit`).
-- **Clipboard Hygiene**: Auto-clears your clipboard after 20 seconds to prevent leaks.
-- **Read-Only Mode**: Open your vault safely in untrusted environments (`apm readonly 5`).
+- **Read-Only / Unlock Sessions**: Manage access durations via the `pm mode` command group.
 
 ## Getting Started
 
@@ -22,28 +21,17 @@ Initialize a new vault. You will be prompted to create a strong Master Password.
 pm init
 ```
 
-### Adding Entries
+### Retrieval
 Add passwords, TOTP secrets, API keys, SSH keys, notes, and more.
 ```bash
 pm add
 ```
 
 Search and retrieve entries.
-
-**Interactive Mode**:
-Run without arguments to select by type:
 ```bash
-pm get
+pm get                 # Interactive type selection
+pm get github          # Fuzzy search across all entries
 ```
-This shows a menu (Password, TOTP, Token, etc.) and lists all available entries for that category.
-
-**Fuzzy Search**:
-Provide a query to search across all entries instantly:
-```bash
-pm get git      # Matches 'github', 'digitalocean', 'git'
-pm get --show-pass github
-```
-If only one match is found, it is displayed immediately. Otherwise, a ranked list is shown for selection.
 
 ### OTP Generation
 Generate TOTP codes live.
@@ -53,41 +41,39 @@ pm totp show <account>
 pm totp show all
 ```
 
-## Security Commands
+### Cloud Synchronization
+Connect your vault to Google Drive for portability.
 
-### Crypto Info (`cinfo`)
-View the exact cryptographic parameters used by APM.
-```bash
-pm cinfo
-```
+1.  **Init Cloud**:
+    ```bash
+    pm cloud init
+    ```
+    Choose a custom **Retrieval Key** (e.g., `MySecretKey-2024`) or let the program generate one. This key allows you to pull your vault on any device WITHOUT logging in.
 
-### Health Scan (`scan`)
-Run a local, offline analysis of your vault to find weak or reused passwords.
-```bash
-pm scan
-```
+2.  **Sync**:
+    ```bash
+    pm cloud sync        # Manual sync
+    pm cloud auto-sync   # Start background watcher
+    ```
 
-### Audit Log (`audit`)
-View the encrypted access history of your vault.
-```bash
-pm audit
-```
+3.  **Retrieve on New Device**:
+    ```bash
+    pm cloud get <your-key>
+    ```
+
+## Security & Modes
+
+### Access Control (`pm mode`)
+APM supports specific modes for secure usage:
+- `pm mode unlock <minutes>`: Temporary read-write access.
+- `pm mode readonly <minutes>`: Temporary read-only access for untrusted environments.
+- `pm mode lock`: Immediately terminate all active sessions.
+
+### Crypto Health (`pm scan` / `pm audit`)
+- **Scan**: Find weak/reused passwords offline.
+- **Audit**: View the timestamped history of vault interactions.
 
 ## Advanced Usage
-
-### Sessions (`unlock` / `readonly`)
-Unlock the vault for a specific duration to avoid repeated password prompts.
-
-**Read-Write Access:**
-```bash
-pm unlock 15         # Unlock for 15 minutes
-```
-
-**Read-Only Access:**
-```bash
-pm readonly 15       # Unlock in Read-Only mode (safety)
-```
-In Read-Only mode, any attempt to modify the vault will be blocked.
 
 ### Import / Export
 Move your data in and out securely.
@@ -98,7 +84,7 @@ pm import backup.json --encrypt-pass <backup-password>
 
 ## Technical Details
 
-**Vault Format (v1)**:
+**Vault Format (v2)**:
 `Header (8B) | Version (1B) | Salt (16B) | Validator (32B) | IV (12B) | AES-GCM Ciphertext | HMAC (32B)`
 
 - **KDF**: Argon2id (Time=3, Memory=128MB, Parallelism=4)
@@ -107,4 +93,4 @@ pm import backup.json --encrypt-pass <backup-password>
 - **Validation**: Constant-time key validation (Hash-based)
 
 ## Zero Trust
-APM never connects to the network. All operations are local. Memory buffers are wiped after use.
+APM prioritizes local-first security. Network connection is only used for explicit cloud sync operations. All source code is minimal, comment-free, and transparent.
