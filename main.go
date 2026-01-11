@@ -106,7 +106,10 @@ func main() {
 			fmt.Println("6. SSH Key")
 			fmt.Println("7. Wi-Fi Credentials")
 			fmt.Println("8. Recovery Codes")
-			fmt.Print("Selection (1-8): ")
+			fmt.Println("9. Certificate (SSL/SSH)")
+			fmt.Println("10. Banking/Finance Item")
+			fmt.Println("11. Encrypted Document (PDF)")
+			fmt.Print("Selection (1-11): ")
 			choice := readInput()
 
 			switch choice {
@@ -218,6 +221,73 @@ func main() {
 					color.Red("Error: %v\n", err)
 					return
 				}
+			case "9":
+				fmt.Print("Label: ")
+				label := readInput()
+				fmt.Print("Issuer: ")
+				issuer := readInput()
+				fmt.Print("Expiry Date (YYYY-MM-DD): ")
+				expiryStr := readInput()
+				expiry, err := time.Parse("2006-01-02", expiryStr)
+				if err != nil {
+					color.Red("Invalid date format. Use YYYY-MM-DD.\n")
+					return
+				}
+				fmt.Println("Enter Certificate Data (end with empty line):")
+				var certLines []string
+				for {
+					line := readInput()
+					if line == "" {
+						break
+					}
+					certLines = append(certLines, line)
+				}
+				fmt.Println("Enter Private Key (end with empty line, blank if none):")
+				var keyLines []string
+				for {
+					line := readInput()
+					if line == "" {
+						break
+					}
+					keyLines = append(keyLines, line)
+				}
+				if err := vault.AddCertificate(label, strings.Join(certLines, "\n"), strings.Join(keyLines, "\n"), issuer, expiry); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
+			case "10":
+				fmt.Print("Label: ")
+				label := readInput()
+				fmt.Print("Type (Card/IBAN/SWIFT): ")
+				bType := readInput()
+				fmt.Print("Details (Number/IBAN): ")
+				details := readInput()
+				fmt.Print("CVV (blank if none): ")
+				cvv := readInput()
+				fmt.Print("Expiry (MM/YY, blank if none): ")
+				exp := readInput()
+				if err := vault.AddBankingItem(label, bType, details, cvv, exp); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
+			case "11":
+				fmt.Print("Document Name: ")
+				name := readInput()
+				fmt.Print("Path to PDF: ")
+				path := readInput()
+				content, err := os.ReadFile(path)
+				if err != nil {
+					color.Red("Error reading file: %v\n", err)
+					return
+				}
+				fmt.Print("Create a password for this document: ")
+				docPass, _ := readPassword()
+				fmt.Println()
+				if err := vault.AddDocument(name, filepath.Base(path), content, docPass); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
+				color.HiYellow("Document stored successfully and safely. Please delete the original file: %s\n", path)
 			default:
 				color.Red("Invalid selection.\n")
 				return
@@ -257,7 +327,10 @@ func main() {
 				fmt.Println("6. SSH Key")
 				fmt.Println("7. Wi-Fi Credentials")
 				fmt.Println("8. Recovery Codes")
-				fmt.Print("Selection (1-8): ")
+				fmt.Println("9. Certificate")
+				fmt.Println("10. Banking Item")
+				fmt.Println("11. Document")
+				fmt.Print("Selection (1-11): ")
 				choice := readInput()
 
 				var results []src.SearchResult
@@ -302,6 +375,21 @@ func main() {
 					category = "Recovery Codes"
 					for _, e := range vault.RecoveryCodeItems {
 						results = append(results, src.SearchResult{Type: "Recovery Codes", Identifier: e.Service, Data: e})
+					}
+				case "9":
+					category = "Certificate"
+					for _, e := range vault.Certificates {
+						results = append(results, src.SearchResult{Type: "Certificate", Identifier: e.Label, Data: e})
+					}
+				case "10":
+					category = "Banking"
+					for _, e := range vault.BankingItems {
+						results = append(results, src.SearchResult{Type: "Banking", Identifier: e.Label, Data: e})
+					}
+				case "11":
+					category = "Document"
+					for _, e := range vault.Documents {
+						results = append(results, src.SearchResult{Type: "Document", Identifier: e.Name, Data: e})
 					}
 				default:
 					color.Red("Invalid selection.\n")
@@ -416,6 +504,12 @@ func main() {
 			} else if vault.DeleteWiFi(name) {
 				deleted = true
 			} else if vault.DeleteRecoveryCode(name) {
+				deleted = true
+			} else if vault.DeleteCertificate(name) {
+				deleted = true
+			} else if vault.DeleteBankingItem(name) {
+				deleted = true
+			} else if vault.DeleteDocument(name) {
 				deleted = true
 			}
 
@@ -648,6 +742,58 @@ func main() {
 					}
 					vault.DeleteRecoveryCode(e.Service)
 					vault.AddRecoveryCode(newSvc, newCodes)
+					updated = true
+				}
+			case "9":
+				if e, ok := vault.GetCertificate(identifier); ok {
+					fmt.Printf("Editing Certificate: %s\n", identifier)
+					fmt.Printf("New Label [%s]: ", e.Label)
+					newLabel := readInput()
+					if newLabel == "" {
+						newLabel = e.Label
+					}
+					fmt.Printf("New Issuer [%s]: ", e.Issuer)
+					newIssuer := readInput()
+					if newIssuer == "" {
+						newIssuer = e.Issuer
+					}
+					fmt.Printf("New Expiry [%s]: ", e.Expiry.Format("2006-01-02"))
+					newExpiryStr := readInput()
+					newExpiry := e.Expiry
+					if newExpiryStr != "" {
+						newExpiry, _ = time.Parse("2006-01-02", newExpiryStr)
+					}
+					vault.DeleteCertificate(e.Label)
+					vault.AddCertificate(newLabel, e.CertData, e.PrivateKey, newIssuer, newExpiry)
+					updated = true
+				}
+			case "10":
+				if e, ok := vault.GetBankingItem(identifier); ok {
+					fmt.Printf("Editing Banking: %s\n", identifier)
+					fmt.Printf("New Label [%s]: ", e.Label)
+					newLabel := readInput()
+					if newLabel == "" {
+						newLabel = e.Label
+					}
+					fmt.Printf("New Details [%s]: ", e.Details)
+					newDetails := readInput()
+					if newDetails == "" {
+						newDetails = e.Details
+					}
+					vault.DeleteBankingItem(e.Label)
+					vault.AddBankingItem(newLabel, e.Type, newDetails, e.CVV, e.Expiry)
+					updated = true
+				}
+			case "11":
+				if e, ok := vault.GetDocument(identifier); ok {
+					fmt.Printf("Editing Document Metadata: %s\n", identifier)
+					fmt.Printf("New Name [%s]: ", e.Name)
+					newName := readInput()
+					if newName == "" {
+						newName = e.Name
+					}
+					vault.DeleteDocument(e.Name)
+					vault.AddDocument(newName, e.FileName, e.Content, e.Password)
 					updated = true
 				}
 			}
@@ -1239,6 +1385,72 @@ func displayEntry(res src.SearchResult, showPass bool) {
 	case "Recovery Codes":
 		r := res.Data.(src.RecoveryCodeEntry)
 		fmt.Printf("Type: Recovery\nService: %s\nCodes: %v\n", r.Service, r.Codes)
+	case "Certificate":
+		c := res.Data.(src.CertificateEntry)
+		fmt.Printf("Type: Certificate\nLabel: %s\nIssuer: %s\nExpiry: %s\n", c.Label, c.Issuer, c.Expiry.Format("2006-01-02"))
+		if time.Until(c.Expiry) < 30*24*time.Hour {
+			color.Red("  [ALERT] Certificate is expiring soon! (%s left)\n", time.Until(c.Expiry).Truncate(time.Hour))
+		}
+		if showPass {
+			fmt.Printf("Cert Data:\n%s\n", c.CertData)
+			if c.PrivateKey != "" {
+				fmt.Printf("Private Key:\n%s\n", c.PrivateKey)
+			}
+		}
+	case "Banking":
+		b := res.Data.(src.BankingEntry)
+		fmt.Printf("Type: Banking (%s)\nLabel: %s\n", b.Type, b.Label)
+		displayDetails := b.Details
+		// Simple redaction logic for Cards (last 4 digits shown)
+		if b.Type == "Card" && len(displayDetails) > 4 {
+			displayDetails = "**** **** **** " + displayDetails[len(displayDetails)-4:]
+		} else if len(displayDetails) > 4 {
+			displayDetails = displayDetails[:4] + " **** **** ****"
+		}
+		fmt.Printf("Details (Redacted): %s\n", displayDetails)
+		if showPass {
+			fmt.Printf("Full Details: %s\n", b.Details)
+			if b.CVV != "" {
+				fmt.Printf("CVV: %s\n", b.CVV)
+			}
+			if b.Expiry != "" {
+				fmt.Printf("Expiry: %s\n", b.Expiry)
+			}
+		}
+	case "Document":
+		d := res.Data.(src.DocumentEntry)
+		fmt.Printf("Type: Document\nName: %s\nFile: %s\n", d.Name, d.FileName)
+		fmt.Print("This is a secure document. Open it? (y/n): ")
+		if strings.ToLower(readInput()) == "y" {
+			fmt.Print("Enter Document Password: ")
+			docPass, _ := readPassword()
+			fmt.Println()
+			if docPass == d.Password {
+				tmpDir := os.TempDir()
+				tmpFile := filepath.Join(tmpDir, d.FileName)
+				err := os.WriteFile(tmpFile, d.Content, 0600)
+				if err != nil {
+					color.Red("Error writing temporary file: %v\n", err)
+					return
+				}
+				defer func() {
+					time.Sleep(5 * time.Second) // Small delay before cleanup attempts
+					os.Remove(tmpFile)
+				}()
+				color.Green("Opening document...")
+				var cmd *exec.Cmd
+				if runtime.GOOS == "windows" {
+					cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
+				} else if runtime.GOOS == "darwin" {
+					cmd = exec.Command("open", tmpFile)
+				} else {
+					cmd = exec.Command("xdg-open", tmpFile)
+				}
+				cmd.Run()
+			} else {
+				color.Red("Incorrect document password.")
+			}
+		}
 	}
 	fmt.Println("---")
 }
