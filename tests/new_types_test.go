@@ -2,6 +2,7 @@ package apm_test
 
 import (
 	"testing"
+	"time"
 
 	src "password-manager/src"
 )
@@ -38,5 +39,27 @@ func TestNewSecretTypes(t *testing.T) {
 	rec, ok := vault.GetRecoveryCode("Test Service")
 	if !ok || len(rec.Codes) != 2 || rec.Codes[0] != "code1" {
 		t.Errorf("Recovery Code failed")
+	}
+
+	// Test Certificate
+	expiry := time.Now().Add(24 * time.Hour)
+	vault.AddCertificate("Test Cert", "CERT DATA", "KEY DATA", "Test Issuer", expiry)
+	cert, ok := vault.GetCertificate("Test Cert")
+	if !ok || cert.Issuer != "Test Issuer" {
+		t.Errorf("Certificate failed")
+	}
+
+	// Test Banking
+	vault.AddBankingItem("Test Card", "Card", "1234567812345678", "123", "12/25")
+	bank, ok := vault.GetBankingItem("Test Card")
+	if !ok || bank.Details != "1234567812345678" {
+		t.Errorf("Banking item failed")
+	}
+
+	// Test Document
+	vault.AddDocument("Test Doc", "test.pdf", []byte("pdf content"), "docpass")
+	doc, ok := vault.GetDocument("Test Doc")
+	if !ok || string(doc.Content) != "pdf content" {
+		t.Errorf("Document failed")
 	}
 }
