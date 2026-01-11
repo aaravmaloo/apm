@@ -77,7 +77,7 @@ type CertificateEntry struct {
 
 type BankingEntry struct {
 	Label    string `json:"label"`
-	Type     string `json:"type"` // "Card", "IBAN", "SWIFT"
+	Type     string `json:"type"`
 	Details  string `json:"details"`
 	CVV      string `json:"cvv,omitempty"`
 	Expiry   string `json:"expiry,omitempty"`
@@ -88,7 +88,7 @@ type DocumentEntry struct {
 	Name     string `json:"name"`
 	FileName string `json:"file_name"`
 	Content  []byte `json:"content"`
-	Password string `json:"password"` // Secondary password for the document
+	Password string `json:"password"`
 }
 
 type Vault struct {
@@ -106,6 +106,9 @@ type Vault struct {
 	Documents         []DocumentEntry     `json:"documents"`
 	History           []HistoryEntry      `json:"history"`
 	RetrievalKey      string              `json:"retrieval_key,omitempty"`
+	CloudFileID       string              `json:"cloud_file_id,omitempty"`
+	CloudCredentials  []byte              `json:"cloud_credentials,omitempty"`
+	CloudToken        []byte              `json:"cloud_token,omitempty"`
 	FailedAttempts    uint8               `json:"failed_attempts,omitempty"`
 	EmergencyMode     bool                `json:"emergency_mode,omitempty"`
 }
