@@ -445,19 +445,19 @@ List all shared entries you have access to.
 | Action | ADMIN | MANAGER | USER | AUDITOR | SECURITY |
 |--------|-------|---------|------|---------|----------|
 | **Department Management** |
-| Create Department | ✅ | ✅ | ❌ | ❌ | ❌ |
-| List Departments | ✅ (all) | ✅ (own) | ✅ (own) | ✅ (own) | ✅ (own) |
+| Create Department | Yes | Yes | No | No | No |
+| List Departments | Yes (all) | Yes (own) | Yes (own) | Yes (own) | Yes (own) |
 | **User Management** |
-| Add User | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Remove User | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Promote User | ✅ | ❌ | ❌ | ❌ | ❌ |
-| List Users | ✅ (all) | ✅ (dept) | ✅ (self) | ✅ (self) | ✅ (self) |
+| Add User | Yes | Yes | No | No | No |
+| Remove User | Yes | Yes | No | No | No |
+| Promote User | Yes | No | No | No | No |
+| List Users | Yes (all) | Yes (dept) | Yes (self) | Yes (self) | Yes (self) |
 | **Entry Management** |
-| Add Entry | ✅ | ✅ | ✅ | ❌ | ❌ |
-| View Entry | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Edit Entry | ✅ | ✅ | ✅ (own) | ❌ | ❌ |
-| Delete Entry | ✅ | ✅ | ✅ (own) | ❌ | ❌ |
-| List Entries | ✅ (all) | ✅ (dept) | ✅ (dept) | ❌ | ❌ |
+| Add Entry | Yes | Yes | Yes | No | No |
+| View Entry | Yes | Yes | Yes | No | No |
+| Edit Entry | Yes | Yes | Yes (own) | No | No |
+| Delete Entry | Yes | Yes | Yes (own) | No | No |
+| List Entries | Yes (all) | Yes (dept) | Yes (dept) | No | No |
 
 ### Role Descriptions
 
@@ -640,63 +640,63 @@ Every action is logged with:
 
 ### 1. Password Management
 
-✅ **DO**:
+**DO**:
 - Use strong, unique passwords for each user
 - Rotate department keys periodically
 - Use TOTP for critical accounts
 - Document password rotation schedules
 
-❌ **DON'T**:
+**DON'T**:
 - Share user passwords
 - Reuse passwords across departments
 - Store passwords in plaintext elsewhere
 
 ### 2. Role Assignment
 
-✅ **DO**:
+**DO**:
 - Follow principle of least privilege
 - Assign MANAGER role to team leads only
 - Use USER role for most team members
 - Create dedicated AUDITOR accounts for compliance
 
-❌ **DON'T**:
+**DON'T**:
 - Give everyone ADMIN access
 - Create unnecessary MANAGER accounts
 - Use shared accounts
 
 ### 3. Department Structure
 
-✅ **DO**:
+**DO**:
 - Align departments with organizational structure
 - Keep departments focused (Engineering, Finance, etc.)
 - Create separate departments for different access levels
 
-❌ **DON'T**:
+**DON'T**:
 - Create too many departments
 - Mix unrelated teams in one department
 - Use generic department names
 
 ### 4. Entry Organization
 
-✅ **DO**:
+**DO**:
 - Use descriptive names ("AWS Production Console")
 - Include service names in labels
 - Add URLs for password entries
 - Document entry purpose in notes
 
-❌ **DON'T**:
+**DON'T**:
 - Use vague names ("Password 1")
 - Duplicate entries across departments
 - Store non-sensitive data
 
 ### 5. Session Management
 
-✅ **DO**:
+**DO**:
 - Logout when done
 - Use short session timeouts
 - Lock workstation when away
 
-❌ **DON'T**:
+**DON'T**:
 - Leave sessions active overnight
 - Share session files
 - Disable session expiry
