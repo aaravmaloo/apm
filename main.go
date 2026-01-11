@@ -1217,10 +1217,15 @@ func main() {
 				return
 			}
 
-			// Upload to cloud and get File ID as key
-			exe, _ := os.Executable()
-			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
-			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			color.Cyan("\n--- Cloud Setup Tips ---")
+			fmt.Println("1. Use a retrieval key that is easy for you to remember but impossible for others to guess.")
+			fmt.Println("2. Something personal like 'MyOldLibraryID-2024' or a unique passphrase is good.")
+			fmt.Println("3. LEAVE BLANK to generate a random secure ID (recommended for maximum security).\n")
+
+			fmt.Print("Enter custom Retrieval Key (or ENTER for random): ")
+			customKey := readInput()
+
+			cm, err := getCloudManager(context.Background(), vault, masterPassword)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
@@ -1232,14 +1237,20 @@ func main() {
 				return
 			}
 
-			vault.RetrievalKey = fileID
-			// Save locally again with the new key
+			actualKey := fileID
+			if customKey != "" {
+				actualKey = customKey
+			}
+
+			vault.RetrievalKey = actualKey
+			vault.CloudFileID = fileID
+
 			data, _ := src.EncryptVault(vault, masterPassword)
 			src.SaveVault(vaultPath, data)
 
 			color.Green("Cloud sync initialized!")
-			color.HiCyan("Retrieval Key: %s\n", fileID)
-			color.Yellow("Keep this key safe! It's required to pull your vault on other devices (no login required).")
+			color.HiCyan("Retrieval Key: %s\n", actualKey)
+			color.Yellow("Keep this key safe! It's required to pull your vault on other devices.")
 		},
 	}
 
@@ -1247,7 +1258,7 @@ func main() {
 		Use:   "sync",
 		Short: "Manually sync current vault to cloud",
 		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
+			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -1258,15 +1269,18 @@ func main() {
 				return
 			}
 
-			exe, _ := os.Executable()
-			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
-			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			cm, err := getCloudManager(context.Background(), vault, masterPassword)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
 			}
 
-			err = cm.SyncVault(vaultPath, vault.RetrievalKey)
+			targetFileID := vault.CloudFileID
+			if targetFileID == "" {
+				targetFileID = vault.RetrievalKey
+			}
+
+			err = cm.SyncVault(vaultPath, targetFileID)
 			if err != nil {
 				color.Red("Sync failed: %v\n", err)
 				return
@@ -1285,7 +1299,7 @@ func main() {
 				return
 			}
 
-			_, vault, _, err := src_unlockVault()
+			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -1297,9 +1311,7 @@ func main() {
 			}
 
 			key := vault.RetrievalKey
-			exe, _ := os.Executable()
-			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
-			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			cm, err := getCloudManager(context.Background(), vault, masterPassword)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
@@ -1324,7 +1336,11 @@ func main() {
 						if event.Op&fsnotify.Write == fsnotify.Write {
 							if time.Since(lastSync) > 5*time.Second {
 								fmt.Printf("[%s] Change detected, syncing...\n", time.Now().Format("15:04:05"))
-								err := cm.SyncVault(vaultPath, key)
+								targetFileID := vault.CloudFileID
+								if targetFileID == "" {
+									targetFileID = key
+								}
+								err := cm.SyncVault(vaultPath, targetFileID)
 								if err != nil {
 									color.Red("Auto-sync failed: %v\n", err)
 								} else {
@@ -1372,7 +1388,6 @@ func main() {
 				return
 			}
 
-			// Verify it's a valid vault before saving
 			fmt.Print("Verify Master Password for downloaded vault: ")
 			pass, _ := readPassword()
 			fmt.Println()
@@ -1395,7 +1410,7 @@ func main() {
 		Use:   "delete",
 		Short: "Permanently delete vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
+			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -1411,45 +1426,23 @@ func main() {
 				return
 			}
 
-			exe, _ := os.Executable()
-			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
-			cm, err := src.NewCloudManager(context.Background(), credsPath)
+			cm, err := getCloudManager(context.Background(), vault, masterPassword)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
 			}
 
-			err = cm.DeleteVault(vault.RetrievalKey)
+			targetFileID := vault.CloudFileID
+			if targetFileID == "" {
+				targetFileID = vault.RetrievalKey
+			}
+
+			err = cm.DeleteVault(targetFileID)
 			if err != nil {
 				color.Red("Deletion failed: %v\n", err)
 				return
 			}
 			color.Green("Cloud vault deleted.")
-		},
-	}
-
-	var cloudListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all vault blobs on cloud",
-		Run: func(cmd *cobra.Command, args []string) {
-			exe, _ := os.Executable()
-			credsPath := filepath.Join(filepath.Dir(exe), "credentials.json")
-			cm, err := src.NewCloudManager(context.Background(), credsPath)
-			if err != nil {
-				color.Red("Cloud Error: %v\n", err)
-				return
-			}
-
-			vaults, err := cm.ListVaults()
-			if err != nil {
-				color.Red("List failed: %v\n", err)
-				return
-			}
-
-			fmt.Println("Cloud Vaults:")
-			for _, v := range vaults {
-				fmt.Println("-", v)
-			}
 		},
 	}
 
@@ -1494,12 +1487,14 @@ func main() {
 		},
 	}
 
-	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudListCmd, cloudResetCmd)
+	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudResetCmd)
 
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, unlockCmd, readonlyCmd, lockCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd)
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.Execute()
 }
 
@@ -1734,7 +1729,7 @@ func displayEntry(res src.SearchResult, showPass bool) {
 					return
 				}
 				defer func() {
-					time.Sleep(5 * time.Second) // Small delay before cleanup attempts
+					time.Sleep(5 * time.Second)
 					os.Remove(tmpFile)
 				}()
 				color.Green("Opening document...")
@@ -1753,4 +1748,44 @@ func displayEntry(res src.SearchResult, showPass bool) {
 		}
 	}
 	fmt.Println("---")
+}
+
+func getCloudManager(ctx context.Context, vault *src.Vault, masterPassword string) (*src.CloudManager, error) {
+	exe, _ := os.Executable()
+	installDir := filepath.Dir(exe)
+
+	migrated := false
+	if len(vault.CloudCredentials) == 0 {
+		credsPath := filepath.Join(installDir, "credentials.json")
+		if data, err := os.ReadFile(credsPath); err == nil {
+			vault.CloudCredentials = data
+			migrated = true
+			color.Yellow("Migrating credentials.json to encrypted vault...")
+		}
+	}
+	if len(vault.CloudToken) == 0 {
+		tokenPath := filepath.Join(installDir, "token.json")
+		if data, err := os.ReadFile(tokenPath); err == nil {
+			vault.CloudToken = data
+			migrated = true
+			color.Yellow("Migrating token.json to encrypted vault...")
+		}
+	}
+
+	if migrated {
+		data, err := src.EncryptVault(vault, masterPassword)
+		if err == nil {
+			src.SaveVault(vaultPath, data)
+			color.Green("Cloud credentials securely stored in vault.")
+		}
+	}
+
+	if len(vault.CloudCredentials) == 0 {
+		return nil, fmt.Errorf("cloud credentials missing. place credentials.json in %s", installDir)
+	}
+	if len(vault.CloudToken) == 0 {
+		return nil, fmt.Errorf("cloud token missing. place token.json in %s", installDir)
+	}
+
+	return src.NewCloudManager(ctx, vault.CloudCredentials, vault.CloudToken)
 }
