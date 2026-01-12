@@ -25,7 +25,7 @@ var (
 	procNCryptOpenStorageProvider = modncrypt.NewProc("NCryptOpenStorageProvider")
 	procNCryptCreatePersistedKey  = modncrypt.NewProc("NCryptCreatePersistedKey")
 	procNCryptFinalizeKey         = modncrypt.NewProc("NCryptFinalizeKey")
-	procNCryptOpenPersistedKey    = modncrypt.NewProc("NCryptOpenPersistedKey")
+	procNCryptOpenKey             = modncrypt.NewProc("NCryptOpenKey")
 	procNCryptDecrypt             = modncrypt.NewProc("NCryptDecrypt")
 	procNCryptEncrypt             = modncrypt.NewProc("NCryptEncrypt")
 	procNCryptFreeObject          = modncrypt.NewProc("NCryptFreeObject")
@@ -72,7 +72,7 @@ func SetupHello(masterPassword string) error {
 	// Verify all procedures are found
 	procs := []*windows.LazyProc{
 		procNCryptDeleteKey, procNCryptOpenStorageProvider, procNCryptCreatePersistedKey,
-		procNCryptFinalizeKey, procNCryptOpenPersistedKey, procNCryptDecrypt,
+		procNCryptFinalizeKey, procNCryptOpenKey, procNCryptDecrypt,
 		procNCryptEncrypt, procNCryptFreeObject, procNCryptSetProperty,
 	}
 	for _, p := range procs {
@@ -96,7 +96,7 @@ func SetupHello(masterPassword string) error {
 	keyName := "APM_WindowsHello_Key"
 
 	// Try to open and delete existing key
-	res, _, _ = procNCryptOpenPersistedKey.Call(
+	res, _, _ = procNCryptOpenKey.Call(
 		hProvider,
 		uintptr(unsafe.Pointer(&hKey)),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(keyName))),
@@ -246,7 +246,7 @@ func GetMasterPasswordWithHello() (string, error) {
 
 	var hKey uintptr
 	keyName := "APM_WindowsHello_Key"
-	res, _, _ = procNCryptOpenPersistedKey.Call(
+	res, _, _ = procNCryptOpenKey.Call(
 		hProvider,
 		uintptr(unsafe.Pointer(&hKey)),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(keyName))),
