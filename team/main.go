@@ -430,7 +430,7 @@ func main() {
 
 			tv, _ := loadTeamVault()
 
-			// Verify department exists
+			
 			deptExists := false
 			for _, d := range tv.Departments {
 				if d.ID == deptID {
@@ -444,7 +444,7 @@ func main() {
 				return
 			}
 
-			// Update user's active department
+			
 			found := false
 			for i, u := range tv.Users {
 				if u.Username == username {
@@ -755,7 +755,7 @@ func main() {
 
 			tv, _ := loadTeamVault()
 
-			// Create export data (without decrypted passwords)
+			
 			exportData := map[string]interface{}{
 				"organization_id": tv.OrganizationID,
 				"departments":     tv.Departments,
@@ -1163,7 +1163,7 @@ func addSharedBankingItem(tv *TeamVault, s *TeamSession) {
 func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 	var creator string
 
-	// Helper to check permission
+	
 	switch v := res.Data.(type) {
 	case SharedPassword:
 		creator = v.CreatedBy
@@ -1210,7 +1210,7 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 			enc, _ := EncryptData([]byte(newPass), s.DeptKey)
 			p.Password = enc
 		}
-		// Find and update in slice
+		
 		for i, item := range tv.SharedEntries.Passwords {
 			if item.ID == p.ID {
 				item.ModifiedBy = s.Username
@@ -1233,7 +1233,7 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 				break
 			}
 		}
-	// ... for brevity I'll implement the rest of types similarly or just the most critical ones for now
+	
 	default:
 		color.Yellow("Edit for %s is partially supported. Re-add to change complex fields.\n", res.Type)
 		return
@@ -1251,9 +1251,9 @@ func deleteSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		creator = v.CreatedBy
 	case SharedTOTP:
 		creator = v.CreatedBy
-	// ... could add all
+	
 	default:
-		// Fallback for types where we haven't mapped CreatedBy yet
+		
 		creator = ""
 	}
 
@@ -1451,14 +1451,14 @@ func displaySharedEntry(res SearchResult, deptKey []byte) {
 		fmt.Println("Use 'pm-team download' (to be implemented) or 'edit' to view password.")
 	}
 
-	// Meta info for all
+	
 	var createdBy, createdAt string
 	switch v := res.Data.(type) {
 	case SharedPassword:
 		createdBy, createdAt = v.CreatedBy, v.CreatedAt.Format("2006-01-02")
 	case SharedTOTP:
 		createdBy, createdAt = v.CreatedBy, v.CreatedAt.Format("2006-01-02")
-		// ... could add all but let's keep it simple for now
+		
 	}
 	if createdBy != "" {
 		fmt.Printf("\nCreated by: %s on %s\n", createdBy, createdAt)
