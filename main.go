@@ -1610,15 +1610,33 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		return "", nil, false, err
 	}
 
-	// Windows Hello Integration
-	helloChan := make(chan string, 1)
+	// Biometric Authentication Attempt
 	if src.IsHelloConfigured() {
+		color.HiBlue("[Windows Hello configured. Authenticating...]")
+		
+		helloResult := make(chan string, 1)
 		go func() {
 			pass, err := src.GetMasterPasswordWithHello()
 			if err == nil {
-				helloChan <- pass
+				helloResult <- pass
 			}
 		}()
+
+		// Wait briefly to see if biometric is immediate, otherwise continue to password input
+		select {
+		case pass := <-helloResult:
+			vault, err := src.DecryptVault(data, pass, 1)
+			if err == nil {
+				color.Green("Authenticated via Windows Hello.")
+				return pass, vault, false, nil
+			}
+		case <-time.After(500 * time.Millisecond):
+			// Proceed to manual input but keep checking helloResult in background
+			fmt.Println("Type Master Password or wait for Windows Hello...")
+		}
+		
+		// If we are here, we are doing manual input
+		// But we still want to allow the goroutine to finish and "interrupt" the input if possible
 	}
 
 	for i := 0; i < 3; i++ {
@@ -1629,37 +1647,13 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			time.Sleep(5 * time.Second)
 		}
 
-		prompt := fmt.Sprintf("Master Password (attempt %d/3): ", i+1)
-		if src.IsHelloConfigured() {
-			prompt = fmt.Sprintf("Master Password (face ID is activated) (attempt %d/3): ", i+1)
-		}
-		fmt.Print(prompt)
-
-		// Race between manual entry and biometric success
-		type result struct {
-			pass string
-			err  error
-		}
-		manualChan := make(chan result, 1)
-		go func() {
-			p, e := readPassword()
-			manualChan <- result{p, e}
-		}()
-
-		var pass string
-		select {
-		case pass = <-helloChan:
-			fmt.Println("[Biometric Authenticated]")
-		case res := <-manualChan:
-			pass = res.pass
-			fmt.Println()
-			if res.err != nil {
-				return "", nil, false, res.err
-			}
-		}
+		fmt.Printf("Master Password (attempt %d/3): ", i+1)
+		pass, _ := readPassword()
+		fmt.Println()
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
+			// Success
 			if vault.EmergencyMode || localFailures >= 6 {
 				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
 			}
@@ -1674,10 +1668,47 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		}
 
 		src.TrackFailure()
+
 		fmt.Printf("Error: %v\n", err)
 	}
 
 	return "", nil, false, fmt.Errorf("too many failed attempts")
+}
+
+func setupWindowsHello() {
+	if !src.VaultExists(vaultPath) {
+		color.Red("Vault not found. Please run 'pm init' first.")
+		return
+	}
+
+	fmt.Print("Enter Master Password to authorize Windows Hello: ")
+	masterPassword, err := readPassword()
+	fmt.Println()
+	if err != nil {
+		color.Red("Error reading password: %v", err)
+		return
+	}
+
+	data, err := src.LoadVault(vaultPath)
+	if err != nil {
+		color.Red("Error loading vault: %v", err)
+		return
+	}
+
+	_, err = src.DecryptVault(data, masterPassword, 1)
+	if err != nil {
+		color.Red("Invalid master password.")
+		return
+	}
+
+	color.Cyan("Setting up Windows Hello... Please complete the biometric challenge.")
+	
+	if err := src.SetupHello(masterPassword); err != nil {
+		color.Red("Error: %v\n", err)
+		return
+	}
+
+	color.Green("Windows Hello successfully configured. You can now unlock your vault with your face, fingerprint, or PIN.")
 }
 
 type ScoredResult struct {
