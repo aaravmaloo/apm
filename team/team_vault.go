@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -167,16 +168,41 @@ type SharedRecoveryCode struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+type SharedBankingItem struct {
+	ID           string    `json:"id"`
+	Label        string    `json:"label"`
+	Type         string    `json:"type"`
+	Details      []byte    `json:"details"`
+	CVV          []byte    `json:"cvv,omitempty"`
+	Expiry       string    `json:"expiry,omitempty"`
+	DepartmentID string    `json:"department_id"`
+	CreatedBy    string    `json:"created_by"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type SharedDocumentEntry struct {
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	FileName     string    `json:"file_name"`
+	Content      []byte    `json:"content"`
+	Password     []byte    `json:"password"`
+	DepartmentID string    `json:"department_id"`
+	CreatedBy    string    `json:"created_by"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type SharedEntryStore struct {
-	Passwords     []SharedPassword     `json:"passwords"`
-	TOTPs         []SharedTOTP         `json:"totps"`
-	APIKeys       []SharedAPIKey       `json:"api_keys"`
-	Tokens        []SharedToken        `json:"tokens"`
-	Notes         []SharedNote         `json:"notes"`
-	SSHKeys       []SharedSSHKey       `json:"ssh_keys"`
-	Certificates  []SharedCertificate  `json:"certificates"`
-	WiFi          []SharedWiFi         `json:"wifi"`
-	RecoveryCodes []SharedRecoveryCode `json:"recovery_codes"`
+	Passwords     []SharedPassword      `json:"passwords"`
+	TOTPs         []SharedTOTP          `json:"totps"`
+	APIKeys       []SharedAPIKey        `json:"api_keys"`
+	Tokens        []SharedToken         `json:"tokens"`
+	Notes         []SharedNote          `json:"notes"`
+	SSHKeys       []SharedSSHKey        `json:"ssh_keys"`
+	Certificates  []SharedCertificate   `json:"certificates"`
+	WiFi          []SharedWiFi          `json:"wifi"`
+	RecoveryCodes []SharedRecoveryCode  `json:"recovery_codes"`
+	BankingItems  []SharedBankingItem   `json:"banking_items"`
+	Documents     []SharedDocumentEntry `json:"documents"`
 }
 
 type TeamVault struct {
@@ -201,4 +227,77 @@ func (tv *TeamVault) AddAuditEntry(user, action, details string) {
 		entry.PrevHash = hashData(data)
 	}
 	tv.AuditTrail = append(tv.AuditTrail, entry)
+}
+
+type SearchResult struct {
+	Type       string
+	Identifier string
+	Data       interface{}
+}
+
+func (tv *TeamVault) SearchAll(query string, deptID string, isAdmin bool) []SearchResult {
+	var results []SearchResult
+	query = strings.ToLower(query)
+
+	checkAccess := func(itemDeptID string) bool {
+		return isAdmin || itemDeptID == deptID
+	}
+
+	for _, p := range tv.SharedEntries.Passwords {
+		if checkAccess(p.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(p.Name), query)) {
+			results = append(results, SearchResult{"Password", p.Name, p})
+		}
+	}
+	for _, t := range tv.SharedEntries.TOTPs {
+		if checkAccess(t.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(t.Name), query)) {
+			results = append(results, SearchResult{"TOTP", t.Name, t})
+		}
+	}
+	for _, k := range tv.SharedEntries.APIKeys {
+		if checkAccess(k.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(k.Label), query)) {
+			results = append(results, SearchResult{"API Key", k.Label, k})
+		}
+	}
+	for _, t := range tv.SharedEntries.Tokens {
+		if checkAccess(t.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(t.Name), query)) {
+			results = append(results, SearchResult{"Token", t.Name, t})
+		}
+	}
+	for _, n := range tv.SharedEntries.Notes {
+		if checkAccess(n.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(n.Name), query)) {
+			results = append(results, SearchResult{"Note", n.Name, n})
+		}
+	}
+	for _, s := range tv.SharedEntries.SSHKeys {
+		if checkAccess(s.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(s.Label), query)) {
+			results = append(results, SearchResult{"SSH Key", s.Label, s})
+		}
+	}
+	for _, c := range tv.SharedEntries.Certificates {
+		if checkAccess(c.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(c.Label), query)) {
+			results = append(results, SearchResult{"Certificate", c.Label, c})
+		}
+	}
+	for _, w := range tv.SharedEntries.WiFi {
+		if checkAccess(w.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(w.SSID), query)) {
+			results = append(results, SearchResult{"Wi-Fi", w.SSID, w})
+		}
+	}
+	for _, r := range tv.SharedEntries.RecoveryCodes {
+		if checkAccess(r.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(r.Service), query)) {
+			results = append(results, SearchResult{"Recovery Code", r.Service, r})
+		}
+	}
+	for _, b := range tv.SharedEntries.BankingItems {
+		if checkAccess(b.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(b.Label), query)) {
+			results = append(results, SearchResult{"Banking", b.Label, b})
+		}
+	}
+	for _, d := range tv.SharedEntries.Documents {
+		if checkAccess(d.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(d.Name), query)) {
+			results = append(results, SearchResult{"Document", d.Name, d})
+		}
+	}
+
+	return results
 }
