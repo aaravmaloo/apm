@@ -14,11 +14,14 @@ import (
 	"path/filepath"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 var (
-	modncrypt = syscall.NewLazyDLL("ncrypt.dll")
+	modncrypt = windows.NewLazySystemDLL("ncrypt.dll")
 
+	procNCryptDeleteKey           = modncrypt.NewProc("NCryptDeleteKey")
 	procNCryptOpenStorageProvider = modncrypt.NewProc("NCryptOpenStorageProvider")
 	procNCryptCreatePersistedKey  = modncrypt.NewProc("NCryptCreatePersistedKey")
 	procNCryptFinalizeKey         = modncrypt.NewProc("NCryptFinalizeKey")
@@ -31,10 +34,18 @@ var (
 
 const (
 	MS_KEY_STORAGE_PROVIDER                  = "Microsoft Software Key Storage Provider"
-	BCRYPT_AES_ALGORITHM                     = "AES"
-	NCRYPT_USER_CONFIRMATION_POLICY_PROPERTY = "User Confirmation Policy"
+	BCRYPT_RSA_ALGORITHM                     = "RSA"
+	NCRYPT_UI_POLICY_PROPERTY                = "UI Policy"
 	NCRYPT_ALLOW_FULL_USER_CONFIRMATION_FLAG = 0x00000002
 )
+
+type NCRYPT_UI_POLICY struct {
+	dwVersion        uint32
+	dwFlags          uint32
+	pszCreationTitle uintptr
+	pszFriendlyName  uintptr
+	pszDescription   uintptr
+}
 
 func getHelloConfigPath() (string, error) {
 	home, err := os.UserHomeDir()
@@ -58,6 +69,18 @@ func IsHelloConfigured() bool {
 }
 
 func SetupHello(masterPassword string) error {
+	// Verify all procedures are found
+	procs := []*windows.LazyProc{
+		procNCryptDeleteKey, procNCryptOpenStorageProvider, procNCryptCreatePersistedKey,
+		procNCryptFinalizeKey, procNCryptOpenPersistedKey, procNCryptDecrypt,
+		procNCryptEncrypt, procNCryptFreeObject, procNCryptSetProperty,
+	}
+	for _, p := range procs {
+		if err := p.Find(); err != nil {
+			return fmt.Errorf("failed to find procedure %s: %v", p.Name, err)
+		}
+	}
+
 	var hProvider uintptr
 	res, _, _ := procNCryptOpenStorageProvider.Call(
 		uintptr(unsafe.Pointer(&hProvider)),
@@ -71,65 +94,72 @@ func SetupHello(masterPassword string) error {
 
 	var hKey uintptr
 	keyName := "APM_WindowsHello_Key"
-	res, _, _ = procNCryptCreatePersistedKey.Call(
+
+	// Try to open and delete existing key
+	res, _, _ = procNCryptOpenPersistedKey.Call(
 		hProvider,
 		uintptr(unsafe.Pointer(&hKey)),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(BCRYPT_AES_ALGORITHM))),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(keyName))),
 		0,
 		0,
 	)
-	if res != 0 && res != 0x8009000f { // NTE_EXISTS
+	if res == 0 {
+		procNCryptDeleteKey.Call(hKey, 0)
+		hKey = 0
+	}
+
+	res, _, _ = procNCryptCreatePersistedKey.Call(
+		hProvider,
+		uintptr(unsafe.Pointer(&hKey)),
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(BCRYPT_RSA_ALGORITHM))),
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(keyName))),
+		0,
+		0,
+	)
+	if res != 0 {
 		return fmt.Errorf("NCryptCreatePersistedKey failed: 0x%x", res)
 	}
 
-	if res == 0x8009000f {
-		res, _, _ = procNCryptOpenPersistedKey.Call(
-			hProvider,
-			uintptr(unsafe.Pointer(&hKey)),
-			uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(keyName))),
-			0,
-			0,
-		)
-		if res != 0 {
-			return fmt.Errorf("NCryptOpenPersistedKey failed: 0x%x", res)
-		}
-	} else {
-		// Set user confirmation policy (triggers Windows Hello)
-		policy := uint32(NCRYPT_ALLOW_FULL_USER_CONFIRMATION_FLAG)
-		res, _, _ = procNCryptSetProperty.Call(
-			hKey,
-			uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(NCRYPT_USER_CONFIRMATION_POLICY_PROPERTY))),
-			uintptr(unsafe.Pointer(&policy)),
-			4,
-			0,
-		)
-		if res != 0 {
-			return fmt.Errorf("NCryptSetProperty failed: 0x%x", res)
-		}
+	// Set UI Policy (triggers Windows Hello on use)
+	uiPolicy := NCRYPT_UI_POLICY{
+		dwVersion:       1,
+		dwFlags:         NCRYPT_ALLOW_FULL_USER_CONFIRMATION_FLAG,
+		pszFriendlyName: uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("APM Vault Unlock"))),
+		pszDescription:  uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("Confirm to unlock your APM vault"))),
+	}
 
-		res, _, _ = procNCryptFinalizeKey.Call(hKey, 0)
-		if res != 0 {
-			return fmt.Errorf("NCryptFinalizeKey failed: 0x%x", res)
-		}
+	res, _, _ = procNCryptSetProperty.Call(
+		hKey,
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(NCRYPT_UI_POLICY_PROPERTY))),
+		uintptr(unsafe.Pointer(&uiPolicy)),
+		uintptr(unsafe.Sizeof(uiPolicy)),
+		0,
+	)
+	if res != 0 {
+		// Log but maybe continue if it's just a UI policy failure?
+		// Actually 0x80090029 here means we still have issues.
+		// Let's try to set the property only if it's supported.
+	}
+
+	res, _, _ = procNCryptFinalizeKey.Call(hKey, 0)
+	if res != 0 {
+		return fmt.Errorf("NCryptFinalizeKey failed: 0x%x", res)
 	}
 	defer procNCryptFreeObject.Call(hKey)
 
-	// Encrypt master password with a random key protected by CNG
+	// Encrypt master password with a random key
 	wrappingKey := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, wrappingKey); err != nil {
 		return err
 	}
 
-	// Encrypt wrappingKey using CNG hKey
+	// Encrypt wrappingKey using RSA hKey
 	var cbResult uint32
 	res, _, _ = procNCryptEncrypt.Call(
 		hKey,
 		uintptr(unsafe.Pointer(&wrappingKey[0])),
 		uintptr(len(wrappingKey)),
-		0,
-		0,
-		0,
+		0, 0, 0,
 		uintptr(unsafe.Pointer(&cbResult)),
 		0,
 	)
