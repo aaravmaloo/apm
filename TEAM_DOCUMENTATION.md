@@ -105,6 +105,8 @@ Credentials, keys, and secrets shared within a department:
 - Certificates
 - WiFi Credentials
 - Recovery Codes
+- Banking/Finance Items
+- Encrypted Documents
 
 ---
 
@@ -313,13 +315,18 @@ Add a shared entry (interactive).
 
 **Interactive Prompts**:
 ```
-Select entry type:
 1. Password
 2. TOTP
 3. API Key
 4. Token
 5. Secure Note
-Choice: 1
+6. SSH Key
+7. Certificate
+8. Wi-Fi
+9. Recovery Code
+10. Banking Item
+11. Document
+Choice (1-11): 1
 
 Name: GitHub Admin
 Username: admin@acme.com
@@ -358,6 +365,45 @@ Shared password 'GitHub Admin' added successfully.
    - Name, Content (multi-line)
    - Shared documentation
    - Encrypted notes for team
+
+6. **SSH Key**
+   - Label, Private Key
+   - Shared access for servers
+
+7. **Certificate**
+   - Label, Issuer, Expiry, Cert Data, Private Key
+   - SSL/SSH certificates for shared infrastructure
+
+8. **Wi-Fi Credentials**
+   - SSID, Password, Security (WPA2/WPA3)
+   - Office/Lab network access
+
+9. **Recovery Code**
+   - Service, Codes (multi-line)
+   - Backup codes for shared accounts
+
+10. **Banking/Finance Item**
+    - Label, Type (Card/IBAN), Details, CVV, Expiry
+    - Shared corporate cards or bank accounts
+
+11. **Encrypted Document**
+    - Document Name, Path to Local File
+    - Securely stores files (e.g. PDFs) inside the vault
+
+#### `pm-team get <query>`
+
+Search and retrieve a shared entry using unified fuzzy search.
+
+**Permissions**: ADMIN, MANAGER, USER
+
+**Example**:
+```powershell
+.\pm-team.exe get github
+```
+
+**Output**:
+- Displays decrypted details for the matching entry.
+- If multiple matches are found, prompts for selection.
 
 #### `pm-team list`
 
