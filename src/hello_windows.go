@@ -311,6 +311,5 @@ func DisableHello() error {
 		return err
 	}
 
-	// We don't necessarily need to delete the CNG key, but we delete the config file
 	return os.Remove(path)
 }
