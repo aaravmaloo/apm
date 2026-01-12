@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"strings" // Added import
+
 	"github.com/mr-tron/base58/base58"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -98,16 +100,44 @@ func (cm *CloudManager) UploadVault(vaultPath string) (string, error) {
 }
 
 func (cm *CloudManager) DownloadVault(fileID string) ([]byte, error) {
-	resp, err := cm.Service.Files.Get(fileID).Download()
-	if err != nil {
-		return nil, fmt.Errorf("unable to download file: %v", err)
-	}
-	defer resp.Body.Close()
-
-	return io.ReadAll(resp.Body)
+	return DownloadPublicVault(fileID)
 }
 
-func DownloadPublicVault(fileID string) ([]byte, error) {
+func extractFileID(input string) string {
+	// Handle full URLs
+	if strings.Contains(input, "drive.google.com") {
+		// Case 1: /file/d/<ID>/view
+		if strings.Contains(input, "/file/d/") {
+			parts := strings.Split(input, "/file/d/")
+			if len(parts) > 1 {
+				idPart := parts[1]
+				if idx := strings.Index(idPart, "/"); idx != -1 {
+					return idPart[:idx]
+				}
+				if idx := strings.Index(idPart, "?"); idx != -1 {
+					return idPart[:idx]
+				}
+				return idPart
+			}
+		}
+		// Case 2: id=<ID> parameter
+		if strings.Contains(input, "id=") {
+			parts := strings.Split(input, "id=")
+			if len(parts) > 1 {
+				idPart := parts[1]
+				if idx := strings.Index(idPart, "&"); idx != -1 {
+					return idPart[:idx]
+				}
+				return idPart
+			}
+		}
+	}
+	// Assume raw ID if no URL structure found
+	return input
+}
+
+func DownloadPublicVault(input string) ([]byte, error) {
+	fileID := extractFileID(input)
 	url := fmt.Sprintf("https://drive.google.com/uc?export=download&id=%s", fileID)
 	resp, err := http.Get(url)
 	if err != nil {
