@@ -1489,10 +1489,66 @@ func main() {
 
 	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudResetCmd)
 
+	var methodCmd = &cobra.Command{Use: "method", Short: "Manage authentication methods"}
+	var helloCmd = &cobra.Command{
+		Use:   "hello",
+		Short: "Setup Windows Hello (biometric/PIN) for vault unlocking",
+		Run: func(cmd *cobra.Command, args []string) {
+			disable, _ := cmd.Flags().GetBool("disable")
+			if disable {
+				if err := src.DisableHello(); err != nil {
+					color.Red("Error: %v\n", err)
+				} else {
+					color.Green("Windows Hello support disabled.\n")
+				}
+				return
+			}
+
+			if src.IsHelloConfigured() {
+				color.Yellow("Windows Hello is already configured. Reconfiguring will overwrite existing setup.")
+			}
+
+			fmt.Print("Enter Master Password to authorize Windows Hello: ")
+			masterPass, err := readPassword()
+			fmt.Println()
+			if err != nil {
+				color.Red("Error reading password: %v\n", err)
+				return
+			}
+
+			// Verify password by attempting to load/decrypt vault
+			if !src.VaultExists(vaultPath) {
+				color.Red("Vault not found. Please init vault first.")
+				return
+			}
+			data, err := src.LoadVault(vaultPath)
+			if err != nil {
+				color.Red("Error loading vault: %v\n", err)
+				return
+			}
+
+			_, err = src.DecryptVault(data, masterPass, 1)
+			if err != nil {
+				color.Red("Authentication failed (incorrect master password).")
+				return
+			}
+
+			color.Cyan("Setting up Windows Hello... Please complete the biometric challenge.")
+			if err := src.SetupHello(masterPass); err != nil {
+				color.Red("Error: %v\n", err)
+				return
+			}
+
+			color.Green("Windows Hello successfully configured. You can now unlock your vault with your face, fingerprint, or PIN.")
+		},
+	}
+	helloCmd.Flags().Bool("disable", false, "Disable Windows Hello support")
+	methodCmd.AddCommand(helloCmd)
+
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, methodCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.Execute()
@@ -1554,6 +1610,17 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		return "", nil, false, err
 	}
 
+	// Windows Hello Integration
+	helloChan := make(chan string, 1)
+	if src.IsHelloConfigured() {
+		go func() {
+			pass, err := src.GetMasterPasswordWithHello()
+			if err == nil {
+				helloChan <- pass
+			}
+		}()
+	}
+
 	for i := 0; i < 3; i++ {
 		localFailures := src.GetFailureCount()
 		costMultiplier := 1
@@ -1562,13 +1629,37 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			time.Sleep(5 * time.Second)
 		}
 
-		fmt.Printf("Master Password (attempt %d/3): ", i+1)
-		pass, _ := readPassword()
-		fmt.Println()
+		prompt := fmt.Sprintf("Master Password (attempt %d/3): ", i+1)
+		if src.IsHelloConfigured() {
+			prompt = fmt.Sprintf("Master Password (face ID is activated) (attempt %d/3): ", i+1)
+		}
+		fmt.Print(prompt)
+
+		// Race between manual entry and biometric success
+		type result struct {
+			pass string
+			err  error
+		}
+		manualChan := make(chan result, 1)
+		go func() {
+			p, e := readPassword()
+			manualChan <- result{p, e}
+		}()
+
+		var pass string
+		select {
+		case pass = <-helloChan:
+			fmt.Println("[Biometric Authenticated]")
+		case res := <-manualChan:
+			pass = res.pass
+			fmt.Println()
+			if res.err != nil {
+				return "", nil, false, res.err
+			}
+		}
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
-
 			if vault.EmergencyMode || localFailures >= 6 {
 				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
 			}
@@ -1583,7 +1674,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		}
 
 		src.TrackFailure()
-
 		fmt.Printf("Error: %v\n", err)
 	}
 
