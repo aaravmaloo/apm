@@ -69,6 +69,16 @@ APM supports specific modes for secure usage:
 - `pm mode readonly <minutes>`: Temporary read-only access for untrusted environments.
 - `pm mode lock`: Immediately terminate all active sessions.
 
+## Team Support (`pm-team`)
+
+APM includes a enterprise-ready team version in the `team/` directory.
+- **Department Isolation**: End-to-end encrypted departments.
+- **Role-Based Access**: Admin, Manager, User, Auditor, Security roles.
+- **Full Parity**: All 11 secret types are supported in the team version.
+- **Tamper-Evident Audit**: Blockchain-style hashed audit trail for all organizational actions.
+
+See [TEAM_DOCUMENTATION.md](TEAM_DOCUMENTATION.md) for full details.
+
 ### Crypto Health (`pm scan` / `pm audit`)
 - **Scan**: Find weak/reused passwords offline.
 - **Audit**: View the timestamped history of vault interactions.
