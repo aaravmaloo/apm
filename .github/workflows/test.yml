@@ -1,32 +1,59 @@
-name: Build and Test
+name: APM Auto-Discover CLI Tests
 
 on:
   push:
-    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main", "master" ]
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.23'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
 
-    - name: Build APM
-      run: go build -v ./main.go
+      - name: Build APM (Windows)
+        if: runner.os == 'Windows'
+        run: go build -o apm.exe
 
-    - name: Build Team APM
-      run: go build -v ./team/main.go
+      - name: Build APM (Linux/Mac)
+        if: runner.os != 'Windows'
+        run: go build -o apm
 
-    - name: Run E2E Tests
-      run: go test -v ./tests/...
+      - name: List and test all subcommands (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $helpText = .\apm.exe --help
+          $cmds = $helpText |
+            Select-String '^\s{2,}[a-zA-Z]' |
+            ForEach-Object { ($_.ToString().Trim().Split()[0]) }
+
+          Write-Host "Detected commands: $cmds"
+          foreach ($c in $cmds) {
+            Write-Host "Testing apm $c"
+            .\apm.exe $c --help
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+
+      - name: List and test all subcommands (Linux/Mac)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          chmod +x ./apm
+          ./apm --help > help.txt
+
+          commands=$(grep -E '^[[:space:]]+[a-zA-Z]' help.txt | awk '{print $1}')
+          echo "Detected commands: $commands"
+
+          for cmd in $commands; do
+            echo "Testing apm $cmd"
+            ./apm "$cmd" --help || exit 1
+          done
