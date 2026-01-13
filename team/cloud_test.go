@@ -1,4 +1,4 @@
-package apm
+package main
 
 import (
 	"testing"
