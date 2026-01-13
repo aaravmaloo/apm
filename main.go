@@ -1231,7 +1231,8 @@ func main() {
 				return
 			}
 
-			fileID, err := cm.UploadVault(vaultPath)
+			// Pass customKey to UploadVault
+			fileID, err := cm.UploadVault(vaultPath, customKey)
 			if err != nil {
 				color.Red("Upload failed: %v\n", err)
 				return
@@ -1613,7 +1614,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 	// Biometric Authentication Attempt
 	if src.IsHelloConfigured() {
 		color.HiBlue("[Windows Hello configured. Authenticating...]")
-		
+
 		helloResult := make(chan string, 1)
 		go func() {
 			pass, err := src.GetMasterPasswordWithHello()
@@ -1634,7 +1635,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			// Proceed to manual input but keep checking helloResult in background
 			fmt.Println("Type Master Password or wait for Windows Hello...")
 		}
-		
+
 		// If we are here, we are doing manual input
 		// But we still want to allow the goroutine to finish and "interrupt" the input if possible
 	}
@@ -1702,7 +1703,7 @@ func setupWindowsHello() {
 	}
 
 	color.Cyan("Setting up Windows Hello... Please complete the biometric challenge.")
-	
+
 	if err := src.SetupHello(masterPassword); err != nil {
 		color.Red("Error: %v\n", err)
 		return
