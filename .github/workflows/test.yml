@@ -1,4 +1,4 @@
-name: APM Auto-Discover CLI Tests
+name: TEST YML
 
 on:
   push:
@@ -19,41 +19,78 @@ jobs:
         with:
           go-version: '1.22'
 
+      # ---------- BUILD ----------
       - name: Build APM (Windows)
         if: runner.os == 'Windows'
-        run: go build -o apm.exe
+        run: go build -o pm.exe
 
-      - name: Build APM (Linux/Mac)
+      - name: Build APM (Linux/macOS)
         if: runner.os != 'Windows'
-        run: go build -o apm
+        run: go build -o pm
 
-      - name: List and test all subcommands (Windows)
+      # ---------- WINDOWS TESTS ----------
+      - name: CLI command tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $helpText = .\apm.exe --help
-          $cmds = $helpText |
-            Select-String '^\s{2,}[a-zA-Z]' |
-            ForEach-Object { ($_.ToString().Trim().Split()[0]) }
+          $pm = ".\pm.exe"
 
-          Write-Host "Detected commands: $cmds"
-          foreach ($c in $cmds) {
-            Write-Host "Testing apm $c"
-            .\apm.exe $c --help
+          $commands = @(
+            "--help",
+            "init --help",
+            "info --help",
+            "add --help",
+            "edit --help",
+            "del --help",
+            "get --help",
+            "gen --help",
+            "scan --help",
+            "audit --help",
+            "cinfo --help",
+            "unlock --help",
+            "readonly --help",
+            "lock --help",
+            "import --help",
+            "export --help",
+            "totp --help",
+            "totp show --help"
+          )
+
+          foreach ($cmd in $commands) {
+            Write-Host "Testing: pm $cmd"
+            & $pm $cmd.Split(" ")
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
 
-      - name: List and test all subcommands (Linux/Mac)
+      # ---------- LINUX / MAC TESTS ----------
+      - name: CLI command tests (Linux/macOS)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          chmod +x ./apm
-          ./apm --help > help.txt
+          chmod +x ./pm
 
-          commands=$(grep -E '^[[:space:]]+[a-zA-Z]' help.txt | awk '{print $1}')
-          echo "Detected commands: $commands"
+          commands=(
+            "--help"
+            "init --help"
+            "info --help"
+            "add --help"
+            "edit --help"
+            "del --help"
+            "get --help"
+            "gen --help"
+            "scan --help"
+            "audit --help"
+            "cinfo --help"
+            "unlock --help"
+            "readonly --help"
+            "lock --help"
+            "import --help"
+            "export --help"
+            "totp --help"
+            "totp show --help"
+          )
 
-          for cmd in $commands; do
-            echo "Testing apm $cmd"
-            ./apm "$cmd" --help || exit 1
+          for cmd in "${commands[@]}"; do
+            echo "Testing: pm $cmd"
+            ./pm $cmd || exit 1
           done
