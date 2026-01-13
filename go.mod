@@ -13,7 +13,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/oauth2 v0.34.0
-	golang.org/x/sys v0.39.0
+	golang.org/x/sys v0.39.0 // indirect
 	google.golang.org/api v0.259.0
 )
 
