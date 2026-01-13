@@ -62,7 +62,7 @@ func NewCloudManager(ctx context.Context, credsJSON []byte, tokenJSON []byte) (*
 	return &CloudManager{Service: srv}, nil
 }
 
-func (cm *CloudManager) UploadVault(vaultPath string) (string, error) {
+func (cm *CloudManager) UploadVault(vaultPath string, customName string) (string, error) {
 	f, err := os.Open(vaultPath)
 	if err != nil {
 		return "", fmt.Errorf("unable to open vault file: %v", err)
@@ -90,8 +90,12 @@ func (cm *CloudManager) UploadVault(vaultPath string) (string, error) {
 		return "", fmt.Errorf("unable to make file public: %v", err)
 	}
 
-	newName := fmt.Sprintf("vault_%s.bin", fileID)
-	_, err = cm.Service.Files.Update(fileID, &drive.File{Name: newName}).Do()
+	finalName := fmt.Sprintf("vault_%s.bin", fileID)
+	if customName != "" {
+		finalName = fmt.Sprintf("vault_%s.bin", customName)
+	}
+
+	_, err = cm.Service.Files.Update(fileID, &drive.File{Name: finalName}).Do()
 	if err != nil {
 		return "", fmt.Errorf("unable to rename file: %v", err)
 	}
@@ -136,20 +140,74 @@ func extractFileID(input string) string {
 	return input
 }
 
+func ResolveKeyToID(key string) (string, error) {
+	// Try to use default public credentials to search for the file by name
+	cm, err := NewCloudManager(context.Background(), GetDefaultCreds(), GetDefaultToken())
+	if err != nil {
+		return "", err
+	}
+
+	query := fmt.Sprintf("name = 'vault_%s.bin' and '%s' in parents and trashed = false", key, DriveFolderID)
+	list, err := cm.Service.Files.List().Q(query).Fields("files(id, name, createdTime)").Do()
+	if err != nil {
+		return "", err
+	}
+
+	if len(list.Files) == 0 {
+		return "", fmt.Errorf("no vault found with key '%s'", key)
+	}
+
+	// Return the most recently created one if duplicates exist
+	return list.Files[0].Id, nil
+}
+
 func DownloadPublicVault(input string) ([]byte, error) {
 	fileID := extractFileID(input)
-	url := fmt.Sprintf("https://drive.google.com/uc?export=download&id=%s", fileID)
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("http error: %v", err)
-	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+	// If the extracted 'ID' is just the same as input and not a typical ID length,
+	// or if the direct download fails, we might need to resolve it.
+	// However, let's try to resolve it IF it doesn't look like a Google Drive ID (roughly 33 chars or 19 chars for old ones)
+	// But "Batman" is definitely not an ID.
+	// Let's rely on ResolveKeyToID if the input doesn't match ID pattern or if http.Get fails?
+	// Actually, just try ResolveKeyToID first if it looks like a custom name (short, no hyphens/underscores mixed with extensive chars)?
+	// Or simplistic approach: Try ID download. If 404, Try Resolve.
+
+	downloadCode := func(id string) ([]byte, int, error) {
+		url := fmt.Sprintf("https://drive.google.com/uc?export=download&id=%s", id)
+		resp, err := http.Get(url)
+		if err != nil {
+			return nil, 0, err
+		}
+		defer resp.Body.Close()
+		data, _ := io.ReadAll(resp.Body)
+		return data, resp.StatusCode, nil
 	}
 
-	return io.ReadAll(resp.Body)
+	data, code, err := downloadCode(fileID)
+
+	// If 404 or bad request, and input was "Batman", maybe it needs resolution.
+	// But if input WAS "Batman", extractFileID returned "Batman".
+	// "Batman" is not a valid ID, so Google likely returns 404 or 400.
+
+	if err != nil || code != http.StatusOK {
+		// Attempt resolution
+		resolvedID, resolveErr := ResolveKeyToID(input)
+		if resolveErr == nil {
+			data, code, err = downloadCode(resolvedID)
+		} else {
+			// If resolution also fails, return the original error or a combination
+			if err == nil {
+				return nil, fmt.Errorf("download failed (status %d) and custom key resolution failed: %v", code, resolveErr)
+			}
+			return nil, fmt.Errorf("original error: %v, resolution error: %v", err, resolveErr)
+		}
+	}
+
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("bad status code: %d", code)
+	}
+
+	return data, nil
 }
 
 func (cm *CloudManager) SyncVault(vaultPath, fileID string) error {
