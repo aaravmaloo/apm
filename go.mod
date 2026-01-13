@@ -11,7 +11,6 @@ require (
 require (
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/mr-tron/base58 v1.2.0
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/oauth2 v0.34.0
 	golang.org/x/sys v0.39.0
