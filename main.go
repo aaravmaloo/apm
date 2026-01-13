@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"context"
@@ -1071,28 +1070,49 @@ func main() {
 				return
 			}
 
-			fmt.Println("\x1b[?25lPress Ctrl+C to stop.")
-			defer fmt.Print("\x1b[?25h")
+			isTerm := term.IsTerminal(int(os.Stdout.Fd()))
+
+			if isTerm {
+				fmt.Println("\x1b[?25lPress Ctrl+C to stop.")
+				defer fmt.Print("\x1b[?25h")
+			}
+
 			for {
 				remaining := 30 - (time.Now().Unix() % 30)
-				fmt.Printf("\r\x1b[KUpdating in %ds... [", remaining)
+				if isTerm {
+					fmt.Printf("\r\x1b[KUpdating in %ds... [", remaining)
 
-				for i := 0; i < 30; i++ {
-					if i < int(remaining) {
-						fmt.Print("=")
-					} else {
-						fmt.Print(" ")
+					for i := 0; i < 30; i++ {
+						if i < int(remaining) {
+							fmt.Print("=")
+						} else {
+							fmt.Print(" ")
+						}
 					}
+					fmt.Println("]")
+				} else {
+					fmt.Printf("Updating in %ds...\n", remaining)
 				}
-				fmt.Println("]")
 
 				for _, entry := range targets {
 					code, err := src.GenerateTOTP(entry.Secret)
 					if err != nil {
-						fmt.Printf("\r\x1b[K  %-20s : INVALID\n", entry.Account)
+						if isTerm {
+							fmt.Printf("\r\x1b[K  %-20s : INVALID\n", entry.Account)
+						} else {
+							fmt.Printf("  %-20s : INVALID\n", entry.Account)
+						}
 					} else {
-						fmt.Printf("\r\x1b[K  %-20s : \x1b[1;32m%s\x1b[0m\n", entry.Account, code)
+						if isTerm {
+							fmt.Printf("\r\x1b[K  %-20s : \x1b[1;32m%s\x1b[0m\n", entry.Account, code)
+						} else {
+							fmt.Printf("  %-20s : %s\n", entry.Account, code)
+						}
 					}
+				}
+
+				if !isTerm {
+					break
 				}
 				time.Sleep(1 * time.Second)
 				fmt.Printf("\033[%dA", len(targets)+1)
@@ -1504,7 +1524,15 @@ func readInput() string {
 }
 
 func readPassword() (string, error) {
-	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		pass, err := inputReader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(pass), nil
+	}
+	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
