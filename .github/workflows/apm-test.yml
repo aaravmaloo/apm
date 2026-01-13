@@ -8,7 +8,11 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
     - uses: actions/checkout@v3
 
@@ -20,10 +24,5 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
-    - name: Build
-      run: go build -v -o pm.exe main.go
-
     - name: Run E2E Tests
       run: go test -v ./tests/...
-      env:
-        GOOS: windows
