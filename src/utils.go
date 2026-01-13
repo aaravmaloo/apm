@@ -165,3 +165,29 @@ func ClearFailures() {
 	path := filepath.Join(filepath.Dir(exe), ".apm_lock")
 	os.Remove(path)
 }
+
+func GenerateRandomWords() (string, error) {
+	adjectives := []string{
+		"Swift", "Silent", "Rapid", "Blue", "Red", "Green", "Brave", "Calm", "Eager", "Fair", "Grand", "Happy",
+		"Jolly", "Kind", "Lively", "Mighty", "Noble", "Proud", "Quick", "Royal", "Sharp", "Tough", "Vivid", "Wise",
+		"Amber", "Bold", "Crisp", "Daring", "Elite", "Fancy", "Giant", "Hero", "Iron", "Jade", "Keen", "Lucky",
+		"Magic", "Neon", "Ocean", "Prime", "Quiet", "Rare", "Solar", "Titan", "Ultra", "Vital", "Wild", "Zeal",
+	}
+	nouns := []string{
+		"Fox", "Hawk", "Eagle", "Bear", "Wolf", "Tiger", "Lion", "Falcon", "Owl", "Shark", "Whale", "Dolphin",
+		"Raven", "Crow", "Stag", "Hares", "Panda", "Koala", "Leopard", "Cobra", "Viper", "Python", "Badger", "Otter",
+		"Beacon", "Comet", "Delta", "Echo", "Flame", "Globe", "Halo", "Icon", "Jet", "Kite", "Luna", "Mars",
+		"Nova", "Orbit", "Pulse", "Quest", "Rider", "Star", "Token", "Unity", "Vertex", "Wave", "Xenon", "Zone",
+	}
+
+	adjIdx, err := rand.Int(rand.Reader, big.NewInt(int64(len(adjectives))))
+	if err != nil {
+		return "", err
+	}
+	nounIdx, err := rand.Int(rand.Reader, big.NewInt(int64(len(nouns))))
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s%s", adjectives[adjIdx.Int64()], nouns[nounIdx.Int64()]), nil
+}
