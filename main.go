@@ -1217,13 +1217,12 @@ func main() {
 				return
 			}
 
-			color.Cyan("\n--- Cloud Setup Tips ---")
-			fmt.Println("1. Use a retrieval key that is easy for you to remember but impossible for others to guess.")
-			fmt.Println("2. Something personal like 'MyOldLibraryID-2024' or a unique passphrase is good.")
-			fmt.Println("3. LEAVE BLANK to generate a random secure ID (recommended for maximum security). \n")
-
-			fmt.Print("Enter custom Retrieval Key (or ENTER for random): ")
-			customKey := readInput()
+			color.Cyan("Generating secure retrieval key...")
+			customKey, err := src.GenerateRetrievalKey()
+			if err != nil {
+				color.Red("Key generation failed: %v\n", err)
+				return
+			}
 
 			cm, err := getCloudManager(context.Background(), vault, masterPassword)
 			if err != nil {
