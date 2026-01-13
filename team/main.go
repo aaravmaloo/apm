@@ -19,6 +19,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
+
+	src "password-manager/src"
 )
 
 var vaultPath string
@@ -430,7 +432,6 @@ func main() {
 
 			tv, _ := loadTeamVault()
 
-			
 			deptExists := false
 			for _, d := range tv.Departments {
 				if d.ID == deptID {
@@ -444,7 +445,6 @@ func main() {
 				return
 			}
 
-			
 			found := false
 			for i, u := range tv.Users {
 				if u.Username == username {
@@ -755,7 +755,6 @@ func main() {
 
 			tv, _ := loadTeamVault()
 
-			
 			exportData := map[string]interface{}{
 				"organization_id": tv.OrganizationID,
 				"departments":     tv.Departments,
@@ -947,7 +946,7 @@ func addSharedToken(tv *TeamVault, s *TeamSession) {
 	fmt.Print("Type (e.g., GitHub): ")
 	tokenType := readInput()
 
-	encryptedToken, _ := EncryptData([]byte(token), s.DeptKey)
+	encryptedToken, _ := src.EncryptData([]byte(token), string(s.DeptKey))
 
 	entry := SharedToken{
 		ID:           fmt.Sprintf("tok_%d", time.Now().Unix()),
@@ -1163,7 +1162,6 @@ func addSharedBankingItem(tv *TeamVault, s *TeamSession) {
 func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 	var creator string
 
-	
 	switch v := res.Data.(type) {
 	case SharedPassword:
 		creator = v.CreatedBy
@@ -1210,7 +1208,7 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 			enc, _ := EncryptData([]byte(newPass), s.DeptKey)
 			p.Password = enc
 		}
-		
+
 		for i, item := range tv.SharedEntries.Passwords {
 			if item.ID == p.ID {
 				item.ModifiedBy = s.Username
@@ -1233,7 +1231,7 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 				break
 			}
 		}
-	
+
 	default:
 		color.Yellow("Edit for %s is partially supported. Re-add to change complex fields.\n", res.Type)
 		return
@@ -1251,9 +1249,9 @@ func deleteSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		creator = v.CreatedBy
 	case SharedTOTP:
 		creator = v.CreatedBy
-	
+
 	default:
-		
+
 		creator = ""
 	}
 
@@ -1451,14 +1449,13 @@ func displaySharedEntry(res SearchResult, deptKey []byte) {
 		fmt.Println("Use 'pm-team download' (to be implemented) or 'edit' to view password.")
 	}
 
-	
 	var createdBy, createdAt string
 	switch v := res.Data.(type) {
 	case SharedPassword:
 		createdBy, createdAt = v.CreatedBy, v.CreatedAt.Format("2006-01-02")
 	case SharedTOTP:
 		createdBy, createdAt = v.CreatedBy, v.CreatedAt.Format("2006-01-02")
-		
+
 	}
 	if createdBy != "" {
 		fmt.Printf("\nCreated by: %s on %s\n", createdBy, createdAt)
