@@ -15,6 +15,7 @@ import (
 
 	"context"
 	src "password-manager/src"
+	"password-manager/src/plugins"
 
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
@@ -39,6 +40,14 @@ func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "pm",
 		Short: "A simple password manager CLI",
+	}
+
+	// --- Plugin Integration ---
+	// Use current directory for plugins_cache to ensure persistence during 'go run'
+	cwd, _ := os.Getwd()
+	pluginMgr := plugins.NewPluginManager(cwd)
+	if err := pluginMgr.LoadPlugins(); err != nil {
+		color.Red("Error loading plugins: %v\n", err)
 	}
 
 	var initCmd = &cobra.Command{
@@ -95,6 +104,19 @@ func main() {
 			}
 			if readonly {
 				color.Red("Vault is in READ-ONLY mode. Cannot add entries.")
+				return
+			}
+
+			// Hooks: Pre Add
+			// Create context for hooks
+			hookData := map[string]interface{}{
+				"command": "add",
+				// "secret.type": "password", // We don't know yet, maybe infer from next selection?
+				// For verification, let's assume we populate this if known.
+			}
+
+			if err := pluginMgr.ExecuteHooks("pre", "add", hookData); err != nil {
+				color.Red("Hook executing blocked action: %v", err)
 				return
 			}
 
@@ -1494,6 +1516,196 @@ func main() {
 	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
+
+	var pluginsCmd = &cobra.Command{
+		Use:   "plugins",
+		Short: "Manage APM plugins",
+	}
+
+	var pluginsInstalledCmd = &cobra.Command{
+		Use:   "installed",
+		Short: "List installed plugins",
+		Run: func(cmd *cobra.Command, args []string) {
+			list := pluginMgr.ListPlugins()
+			if len(list) == 0 {
+				fmt.Println("No plugins installed locally.")
+				return
+			}
+			fmt.Println("Installed Plugins:")
+			for _, p := range list {
+				fmt.Printf("- %s\n", p)
+			}
+		},
+	}
+
+	getCloudManager := func() (*src.CloudManager, error) {
+		creds := src.GetDefaultCreds()
+		token := src.GetDefaultToken()
+
+		return src.NewCloudManager(context.Background(), creds, token)
+	}
+
+	var pluginsListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List available plugins in Marketplace (Google Drive)",
+		Run: func(cmd *cobra.Command, args []string) {
+			cm, err := getCloudManager()
+			if err != nil {
+				color.Red("Cloud authentication failed: %v", err)
+				return
+			}
+			fmt.Println("Fetching plugins from Marketplace...")
+			plugins, err := cm.ListMarketplacePlugins()
+			if err != nil {
+				color.Red("Failed to list plugins: %v", err)
+				return
+			}
+			if len(plugins) == 0 {
+				fmt.Println("No plugins found in Marketplace.")
+				return
+			}
+			fmt.Println("Available Plugins:")
+			for _, p := range plugins {
+				fmt.Printf("- %s\n", p)
+			}
+		},
+	}
+
+	var pluginsAddCmd = &cobra.Command{
+		Use:   "add [name]",
+		Short: "Install a plugin from Marketplace",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				color.Red("Usage: pm plugins add <name>")
+				return
+			}
+			name := args[0]
+
+			cm, err := getCloudManager()
+			if err != nil {
+				color.Red("Cloud authentication failed: %v", err)
+				return
+			}
+
+			fmt.Printf("Downloading plugin '%s'...\n", name)
+
+			targetDir := filepath.Join(pluginMgr.PluginsDir, name)
+
+			if err := cm.DownloadPlugin(name, targetDir); err != nil {
+				color.Red("Failed to install plugin: %v", err)
+				os.RemoveAll(targetDir) // Verify cleanup
+				return
+			}
+
+			color.Green("Plugin '%s' installed successfully.", name)
+		},
+	}
+
+	var pluginsRemoveCmd = &cobra.Command{
+		Use:   "remove [name]",
+		Short: "Remove a plugin",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				color.Red("Usage: pm plugins remove <name>")
+				return
+			}
+			name := args[0]
+			if err := pluginMgr.RemovePlugin(name); err != nil {
+				color.Red("Error removing plugin: %v\n", err)
+				return
+			}
+			color.Green("Plugin %s removed successfully.\n", name)
+		},
+	}
+
+	var pluginsPushCmd = &cobra.Command{
+		Use:   "push [name]",
+		Short: "Push a plugin to Marketplace (Google Drive)",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				color.Red("Usage: pm plugins push <name>")
+				return
+			}
+			pluginName := args[0]
+			cwd, _ := os.Getwd()
+			pluginPath := filepath.Join(cwd, "plugins", pluginName)
+
+			if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
+				color.Red("Plugin %s not found in current directory.", pluginName)
+				return
+			}
+
+			def, err := plugins.LoadPluginDef(filepath.Join(pluginPath, "plugin.json"))
+			if err != nil {
+				color.Red("Invalid plugin.json: %v", err)
+				return
+			}
+
+			cm, err := getCloudManager()
+			if err != nil {
+				color.Red("Cloud authentication failed: %v", err)
+				return
+			}
+
+			fmt.Printf("Validating plugin '%s' v%s...\n", def.Name, def.Version)
+			fmt.Println("Uploading to Google Drive (APM_PUBLIC/plugins)...")
+
+			if err := cm.UploadPlugin(pluginName, pluginPath); err != nil {
+				color.Red("Failed to upload plugin: %v", err)
+				return
+			}
+
+			color.Green("Successfully pushed plugin '%s' to marketplace!", pluginName)
+		},
+	}
+
+	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginsPushCmd)
+	rootCmd.AddCommand(pluginsCmd)
+
+	// Register Dynamic Plugin Commands
+	// Register Dynamic Plugin Commands
+	for _, plugin := range pluginMgr.Loaded {
+		for cmdKey, cmdDef := range plugin.Definition.Commands {
+			// Capture loop variables
+			cmdName := cmdKey
+			desc := cmdDef.Description
+
+			dynamicCmd := &cobra.Command{
+				Use:   cmdName,
+				Short: desc,
+				Run: func(c *cobra.Command, args []string) {
+					// Build Context
+					ctx := plugins.NewExecutionContext()
+
+					// Parse Flags (from map)
+					for flagName, flagDef := range cmdDef.Flags {
+						val, _ := c.Flags().GetString(flagName)
+						if val == "" {
+							val = flagDef.Default
+						}
+						// Strip quotes if user provided them? Or trust cobra.
+						ctx.Variables[flagName] = val
+					}
+
+					executor := plugins.NewStepExecutor(ctx)
+
+					if err := executor.ExecuteSteps(cmdDef.Steps, plugin.Definition.Permissions); err != nil {
+						color.Red("Plugin execution error: %v\n", err)
+					}
+				},
+			}
+
+			// Register Flags
+			for flagName, flagDef := range cmdDef.Flags {
+				// Assuming string type for now based on previous impl,
+				// but definition has 'Type' field we could switch on.
+				dynamicCmd.Flags().String(flagName, flagDef.Default, flagName)
+			}
+
+			rootCmd.AddCommand(dynamicCmd)
+		}
+	}
+
 	rootCmd.Execute()
 }
 
