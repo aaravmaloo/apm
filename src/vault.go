@@ -169,7 +169,9 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	if vault.CurrentProfileParams != nil {
 		profile = *vault.CurrentProfileParams
 		// Ensure name matches or is set
-		if profile.Name == "" { profile.Name = "custom" }
+		if profile.Name == "" {
+			profile.Name = "custom"
+		}
 	} else {
 		if vault.Profile == "" {
 			vault.Profile = "standard"
@@ -309,8 +311,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	}
 
 	if offset+profile.SaltLen > len(data) {
-
-	if offset+profile.SaltLen > len(data) {
 		return nil, errors.New("corrupted header (salt)")
 	}
 	salt := data[offset : offset+profile.SaltLen]
@@ -368,6 +368,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
 	}
+	vault.CurrentProfileParams = &profile
 	return &vault, nil
 }
 
