@@ -17,11 +17,71 @@ import (
 )
 
 const (
-	ArgonTime        = 3
-	ArgonMemory      = 128 * 1024
-	ArgonParallelism = 4
-	KeyLength        = 32
+	KeyLength = 32
 )
+
+type CryptoProfile struct {
+	Name        string
+	KDF         string // "argon2id", "pbkdf2"
+	Time        uint32
+	Memory      uint32
+	Parallelism uint8
+	SaltLen     int
+	NonceLen    int
+}
+
+var (
+	ProfileStandard = CryptoProfile{
+		Name:        "standard",
+		KDF:         "argon2id",
+		Time:        3,
+		Memory:      64 * 1024,
+		Parallelism: 2,
+		SaltLen:     16,
+		NonceLen:    12,
+	}
+	ProfileHardened = CryptoProfile{
+		Name:        "hardened",
+		KDF:         "argon2id",
+		Time:        5,
+		Memory:      256 * 1024,
+		Parallelism: 4,
+		SaltLen:     32,
+		NonceLen:    12,
+	}
+	ProfileParanoid = CryptoProfile{
+		Name:        "paranoid",
+		KDF:         "argon2id",
+		Time:        6,
+		Memory:      512 * 1024,
+		Parallelism: 4,
+		SaltLen:     32,
+		NonceLen:    24,
+	}
+	ProfileLegacy = CryptoProfile{
+		Name:        "legacy",
+		KDF:         "pbkdf2",
+		Time:        600000, // Iterations
+		Memory:      0,      // N/A for PBKDF2
+		Parallelism: 1,
+		SaltLen:     16,
+		NonceLen:    12,
+	}
+)
+
+var Profiles = map[string]CryptoProfile{
+	"standard": ProfileStandard,
+	"hardened": ProfileHardened,
+	"paranoid": ProfileParanoid,
+	"legacy":   ProfileLegacy,
+}
+
+func GetProfile(name string) CryptoProfile {
+	if p, ok := Profiles[name]; ok {
+		return p
+	}
+	return ProfileStandard
+}
 
 type Keys struct {
 	EncryptionKey []byte
@@ -29,16 +89,8 @@ type Keys struct {
 	Validator     []byte
 }
 
-func DeriveKeys(password string, salt []byte, costMultiplier int) *Keys {
-	timeParam := uint32(ArgonTime)
-	memoryParam := uint32(ArgonMemory)
-
-	if costMultiplier > 1 {
-		timeParam *= uint32(costMultiplier)
-		memoryParam *= uint32(costMultiplier)
-	}
-
-	keyMaterial := argon2.IDKey([]byte(password), salt, timeParam, memoryParam, ArgonParallelism, 96)
+func DeriveKeys(password string, salt []byte, time, memory uint32, parallelism uint8) *Keys {
+	keyMaterial := argon2.IDKey([]byte(password), salt, time, memory, parallelism, 96)
 
 	keys := &Keys{
 		EncryptionKey: make([]byte, 32),
@@ -80,8 +132,8 @@ func VerifyPasswordValidator(derived, stored []byte) bool {
 	return subtle.ConstantTimeCompare(derived, stored) == 1
 }
 
-func GenerateSalt() ([]byte, error) {
-	salt := make([]byte, 16)
+func GenerateSalt(length int) ([]byte, error) {
+	salt := make([]byte, length)
 	_, err := rand.Read(salt)
 	return salt, err
 }
