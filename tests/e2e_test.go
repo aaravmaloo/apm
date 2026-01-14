@@ -223,6 +223,44 @@ func Test_07_Mode_Commands(t *testing.T) {
 	}
 }
 
+func Test_08_Security_Suite(t *testing.T) {
+	// 1. health dashboard
+	input := fmt.Sprintf("%s\n", masterPass)
+	out, _ := runPM(input, "health")
+	if !strings.Contains(out, "SECURITY HEALTH DASHBOARD") {
+		t.Errorf("health failed: %s", out)
+	}
+
+	// 2. vsettings modify (Profile update)
+	// Interactive prompts: "New Profile (leave blank to skip): "
+	input = fmt.Sprintf("%s\nhardened\n", masterPass)
+	out, _ = runPM(input, "vsettings", "--modify")
+	if !strings.Contains(out, "Profile updated to hardened") {
+		t.Errorf("vsettings modify failed: %s", out)
+	}
+
+	// 3. profile set (Switch back to standard)
+	input = fmt.Sprintf("%s\n", masterPass)
+	out, _ = runPM(input, "profile", "set", "standard")
+	if !strings.Contains(out, "Profile switched to standard") {
+		t.Errorf("profile set failed: %s", out)
+	}
+
+	// 4. vsettings alerts (Toggle alerts)
+	input = fmt.Sprintf("%s\n", masterPass)
+	out, _ = runPM(input, "vsettings", "--alerts")
+	if !strings.Contains(out, "Alerts set to") {
+		t.Errorf("vsettings alerts failed: %s", out)
+	}
+
+	// 5. adup (Anomaly check)
+	input = fmt.Sprintf("%s\n", masterPass)
+	out, _ = runPM(input, "adup")
+	if !strings.Contains(out, "anomalies detected") {
+		t.Errorf("adup failed: %s", out)
+	}
+}
+
 func Test_09_ExportImport_Formats(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
 
