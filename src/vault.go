@@ -14,7 +14,47 @@ import (
 
 const VaultHeader = "APMVAULT"
 
-const CurrentVersion = 1
+const CurrentVersion = 3
+
+// GetVaultParams reads the profile from the vault header without decrypting.
+func GetVaultParams(data []byte) (CryptoProfile, int, error) {
+	if len(data) < len(VaultHeader) || string(data[:len(VaultHeader)]) != VaultHeader {
+		return CryptoProfile{}, 0, errors.New("invalid vault header")
+	}
+	offset := len(VaultHeader)
+	version := data[offset]
+	offset++
+
+	if version == 1 {
+		return ProfileStandard, 1, nil // Approx
+	} else if version == 2 {
+		if offset >= len(data) {
+			return CryptoProfile{}, 0, errors.New("short header")
+		}
+		nameLen := int(data[offset])
+		offset++
+		if offset+nameLen > len(data) {
+			return CryptoProfile{}, 0, errors.New("short header")
+		}
+		name := string(data[offset : offset+nameLen])
+		return GetProfile(name), 2, nil
+	} else if version == 3 {
+		if offset+2 > len(data) {
+			return CryptoProfile{}, 0, errors.New("short header")
+		}
+		pLen := int(data[offset])<<8 | int(data[offset+1])
+		offset += 2
+		if offset+pLen > len(data) {
+			return CryptoProfile{}, 0, errors.New("short header")
+		}
+		var p CryptoProfile
+		if err := json.Unmarshal(data[offset:offset+pLen], &p); err != nil {
+			return CryptoProfile{}, 0, err
+		}
+		return p, 3, nil
+	}
+	return CryptoProfile{}, 0, fmt.Errorf("unknown version %d", version)
+}
 
 type Entry struct {
 	Account  string `json:"account"`
@@ -92,25 +132,32 @@ type DocumentEntry struct {
 }
 
 type Vault struct {
-	Salt              []byte              `json:"salt"`
-	Entries           []Entry             `json:"entries"`
-	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
-	Tokens            []TokenEntry        `json:"tokens"`
-	SecureNotes       []SecureNoteEntry   `json:"secure_notes"`
-	APIKeys           []APIKeyEntry       `json:"api_keys"`
-	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
-	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
-	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
-	Certificates      []CertificateEntry  `json:"certificates"`
-	BankingItems      []BankingEntry      `json:"banking_items"`
-	Documents         []DocumentEntry     `json:"documents"`
-	History           []HistoryEntry      `json:"history"`
-	RetrievalKey      string              `json:"retrieval_key,omitempty"`
-	CloudFileID       string              `json:"cloud_file_id,omitempty"`
-	CloudCredentials  []byte              `json:"cloud_credentials,omitempty"`
-	CloudToken        []byte              `json:"cloud_token,omitempty"`
-	FailedAttempts    uint8               `json:"failed_attempts,omitempty"`
-	EmergencyMode     bool                `json:"emergency_mode,omitempty"`
+	Salt                    []byte              `json:"salt"`
+	Entries                 []Entry             `json:"entries"`
+	TOTPEntries             []TOTPEntry         `json:"totp_entries"`
+	Tokens                  []TokenEntry        `json:"tokens"`
+	SecureNotes             []SecureNoteEntry   `json:"secure_notes"`
+	APIKeys                 []APIKeyEntry       `json:"api_keys"`
+	SSHKeys                 []SSHKeyEntry       `json:"ssh_keys"`
+	WiFiCredentials         []WiFiEntry         `json:"wifi_credentials"`
+	RecoveryCodeItems       []RecoveryCodeEntry `json:"recovery_codes"`
+	Certificates            []CertificateEntry  `json:"certificates"`
+	BankingItems            []BankingEntry      `json:"banking_items"`
+	Documents               []DocumentEntry     `json:"documents"`
+	History                 []HistoryEntry      `json:"history"`
+	RetrievalKey            string              `json:"retrieval_key,omitempty"`
+	CloudFileID             string              `json:"cloud_file_id,omitempty"`
+	CloudCredentials        []byte              `json:"cloud_credentials,omitempty"`
+	CloudToken              []byte              `json:"cloud_token,omitempty"`
+	FailedAttempts          uint8               `json:"failed_attempts,omitempty"`
+	EmergencyMode           bool                `json:"emergency_mode,omitempty"`
+	Profile                 string              `json:"profile,omitempty"`
+	AlertEmail              string              `json:"alert_email,omitempty"`
+	AlertsEnabled           bool                `json:"alerts_enabled,omitempty"`
+	AnomalyDetectionEnabled bool                `json:"anomaly_detection_enabled,omitempty"`
+
+	// Runtime only - populated on decrypt
+	CurrentProfileParams *CryptoProfile `json:"-"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -118,12 +165,24 @@ func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
 }
 
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
-	salt, err := GenerateSalt()
+	var profile CryptoProfile
+	if vault.CurrentProfileParams != nil {
+		profile = *vault.CurrentProfileParams
+		// Ensure name matches or is set
+		if profile.Name == "" { profile.Name = "custom" }
+	} else {
+		if vault.Profile == "" {
+			vault.Profile = "standard"
+		}
+		profile = GetProfile(vault.Profile)
+	}
+
+	salt, err := GenerateSalt(profile.SaltLen)
 	if err != nil {
 		return nil, err
 	}
 
-	keys := DeriveKeys(masterPassword, salt, 1)
+	keys := DeriveKeys(masterPassword, salt, profile.Time, profile.Memory, profile.Parallelism)
 	defer Wipe(keys.EncryptionKey)
 	defer Wipe(keys.AuthKey)
 	defer Wipe(keys.Validator)
@@ -138,7 +197,7 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
+	gcm, err := cipher.NewGCMWithNonceSize(block, profile.NonceLen)
 	if err != nil {
 		return nil, err
 	}
@@ -153,6 +212,23 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	var payload []byte
 	payload = append(payload, []byte(VaultHeader)...)
 	payload = append(payload, byte(CurrentVersion))
+
+	// V3: Embed Profile Parameters (Full Struct)
+	encProfile, err := json.Marshal(profile)
+	if err != nil {
+		return nil, err
+	}
+	// Use 4 bytes for length (uint32) to be safe for big JSON? 2 bytes (uint16) enough?
+	// Max length 65535 is plenty for struct.
+	if len(encProfile) > 65535 {
+		return nil, errors.New("profile data too large")
+	}
+	lenBytes := make([]byte, 2)
+	lenBytes[0] = byte(len(encProfile) >> 8)
+	lenBytes[1] = byte(len(encProfile))
+	payload = append(payload, lenBytes...)
+	payload = append(payload, encProfile...)
+
 	payload = append(payload, salt...)
 	payload = append(payload, keys.Validator...)
 	payload = append(payload, nonce...)
@@ -177,24 +253,80 @@ func DecryptVault(data []byte, masterPassword string, costMultiplier int) (*Vaul
 }
 
 func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*Vault, error) {
-	minLen := len(VaultHeader) + 1 + 16 + 32 + 12 + 32
-	if len(data) < minLen {
-		return nil, errors.New("vault file corrupted (too short)")
-	}
-
+	// Original V1 (and now V2) Parsing
 	offset := len(VaultHeader)
 	version := data[offset]
 	offset++
-	if version != CurrentVersion {
+
+	var profile CryptoProfile
+
+	if version == 1 {
+		// V1 hardcoded params: Time=3, Mem=128*1024, Threads=4, Salt=16
+		// Previously we supported costMultiplier, but let's assume default=1 for V1 upgrades usually,
+		// or translate costMultiplier if passed > 1.
+		// NOTE: The previous code multiplied defaults by costMultiplier.
+		time := uint32(3)
+		mem := uint32(128 * 1024)
+		if costMultiplier > 1 {
+			time *= uint32(costMultiplier)
+			mem *= uint32(costMultiplier)
+		}
+		profile = CryptoProfile{
+			Name: "legacy_v1", KDF: "argon2id", Time: time, Memory: mem, Parallelism: 4, SaltLen: 16, NonceLen: 12,
+		}
+	} else if version == 2 {
+		// V2: Name only
+		if offset >= len(data) {
+			return nil, errors.New("corrupted header")
+		}
+		nameLen := int(data[offset])
+		offset++
+		if offset+nameLen > len(data) {
+			return nil, errors.New("corrupted header (profile name)")
+		}
+		profileName := string(data[offset : offset+nameLen])
+		offset += nameLen
+		profile = GetProfile(profileName)
+	} else if version == 3 {
+		// V3: Embedded Params
+		if offset+2 > len(data) {
+			return nil, errors.New("corrupted header (params len)")
+		}
+		pLen := int(data[offset])<<8 | int(data[offset+1])
+		offset += 2
+
+		if offset+pLen > len(data) {
+			return nil, errors.New("corrupted header (params)")
+		}
+		pBytes := data[offset : offset+pLen]
+		offset += pLen
+
+		if err := json.Unmarshal(pBytes, &profile); err != nil {
+			return nil, fmt.Errorf("corrupted profile data: %v", err)
+		}
+	} else {
 		return nil, fmt.Errorf("unsupported vault version: %d", version)
 	}
 
-	salt := data[offset : offset+16]
-	offset += 16
+	if offset+profile.SaltLen > len(data) {
+
+	if offset+profile.SaltLen > len(data) {
+		return nil, errors.New("corrupted header (salt)")
+	}
+	salt := data[offset : offset+profile.SaltLen]
+	offset += profile.SaltLen
+
+	if offset+32 > len(data) {
+		return nil, errors.New("corrupted header (validator)")
+	}
 	storedValidator := data[offset : offset+32]
 	offset += 32
-	nonce := data[offset : offset+12]
-	offset += 12
+
+	if offset+profile.NonceLen > len(data) {
+		return nil, errors.New("corrupted header (nonce)")
+	}
+	nonce := data[offset : offset+profile.NonceLen]
+	offset += profile.NonceLen
 
 	rest := data[offset:]
 	if len(rest) < 32 {
@@ -203,7 +335,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	ciphertext := rest[:len(rest)-32]
 	storedHMAC := rest[len(rest)-32:]
 
-	keys := DeriveKeys(masterPassword, salt, costMultiplier)
+	keys := DeriveKeys(masterPassword, salt, profile.Time, profile.Memory, profile.Parallelism)
 	defer Wipe(keys.EncryptionKey)
 	defer Wipe(keys.AuthKey)
 	defer Wipe(keys.Validator)
@@ -221,13 +353,14 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	if err != nil {
 		return nil, err
 	}
-	gcm, err := cipher.NewGCM(block)
+	gcm, err := cipher.NewGCMWithNonceSize(block, profile.NonceLen)
 	if err != nil {
 		return nil, err
 	}
 
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
+		// Try to give a helpful error if it's likely a profile mismatch vs password
 		return nil, errors.New("decryption failed despite valid password")
 	}
 
@@ -265,11 +398,13 @@ func decryptOldVault(ciphertext []byte, masterPassword string, salt []byte) (*Va
 }
 
 func EncryptData(plaintext []byte, password string) ([]byte, error) {
-	salt, err := GenerateSalt()
+	salt, err := GenerateSalt(16) // Default 16
 	if err != nil {
 		return nil, err
 	}
-	keys := DeriveKeys(password, salt, 1)
+	// Use Standard profile for generic data encryption
+	p := ProfileStandard
+	keys := DeriveKeys(password, salt, p.Time, p.Memory, p.Parallelism)
 	defer Wipe(keys.EncryptionKey)
 
 	block, err := aes.NewCipher(keys.EncryptionKey)
@@ -295,7 +430,7 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 	salt := data[:16]
 	ciphertext := data[16:]
 
-	keys := DeriveKeys(password, salt, 1)
+	keys := DeriveKeys(password, salt, ProfileStandard.Time, ProfileStandard.Memory, ProfileStandard.Parallelism)
 	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err == nil {
 		gcm, err := cipher.NewGCM(block)
