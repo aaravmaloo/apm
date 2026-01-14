@@ -26,3 +26,12 @@ jobs:
 
     - name: Run E2E Tests
       run: go test -v ./tests/...
+
+    - name: Run totp_test
+      run: go test -v ./tests/totp_test.go
+
+    - name: Run portablity tests
+      run: go test -v ./tests/portablity_test.go
+
+    - name: Run new types tests
+      run: go test -v ./tests/new_types_test.go
