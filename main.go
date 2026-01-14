@@ -46,6 +46,199 @@ func main() {
 	// Use current directory for plugins_cache to ensure persistence during 'go run'
 	cwd, _ := os.Getwd()
 	pluginMgr := plugins.NewPluginManager(cwd)
+	// --- Security Suite Commands ---
+
+	var vsettingsCmd = &cobra.Command{
+		Use:   "vsettings",
+		Short: "Manage vault security settings",
+	}
+
+	var vsettingsModifyCmd = &cobra.Command{
+		Use:   "modify",
+		Short: "Modify encryption settings (Profile)",
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPassword, vault, _, err := src_unlockVault()
+			if err != nil {
+				color.Red("%v", err)
+				return
+			}
+
+			fmt.Printf("Current Profile: %s\n", vault.Profile)
+			fmt.Println("Available Profiles:")
+			for _, p := range src.GetAvailableProfiles() {
+				fmt.Printf("- %s\n", p)
+			}
+
+			fmt.Print("\nEnter new profile name (or cancel): ")
+			newName := readInput()
+			if newName == "" || newName == "cancel" {
+				return
+			}
+
+			if newName == vault.Profile {
+				color.Yellow("Vault is already using profile '%s'.", newName)
+				return
+			}
+
+			// Security Delta Warning
+			pOld := src.GetProfile(vault.Profile)
+			pNew := src.GetProfile(newName)
+
+			if pNew.Time < pOld.Time || pNew.Memory < pOld.Memory {
+				color.Yellow("\n⚠ WARNING: You are weakening security (%s -> %s).", pOld.Name, pNew.Name)
+				fmt.Print("Type 'I UNDERSTAND' to proceed: ")
+				if readInput() != "I UNDERSTAND" {
+					color.Red("Aborted.")
+					return
+				}
+			}
+
+			color.Cyan("Re-encrypting vault with '%s' profile (this may take time)...", newName)
+			if err := src.ChangeProfile(vault, newName, masterPassword, vaultPath); err != nil {
+				color.Red("Failed to change profile: %v", err)
+				return
+			}
+			color.Green("Profile updated successfully.")
+		},
+	}
+
+	var vsettingsAlertsCmd = &cobra.Command{
+		Use:   "alerts [true/false]",
+		Short: "Enable or disable security alerts",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				color.Red("Usage: pm vsettings alerts <true|false>")
+				return
+			}
+			enabled := strings.ToLower(args[0]) == "true"
+
+			masterPassword, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			email := vault.AlertEmail
+			if enabled {
+				if email == "" {
+					fmt.Print("Enter email for alerts: ")
+					email = readInput()
+				} else {
+					fmt.Printf("Current email: %s. Update? (y/n): ", email)
+					if strings.ToLower(readInput()) == "y" {
+						fmt.Print("Enter new email: ")
+						email = readInput()
+					}
+				}
+			}
+
+			if err := src.ConfigureAlerts(vault, enabled, email, masterPassword, vaultPath); err != nil {
+				color.Red("Failed to update alerts: %v", err)
+				return
+			}
+			if enabled {
+				color.Green("Alerts ENABLED for %s.", email)
+			} else {
+				color.Green("Alerts DISABLED.")
+			}
+		},
+	}
+
+	vsettingsCmd.AddCommand(vsettingsModifyCmd, vsettingsAlertsCmd)
+
+	var profileCmd = &cobra.Command{
+		Use:   "profile",
+		Short: "Manage encryption profiles",
+	}
+
+	var profileSetCmd = &cobra.Command{
+		Use:   "set <name>",
+		Short: "Set encryption profile (alias for vsettings modify)",
+		Run: func(cmd *cobra.Command, args []string) {
+			// Reuse vsettings modify logic or call it?
+			// Simpler to just reimplement simple wrapper.
+			if len(args) < 1 {
+				color.Red("Usage: pm profile set <name>")
+				return
+			}
+			newName := args[0]
+
+			masterPassword, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			if err := src.ChangeProfile(vault, newName, masterPassword, vaultPath); err != nil {
+				color.Red("Error: %v", err)
+				return
+			}
+			color.Green("Profile changed to %s", newName)
+		},
+	}
+
+	profileCmd.AddCommand(profileSetCmd) // create not implemented
+
+	var healthCmd = &cobra.Command{
+		Use:   "health",
+		Short: "Show vault health dashboard",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			score, report := src.CalculateHealth(vault)
+
+			fmt.Println("\nVault Health Dashboard")
+			fmt.Println("======================")
+			fmt.Printf("Overall Score: %d / 100", score)
+			if score >= 80 {
+				color.Green(" 🟢")
+			} else if score >= 50 {
+				color.Yellow(" 🟡")
+			} else {
+				color.Red(" 🔴")
+			}
+			fmt.Println()
+
+			for _, item := range report {
+				fmt.Println("- " + item)
+			}
+		},
+	}
+
+	var adupCmd = &cobra.Command{
+		Use:   "adup [enable/disable]",
+		Short: "Manage Anomaly Detection on Usage Patterns",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				color.Red("Usage: pm adup <enable|disable>")
+				return
+			}
+			action := strings.ToLower(args[0])
+
+			masterPassword, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			if action == "enable" {
+				vault.AnomalyDetectionEnabled = true
+				color.Green("Anomaly Detection ENABLED.")
+			} else if action == "disable" {
+				vault.AnomalyDetectionEnabled = false
+				color.Yellow("Anomaly Detection DISABLED.")
+			} else {
+				color.Red("Invalid action. Use enable or disable.")
+				return
+			}
+
+			data, _ := src.EncryptVault(vault, masterPassword)
+			src.SaveVault(vaultPath, data)
+		},
+	}
+
+	rootCmd.AddCommand(vsettingsCmd, profileCmd, healthCmd, adupCmd)
+
 	if err := pluginMgr.LoadPlugins(); err != nil {
 		color.Red("Error loading plugins: %v\n", err)
 	}
@@ -912,9 +1105,9 @@ func main() {
 			fmt.Println("APM Crypto Configuration")
 			fmt.Println("========================")
 			fmt.Println("KDF:       Argon2id")
-			fmt.Printf("  Time:    %d\n", src.ArgonTime)
-			fmt.Printf("  Memory:  %d KB\n", src.ArgonMemory)
-			fmt.Printf("  Threads: %d\n", src.ArgonParallelism)
+			fmt.Printf("  Time:    %d\n", src.ProfileStandard.Time)
+			fmt.Printf("  Memory:  %d KB\n", src.ProfileStandard.Memory/1024)
+			fmt.Printf("  Threads: %d\n", src.ProfileStandard.Parallelism)
 			fmt.Println("Cipher:    AES-256-GCM")
 			fmt.Println("Integrity: HMAC-SHA256 (Encrypt-then-MAC)")
 			fmt.Println("Format:    APMVAULT v1")
@@ -1480,6 +1673,14 @@ func main() {
 				color.Red("Vault is READ-ONLY. Cannot reset cloud metadata.")
 				return
 			}
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if readonly {
+				color.Red("Vault is READ-ONLY. Cannot reset cloud metadata.")
+				return
+			}
 
 			if vault.RetrievalKey == "" {
 				color.Yellow("Cloud sync is not initialized (no key found).")
@@ -1769,6 +1970,17 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		return "", nil, false, err
 	}
 
+	// Anomaly Detection (Pre-Unlock)
+	src.LogAccess("ATTEMPT")
+	alerts := src.CheckAnomalies(nil)
+	if len(alerts) > 0 {
+		color.Red("\n⚠ SECURITY WARNING: Unusual activity detected!")
+		for _, a := range alerts {
+			color.Red("  - %s", a)
+		}
+		fmt.Println()
+	}
+
 	for i := 0; i < 3; i++ {
 		localFailures := src.GetFailureCount()
 		costMultiplier := 1
@@ -1784,6 +1996,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
 			// Success
+			src.LogAccess("UNLOCK")
 			if vault.EmergencyMode || localFailures >= 6 {
 				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
 			}
@@ -1791,13 +2004,23 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			vault.EmergencyMode = false
 			src.ClearFailures()
 
+			// Auto email alert if enabled
+			if vault.AlertsEnabled && vault.AnomalyDetectionEnabled && len(alerts) > 0 {
+				src.SendAlert(vault, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
+			}
+
 			updatedData, _ := src.EncryptVault(vault, pass)
 			src.SaveVault(vaultPath, updatedData)
 
 			return pass, vault, false, nil
 		}
 
+		src.LogAccess("FAIL")
 		src.TrackFailure()
+
+		// If Alert enabled, maybe send failed attempt alert?
+		// Since we don't have vault decrypted, we can't check AlertsEnabled.
+		// Unless we key it off username... but we verify password first.
 
 		fmt.Printf("Error: %v\n", err)
 	}
