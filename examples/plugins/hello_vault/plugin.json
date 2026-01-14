@@ -1,0 +1,39 @@
+{
+    "name": "hello_vault",
+    "version": "1.0.0",
+    "description": "A simple plugin to demonstrate APM plugin system",
+    "author": "Aarav Maloo",
+    "permissions": [
+        "vault.read"
+    ],
+    "commands": {
+        "greet": {
+            "description": "Greet the user with a secret from the vault",
+            "flags": {
+                "user": {
+                    "type": "string",
+                    "default": "User"
+                }
+            },
+            "steps": [
+                {
+                    "action": "vault.get",
+                    "key": "username",
+                    "assign_to": "vault_user"
+                },
+                {
+                    "action": "print",
+                    "message": "Hello {{user}}! Vault says hello to {{vault_user}}."
+                }
+            ]
+        }
+    },
+    "hooks": {
+        "post:unlock": [
+            {
+                "action": "print",
+                "message": "Vault successfully unlocked. Plugin system active."
+            }
+        ]
+    }
+}
