@@ -16,7 +16,6 @@ const VaultHeader = "APMVAULT"
 
 const CurrentVersion = 3
 
-// GetVaultParams reads the profile from the vault header without decrypting.
 func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 	if len(data) < len(VaultHeader) || string(data[:len(VaultHeader)]) != VaultHeader {
 		return CryptoProfile{}, 0, errors.New("invalid vault header")
@@ -26,7 +25,7 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 	offset++
 
 	if version == 1 {
-		return ProfileStandard, 1, nil // Approx
+		return ProfileStandard, 1, nil
 	} else if version == 2 {
 		if offset >= len(data) {
 			return CryptoProfile{}, 0, errors.New("short header")
@@ -156,7 +155,6 @@ type Vault struct {
 	AlertsEnabled           bool                `json:"alerts_enabled,omitempty"`
 	AnomalyDetectionEnabled bool                `json:"anomaly_detection_enabled,omitempty"`
 
-	// Runtime only - populated on decrypt
 	CurrentProfileParams *CryptoProfile `json:"-"`
 }
 
@@ -168,7 +166,6 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	var profile CryptoProfile
 	if vault.CurrentProfileParams != nil {
 		profile = *vault.CurrentProfileParams
-		// Ensure name matches or is set
 		if profile.Name == "" {
 			profile.Name = "custom"
 		}
@@ -215,13 +212,10 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, []byte(VaultHeader)...)
 	payload = append(payload, byte(CurrentVersion))
 
-	// V3: Embed Profile Parameters (Full Struct)
 	encProfile, err := json.Marshal(profile)
 	if err != nil {
 		return nil, err
 	}
-	// Use 4 bytes for length (uint32) to be safe for big JSON? 2 bytes (uint16) enough?
-	// Max length 65535 is plenty for struct.
 	if len(encProfile) > 65535 {
 		return nil, errors.New("profile data too large")
 	}
@@ -255,7 +249,6 @@ func DecryptVault(data []byte, masterPassword string, costMultiplier int) (*Vaul
 }
 
 func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*Vault, error) {
-	// Original V1 (and now V2) Parsing
 	offset := len(VaultHeader)
 	version := data[offset]
 	offset++
@@ -263,10 +256,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	var profile CryptoProfile
 
 	if version == 1 {
-		// V1 hardcoded params: Time=3, Mem=128*1024, Threads=4, Salt=16
-		// Previously we supported costMultiplier, but let's assume default=1 for V1 upgrades usually,
-		// or translate costMultiplier if passed > 1.
-		// NOTE: The previous code multiplied defaults by costMultiplier.
 		time := uint32(3)
 		mem := uint32(128 * 1024)
 		if costMultiplier > 1 {
@@ -277,7 +266,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 			Name: "legacy_v1", KDF: "argon2id", Time: time, Memory: mem, Parallelism: 4, SaltLen: 16, NonceLen: 12,
 		}
 	} else if version == 2 {
-		// V2: Name only
 		if offset >= len(data) {
 			return nil, errors.New("corrupted header")
 		}
@@ -290,7 +278,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		offset += nameLen
 		profile = GetProfile(profileName)
 	} else if version == 3 {
-		// V3: Embedded Params
 		if offset+2 > len(data) {
 			return nil, errors.New("corrupted header (params len)")
 		}
@@ -360,7 +347,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		// Try to give a helpful error if it's likely a profile mismatch vs password
 		return nil, errors.New("decryption failed despite valid password")
 	}
 
@@ -399,11 +385,10 @@ func decryptOldVault(ciphertext []byte, masterPassword string, salt []byte) (*Va
 }
 
 func EncryptData(plaintext []byte, password string) ([]byte, error) {
-	salt, err := GenerateSalt(16) // Default 16
+	salt, err := GenerateSalt(16)
 	if err != nil {
 		return nil, err
 	}
-	// Use Standard profile for generic data encryption
 	p := ProfileStandard
 	keys := DeriveKeys(password, salt, p.Time, p.Memory, p.Parallelism)
 	defer Wipe(keys.EncryptionKey)
