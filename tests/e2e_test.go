@@ -87,53 +87,42 @@ func Test_01_Init(t *testing.T) {
 }
 
 func Test_02_Add_AllTypes(t *testing.T) {
-	// 1. Password
 	input := fmt.Sprintf("%s\n1\nTestAcc\nTestUser\nTestPass123\n", masterPass)
 	out, _ := runPM(input, "add")
 	if !strings.Contains(out, "Entry saved") {
 		t.Errorf("Password add failed: %s", out)
 	}
 
-	// 2. TOTP
 	input = fmt.Sprintf("%s\n2\nTestTOTP\nJBSWY3DPEHPK3PXP\n", masterPass)
 	out, _ = runPM(input, "add")
 	if !strings.Contains(out, "Entry saved") {
 		t.Errorf("TOTP add failed: %s", out)
 	}
 
-	// 3. Token
 	input = fmt.Sprintf("%s\n3\nTestToken\nmy-secret-token\nGitHub\n", masterPass)
 	runPM(input, "add")
 
-	// 4. Secure Note
 	input = fmt.Sprintf("%s\n4\nMyNote\nline1\nline2\n\n", masterPass)
 	runPM(input, "add")
 
-	// 5. API Key
 	input = fmt.Sprintf("%s\n5\nMyAPIKey\nOpenAI\nsk-12345\n", masterPass)
 	runPM(input, "add")
 
-	// 6. SSH Key
 	input = fmt.Sprintf("%s\n6\nMySSH\n-----BEGIN RSA PRIVATE KEY-----\nkey-content\n\n", masterPass)
 	runPM(input, "add")
 
-	// 7. Wi-Fi
 	input = fmt.Sprintf("%s\n7\nMyWiFi\npass123\nWPA2\n", masterPass)
 	runPM(input, "add")
 
-	// 8. Recovery Codes
 	input = fmt.Sprintf("%s\n8\nMyRecovery\ncode1\ncode2\n\n", masterPass)
 	runPM(input, "add")
 
-	// 9. Certificate
 	input = fmt.Sprintf("%s\n9\nMyCert\nIssuerX\n2025-01-01\ncert-data\n\nkey-data\n\n", masterPass)
 	runPM(input, "add")
 
-	// 10. Banking
 	input = fmt.Sprintf("%s\n10\nMyBank\nCard\n1234567812345678\n123\n12/26\n", masterPass)
 	runPM(input, "add")
 
-	// 11. Document (requires a real file)
 	dummyPDF := "dummy.pdf"
 	os.WriteFile(dummyPDF, []byte("fake pdf content"), 0644)
 	defer os.Remove(dummyPDF)
@@ -142,15 +131,12 @@ func Test_02_Add_AllTypes(t *testing.T) {
 }
 
 func Test_03_Get_Fuzzy_And_Flags(t *testing.T) {
-	// Test category-based retrieval (Interactive)
-	// Choice: 1 (Password) -> Choice: 1 (TestAcc)
 	input := fmt.Sprintf("%s\n1\n1\n", masterPass)
 	out, err := runPM(input, "get")
 	if err != nil || !strings.Contains(out, "TestUser") {
 		t.Errorf("Interactive get failed: %s", out)
 	}
 
-	// Test fuzzy search with flag
 	input = fmt.Sprintf("%s\n", masterPass)
 	out, _ = runPM(input, "get", "TestAc", "--show-pass")
 	if !strings.Contains(out, "TestPass123") {
@@ -159,8 +145,6 @@ func Test_03_Get_Fuzzy_And_Flags(t *testing.T) {
 }
 
 func Test_04_Edit_Entry(t *testing.T) {
-	// Edit Password entry: Choice 1 (Password) -> identifier NewAcc (oops, it was TestAcc)
-	// Let's use TestAcc
 	input := fmt.Sprintf("%s\n1\nTestAcc\nUpdatedAcc\nUpdatedUser\nUpdatedPass\n", masterPass)
 	out, _ := runPM(input, "edit")
 	if !strings.Contains(out, "Entry updated successfully") {
@@ -177,33 +161,28 @@ func Test_05_Del_Entry(t *testing.T) {
 }
 
 func Test_06_Utility_Commands(t *testing.T) {
-	// cinfo
 	out, _ := runPM("", "cinfo")
 	if !strings.Contains(out, "Argon2id") {
 		t.Errorf("cinfo failed")
 	}
 
-	// gen
 	out, _ = runPM("", "gen", "--length", "32")
 	if len(strings.TrimSpace(out)) < 32 {
 		t.Errorf("gen failed")
 	}
 
-	// scan
 	input := fmt.Sprintf("%s\n", masterPass)
 	out, _ = runPM(input, "scan")
 	if !strings.Contains(out, "Scanning Vault Health") {
 		t.Errorf("scan failed: %s", out)
 	}
 
-	// audit
 	input = fmt.Sprintf("%s\n", masterPass)
 	out, _ = runPM(input, "audit")
 	if !strings.Contains(out, "Timestamp") {
 		t.Errorf("audit failed: %s", out)
 	}
 
-	// info
 	out, _ = runPM("", "info")
 	if !strings.Contains(out, "@apm") {
 		t.Errorf("info failed")
@@ -211,14 +190,12 @@ func Test_06_Utility_Commands(t *testing.T) {
 }
 
 func Test_07_Mode_Commands(t *testing.T) {
-	// readonly
 	input := fmt.Sprintf("%s\n", masterPass)
 	out, _ := runPM(input, "mode", "readonly", "5")
 	if !strings.Contains(out, "Vault unlocked for 5 minutes (READ-ONLY)") {
 		t.Errorf("readonly mode failed: %s", out)
 	}
 
-	// lock
 	out, _ = runPM("", "mode", "lock")
 	if !strings.Contains(out, "Vault locked") {
 		t.Errorf("lock mode failed")
@@ -226,36 +203,30 @@ func Test_07_Mode_Commands(t *testing.T) {
 }
 
 func Test_08_Security_Suite(t *testing.T) {
-	// 1. health dashboard
 	input := fmt.Sprintf("%s\n", masterPass)
 	out, _ := runPM(input, "health")
 	if !strings.Contains(out, "SECURITY HEALTH DASHBOARD") {
 		t.Errorf("health failed: %s", out)
 	}
 
-	// 2. vsettings modify (Profile update)
-	// Interactive prompts: "New Profile (leave blank to skip): "
 	input = fmt.Sprintf("%s\nhardened\n", masterPass)
 	out, _ = runPM(input, "vsettings", "--modify")
 	if !strings.Contains(out, "Profile updated to hardened") {
 		t.Errorf("vsettings modify failed: %s", out)
 	}
 
-	// 3. profile set (Switch back to standard)
 	input = fmt.Sprintf("%s\n", masterPass)
 	out, _ = runPM(input, "profile", "set", "standard")
 	if !strings.Contains(out, "Profile switched to standard") {
 		t.Errorf("profile set failed: %s", out)
 	}
 
-	// 4. vsettings alerts (Toggle alerts)
 	input = fmt.Sprintf("%s\n", masterPass)
 	out, _ = runPM(input, "vsettings", "--alerts")
 	if !strings.Contains(out, "Alerts set to") {
 		t.Errorf("vsettings alerts failed: %s", out)
 	}
 
-	// 5. adup (Anomaly check)
 	input = fmt.Sprintf("%s\n", masterPass)
 	out, _ = runPM(input, "adup")
 	if !strings.Contains(out, "anomalies detected") {
@@ -266,25 +237,21 @@ func Test_08_Security_Suite(t *testing.T) {
 func Test_09_ExportImport_Formats(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
 
-	// JSON
 	runPM(input, "export", "--output", "exp.json")
 	if _, err := os.Stat("exp.json"); err != nil {
 		t.Errorf("JSON export failed")
 	}
 
-	// CSV
 	runPM(input, "export", "--output", "exp.csv")
 	if _, err := os.Stat("exp.csv"); err != nil {
 		t.Errorf("CSV export failed")
 	}
 
-	// TXT --without-password
 	runPM(input, "export", "--output", "exp.txt", "--without-password")
 	if _, err := os.Stat("exp.txt"); err != nil {
 		t.Errorf("TXT export failed")
 	}
 
-	// Import check
 	input = fmt.Sprintf("%s\n", masterPass)
 	out, _ := runPM(input, "import", "exp.json")
 	if !strings.Contains(out, "Successfully imported") {
@@ -292,7 +259,6 @@ func Test_09_ExportImport_Formats(t *testing.T) {
 	}
 
 	cleanup()
-	// re-init for final tests
 	runPM(fmt.Sprintf("%s\n", masterPass), "init")
 }
 
@@ -310,38 +276,31 @@ func Test_11_Compromise(t *testing.T) {
 	if !strings.Contains(out, "Vault nuked") {
 		t.Errorf("Compromise failed: %s", out)
 	}
-	// Note: src.VaultExists checks global variable but we are in tests,
-	// we should check if file exists
 	if _, err := os.Stat(testVault); err == nil {
 		t.Errorf("Vault still exists after compromise")
 	}
 }
 func Test_12_Internal_Unit_Tests(t *testing.T) {
-	// Migrated from new_types_test.go
 	vault := &src.Vault{}
 
-	// Test Note/API Key via internal AddToken
 	vault.AddToken("Test Note", "Test Content", "SecureNote")
 	tok, ok := vault.GetToken("Test Note")
 	if !ok || tok.Token != "Test Content" {
 		t.Errorf("Internal Token (Note) failed: expected Test Content, got %s", tok.Token)
 	}
 
-	// Test SSH Key
 	vault.AddSSHKey("Test SSH", "Test Private Key")
 	sshKey, ok := vault.GetSSHKey("Test SSH")
 	if !ok || sshKey.PrivateKey != "Test Private Key" {
 		t.Errorf("Internal SSH Key failed: expected Test Private Key, got %s", sshKey.PrivateKey)
 	}
 
-	// Test Wi-Fi
 	vault.AddWiFi("Test SSID", "Test Pass", "WPA2")
 	wifi, ok := vault.GetWiFi("Test SSID")
 	if !ok || wifi.Password != "Test Pass" {
 		t.Errorf("Internal Wi-Fi failed: expected Test Pass, got %s", wifi.Password)
 	}
 
-	// Test TOTP generation (Migrated from totp_test.go)
 	secret := "JBSWY3DPEHPK3PXP"
 	code, err := src.GenerateTOTP(secret)
 	if err != nil {
@@ -353,7 +312,6 @@ func Test_12_Internal_Unit_Tests(t *testing.T) {
 }
 
 func Test_13_Portability_Unit_Tests(t *testing.T) {
-	// Migrated from portability_test.go
 	vault := &src.Vault{}
 
 	csvData := "ENTRY,google,user@gmail.com,secretpass\nTOTP,github,GITHUBSECRET"
