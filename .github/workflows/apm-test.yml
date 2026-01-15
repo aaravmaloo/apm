@@ -25,5 +25,5 @@ jobs:
       run: go mod download
 
     - name: Run E2E Tests
-      run: go test -v ./tests/e2e_tests.go
+      run: go test -v ./tests/e2e_test.go
 
