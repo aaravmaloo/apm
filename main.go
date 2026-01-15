@@ -42,11 +42,8 @@ func main() {
 		Short: "A simple password manager CLI",
 	}
 
-	// --- Plugin Integration ---
-	// Use current directory for plugins_cache to ensure persistence during 'go run'
 	cwd, _ := os.Getwd()
 	pluginMgr := plugins.NewPluginManager(cwd)
-	// --- Security Suite Commands ---
 
 	if err := pluginMgr.LoadPlugins(); err != nil {
 		color.Red("Error loading plugins: %v\n", err)
@@ -109,12 +106,8 @@ func main() {
 				return
 			}
 
-			// Hooks: Pre Add
-			// Create context for hooks
 			hookData := map[string]interface{}{
 				"command": "add",
-				// "secret.type": "password", // We don't know yet, maybe infer from next selection?
-				// For verification, let's assume we populate this if known.
 			}
 
 			if err := pluginMgr.ExecuteHooks("pre", "add", hookData); err != nil {
@@ -1071,7 +1064,6 @@ func main() {
 				NonceLen:    12,
 			}
 
-			// In V3 we use CurrentProfileParams
 			vault.CurrentProfileParams = &customProfile
 			vault.Profile = args[0]
 
@@ -1454,7 +1446,6 @@ func main() {
 				return
 			}
 
-			// Pass customKey to UploadVault
 			fileID, err := cm.UploadVault(vaultPath, customKey)
 			if err != nil {
 				color.Red("Upload failed: %v\n", err)
@@ -1804,7 +1795,7 @@ func main() {
 
 			if err := cm.DownloadPlugin(name, targetDir); err != nil {
 				color.Red("Failed to install plugin: %v", err)
-				os.RemoveAll(targetDir) // Verify cleanup
+				os.RemoveAll(targetDir)
 				return
 			}
 
@@ -1873,11 +1864,8 @@ func main() {
 	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginsPushCmd)
 	rootCmd.AddCommand(pluginsCmd)
 
-	// Register Dynamic Plugin Commands
-	// Register Dynamic Plugin Commands
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
-			// Capture loop variables
 			cmdName := cmdKey
 			desc := cmdDef.Description
 
@@ -1885,16 +1873,13 @@ func main() {
 				Use:   cmdName,
 				Short: desc,
 				Run: func(c *cobra.Command, args []string) {
-					// Build Context
 					ctx := plugins.NewExecutionContext()
 
-					// Parse Flags (from map)
 					for flagName, flagDef := range cmdDef.Flags {
 						val, _ := c.Flags().GetString(flagName)
 						if val == "" {
 							val = flagDef.Default
 						}
-						// Strip quotes if user provided them? Or trust cobra.
 						ctx.Variables[flagName] = val
 					}
 
@@ -1911,10 +1896,7 @@ func main() {
 				},
 			}
 
-			// Register Flags
 			for flagName, flagDef := range cmdDef.Flags {
-				// Assuming string type for now based on previous impl,
-				// but definition has 'Type' field we could switch on.
 				dynamicCmd.Flags().String(flagName, flagDef.Default, flagName)
 			}
 
@@ -1938,7 +1920,6 @@ func readPassword() (string, error) {
 		}
 		return strings.TrimSpace(string(bytePassword)), nil
 	}
-	// Fallback for non-interactive environments (like tests)
 	return readInput(), nil
 }
 
@@ -1985,7 +1966,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		return "", nil, false, err
 	}
 
-	// Anomaly Detection (Pre-Unlock)
 	src.LogAccess("ATTEMPT")
 	alerts := src.CheckAnomalies(nil)
 	if len(alerts) > 0 {
@@ -2010,7 +1990,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
-			// Success
 			src.LogAccess("UNLOCK")
 			if vault.EmergencyMode || localFailures >= 6 {
 				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
@@ -2019,7 +1998,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			vault.EmergencyMode = false
 			src.ClearFailures()
 
-			// Auto email alert if enabled
 			if vault.AlertsEnabled && vault.AnomalyDetectionEnabled && len(alerts) > 0 {
 				src.SendAlert(vault, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
 			}
@@ -2032,10 +2010,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		src.LogAccess("FAIL")
 		src.TrackFailure()
-
-		// If Alert enabled, maybe send failed attempt alert?
-		// Since we don't have vault decrypted, we can't check AlertsEnabled.
-		// Unless we key it off username... but we verify password first.
 
 		fmt.Printf("Error: %v\n", err)
 	}
