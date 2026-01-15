@@ -816,7 +816,21 @@ func main() {
 			fmt.Println("6. SSH Key")
 			fmt.Println("7. Wi-Fi Credentials")
 			fmt.Println("8. Recovery Codes")
-			fmt.Print("Selection (1-8): ")
+			fmt.Println("9. Certificate")
+			fmt.Println("10. Banking Item")
+			fmt.Println("11. Document")
+			fmt.Println("12. Government ID")
+			fmt.Println("13. Medical Record")
+			fmt.Println("14. Travel Doc")
+			fmt.Println("15. Contact")
+			fmt.Println("16. Cloud Credentials")
+			fmt.Println("17. Kubernetes Secret")
+			fmt.Println("18. Docker Registry")
+			fmt.Println("19. SSH Config")
+			fmt.Println("20. CI/CD Secret")
+			fmt.Println("21. Software License")
+			fmt.Println("22. Legal Contract")
+			fmt.Print("Selection (1-22): ")
 			choice := readInput()
 
 			identifier := ""
@@ -981,8 +995,19 @@ func main() {
 					if newSec == "" {
 						newSec = e.SecurityType
 					}
+					fmt.Printf("New Router IP [%s]: ", e.RouterIP)
+					newRip := readInput()
+					if newRip == "" {
+						newRip = e.RouterIP
+					}
 					vault.DeleteWiFi(e.SSID)
 					vault.AddWiFi(newSSID, newPass, newSec)
+					// Patch RouterIP
+					for i, w := range vault.WiFiCredentials {
+						if w.SSID == newSSID {
+							vault.WiFiCredentials[i].RouterIP = newRip
+						}
+					}
 					updated = true
 				}
 			case "8":
@@ -1058,9 +1083,381 @@ func main() {
 					if newName == "" {
 						newName = e.Name
 					}
+					fmt.Printf("New Tags [%s]: ", strings.Join(e.Tags, ", "))
+					newTagsRaw := readInput()
+					newTags := e.Tags
+					if newTagsRaw != "" {
+						newTags = strings.Split(newTagsRaw, ",")
+						for i := range newTags {
+							newTags[i] = strings.TrimSpace(newTags[i])
+						}
+					}
+					fmt.Printf("New Expiry [%s]: ", e.Expiry)
+					newExp := readInput()
+					if newExp == "" {
+						newExp = e.Expiry
+					}
 					vault.DeleteDocument(e.Name)
-					vault.AddDocument(newName, e.FileName, e.Content, e.Password, e.Tags, e.Expiry)
+					vault.AddDocument(newName, e.FileName, e.Content, e.Password, newTags, newExp)
 					updated = true
+				}
+			case "12":
+				for i, e := range vault.GovIDs {
+					if e.IDNumber == identifier {
+						fmt.Printf("Editing Gov ID: %s\n", identifier)
+						fmt.Printf("New Type [%s]: ", e.Type)
+						newType := readInput()
+						if newType == "" {
+							newType = e.Type
+						}
+						fmt.Printf("New ID Number [%s]: ", e.IDNumber)
+						newNum := readInput()
+						if newNum == "" {
+							newNum = e.IDNumber
+						}
+						fmt.Printf("New Name [%s]: ", e.Name)
+						newName := readInput()
+						if newName == "" {
+							newName = e.Name
+						}
+						fmt.Printf("New Expiry [%s]: ", e.Expiry)
+						newExp := readInput()
+						if newExp == "" {
+							newExp = e.Expiry
+						}
+						vault.GovIDs[i] = src.GovIDEntry{Type: newType, IDNumber: newNum, Name: newName, Expiry: newExp}
+						updated = true
+						break
+					}
+				}
+			case "13":
+				for i, e := range vault.MedicalRecords {
+					if e.Label == identifier {
+						fmt.Printf("Editing Medical Record: %s\n", identifier)
+						fmt.Printf("New Label [%s]: ", e.Label)
+						newLabel := readInput()
+						if newLabel == "" {
+							newLabel = e.Label
+						}
+						fmt.Printf("New Insurance ID [%s]: ", e.InsuranceID)
+						newIID := readInput()
+						if newIID == "" {
+							newIID = e.InsuranceID
+						}
+						fmt.Printf("New Prescriptions [%s]: ", e.Prescriptions)
+						newPres := readInput()
+						if newPres == "" {
+							newPres = e.Prescriptions
+						}
+						fmt.Printf("New Allergies [%s]: ", e.Allergies)
+						newAll := readInput()
+						if newAll == "" {
+							newAll = e.Allergies
+						}
+						vault.MedicalRecords[i] = src.MedicalRecordEntry{Label: newLabel, InsuranceID: newIID, Prescriptions: newPres, Allergies: newAll}
+						updated = true
+						break
+					}
+				}
+			case "14":
+				for i, e := range vault.TravelDocs {
+					if e.Label == identifier {
+						fmt.Printf("Editing Travel Doc: %s\n", identifier)
+						fmt.Printf("New Label [%s]: ", e.Label)
+						newLabel := readInput()
+						if newLabel == "" {
+							newLabel = e.Label
+						}
+						fmt.Printf("New Ticket Number [%s]: ", e.TicketNumber)
+						newTick := readInput()
+						if newTick == "" {
+							newTick = e.TicketNumber
+						}
+						fmt.Printf("New Booking Code [%s]: ", e.BookingCode)
+						newCode := readInput()
+						if newCode == "" {
+							newCode = e.BookingCode
+						}
+						fmt.Printf("New Loyalty Program [%s]: ", e.LoyaltyProgram)
+						newLoy := readInput()
+						if newLoy == "" {
+							newLoy = e.LoyaltyProgram
+						}
+						vault.TravelDocs[i] = src.TravelEntry{Label: newLabel, TicketNumber: newTick, BookingCode: newCode, LoyaltyProgram: newLoy}
+						updated = true
+						break
+					}
+				}
+			case "15":
+				for i, e := range vault.Contacts {
+					if e.Name == identifier {
+						fmt.Printf("Editing Contact: %s\n", identifier)
+						fmt.Printf("New Name [%s]: ", e.Name)
+						newName := readInput()
+						if newName == "" {
+							newName = e.Name
+						}
+						fmt.Printf("New Phone [%s]: ", e.Phone)
+						newPhone := readInput()
+						if newPhone == "" {
+							newPhone = e.Phone
+						}
+						fmt.Printf("New Email [%s]: ", e.Email)
+						newEmail := readInput()
+						if newEmail == "" {
+							newEmail = e.Email
+						}
+						fmt.Printf("New Address [%s]: ", e.Address)
+						newAddr := readInput()
+						if newAddr == "" {
+							newAddr = e.Address
+						}
+						fmt.Printf("Emergency Contact (y/n) [%v]: ", e.Emergency)
+						newEmRaw := readInput()
+						newEm := e.Emergency
+						if newEmRaw != "" {
+							newEm = strings.ToLower(newEmRaw) == "y"
+						}
+						vault.Contacts[i] = src.ContactEntry{Name: newName, Phone: newPhone, Email: newEmail, Address: newAddr, Emergency: newEm}
+						updated = true
+						break
+					}
+				}
+			case "16":
+				for i, e := range vault.CloudCredentialsItems {
+					if e.Label == identifier {
+						fmt.Printf("Editing Cloud Cred: %s\n", identifier)
+						fmt.Printf("New Label [%s]: ", e.Label)
+						newLabel := readInput()
+						if newLabel == "" {
+							newLabel = e.Label
+						}
+						fmt.Printf("New Access Key [%s]: ", e.AccessKey)
+						newAK := readInput()
+						if newAK == "" {
+							newAK = e.AccessKey
+						}
+						fmt.Printf("New Secret Key [%s]: ", e.SecretKey)
+						newSK := readInput()
+						if newSK == "" {
+							newSK = e.SecretKey
+						}
+						fmt.Printf("New Region [%s]: ", e.Region)
+						newReg := readInput()
+						if newReg == "" {
+							newReg = e.Region
+						}
+						fmt.Printf("New Account ID [%s]: ", e.AccountID)
+						newAID := readInput()
+						if newAID == "" {
+							newAID = e.AccountID
+						}
+						fmt.Printf("New Role [%s]: ", e.Role)
+						newRole := readInput()
+						if newRole == "" {
+							newRole = e.Role
+						}
+						fmt.Printf("New Expiration [%s]: ", e.Expiration)
+						newExp := readInput()
+						if newExp == "" {
+							newExp = e.Expiration
+						}
+						vault.CloudCredentialsItems[i] = src.CloudCredentialEntry{Label: newLabel, AccessKey: newAK, SecretKey: newSK, Region: newReg, AccountID: newAID, Role: newRole, Expiration: newExp}
+						updated = true
+						break
+					}
+				}
+			case "17":
+				for i, e := range vault.K8sSecrets {
+					if e.Name == identifier {
+						fmt.Printf("Editing K8s Secret: %s\n", identifier)
+						fmt.Printf("New Name [%s]: ", e.Name)
+						newName := readInput()
+						if newName == "" {
+							newName = e.Name
+						}
+						fmt.Printf("New Cluster URL [%s]: ", e.ClusterURL)
+						newURL := readInput()
+						if newURL == "" {
+							newURL = e.ClusterURL
+						}
+						fmt.Printf("New Namespace [%s]: ", e.Namespace)
+						newNS := readInput()
+						if newNS == "" {
+							newNS = e.Namespace
+						}
+						fmt.Printf("New Expiration [%s]: ", e.Expiration)
+						newExp := readInput()
+						if newExp == "" {
+							newExp = e.Expiration
+						}
+						vault.K8sSecrets[i] = src.K8sSecretEntry{Name: newName, ClusterURL: newURL, Namespace: newNS, Expiration: newExp}
+						updated = true
+						break
+					}
+				}
+			case "18":
+				for i, e := range vault.DockerRegistries {
+					if e.Name == identifier {
+						fmt.Printf("Editing Docker Registry: %s\n", identifier)
+						fmt.Printf("New Name [%s]: ", e.Name)
+						newName := readInput()
+						if newName == "" {
+							newName = e.Name
+						}
+						fmt.Printf("New Registry URL [%s]: ", e.RegistryURL)
+						newURL := readInput()
+						if newURL == "" {
+							newURL = e.RegistryURL
+						}
+						fmt.Printf("New Username [%s]: ", e.Username)
+						newUser := readInput()
+						if newUser == "" {
+							newUser = e.Username
+						}
+						fmt.Printf("New Token [%s]: ", e.Token)
+						newTok := readInput()
+						if newTok == "" {
+							newTok = e.Token
+						}
+						vault.DockerRegistries[i] = src.DockerRegistryEntry{Name: newName, RegistryURL: newURL, Username: newUser, Token: newTok}
+						updated = true
+						break
+					}
+				}
+			case "19":
+				for i, e := range vault.SSHConfigs {
+					if e.Alias == identifier {
+						fmt.Printf("Editing SSH Config: %s\n", identifier)
+						fmt.Printf("New Alias [%s]: ", e.Alias)
+						newAlias := readInput()
+						if newAlias == "" {
+							newAlias = e.Alias
+						}
+						fmt.Printf("New Host [%s]: ", e.Host)
+						newHost := readInput()
+						if newHost == "" {
+							newHost = e.Host
+						}
+						fmt.Printf("New User [%s]: ", e.User)
+						newUser := readInput()
+						if newUser == "" {
+							newUser = e.User
+						}
+						fmt.Printf("New Port [%s]: ", e.Port)
+						newPort := readInput()
+						if newPort == "" {
+							newPort = e.Port
+						}
+						fmt.Printf("New Key Path [%s]: ", e.KeyPath)
+						newKP := readInput()
+						if newKP == "" {
+							newKP = e.KeyPath
+						}
+						fmt.Printf("New Fingerprint [%s]: ", e.Fingerprint)
+						newFP := readInput()
+						if newFP == "" {
+							newFP = e.Fingerprint
+						}
+						fmt.Println("Enter New Private Key (end with empty line, blank to keep):")
+						var kLines []string
+						for {
+							line := readInput()
+							if line == "" {
+								break
+							}
+							kLines = append(kLines, line)
+						}
+						newPK := strings.Join(kLines, "\n")
+						if newPK == "" {
+							newPK = e.PrivateKey
+						}
+						vault.SSHConfigs[i] = src.SSHConfigEntry{Alias: newAlias, Host: newHost, User: newUser, Port: newPort, KeyPath: newKP, PrivateKey: newPK, Fingerprint: newFP}
+						updated = true
+						break
+					}
+				}
+			case "20":
+				for i, e := range vault.CICDSecrets {
+					if e.Name == identifier {
+						fmt.Printf("Editing CI/CD Secret: %s\n", identifier)
+						fmt.Printf("New Name [%s]: ", e.Name)
+						newName := readInput()
+						if newName == "" {
+							newName = e.Name
+						}
+						fmt.Printf("New Webhook [%s]: ", e.Webhook)
+						newWH := readInput()
+						if newWH == "" {
+							newWH = e.Webhook
+						}
+						fmt.Printf("New Env Vars [%s]: ", e.EnvVars)
+						newEV := readInput()
+						if newEV == "" {
+							newEV = e.EnvVars
+						}
+						vault.CICDSecrets[i] = src.CICDSecretEntry{Name: newName, Webhook: newWH, EnvVars: newEV}
+						updated = true
+						break
+					}
+				}
+			case "21":
+				for i, e := range vault.SoftwareLicenses {
+					if e.ProductName == identifier {
+						fmt.Printf("Editing License: %s\n", identifier)
+						fmt.Printf("New Product [%s]: ", e.ProductName)
+						newProd := readInput()
+						if newProd == "" {
+							newProd = e.ProductName
+						}
+						fmt.Printf("New Serial Key [%s]: ", e.SerialKey)
+						newKey := readInput()
+						if newKey == "" {
+							newKey = e.SerialKey
+						}
+						fmt.Printf("New Activation Info [%s]: ", e.ActivationInfo)
+						newAct := readInput()
+						if newAct == "" {
+							newAct = e.ActivationInfo
+						}
+						fmt.Printf("New Expiration [%s]: ", e.Expiration)
+						newExp := readInput()
+						if newExp == "" {
+							newExp = e.Expiration
+						}
+						vault.SoftwareLicenses[i] = src.SoftwareLicenseEntry{ProductName: newProd, SerialKey: newKey, ActivationInfo: newAct, Expiration: newExp}
+						updated = true
+						break
+					}
+				}
+			case "22":
+				for i, e := range vault.LegalContracts {
+					if e.Name == identifier {
+						fmt.Printf("Editing Contract: %s\n", identifier)
+						fmt.Printf("New Name [%s]: ", e.Name)
+						newName := readInput()
+						if newName == "" {
+							newName = e.Name
+						}
+						fmt.Printf("New Summary [%s]: ", e.Summary)
+						newSum := readInput()
+						if newSum == "" {
+							newSum = e.Summary
+						}
+						fmt.Printf("New Parties [%s]: ", e.PartiesInvolved)
+						newParties := readInput()
+						if newParties == "" {
+							newParties = e.PartiesInvolved
+						}
+						fmt.Printf("New Signed Date [%s]: ", e.SignedDate)
+						newDate := readInput()
+						if newDate == "" {
+							newDate = e.SignedDate
+						}
+						vault.LegalContracts[i] = src.LegalContractEntry{Name: newName, Summary: newSum, PartiesInvolved: newParties, SignedDate: newDate}
+						updated = true
+						break
+					}
 				}
 			}
 
