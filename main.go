@@ -126,8 +126,19 @@ func main() {
 			fmt.Println("8. Recovery Codes")
 			fmt.Println("9. Certificate (SSL/SSH)")
 			fmt.Println("10. Banking/Finance Item")
-			fmt.Println("11. Encrypted Document (PDF)")
-			fmt.Print("Selection (1-11): ")
+			fmt.Println("11. Encrypted Document")
+			fmt.Println("12. Government ID")
+			fmt.Println("13. Medical/Health Record")
+			fmt.Println("14. Travel Doc")
+			fmt.Println("15. Contact/Emergency Info")
+			fmt.Println("16. Cloud Credentials")
+			fmt.Println("17. Kubernetes Secret")
+			fmt.Println("18. Docker Registry")
+			fmt.Println("19. SSH Config Snippet")
+			fmt.Println("20. CI/CD Pipeline Secret")
+			fmt.Println("21. Software License")
+			fmt.Println("22. Legal Contract/NDA")
+			fmt.Print("Selection (1-22): ")
 			choice := readInput()
 
 			switch choice {
@@ -219,7 +230,16 @@ func main() {
 				pass := readInput()
 				fmt.Print("Security (WPA2/WPA3): ")
 				sec := readInput()
-				if err := vault.AddWiFi(ssid, pass, sec); err != nil {
+				fmt.Print("Router IP: ")
+				rip := readInput()
+				if err := vault.AddWiFi(ssid, pass, sec); err == nil {
+					// Hack to add RouterIP since AddWiFi is simple
+					for i, w := range vault.WiFiCredentials {
+						if w.SSID == ssid {
+							vault.WiFiCredentials[i].RouterIP = rip
+						}
+					}
+				} else {
 					color.Red("Error: %v\n", err)
 					return
 				}
@@ -291,7 +311,7 @@ func main() {
 			case "11":
 				fmt.Print("Document Name: ")
 				name := readInput()
-				fmt.Print("Path to PDF: ")
+				fmt.Print("Path to File: ")
 				path := readInput()
 				content, err := os.ReadFile(path)
 				if err != nil {
@@ -301,11 +321,151 @@ func main() {
 				fmt.Print("Create a password for this document: ")
 				docPass, _ := readPassword()
 				fmt.Println()
-				if err := vault.AddDocument(name, filepath.Base(path), content, docPass); err != nil {
+				fmt.Print("Tags (comma separated): ")
+				tagsRaw := readInput()
+				var tags []string
+				if tagsRaw != "" {
+					tags = strings.Split(tagsRaw, ",")
+					for i := range tags {
+						tags[i] = strings.TrimSpace(tags[i])
+					}
+				}
+				fmt.Print("Expiry Date (e.g. YYYY-MM-DD, blank if none): ")
+				exp := readInput()
+				if err := vault.AddDocument(name, filepath.Base(path), content, docPass, tags, exp); err != nil {
 					color.Red("Error: %v\n", err)
 					return
 				}
 				color.HiYellow("Document stored successfully and safely. Please delete the original file: %s\n", path)
+			case "12":
+				fmt.Print("Type (Passport/Driver's License/Voter ID): ")
+				tType := readInput()
+				fmt.Print("ID Number: ")
+				num := readInput()
+				fmt.Print("Full Name: ")
+				name := readInput()
+				fmt.Print("Expiry Date: ")
+				exp := readInput()
+				vault.AddGovID(src.GovIDEntry{Type: tType, IDNumber: num, Name: name, Expiry: exp})
+			case "13":
+				fmt.Print("Label: ")
+				label := readInput()
+				fmt.Print("Insurance ID: ")
+				iid := readInput()
+				fmt.Print("Prescriptions: ")
+				pres := readInput()
+				fmt.Print("Allergies: ")
+				all := readInput()
+				vault.AddMedicalRecord(src.MedicalRecordEntry{Label: label, InsuranceID: iid, Prescriptions: pres, Allergies: all})
+			case "14":
+				fmt.Print("Label: ")
+				label := readInput()
+				fmt.Print("Ticket Number: ")
+				tick := readInput()
+				fmt.Print("Booking Code: ")
+				code := readInput()
+				fmt.Print("Loyalty Program: ")
+				loy := readInput()
+				vault.AddTravelDoc(src.TravelEntry{Label: label, TicketNumber: tick, BookingCode: code, LoyaltyProgram: loy})
+			case "15":
+				fmt.Print("Name: ")
+				name := readInput()
+				fmt.Print("Phone: ")
+				phone := readInput()
+				fmt.Print("Email: ")
+				email := readInput()
+				fmt.Print("Address: ")
+				addr := readInput()
+				fmt.Print("Is Emergency Contact? (y/n): ")
+				em := strings.ToLower(readInput()) == "y"
+				vault.AddContact(src.ContactEntry{Name: name, Phone: phone, Email: email, Address: addr, Emergency: em})
+			case "16":
+				fmt.Print("Label: ")
+				label := readInput()
+				fmt.Print("Access Key: ")
+				ak := readInput()
+				fmt.Print("Secret Key: ")
+				sk := readInput()
+				fmt.Print("Region: ")
+				reg := readInput()
+				fmt.Print("Account ID: ")
+				aid := readInput()
+				fmt.Print("Role: ")
+				role := readInput()
+				fmt.Print("Expiration: ")
+				exp := readInput()
+				vault.AddCloudCredential(src.CloudCredentialEntry{Label: label, AccessKey: ak, SecretKey: sk, Region: reg, AccountID: aid, Role: role, Expiration: exp})
+			case "17":
+				fmt.Print("Name: ")
+				name := readInput()
+				fmt.Print("Cluster URL: ")
+				url := readInput()
+				fmt.Print("Namespace: ")
+				ns := readInput()
+				fmt.Print("Expiration: ")
+				exp := readInput()
+				vault.AddK8sSecret(src.K8sSecretEntry{Name: name, ClusterURL: url, Namespace: ns, Expiration: exp})
+			case "18":
+				fmt.Print("Name: ")
+				name := readInput()
+				fmt.Print("Registry URL: ")
+				url := readInput()
+				fmt.Print("Username: ")
+				user := readInput()
+				fmt.Print("Token: ")
+				tok := readInput()
+				vault.AddDockerRegistry(src.DockerRegistryEntry{Name: name, RegistryURL: url, Username: user, Token: tok})
+			case "19":
+				fmt.Print("Alias: ")
+				alias := readInput()
+				fmt.Print("Host: ")
+				host := readInput()
+				fmt.Print("User: ")
+				user := readInput()
+				fmt.Print("Port: ")
+				port := readInput()
+				fmt.Print("Key Path: ")
+				kp := readInput()
+				fmt.Print("Fingerprint: ")
+				fp := readInput()
+				fmt.Println("Enter Private Key (end with empty line):")
+				var pkLines []string
+				for {
+					line := readInput()
+					if line == "" {
+						break
+					}
+					pkLines = append(pkLines, line)
+				}
+				vault.AddSSHConfig(src.SSHConfigEntry{Alias: alias, Host: host, User: user, Port: port, KeyPath: kp, PrivateKey: strings.Join(pkLines, "\n"), Fingerprint: fp})
+			case "20":
+				fmt.Print("Name: ")
+				name := readInput()
+				fmt.Print("Webhook URL: ")
+				wh := readInput()
+				fmt.Print("Environment Variables (comma separated): ")
+				ev := readInput()
+				vault.AddCICDSecret(src.CICDSecretEntry{Name: name, Webhook: wh, EnvVars: ev})
+			case "21":
+				fmt.Print("Product Name: ")
+				prod := readInput()
+				fmt.Print("Serial Key: ")
+				key := readInput()
+				fmt.Print("Activation Info: ")
+				act := readInput()
+				fmt.Print("Expiration: ")
+				exp := readInput()
+				vault.AddSoftwareLicense(src.SoftwareLicenseEntry{ProductName: prod, SerialKey: key, ActivationInfo: act, Expiration: exp})
+			case "22":
+				fmt.Print("Name: ")
+				name := readInput()
+				fmt.Print("Summary: ")
+				sum := readInput()
+				fmt.Print("Parties Involved: ")
+				part := readInput()
+				fmt.Print("Signed Date: ")
+				date := readInput()
+				vault.AddLegalContract(src.LegalContractEntry{Name: name, Summary: sum, PartiesInvolved: part, SignedDate: date})
 			default:
 				color.Red("Invalid selection.\n")
 				return
@@ -348,7 +508,18 @@ func main() {
 				fmt.Println("9. Certificate")
 				fmt.Println("10. Banking Item")
 				fmt.Println("11. Document")
-				fmt.Print("Selection (1-11): ")
+				fmt.Println("12. Government ID")
+				fmt.Println("13. Medical Record")
+				fmt.Println("14. Travel Doc")
+				fmt.Println("15. Contact")
+				fmt.Println("16. Cloud Credentials")
+				fmt.Println("17. Kubernetes Secret")
+				fmt.Println("18. Docker Registry")
+				fmt.Println("19. SSH Config")
+				fmt.Println("20. CI/CD Secret")
+				fmt.Println("21. Software License")
+				fmt.Println("22. Legal Contract")
+				fmt.Print("Selection (1-22): ")
 				choice := readInput()
 
 				var results []src.SearchResult
@@ -408,6 +579,61 @@ func main() {
 					category = "Document"
 					for _, e := range vault.Documents {
 						results = append(results, src.SearchResult{Type: "Document", Identifier: e.Name, Data: e})
+					}
+				case "12":
+					category = "Government ID"
+					for _, e := range vault.GovIDs {
+						results = append(results, src.SearchResult{Type: "Government ID", Identifier: e.IDNumber, Data: e})
+					}
+				case "13":
+					category = "Medical Record"
+					for _, e := range vault.MedicalRecords {
+						results = append(results, src.SearchResult{Type: "Medical Record", Identifier: e.Label, Data: e})
+					}
+				case "14":
+					category = "Travel"
+					for _, e := range vault.TravelDocs {
+						results = append(results, src.SearchResult{Type: "Travel", Identifier: e.Label, Data: e})
+					}
+				case "15":
+					category = "Contact"
+					for _, e := range vault.Contacts {
+						results = append(results, src.SearchResult{Type: "Contact", Identifier: e.Name, Data: e})
+					}
+				case "16":
+					category = "Cloud Credentials"
+					for _, e := range vault.CloudCredentialsItems {
+						results = append(results, src.SearchResult{Type: "Cloud Credentials", Identifier: e.Label, Data: e})
+					}
+				case "17":
+					category = "Kubernetes Secret"
+					for _, e := range vault.K8sSecrets {
+						results = append(results, src.SearchResult{Type: "Kubernetes Secret", Identifier: e.Name, Data: e})
+					}
+				case "18":
+					category = "Docker Registry"
+					for _, e := range vault.DockerRegistries {
+						results = append(results, src.SearchResult{Type: "Docker Registry", Identifier: e.Name, Data: e})
+					}
+				case "19":
+					category = "SSH Config"
+					for _, e := range vault.SSHConfigs {
+						results = append(results, src.SearchResult{Type: "SSH Config", Identifier: e.Alias, Data: e})
+					}
+				case "20":
+					category = "CI/CD Secret"
+					for _, e := range vault.CICDSecrets {
+						results = append(results, src.SearchResult{Type: "CI/CD Secret", Identifier: e.Name, Data: e})
+					}
+				case "21":
+					category = "Software License"
+					for _, e := range vault.SoftwareLicenses {
+						results = append(results, src.SearchResult{Type: "Software License", Identifier: e.ProductName, Data: e})
+					}
+				case "22":
+					category = "Legal Contract"
+					for _, e := range vault.LegalContracts {
+						results = append(results, src.SearchResult{Type: "Legal Contract", Identifier: e.Name, Data: e})
 					}
 				default:
 					color.Red("Invalid selection.\n")
@@ -528,6 +754,28 @@ func main() {
 			} else if vault.DeleteBankingItem(name) {
 				deleted = true
 			} else if vault.DeleteDocument(name) {
+				deleted = true
+			} else if vault.DeleteGovID(name) {
+				deleted = true
+			} else if vault.DeleteMedicalRecord(name) {
+				deleted = true
+			} else if vault.DeleteTravelDoc(name) {
+				deleted = true
+			} else if vault.DeleteContact(name) {
+				deleted = true
+			} else if vault.DeleteCloudCredential(name) {
+				deleted = true
+			} else if vault.DeleteK8sSecret(name) {
+				deleted = true
+			} else if vault.DeleteDockerRegistry(name) {
+				deleted = true
+			} else if vault.DeleteSSHConfig(name) {
+				deleted = true
+			} else if vault.DeleteCICDSecret(name) {
+				deleted = true
+			} else if vault.DeleteSoftwareLicense(name) {
+				deleted = true
+			} else if vault.DeleteLegalContract(name) {
 				deleted = true
 			}
 
@@ -811,7 +1059,7 @@ func main() {
 						newName = e.Name
 					}
 					vault.DeleteDocument(e.Name)
-					vault.AddDocument(newName, e.FileName, e.Content, e.Password)
+					vault.AddDocument(newName, e.FileName, e.Content, e.Password, e.Tags, e.Expiry)
 					updated = true
 				}
 			}
@@ -2173,6 +2421,53 @@ func displayEntry(res src.SearchResult, showPass bool) {
 				color.Red("Incorrect document password.")
 			}
 		}
+	case "Government ID":
+		g := res.Data.(src.GovIDEntry)
+		fmt.Printf("Type: %s\nID Number: %s\nName: %s\nExpiry: %s\n", g.Type, g.IDNumber, g.Name, g.Expiry)
+		copyToClipboardWithExpiry(g.IDNumber)
+	case "Medical Record":
+		m := res.Data.(src.MedicalRecordEntry)
+		fmt.Printf("Type: Medical Record\nLabel: %s\nInsurance ID: %s\nPrescriptions: %s\nAllergies: %s\n", m.Label, m.InsuranceID, m.Prescriptions, m.Allergies)
+	case "Travel":
+		t := res.Data.(src.TravelEntry)
+		fmt.Printf("Type: Travel\nLabel: %s\nTicket: %s\nBooking Code: %s\nLoyalty: %s\n", t.Label, t.TicketNumber, t.BookingCode, t.LoyaltyProgram)
+		copyToClipboardWithExpiry(t.BookingCode)
+	case "Contact":
+		c := res.Data.(src.ContactEntry)
+		fmt.Printf("Type: Contact\nName: %s\nPhone: %s\nEmail: %s\nAddress: %s\nEmergency: %v\n", c.Name, c.Phone, c.Email, c.Address, c.Emergency)
+	case "Cloud Credentials":
+		c := res.Data.(src.CloudCredentialEntry)
+		fmt.Printf("Type: Cloud Credentials\nLabel: %s\nRegion: %s\nAccount ID: %s\nRole: %s\nExpiration: %s\n", c.Label, c.Region, c.AccountID, c.Role, c.Expiration)
+		if showPass {
+			fmt.Printf("Access Key: %s\nSecret Key: %s\n", c.AccessKey, c.SecretKey)
+		}
+		copyToClipboardWithExpiry(c.SecretKey)
+	case "Kubernetes Secret":
+		k := res.Data.(src.K8sSecretEntry)
+		fmt.Printf("Type: K8s Secret\nName: %s\nCluster URL: %s\nNamespace: %s\nExpiration: %s\n", k.Name, k.ClusterURL, k.Namespace, k.Expiration)
+	case "Docker Registry":
+		d := res.Data.(src.DockerRegistryEntry)
+		fmt.Printf("Type: Docker Registry\nName: %s\nRegistry URL: %s\nUsername: %s\n", d.Name, d.RegistryURL, d.Username)
+		if showPass {
+			fmt.Printf("Token: %s\n", d.Token)
+		}
+		copyToClipboardWithExpiry(d.Token)
+	case "SSH Config":
+		s := res.Data.(src.SSHConfigEntry)
+		fmt.Printf("Type: SSH Config\nAlias: %s\nHost: %s\nUser: %s\nPort: %s\nKey Path: %s\nFingerprint: %s\n", s.Alias, s.Host, s.User, s.Port, s.KeyPath, s.Fingerprint)
+		if showPass {
+			fmt.Printf("Private Key:\n%s\n", s.PrivateKey)
+		}
+		copyToClipboardWithExpiry(s.PrivateKey)
+	case "CI/CD Secret":
+		c := res.Data.(src.CICDSecretEntry)
+		fmt.Printf("Type: CI/CD Secret\nName: %s\nWebhook: %s\nEnv Vars: %s\n", c.Name, c.Webhook, c.EnvVars)
+	case "Software License":
+		s := res.Data.(src.SoftwareLicenseEntry)
+		fmt.Printf("Type: Software License\nProduct: %s\nSerial Key: %s\nActivation: %s\nExpiration: %s\n", s.ProductName, s.SerialKey, s.ActivationInfo, s.Expiration)
+	case "Legal Contract":
+		l := res.Data.(src.LegalContractEntry)
+		fmt.Printf("Type: Legal Contract\nName: %s\nSummary: %s\nParties: %s\nSigned: %s\n", l.Name, l.Summary, l.PartiesInvolved, l.SignedDate)
 	}
 	fmt.Println("---")
 }
