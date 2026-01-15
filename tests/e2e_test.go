@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	src "password-manager/src"
 )
 
 var (
@@ -312,5 +314,72 @@ func Test_11_Compromise(t *testing.T) {
 	// we should check if file exists
 	if _, err := os.Stat(testVault); err == nil {
 		t.Errorf("Vault still exists after compromise")
+	}
+}
+func Test_12_Internal_Unit_Tests(t *testing.T) {
+	// Migrated from new_types_test.go
+	vault := &src.Vault{}
+
+	// Test Note/API Key via internal AddToken
+	vault.AddToken("Test Note", "Test Content", "SecureNote")
+	tok, ok := vault.GetToken("Test Note")
+	if !ok || tok.Token != "Test Content" {
+		t.Errorf("Internal Token (Note) failed: expected Test Content, got %s", tok.Token)
+	}
+
+	// Test SSH Key
+	vault.AddSSHKey("Test SSH", "Test Private Key")
+	sshKey, ok := vault.GetSSHKey("Test SSH")
+	if !ok || sshKey.PrivateKey != "Test Private Key" {
+		t.Errorf("Internal SSH Key failed: expected Test Private Key, got %s", sshKey.PrivateKey)
+	}
+
+	// Test Wi-Fi
+	vault.AddWiFi("Test SSID", "Test Pass", "WPA2")
+	wifi, ok := vault.GetWiFi("Test SSID")
+	if !ok || wifi.Password != "Test Pass" {
+		t.Errorf("Internal Wi-Fi failed: expected Test Pass, got %s", wifi.Password)
+	}
+
+	// Test TOTP generation (Migrated from totp_test.go)
+	secret := "JBSWY3DPEHPK3PXP"
+	code, err := src.GenerateTOTP(secret)
+	if err != nil {
+		t.Fatalf("Internal TOTP generation failed: %v", err)
+	}
+	if len(code) != 6 {
+		t.Errorf("Expected 6-digit code, got %d digits: %s", len(code), code)
+	}
+}
+
+func Test_13_Portability_Unit_Tests(t *testing.T) {
+	// Migrated from portability_test.go
+	vault := &src.Vault{}
+
+	csvData := "ENTRY,google,user@gmail.com,secretpass\nTOTP,github,GITHUBSECRET"
+	tmpCSV := "test_port.csv"
+	os.WriteFile(tmpCSV, []byte(csvData), 0600)
+	defer os.Remove(tmpCSV)
+
+	if err := src.ImportFromCSV(vault, tmpCSV); err != nil {
+		t.Fatalf("CSV Import function error: %v", err)
+	}
+
+	if len(vault.Entries) != 1 || vault.Entries[0].Account != "google" {
+		t.Errorf("CSV Import failed validation")
+	}
+
+	tmpTXT := "test_port.txt"
+	if err := src.ExportToTXT(vault, tmpTXT, false); err != nil {
+		t.Fatalf("TXT Export function error: %v", err)
+	}
+	defer os.Remove(tmpTXT)
+
+	newVault := &src.Vault{}
+	if err := src.ImportFromTXT(newVault, tmpTXT); err != nil {
+		t.Fatalf("TXT Import function error: %v", err)
+	}
+	if len(newVault.Entries) != 1 || newVault.Entries[0].Password != "secretpass" {
+		t.Errorf("TXT Import/Export roundtrip failed")
 	}
 }
