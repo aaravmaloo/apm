@@ -86,9 +86,9 @@ Even so, if the user does not want to store their vault on the cloud, they can s
 | Command | Subcommands | Flag Examples | Description |
 |---------|-------------|---------------|-------------|
 | **init** | N/A | N/A | Initializes a new encrypted vault file (`vault.dat`). |
-| **add** | N/A | N/A | Launches an interactive menu to store one of the 11 secret types. |
-| **get** | [query] | `--show-pass`, `--clip` | Fuzzy searches and retrieves secret details. |
-| **edit** | [name] | N/A | Interactive modification of an existing entry. |
+| **add** | N/A | N/A | Launches an interactive menu to store one of the 22 secret types. |
+| **get** | [query] | `--show-pass` | Fuzzy searches and retrieves secret details. |
+| **edit** | [name] | N/A | Interactive modification of existing entry metadata. |
 | **del** | [name] | N/A | Permanent deletion of an entry from the vault. |
 | **gen** | N/A | `--length 24` | High-entropy password generator. |
 | **totp** | `show [acc]`| N/A | Real-time generation of 2FA codes. |
@@ -129,19 +129,35 @@ Designed for organizations, the Team Edition facilitates secure credential shari
 
 ## 5. Supported Secret Types
 
-APM supports 11 distinct data structures, each encrypted with unique nonces.
+APM supports 22 distinct data structures, each encrypted with unique nonces.
 
+#### Personal & Lifestyle
 1. **Passwords**: Account, Username, Password, URL string.
 2. **TOTP**: Account mapping and Base32 secrets.
-3. **API Keys**: Service name, Label, and Key material.
-4. **Tokens**: Bearer/Auth tokens with Type classification.
-5. **Secure Notes**: Multi-line markdown-capable notes.
-6. **SSH Keys**: Private key blocks for remote server access.
-7. **Wi-Fi**: SSID, Password, and Security Type (WPA2/WPA3).
-8. **Recovery Codes**: Array-based storage for backup codes.
-9. **Certificates**: X.509/SSL data, Issuers, and Expiry tracking.
-10. **Banking**: Card/IBAN details including CVV and Expiry dates.
-11. **Documents**: Encrypted binary storage (e.g., PDF/JPG) within the vault.
+3. **Government IDs**: Passport, Driver's License, and Voter ID templates with ID Numbers and Expiry.
+4. **Medical Records**: Insurance IDs, Prescriptions, and Allergies.
+5. **Travel Docs**: Ticket Numbers, Booking Codes, and Loyalty Programs.
+6. **Contacts**: Encrypted address book with Emergency contact flags.
+7. **Wi-Fi**: SSID, Password, Security Type, and **Router IP**.
+
+#### Developer & DevOps
+8. **API Keys**: Service name, Label, and Key material.
+9. **Tokens**: Bearer/Auth tokens with Type classification.
+10. **SSH Keys**: Private key blocks for remote server access.
+11. **SSH Configs**: Host Alias, Key Path, User, Port, and Fingerprints.
+12. **Cloud Credentials**: Access/Secret Keys, Region, Account, and Roles.
+13. **Kubernetes Secrets**: Cluster URL, Namespace, and Expiration.
+14. **Docker Registry**: Registry URL with associated credentials.
+15. **CI/CD Secrets**: Webhook URLs and environment variable groups.
+
+#### Documents & Licenses
+16. **Secure Notes**: Multi-line markdown-capable notes.
+17. **Recovery Codes**: Array-based storage for backup codes.
+18. **Certificates**: X.509/SSL data, Issuers, and Expiry tracking.
+19. **Banking**: Card/IBAN details including CVV and Expiry dates.
+20. **Documents**: Encrypted binary storage with **Tags** and **Expiry Dates**.
+21. **Software Licenses**: Serial Keys, Product Name, and Activation Info.
+22. **Legal Contracts**: Summary, Involved Parties, and Signed Dates.
 
 ---
 
