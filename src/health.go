@@ -4,13 +4,10 @@ import (
 	"fmt"
 )
 
-// Health Dashboard logic
-
 func CalculateHealth(vault *Vault) (int, []string) {
 	score := 100
 	var report []string
 
-	// Profile check
 	prof := GetProfile(vault.Profile)
 	if vault.Profile == "" {
 		prof = ProfileStandard
@@ -18,11 +15,6 @@ func CalculateHealth(vault *Vault) (int, []string) {
 
 	if prof.Name == "hardened" || prof.Name == "paranoid" {
 		report = append(report, fmt.Sprintf("Encryption profile: %s (+20)", prof.Name))
-		// Bonus already included in base? Or add bonus?
-		// Let's say base is 60.
-		// Standard: +0
-		// Hardened: +20
-		// logic:
 	} else if prof.Name == "legacy" {
 		score -= 20
 		report = append(report, "Legacy profile used (-20)")
@@ -34,14 +26,13 @@ func CalculateHealth(vault *Vault) (int, []string) {
 		score += 10
 		if score > 100 {
 			score = 100
-		} // Cap at 100? Or base is 80?
+		}
 		report = append(report, "Alerts enabled: yes (+10)")
 	} else {
 		score -= 10
 		report = append(report, "Alerts disabled: no (-10)")
 	}
 
-	// Weak passwords / Reused (Mock logic, would iterate Entries)
 	weakCount := 0
 	for _, e := range vault.Entries {
 		if len(e.Password) < 8 {
