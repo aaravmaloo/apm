@@ -22,7 +22,7 @@ const (
 
 type CryptoProfile struct {
 	Name        string
-	KDF         string // "argon2id", "pbkdf2"
+	KDF         string
 	Time        uint32
 	Memory      uint32
 	Parallelism uint8
@@ -61,8 +61,8 @@ var (
 	ProfileLegacy = CryptoProfile{
 		Name:        "legacy",
 		KDF:         "pbkdf2",
-		Time:        600000, // Iterations
-		Memory:      0,      // N/A for PBKDF2
+		Time:        600000,
+		Memory:      0,
 		Parallelism: 1,
 		SaltLen:     16,
 		NonceLen:    12,
