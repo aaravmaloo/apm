@@ -111,7 +111,7 @@ func Test_02_Add_AllTypes(t *testing.T) {
 	input = fmt.Sprintf("%s\n6\nMySSH\n-----BEGIN RSA PRIVATE KEY-----\nkey-content\n\n", masterPass)
 	runPM(input, "add")
 
-	input = fmt.Sprintf("%s\n7\nMyWiFi\npass123\nWPA2\n", masterPass)
+	input = fmt.Sprintf("%s\n7\nMyWiFi\npass123\nWPA2\n192.168.1.1\n", masterPass)
 	runPM(input, "add")
 
 	input = fmt.Sprintf("%s\n8\nMyRecovery\ncode1\ncode2\n\n", masterPass)
@@ -126,7 +126,40 @@ func Test_02_Add_AllTypes(t *testing.T) {
 	dummyPDF := "dummy.pdf"
 	os.WriteFile(dummyPDF, []byte("fake pdf content"), 0644)
 	defer os.Remove(dummyPDF)
-	input = fmt.Sprintf("%s\n11\nMyDoc\n%s\ndocpass123\n", masterPass, dummyPDF)
+	input = fmt.Sprintf("%s\n11\nMyDoc\n%s\ndocpass123\ntag1,tag2\n2030-01-01\n", masterPass, dummyPDF)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n12\nPassport\nL1234567\nJohn Doe\n2035-10-10\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n13\nHealth Insurance\nPOL-789\nParacetamol\nPeanuts\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n14\nFlight to Mars\nTX-111\nBOOK-ABC\nMartian Miles\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n15\nMom\n+1-555-0101\nmom@example.com\n123 Home St\ny\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n16\nAWS-Prod\nAKIA...\nSecretKeyContent\nus-east-1\n123456789\nAdminRole\n2027-01-01\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n17\nK8s-Cluster\nhttps://cluster.url\ndefault\nnever\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n18\nDocker-Hub\nhttps://index.docker.io/v1/\nmyuser\ndcker_pat_...\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n19\nprod-srv\n10.0.0.5\nroot\n22\n~/.ssh/id_rsa\nSHA256:...\nPRIVATE KEY DATA\n\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n20\nGitHub-Webhook\nhttps://hooks.github.com\nENV=PROD,TOKEN=XYZ\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n21\nWindows 11\nXXXXX-XXXXX-XXXXX\nDigital License\nnever\n", masterPass)
+	runPM(input, "add")
+
+	input = fmt.Sprintf("%s\n22\nRent Contract\nFlat 202 rental\nLandlord, Tenant\n2024-01-01\n", masterPass)
 	runPM(input, "add")
 }
 
