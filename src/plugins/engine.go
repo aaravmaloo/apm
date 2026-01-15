@@ -34,7 +34,7 @@ func (ctx *ExecutionContext) Substitute(input string) string {
 
 type StepExecutor struct {
 	Context *ExecutionContext
-	Vault   *apm.Vault // Added support for real vault
+	Vault   *apm.Vault
 }
 
 func NewStepExecutor(ctx *ExecutionContext, vault *apm.Vault) *StepExecutor {
@@ -67,7 +67,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		}
 		key := se.Context.Substitute(step.Key)
 
-		// Search in passwords
 		var secretValue string
 		for _, e := range se.Vault.Entries {
 			if e.Account == key {
@@ -76,7 +75,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 			}
 		}
 
-		// Fallback to tokens
 		if secretValue == "" {
 			for _, t := range se.Vault.Tokens {
 				if t.Name == key {
@@ -98,7 +96,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		if se.Vault == nil {
 			return fmt.Errorf("vault not available")
 		}
-		// Assuming simple password entry for plugin vault.add
 		name := se.Context.Substitute(step.Key)
 		val := se.Context.Substitute(step.Message)
 		se.Vault.AddEntry(name, "plugin_user", val)
@@ -125,9 +122,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 			return fmt.Errorf("permission denied: system.write")
 		}
 		text := se.Context.Substitute(step.Message)
-		// We can't directly call main.copyToClipboard here due to circular import
-		// but we can print a special sequence or use a shared util if we had one.
-		// For now, let's just print it with a prefix.
 		fmt.Printf("[CLIPBOARD] %s\n", text)
 		return nil
 
@@ -213,8 +207,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		key := se.Context.Substitute(step.Key)
 		for _, t := range se.Vault.TOTPEntries {
 			if t.Account == key {
-				// We need to call src.GenerateTOTP but it's in a different package
-				// For now, return the secret or use a mock if we can't import
 				se.Context.Variables[step.AssignTo] = "TOTP_FOR_" + t.Secret
 				return nil
 			}
@@ -263,7 +255,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		return nil
 
 	case "vault.lock":
-		// This could just trigger a cleanup or exit
 		fmt.Println("Lock signal received from plugin.")
 		return nil
 

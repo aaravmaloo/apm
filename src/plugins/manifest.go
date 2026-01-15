@@ -6,7 +6,6 @@ import (
 	"os"
 )
 
-// Manifest represents the structure of a plugin's manifest.json file
 type Manifest struct {
 	Name                string   `json:"name"`
 	Version             string   `json:"version"`
@@ -18,12 +17,10 @@ type Manifest struct {
 	Hooks               []string `json:"hooks"`
 }
 
-// Validate checks if the manifest contains valid data
 func (m *Manifest) Validate() error {
 	if m.Name == "" {
 		return fmt.Errorf("plugin name is required")
 	}
-	// Basic permission validation
 	allowedPermissions := map[string]bool{
 		"vault.read":       true,
 		"vault.write":      true,
@@ -41,7 +38,6 @@ func (m *Manifest) Validate() error {
 	return nil
 }
 
-// LoadManifest reads and parses a manifest.json file
 func LoadManifest(path string) (*Manifest, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

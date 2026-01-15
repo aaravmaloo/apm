@@ -26,7 +26,6 @@ func NewPluginManager(rootDir string) *PluginManager {
 
 func (pm *PluginManager) LoadPlugins() error {
 	if _, err := os.Stat(pm.PluginsDir); os.IsNotExist(err) {
-		// Create if not exists
 		if err := os.MkdirAll(pm.PluginsDir, 0755); err != nil {
 			return err
 		}
