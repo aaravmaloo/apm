@@ -92,6 +92,90 @@ type WiFiEntry struct {
 	SSID         string `json:"ssid"`
 	Password     string `json:"password"`
 	SecurityType string `json:"security_type"`
+	RouterIP     string `json:"router_ip"`
+}
+
+type GovIDEntry struct {
+	Type     string `json:"type"` // Passport, Driver's License, Voter ID
+	IDNumber string `json:"id_number"`
+	Name     string `json:"name"`
+	Expiry   string `json:"expiry"`
+}
+
+type MedicalRecordEntry struct {
+	Label         string `json:"label"`
+	InsuranceID   string `json:"insurance_id"`
+	Prescriptions string `json:"prescriptions"`
+	Allergies     string `json:"allergies"`
+}
+
+type TravelEntry struct {
+	Label          string `json:"label"`
+	TicketNumber   string `json:"ticket_number"`
+	BookingCode    string `json:"booking_code"`
+	LoyaltyProgram string `json:"loyalty_program"`
+}
+
+type ContactEntry struct {
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	Email     string `json:"email"`
+	Address   string `json:"address"`
+	Emergency bool   `json:"emergency"`
+}
+
+type CloudCredentialEntry struct {
+	Label      string `json:"label"`
+	AccessKey  string `json:"access_key"`
+	SecretKey  string `json:"secret_key"`
+	Region     string `json:"region"`
+	AccountID  string `json:"account_id"`
+	Role       string `json:"role"`
+	Expiration string `json:"expiration"`
+}
+
+type K8sSecretEntry struct {
+	Name       string `json:"name"`
+	ClusterURL string `json:"cluster_url"`
+	Namespace  string `json:"namespace"`
+	Expiration string `json:"expiration"`
+}
+
+type DockerRegistryEntry struct {
+	Name        string `json:"name"`
+	RegistryURL string `json:"registry_url"`
+	Username    string `json:"username"`
+	Token       string `json:"token"`
+}
+
+type SSHConfigEntry struct {
+	Alias       string `json:"alias"`
+	Host        string `json:"host"`
+	User        string `json:"user"`
+	Port        string `json:"port"`
+	KeyPath     string `json:"key_path"`
+	PrivateKey  string `json:"private_key"`
+	Fingerprint string `json:"fingerprint"`
+}
+
+type CICDSecretEntry struct {
+	Name    string `json:"name"`
+	Webhook string `json:"webhook"`
+	EnvVars string `json:"env_vars"`
+}
+
+type SoftwareLicenseEntry struct {
+	ProductName    string `json:"product_name"`
+	SerialKey      string `json:"serial_key"`
+	ActivationInfo string `json:"activation_info"`
+	Expiration     string `json:"expiration"`
+}
+
+type LegalContractEntry struct {
+	Name            string `json:"name"`
+	Summary         string `json:"summary"`
+	PartiesInvolved string `json:"parties_involved"`
+	SignedDate      string `json:"signed_date"`
 }
 
 type RecoveryCodeEntry struct {
@@ -124,36 +208,49 @@ type BankingEntry struct {
 }
 
 type DocumentEntry struct {
-	Name     string `json:"name"`
-	FileName string `json:"file_name"`
-	Content  []byte `json:"content"`
-	Password string `json:"password"`
+	Name     string   `json:"name"`
+	FileName string   `json:"file_name"`
+	Content  []byte   `json:"content"`
+	Password string   `json:"password"`
+	Tags     []string `json:"tags,omitempty"`
+	Expiry   string   `json:"expiry,omitempty"`
 }
 
 type Vault struct {
-	Salt                    []byte              `json:"salt"`
-	Entries                 []Entry             `json:"entries"`
-	TOTPEntries             []TOTPEntry         `json:"totp_entries"`
-	Tokens                  []TokenEntry        `json:"tokens"`
-	SecureNotes             []SecureNoteEntry   `json:"secure_notes"`
-	APIKeys                 []APIKeyEntry       `json:"api_keys"`
-	SSHKeys                 []SSHKeyEntry       `json:"ssh_keys"`
-	WiFiCredentials         []WiFiEntry         `json:"wifi_credentials"`
-	RecoveryCodeItems       []RecoveryCodeEntry `json:"recovery_codes"`
-	Certificates            []CertificateEntry  `json:"certificates"`
-	BankingItems            []BankingEntry      `json:"banking_items"`
-	Documents               []DocumentEntry     `json:"documents"`
-	History                 []HistoryEntry      `json:"history"`
-	RetrievalKey            string              `json:"retrieval_key,omitempty"`
-	CloudFileID             string              `json:"cloud_file_id,omitempty"`
-	CloudCredentials        []byte              `json:"cloud_credentials,omitempty"`
-	CloudToken              []byte              `json:"cloud_token,omitempty"`
-	FailedAttempts          uint8               `json:"failed_attempts,omitempty"`
-	EmergencyMode           bool                `json:"emergency_mode,omitempty"`
-	Profile                 string              `json:"profile,omitempty"`
-	AlertEmail              string              `json:"alert_email,omitempty"`
-	AlertsEnabled           bool                `json:"alerts_enabled,omitempty"`
-	AnomalyDetectionEnabled bool                `json:"anomaly_detection_enabled,omitempty"`
+	Salt                    []byte                 `json:"salt"`
+	Entries                 []Entry                `json:"entries"`
+	TOTPEntries             []TOTPEntry            `json:"totp_entries"`
+	Tokens                  []TokenEntry           `json:"tokens"`
+	SecureNotes             []SecureNoteEntry      `json:"secure_notes"`
+	APIKeys                 []APIKeyEntry          `json:"api_keys"`
+	SSHKeys                 []SSHKeyEntry          `json:"ssh_keys"`
+	WiFiCredentials         []WiFiEntry            `json:"wifi_credentials"`
+	RecoveryCodeItems       []RecoveryCodeEntry    `json:"recovery_codes"`
+	Certificates            []CertificateEntry     `json:"certificates"`
+	BankingItems            []BankingEntry         `json:"banking_items"`
+	Documents               []DocumentEntry        `json:"documents"`
+	GovIDs                  []GovIDEntry           `json:"gov_ids"`
+	MedicalRecords          []MedicalRecordEntry   `json:"medical_records"`
+	TravelDocs              []TravelEntry          `json:"travel_docs"`
+	Contacts                []ContactEntry         `json:"contacts"`
+	CloudCredentialsItems   []CloudCredentialEntry `json:"cloud_credentials_items"`
+	K8sSecrets              []K8sSecretEntry       `json:"k8s_secrets"`
+	DockerRegistries        []DockerRegistryEntry  `json:"docker_registries"`
+	SSHConfigs              []SSHConfigEntry       `json:"ssh_configs"`
+	CICDSecrets             []CICDSecretEntry      `json:"cicd_secrets"`
+	SoftwareLicenses        []SoftwareLicenseEntry `json:"software_licenses"`
+	LegalContracts          []LegalContractEntry   `json:"legal_contracts"`
+	History                 []HistoryEntry         `json:"history"`
+	RetrievalKey            string                 `json:"retrieval_key,omitempty"`
+	CloudFileID             string                 `json:"cloud_file_id,omitempty"`
+	CloudCredentials        []byte                 `json:"cloud_credentials,omitempty"`
+	CloudToken              []byte                 `json:"cloud_token,omitempty"`
+	FailedAttempts          uint8                  `json:"failed_attempts,omitempty"`
+	EmergencyMode           bool                   `json:"emergency_mode,omitempty"`
+	Profile                 string                 `json:"profile,omitempty"`
+	AlertEmail              string                 `json:"alert_email,omitempty"`
+	AlertsEnabled           bool                   `json:"alerts_enabled,omitempty"`
+	AnomalyDetectionEnabled bool                   `json:"anomaly_detection_enabled,omitempty"`
 
 	CurrentProfileParams *CryptoProfile `json:"-"`
 }
@@ -764,13 +861,13 @@ func (v *Vault) DeleteBankingItem(label string) bool {
 	return false
 }
 
-func (v *Vault) AddDocument(name, fileName string, content []byte, password string) error {
+func (v *Vault) AddDocument(name, fileName string, content []byte, password string, tags []string, expiry string) error {
 	for _, e := range v.Documents {
 		if e.Name == name {
 			return errors.New("document already exists")
 		}
 	}
-	v.Documents = append(v.Documents, DocumentEntry{Name: name, FileName: fileName, Content: content, Password: password})
+	v.Documents = append(v.Documents, DocumentEntry{Name: name, FileName: fileName, Content: content, Password: password, Tags: tags, Expiry: expiry})
 	v.logHistory("ADD", "DOCUMENT", name)
 	return nil
 }
@@ -789,6 +886,198 @@ func (v *Vault) DeleteDocument(name string) bool {
 		if e.Name == name {
 			v.Documents = append(v.Documents[:i], v.Documents[i+1:]...)
 			v.logHistory("DEL", "DOCUMENT", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddGovID(g GovIDEntry) error {
+	for _, e := range v.GovIDs {
+		if e.IDNumber == g.IDNumber && e.Type == g.Type {
+			return errors.New("government ID already exists")
+		}
+	}
+	v.GovIDs = append(v.GovIDs, g)
+	v.logHistory("ADD", "GOVID", g.IDNumber)
+	return nil
+}
+
+func (v *Vault) DeleteGovID(idNum string) bool {
+	for i, e := range v.GovIDs {
+		if e.IDNumber == idNum {
+			v.GovIDs = append(v.GovIDs[:i], v.GovIDs[i+1:]...)
+			v.logHistory("DEL", "GOVID", idNum)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddMedicalRecord(m MedicalRecordEntry) error {
+	v.MedicalRecords = append(v.MedicalRecords, m)
+	v.logHistory("ADD", "MEDICAL", m.Label)
+	return nil
+}
+
+func (v *Vault) DeleteMedicalRecord(label string) bool {
+	for i, e := range v.MedicalRecords {
+		if e.Label == label {
+			v.MedicalRecords = append(v.MedicalRecords[:i], v.MedicalRecords[i+1:]...)
+			v.logHistory("DEL", "MEDICAL", label)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddTravelDoc(t TravelEntry) error {
+	v.TravelDocs = append(v.TravelDocs, t)
+	v.logHistory("ADD", "TRAVEL", t.Label)
+	return nil
+}
+
+func (v *Vault) DeleteTravelDoc(label string) bool {
+	for i, e := range v.TravelDocs {
+		if e.Label == label {
+			v.TravelDocs = append(v.TravelDocs[:i], v.TravelDocs[i+1:]...)
+			v.logHistory("DEL", "TRAVEL", label)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddContact(c ContactEntry) error {
+	v.Contacts = append(v.Contacts, c)
+	v.logHistory("ADD", "CONTACT", c.Name)
+	return nil
+}
+
+func (v *Vault) DeleteContact(name string) bool {
+	for i, e := range v.Contacts {
+		if e.Name == name {
+			v.Contacts = append(v.Contacts[:i], v.Contacts[i+1:]...)
+			v.logHistory("DEL", "CONTACT", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddCloudCredential(c CloudCredentialEntry) error {
+	v.CloudCredentialsItems = append(v.CloudCredentialsItems, c)
+	v.logHistory("ADD", "CLOUDCRED", c.Label)
+	return nil
+}
+
+func (v *Vault) DeleteCloudCredential(label string) bool {
+	for i, e := range v.CloudCredentialsItems {
+		if e.Label == label {
+			v.CloudCredentialsItems = append(v.CloudCredentialsItems[:i], v.CloudCredentialsItems[i+1:]...)
+			v.logHistory("DEL", "CLOUDCRED", label)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddK8sSecret(k K8sSecretEntry) error {
+	v.K8sSecrets = append(v.K8sSecrets, k)
+	v.logHistory("ADD", "K8S", k.Name)
+	return nil
+}
+
+func (v *Vault) DeleteK8sSecret(name string) bool {
+	for i, e := range v.K8sSecrets {
+		if e.Name == name {
+			v.K8sSecrets = append(v.K8sSecrets[:i], v.K8sSecrets[i+1:]...)
+			v.logHistory("DEL", "K8S", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddDockerRegistry(d DockerRegistryEntry) error {
+	v.DockerRegistries = append(v.DockerRegistries, d)
+	v.logHistory("ADD", "DOCKER", d.Name)
+	return nil
+}
+
+func (v *Vault) DeleteDockerRegistry(name string) bool {
+	for i, e := range v.DockerRegistries {
+		if e.Name == name {
+			v.DockerRegistries = append(v.DockerRegistries[:i], v.DockerRegistries[i+1:]...)
+			v.logHistory("DEL", "DOCKER", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddSSHConfig(s SSHConfigEntry) error {
+	v.SSHConfigs = append(v.SSHConfigs, s)
+	v.logHistory("ADD", "SSHCONFIG", s.Alias)
+	return nil
+}
+
+func (v *Vault) DeleteSSHConfig(alias string) bool {
+	for i, e := range v.SSHConfigs {
+		if e.Alias == alias {
+			v.SSHConfigs = append(v.SSHConfigs[:i], v.SSHConfigs[i+1:]...)
+			v.logHistory("DEL", "SSHCONFIG", alias)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddCICDSecret(c CICDSecretEntry) error {
+	v.CICDSecrets = append(v.CICDSecrets, c)
+	v.logHistory("ADD", "CICD", c.Name)
+	return nil
+}
+
+func (v *Vault) DeleteCICDSecret(name string) bool {
+	for i, e := range v.CICDSecrets {
+		if e.Name == name {
+			v.CICDSecrets = append(v.CICDSecrets[:i], v.CICDSecrets[i+1:]...)
+			v.logHistory("DEL", "CICD", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddSoftwareLicense(s SoftwareLicenseEntry) error {
+	v.SoftwareLicenses = append(v.SoftwareLicenses, s)
+	v.logHistory("ADD", "LICENSE", s.ProductName)
+	return nil
+}
+
+func (v *Vault) DeleteSoftwareLicense(product string) bool {
+	for i, e := range v.SoftwareLicenses {
+		if e.ProductName == product {
+			v.SoftwareLicenses = append(v.SoftwareLicenses[:i], v.SoftwareLicenses[i+1:]...)
+			v.logHistory("DEL", "LICENSE", product)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddLegalContract(l LegalContractEntry) error {
+	v.LegalContracts = append(v.LegalContracts, l)
+	v.logHistory("ADD", "CONTRACT", l.Name)
+	return nil
+}
+
+func (v *Vault) DeleteLegalContract(name string) bool {
+	for i, e := range v.LegalContracts {
+		if e.Name == name {
+			v.LegalContracts = append(v.LegalContracts[:i], v.LegalContracts[i+1:]...)
+			v.logHistory("DEL", "CONTRACT", name)
 			return true
 		}
 	}
@@ -858,6 +1147,61 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 	for _, e := range v.Documents {
 		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
 			results = append(results, SearchResult{"Document", e.Name, e})
+		}
+	}
+	for _, e := range v.GovIDs {
+		if query == "" || strings.Contains(strings.ToLower(e.IDNumber), query) || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Government ID", e.IDNumber, e})
+		}
+	}
+	for _, e := range v.MedicalRecords {
+		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
+			results = append(results, SearchResult{"Medical Record", e.Label, e})
+		}
+	}
+	for _, e := range v.TravelDocs {
+		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
+			results = append(results, SearchResult{"Travel", e.Label, e})
+		}
+	}
+	for _, e := range v.Contacts {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Contact", e.Name, e})
+		}
+	}
+	for _, e := range v.CloudCredentialsItems {
+		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
+			results = append(results, SearchResult{"Cloud Credentials", e.Label, e})
+		}
+	}
+	for _, e := range v.K8sSecrets {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Kubernetes Secret", e.Name, e})
+		}
+	}
+	for _, e := range v.DockerRegistries {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Docker Registry", e.Name, e})
+		}
+	}
+	for _, e := range v.SSHConfigs {
+		if query == "" || strings.Contains(strings.ToLower(e.Alias), query) {
+			results = append(results, SearchResult{"SSH Config", e.Alias, e})
+		}
+	}
+	for _, e := range v.CICDSecrets {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"CI/CD Secret", e.Name, e})
+		}
+	}
+	for _, e := range v.SoftwareLicenses {
+		if query == "" || strings.Contains(strings.ToLower(e.ProductName), query) {
+			results = append(results, SearchResult{"Software License", e.ProductName, e})
+		}
+	}
+	for _, e := range v.LegalContracts {
+		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
+			results = append(results, SearchResult{"Legal Contract", e.Name, e})
 		}
 	}
 	return results
