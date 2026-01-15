@@ -1898,7 +1898,12 @@ func main() {
 						ctx.Variables[flagName] = val
 					}
 
-					executor := plugins.NewStepExecutor(ctx)
+					_, vault, _, err := src_unlockVault()
+					if err != nil {
+						color.Red("Error unlocking vault for plugin: %v\n", err)
+						return
+					}
+					executor := plugins.NewStepExecutor(ctx, vault)
 
 					if err := executor.ExecuteSteps(cmdDef.Steps, plugin.Definition.Permissions); err != nil {
 						color.Red("Plugin execution error: %v\n", err)
