@@ -1976,7 +1976,17 @@ func main() {
 			}
 
 			fmt.Println("\x1b[?25lPress Ctrl+C to stop.")
+			fmt.Println("Type entry number to copy to clipboard.")
 			defer fmt.Print("\x1b[?25h")
+
+			inputChan := make(chan string)
+			go func() {
+				scanner := bufio.NewScanner(os.Stdin)
+				for scanner.Scan() {
+					inputChan <- scanner.Text()
+				}
+			}()
+
 			for {
 				remaining := 30 - (time.Now().Unix() % 30)
 				fmt.Printf("\r\x1b[KUpdating in %ds... [", remaining)
@@ -1990,16 +2000,32 @@ func main() {
 				}
 				fmt.Println("]")
 
-				for _, entry := range targets {
+				for i, entry := range targets {
 					code, err := src.GenerateTOTP(entry.Secret)
 					if err != nil {
-						fmt.Printf("\r\x1b[K  %-20s : INVALID\n", entry.Account)
+						fmt.Printf("\r\x1b[K[%d] %-20s : INVALID\n", i+1, entry.Account)
 					} else {
-						fmt.Printf("\r\x1b[K  %-20s : \x1b[1;32m%s\x1b[0m\n", entry.Account, code)
+						fmt.Printf("\r\x1b[K[%d] %-20s : \x1b[1;32m%s\x1b[0m\n", i+1, entry.Account, code)
 					}
 				}
-				time.Sleep(1 * time.Second)
-				fmt.Printf("\033[%dA", len(targets)+1)
+
+				select {
+				case input := <-inputChan:
+					num, err := strconv.Atoi(input)
+					if err == nil && num >= 1 && num <= len(targets) {
+						targetEntry := targets[num-1]
+						code, _ := src.GenerateTOTP(targetEntry.Secret)
+						copyToClipboard(code)
+						fmt.Printf("\r\x1b[K\x1b[1;36m>> Copied TOTP for %s to clipboard!\x1b[0m\n", targetEntry.Account)
+						time.Sleep(1 * time.Second)
+						fmt.Printf("\033[%dA", len(targets)+2)
+					} else {
+						fmt.Printf("\033[%dA", len(targets)+1)
+					}
+				default:
+					time.Sleep(500 * time.Millisecond)
+					fmt.Printf("\033[%dA", len(targets)+1)
+				}
 			}
 		},
 	}
