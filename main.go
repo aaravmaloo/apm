@@ -1677,7 +1677,16 @@ func main() {
 				return
 			}
 
-			fmt.Println("Custom Profile Parameters")
+			fmt.Println("\n--- Custom Security Profile Creation ---")
+			fmt.Println("You are about to customize the underlying cryptographic parameters of your vault.")
+			fmt.Println("Each field below affects how hard it is for an attacker to crack your vault,")
+			fmt.Println("but also how long it takes for you to unlock it.")
+
+			// 1. Memory
+			fmt.Println("\n[1] Memory (Argon2 Memory Cost)")
+			fmt.Println("Explanation: The amount of RAM required to derive your encryption keys.")
+			fmt.Println("Security: Higher memory cost protects against GPU/ASIC brute-force attacks.")
+			fmt.Println("Tip: 64MB is standard. 256MB+ is hardened. Use what your system can comfortably spare.")
 			fmt.Print("Memory (MB) [64]: ")
 			memStr := readInput()
 			mem := uint32(64)
@@ -1685,6 +1694,11 @@ func main() {
 				fmt.Sscanf(memStr, "%d", &mem)
 			}
 
+			// 2. Time/Iterations
+			fmt.Println("\n[2] Time (Argon2 Iterations)")
+			fmt.Println("Explanation: The number of times the hashing function is repeated.")
+			fmt.Println("Security: More iterations mean a slower hash, making brute-force much slower.")
+			fmt.Println("Tip: 3 is standard. Increase this if you want the 'unlock' process to take longer (more secure).")
 			fmt.Print("Time (Iterations) [3]: ")
 			timeStr := readInput()
 			t := uint32(3)
@@ -1692,11 +1706,40 @@ func main() {
 				fmt.Sscanf(timeStr, "%d", &t)
 			}
 
+			// 3. Parallelism
+			fmt.Println("\n[3] Parallelism (Argon2 Threads)")
+			fmt.Println("Explanation: The number of CPU threads used during key derivation.")
+			fmt.Println("Security: Typically matched to your CPU's core count.")
+			fmt.Println("Tip: 2-4 is usually ideal. Higher values don't necessarily increase security but use more CPU power.")
 			fmt.Print("Parallelism [2]: ")
 			parStr := readInput()
 			p := uint8(2)
 			if parStr != "" {
 				fmt.Sscanf(parStr, "%d", &p)
+			}
+
+			// 4. Salt Length
+			fmt.Println("\n[4] Salt Length")
+			fmt.Println("Explanation: Random data added to your password before hashing.")
+			fmt.Println("Security: Prevents 'Rainbow Table' attacks where pre-computed hashes are used.")
+			fmt.Println("Tip: 16 bytes is standard. 32 bytes is very secure. Increasing this has negligible performance hit.")
+			fmt.Print("Salt Length (Bytes) [16]: ")
+			saltLenStr := readInput()
+			saltLen := 16
+			if saltLenStr != "" {
+				fmt.Sscanf(saltLenStr, "%d", &saltLen)
+			}
+
+			// 5. Nonce Length
+			fmt.Println("\n[5] Nonce Length (IV Size)")
+			fmt.Println("Explanation: A 'Number used ONCE' for the AES-GCM encryption process.")
+			fmt.Println("Security: Ensures that the same data encrypted twice looks different.")
+			fmt.Println("Tip: 12 bytes is standard for AES-GCM. 24 bytes is used for XChaCha20 (not yet supported) or special cases.")
+			fmt.Print("Nonce Length (Bytes) [12]: ")
+			nonceLenStr := readInput()
+			nonceLen := 12
+			if nonceLenStr != "" {
+				fmt.Sscanf(nonceLenStr, "%d", &nonceLen)
 			}
 
 			customProfile := src.CryptoProfile{
@@ -1705,8 +1748,8 @@ func main() {
 				Memory:      mem * 1024,
 				Time:        t,
 				Parallelism: p,
-				SaltLen:     16,
-				NonceLen:    12,
+				SaltLen:     saltLen,
+				NonceLen:    nonceLen,
 			}
 
 			vault.CurrentProfileParams = &customProfile
