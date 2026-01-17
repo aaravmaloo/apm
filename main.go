@@ -89,6 +89,9 @@ func main() {
 			}
 
 			color.Green("Vault initialized successfully.\n")
+
+			fmt.Println("if this program even helps you, please consider donating to the developer.")
+			fmt.Println("for donations contact: aaravmaloo06@gmail.com")
 		},
 	}
 
