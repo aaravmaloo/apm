@@ -42,8 +42,8 @@ func main() {
 		Short: "A simple password manager CLI",
 	}
 
-	cwd, _ := os.Getwd()
-	pluginMgr := plugins.NewPluginManager(cwd)
+	exe, _ := os.Executable()
+	pluginMgr := plugins.NewPluginManager(filepath.Dir(exe))
 
 	if err := pluginMgr.LoadPlugins(); err != nil {
 		color.Red("Error loading plugins: %v\n", err)
@@ -1680,6 +1680,7 @@ func main() {
 			fmt.Println("\n--- Custom Security Profile Creation ---")
 			fmt.Println("You are about to customize the underlying cryptographic parameters of your vault.")
 			fmt.Println("Each field below affects how hard it is for an attacker to crack your vault,")
+			fmt.Println("Do this at your own risk.")
 			fmt.Println("but also how long it takes for you to unlock it.")
 
 			// 1. Memory
