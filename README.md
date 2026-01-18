@@ -1,10 +1,16 @@
-# APM - Advanced Password Manager
+<h1 style="text-align: center;">
+  APM<br>
+  <span style="font-size: 0.82em;">
+    Advanced Password Manager
+  </span>
+</h1>
 
 APM is a professional-grade, zero-knowledge command-line interface (CLI) for managing high-sensitivity credentials. Engineered for cryptographic performance and organizational scalability, it features a dual-engine architecture supporting both individual privacy and team-based collaboration.
 
 [![Tests Status](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/aaravmaloo/apm/actions)
 [![Vault Version](https://img.shields.io/badge/vault-v3-blue.svg)](#)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-red.svg)](LICENSE.md)
+[![APM](https://img.shields.io/badge/apm-v7-purple.svg)](#)
 
 ---
 
