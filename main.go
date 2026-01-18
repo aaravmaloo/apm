@@ -3005,6 +3005,11 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 
 	migrated := false
 	if provider == "gdrive" {
+		if vault.LastCloudProvider != "" && vault.LastCloudProvider != "gdrive" {
+			vault.CloudToken = nil
+			vault.CloudCredentials = nil
+			migrated = true
+		}
 		if len(vault.CloudCredentials) == 0 {
 			credsPath := filepath.Join(installDir, "credentials.json")
 			if data, err := os.ReadFile(credsPath); err == nil {
@@ -3026,6 +3031,11 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 			}
 		}
 	} else if provider == "dropbox" {
+		if vault.LastCloudProvider != "" && vault.LastCloudProvider != "dropbox" {
+			vault.CloudToken = nil
+			vault.CloudCredentials = nil
+			migrated = true
+		}
 		if len(vault.CloudToken) == 0 {
 			vault.CloudToken = src.GetDefaultDropboxToken()
 			migrated = true
