@@ -236,7 +236,6 @@ func main() {
 				fmt.Print("Router IP: ")
 				rip := readInput()
 				if err := vault.AddWiFi(ssid, pass, sec); err == nil {
-					// Hack to add RouterIP since AddWiFi is simple
 					for i, w := range vault.WiFiCredentials {
 						if w.SSID == ssid {
 							vault.WiFiCredentials[i].RouterIP = rip
@@ -1005,7 +1004,6 @@ func main() {
 					}
 					vault.DeleteWiFi(e.SSID)
 					vault.AddWiFi(newSSID, newPass, newSec)
-					// Patch RouterIP
 					for i, w := range vault.WiFiCredentials {
 						if w.SSID == newSSID {
 							vault.WiFiCredentials[i].RouterIP = newRip
@@ -1686,7 +1684,6 @@ func main() {
 			fmt.Println("Do this at your own risk.")
 			fmt.Println("but also how long it takes for you to unlock it.")
 
-			// 1. Memory
 			fmt.Println("\n[1] Memory (Argon2 Memory Cost)")
 			fmt.Println("Explanation: The amount of RAM required to derive your encryption keys.")
 			fmt.Println("Security: Higher memory cost protects against GPU/ASIC brute-force attacks.")
@@ -1698,7 +1695,6 @@ func main() {
 				fmt.Sscanf(memStr, "%d", &mem)
 			}
 
-			// 2. Time/Iterations
 			fmt.Println("\n[2] Time (Argon2 Iterations)")
 			fmt.Println("Explanation: The number of times the hashing function is repeated.")
 			fmt.Println("Security: More iterations mean a slower hash, making brute-force much slower.")
@@ -1710,7 +1706,6 @@ func main() {
 				fmt.Sscanf(timeStr, "%d", &t)
 			}
 
-			// 3. Parallelism
 			fmt.Println("\n[3] Parallelism (Argon2 Threads)")
 			fmt.Println("Explanation: The number of CPU threads used during key derivation.")
 			fmt.Println("Security: Typically matched to your CPU's core count.")
@@ -1722,7 +1717,6 @@ func main() {
 				fmt.Sscanf(parStr, "%d", &p)
 			}
 
-			// 4. Salt Length
 			fmt.Println("\n[4] Salt Length")
 			fmt.Println("Explanation: Random data added to your password before hashing.")
 			fmt.Println("Security: Prevents 'Rainbow Table' attacks where pre-computed hashes are used.")
@@ -1734,7 +1728,6 @@ func main() {
 				fmt.Sscanf(saltLenStr, "%d", &saltLen)
 			}
 
-			// 5. Nonce Length
 			fmt.Println("\n[5] Nonce Length (IV Size)")
 			fmt.Println("Explanation: A 'Number used ONCE' for the AES-GCM encryption process.")
 			fmt.Println("Security: Ensures that the same data encrypted twice looks different.")
@@ -2499,26 +2492,38 @@ func main() {
 
 	var pluginsListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List available plugins in Marketplace (Google Drive)",
+		Short: "List available plugins in Marketplace (Multi-Cloud)",
 		Run: func(cmd *cobra.Command, args []string) {
-			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
-			if err != nil {
-				color.Red("Cloud authentication failed: %v", err)
-				return
-			}
+			providers := []string{"gdrive", "dropbox"}
+			allPlugins := make(map[string]bool)
+
 			fmt.Println("Fetching plugins from Marketplace...")
-			plugins, err := cm.ListMarketplacePlugins()
-			if err != nil {
-				color.Red("Failed to list plugins: %v", err)
-				return
+			for _, p := range providers {
+				cm, err := getCloudManagerEx(context.Background(), nil, "", p)
+				if err != nil {
+					continue
+				}
+				plugins, err := cm.ListMarketplacePlugins()
+				if err != nil {
+					continue
+				}
+				for _, name := range plugins {
+					allPlugins[name] = true
+				}
 			}
-			if len(plugins) == 0 {
+
+			if len(allPlugins) == 0 {
 				fmt.Println("No plugins found in Marketplace.")
 				return
 			}
 			fmt.Println("Available Plugins:")
-			for _, p := range plugins {
-				fmt.Printf("- %s\n", p)
+			var names []string
+			for name := range allPlugins {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, n := range names {
+				fmt.Printf("- %s\n", n)
 			}
 		},
 	}
@@ -2533,19 +2538,28 @@ func main() {
 			}
 			name := args[0]
 
-			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
-			if err != nil {
-				color.Red("Cloud authentication failed: %v", err)
-				return
-			}
-
-			fmt.Printf("Downloading plugin '%s'...\n", name)
+			providers := []string{"gdrive", "dropbox"}
+			success := false
 
 			targetDir := filepath.Join(pluginMgr.PluginsDir, name)
 
-			if err := cm.DownloadPlugin(name, targetDir); err != nil {
-				color.Red("Failed to install plugin: %v", err)
-				os.RemoveAll(targetDir)
+			for _, p := range providers {
+				cm, err := getCloudManagerEx(context.Background(), nil, "", p)
+				if err != nil {
+					continue
+				}
+
+				fmt.Printf("Attempting to download '%s' from %s...\n", name, p)
+				if err := cm.DownloadPlugin(name, targetDir); err == nil {
+					success = true
+					break
+				} else {
+					os.RemoveAll(targetDir)
+				}
+			}
+
+			if !success {
+				color.Red("Failed to install plugin '%s' from any marketplace.", name)
 				return
 			}
 
@@ -2572,7 +2586,7 @@ func main() {
 
 	var pluginsPushCmd = &cobra.Command{
 		Use:   "push [name]",
-		Short: "Push a plugin to Marketplace (Google Drive)",
+		Short: "Push a plugin to Marketplace (Multi-Cloud)",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				color.Red("Usage: pm plugins push <name>")
@@ -2593,17 +2607,28 @@ func main() {
 				return
 			}
 
-			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
-			if err != nil {
-				color.Red("Cloud authentication failed: %v", err)
-				return
+			fmt.Printf("Validating plugin '%s' v%s...\n", def.Name, def.Version)
+
+			providers := []string{"gdrive", "dropbox"}
+			anySuccess := false
+
+			for _, p := range providers {
+				fmt.Printf("Uploading to %s...\n", p)
+				cm, err := getCloudManagerEx(context.Background(), nil, "", p)
+				if err != nil {
+					color.Yellow("Skipping %s: authentication failed", p)
+					continue
+				}
+
+				if err := cm.UploadPlugin(pluginName, pluginPath); err != nil {
+					color.Yellow("Failed to upload to %s: %v", p, err)
+					continue
+				}
+				anySuccess = true
 			}
 
-			fmt.Printf("Validating plugin '%s' v%s...\n", def.Name, def.Version)
-			fmt.Println("Uploading to Google Drive (APM_PUBLIC/plugins)...")
-
-			if err := cm.UploadPlugin(pluginName, pluginPath); err != nil {
-				color.Red("Failed to upload plugin: %v", err)
+			if !anySuccess {
+				color.Red("Failed to push plugin to any marketplace.")
 				return
 			}
 
