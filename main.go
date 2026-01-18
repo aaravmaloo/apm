@@ -2133,13 +2133,18 @@ func main() {
 
 	var cloudCmd = &cobra.Command{
 		Use:   "cloud",
-		Short: "Sync and retrieve vaults from Google Drive",
+		Short: "Sync and retrieve vaults from cloud (Google Drive or Dropbox)",
 	}
 
 	var cloudInitCmd = &cobra.Command{
-		Use:   "init",
+		Use:   "init [dropbox|gdrive]",
 		Short: "Setup cloud sync and generate retrieval key",
 		Run: func(cmd *cobra.Command, args []string) {
+			provider := "gdrive"
+			if len(args) > 0 {
+				provider = args[0]
+			}
+
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
@@ -2158,7 +2163,7 @@ func main() {
 				return
 			}
 
-			cm, err := getCloudManager(context.Background(), vault, masterPassword)
+			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
@@ -2170,26 +2175,22 @@ func main() {
 				return
 			}
 
-			actualKey := fileID
-			if customKey != "" {
-				actualKey = customKey
-			}
-
-			vault.RetrievalKey = actualKey
+			vault.RetrievalKey = customKey
 			vault.CloudFileID = fileID
+			vault.LastCloudProvider = provider
 
 			data, _ := src.EncryptVault(vault, masterPassword)
 			src.SaveVault(vaultPath, data)
 
-			color.Green("Cloud sync initialized!")
-			color.HiCyan("Retrieval Key: %s\n", actualKey)
+			color.Green("Cloud sync initialized (%s)!", provider)
+			color.HiCyan("Retrieval Key: %s\n", customKey)
 			color.Yellow("Keep this key safe! It's required to pull your vault on other devices.")
 		},
 	}
 
 	var cloudSyncCmd = &cobra.Command{
-		Use:   "sync",
-		Short: "Manually sync current vault to cloud",
+		Use:   "sync [dropbox|gdrive]",
+		Short: "Sync local vault to cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2198,27 +2199,30 @@ func main() {
 			}
 
 			if vault.RetrievalKey == "" {
-				color.Red("Cloud sync not initialized. Run 'pm cloud init'.")
+				color.Red("Cloud sync not initialized. Run 'pm cloud init' first.")
 				return
 			}
 
-			cm, err := getCloudManager(context.Background(), vault, masterPassword)
+			provider := vault.LastCloudProvider
+			if len(args) > 0 {
+				provider = args[0]
+			}
+			if provider == "" {
+				provider = "gdrive"
+			}
+
+			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
 			}
 
-			targetFileID := vault.CloudFileID
-			if targetFileID == "" {
-				targetFileID = vault.RetrievalKey
-			}
-
-			err = cm.SyncVault(vaultPath, targetFileID)
+			err = cm.SyncVault(vaultPath, vault.CloudFileID)
 			if err != nil {
 				color.Red("Sync failed: %v\n", err)
 				return
 			}
-			color.Green("Vault synced to cloud.")
+			color.Green("Vault synced to cloud (%s).", provider)
 		},
 	}
 
@@ -2244,7 +2248,11 @@ func main() {
 			}
 
 			key := vault.RetrievalKey
-			cm, err := getCloudManager(context.Background(), vault, masterPassword)
+			provider := vault.LastCloudProvider
+			if provider == "" {
+				provider = "gdrive"
+			}
+			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
@@ -2303,18 +2311,44 @@ func main() {
 	cloudAutoSyncCmd.Flags().Bool("true", false, "Enable auto-sync")
 
 	var cloudGetCmd = &cobra.Command{
-		Use:   "get [retrieval_key]",
+		Use:   "get [dropbox|gdrive] [retrieval_key]",
 		Short: "Download vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
+			provider := "gdrive"
 			var key string
-			if len(args) > 0 {
-				key = args[0]
-			} else {
+
+			if len(args) == 0 {
+				fmt.Print("Enter Provider (dropbox/gdrive) [gdrive]: ")
+				pInput := readInput()
+				if pInput != "" {
+					provider = pInput
+				}
 				fmt.Print("Enter Retrieval Key: ")
-				key = readInput()
+				key, _ = readPassword()
+				fmt.Println()
+			} else if len(args) == 1 {
+				provider = args[0]
+				fmt.Print("Enter Retrieval Key: ")
+				key, _ = readPassword()
+				fmt.Println()
+			} else {
+				provider = args[0]
+				key = args[1]
 			}
 
-			data, err := src.DownloadPublicVault(key)
+			cp, err := src.GetCloudProvider(provider, context.Background(), nil, nil)
+			if err != nil {
+				color.Red("Cloud Error: %v\n", err)
+				return
+			}
+
+			fileID, err := cp.ResolveKeyToID(key)
+			if err != nil {
+				color.Red("Key resolution failed: %v\n", err)
+				return
+			}
+
+			data, err := cp.DownloadVault(fileID)
 			if err != nil {
 				color.Red("Download failed: %v\n", err)
 				color.Yellow("Note: Only uploader needs credentials.json. For public retrieval, ensure the key is correct.")
@@ -2340,8 +2374,8 @@ func main() {
 	}
 
 	var cloudDeleteCmd = &cobra.Command{
-		Use:   "delete",
-		Short: "Permanently delete vault from cloud",
+		Use:   "delete [dropbox|gdrive]",
+		Short: "Delete current vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2349,33 +2383,38 @@ func main() {
 				return
 			}
 
-			if vault.RetrievalKey == "" {
-				color.Red("Cloud sync not initialized.")
+			if vault.CloudFileID == "" {
+				color.Red("Cloud file not found in vault metadata.")
 				return
 			}
 
-			fmt.Printf("ARE YOU SURE? This will delete the vault '%s' from Drive. (y/n): ", vault.RetrievalKey)
-			if strings.ToLower(readInput()) != "y" {
-				return
+			provider := vault.LastCloudProvider
+			if len(args) > 0 {
+				provider = args[0]
+			}
+			if provider == "" {
+				provider = "gdrive"
 			}
 
-			cm, err := getCloudManager(context.Background(), vault, masterPassword)
+			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
 			}
 
-			targetFileID := vault.CloudFileID
-			if targetFileID == "" {
-				targetFileID = vault.RetrievalKey
-			}
-
-			err = cm.DeleteVault(targetFileID)
+			err = cm.DeleteVault(vault.CloudFileID)
 			if err != nil {
-				color.Red("Deletion failed: %v\n", err)
+				color.Red("Delete failed: %v\n", err)
 				return
 			}
-			color.Green("Cloud vault deleted.")
+
+			vault.RetrievalKey = ""
+			vault.CloudFileID = ""
+			vault.LastCloudProvider = ""
+			data, _ := src.EncryptVault(vault, masterPassword)
+			src.SaveVault(vaultPath, data)
+
+			color.Green("Vault deleted from cloud.")
 		},
 	}
 
@@ -2458,18 +2497,11 @@ func main() {
 		},
 	}
 
-	getCloudManager := func() (*src.CloudManager, error) {
-		creds := src.GetDefaultCreds()
-		token := src.GetDefaultToken()
-
-		return src.NewCloudManager(context.Background(), creds, token)
-	}
-
 	var pluginsListCmd = &cobra.Command{
 		Use:   "list",
 		Short: "List available plugins in Marketplace (Google Drive)",
 		Run: func(cmd *cobra.Command, args []string) {
-			cm, err := getCloudManager()
+			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
 			if err != nil {
 				color.Red("Cloud authentication failed: %v", err)
 				return
@@ -2501,7 +2533,7 @@ func main() {
 			}
 			name := args[0]
 
-			cm, err := getCloudManager()
+			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
 			if err != nil {
 				color.Red("Cloud authentication failed: %v", err)
 				return
@@ -2561,7 +2593,7 @@ func main() {
 				return
 			}
 
-			cm, err := getCloudManager()
+			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
 			if err != nil {
 				color.Red("Cloud authentication failed: %v", err)
 				return
@@ -2942,30 +2974,35 @@ func displayEntry(res src.SearchResult, showPass bool) {
 	fmt.Println("---")
 }
 
-func getCloudManager(ctx context.Context, vault *src.Vault, masterPassword string) (*src.CloudManager, error) {
+func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword string, provider string) (src.CloudProvider, error) {
 	exe, _ := os.Executable()
 	installDir := filepath.Dir(exe)
 
 	migrated := false
-	if len(vault.CloudCredentials) == 0 {
-		credsPath := filepath.Join(installDir, "credentials.json")
-		if data, err := os.ReadFile(credsPath); err == nil {
-			vault.CloudCredentials = data
-			migrated = true
-			color.Yellow("Migrating credentials.json to encrypted vault...")
-		} else {
-			vault.CloudCredentials = src.GetDefaultCreds()
-			migrated = true
+	if provider == "gdrive" {
+		if len(vault.CloudCredentials) == 0 {
+			credsPath := filepath.Join(installDir, "credentials.json")
+			if data, err := os.ReadFile(credsPath); err == nil {
+				vault.CloudCredentials = data
+				migrated = true
+			} else {
+				vault.CloudCredentials = src.GetDefaultCreds()
+				migrated = true
+			}
 		}
-	}
-	if len(vault.CloudToken) == 0 {
-		tokenPath := filepath.Join(installDir, "token.json")
-		if data, err := os.ReadFile(tokenPath); err == nil {
-			vault.CloudToken = data
-			migrated = true
-			color.Yellow("Migrating token.json to encrypted vault...")
-		} else {
-			vault.CloudToken = src.GetDefaultToken()
+		if len(vault.CloudToken) == 0 {
+			tokenPath := filepath.Join(installDir, "token.json")
+			if data, err := os.ReadFile(tokenPath); err == nil {
+				vault.CloudToken = data
+				migrated = true
+			} else {
+				vault.CloudToken = src.GetDefaultToken()
+				migrated = true
+			}
+		}
+	} else if provider == "dropbox" {
+		if len(vault.CloudToken) == 0 {
+			vault.CloudToken = src.GetDefaultDropboxToken()
 			migrated = true
 		}
 	}
@@ -2974,9 +3011,8 @@ func getCloudManager(ctx context.Context, vault *src.Vault, masterPassword strin
 		data, err := src.EncryptVault(vault, masterPassword)
 		if err == nil {
 			src.SaveVault(vaultPath, data)
-			color.Green("Cloud credentials securely stored in vault.")
 		}
 	}
 
-	return src.NewCloudManager(ctx, vault.CloudCredentials, vault.CloudToken)
+	return src.GetCloudProvider(provider, ctx, vault.CloudCredentials, vault.CloudToken)
 }
