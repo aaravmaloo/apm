@@ -79,10 +79,10 @@ Users can select from pre-defined profiles via `pm profile set` to balance secur
 ### 3.1 Personal Edition (pm)
 
 The personal edition focuses on local-first security and privacy.
-The best feature of APM, to my belief is security of cloud sync and how easily it is to maintain a portable vault. 
-The users' whole vault is stored in a single encrypted .dat file and shows empty and encrypted when opened with a .dat viewer. 
-The user can sync their vault to a public Google Drive folder and access it from any device. To get the vault, they require the randomly generated retrieval key and the master password.
-Even so, if the user does not want to store their vault on the cloud, they can simply copy their existing vault.dat file to a USB drive and access it from any device.
+The best feature of APM, to my belief is security of multi-cloud sync and how easily it is to maintain a portable vault. 
+The users' whole vault is stored in a single encrypted .dat file and remains fully opaque to unauthorized viewers. 
+The user can sync their vault to Google Drive or Dropbox. For maximum privacy, cloud vaults use randomized filenames (e.g., `v_1h2k3j.bin`) instead of the retrieval key. Retrieving a vault requires a two-word retrieval key (now hidden during input) and the master password.
+For those preferring air-gapped security, the `vault.dat` file can be manually carried on a physical hardware key.
 | Command | Subcommands | Flag Examples | Description |
 |---------|-------------|---------------|-------------|
 | **init** | N/A | N/A | Initializes a new encrypted vault file (`vault.dat`). |
@@ -97,8 +97,8 @@ Even so, if the user does not want to store their vault on the cloud, they can s
 | **adup** | N/A | N/A | Anomaly Detection: Checks for suspicious access patterns. |
 | **health**| N/A | N/A | Security dashboard with vulnerability scoring. |
 | **mode** | `unlock`, `lock` | `--min 15` | Session duration and access control management. |
-| **cloud** | `init`, `sync` | `--retrieval-key` | Google Drive integration for cross-device portability. |
-| **plugins**| `list`, `add` | N/A | Marketplace integration for declarative extensions. |
+| **cloud** | `init`, `sync`, `get` | `dropbox`, `gdrive` | Multi-cloud integration (Dropbox/GDrive) with randomized naming. |
+| **plugins**| `list`, `add`, `push` | N/A | Multi-cloud Marketplace with failover-capable plugin storage. |
 
 ---
 
@@ -169,6 +169,7 @@ APM features a declarative, JSON-driven plugin architecture. This allows for ext
 - **Discovery**: Plugins are located in the `/plugins_cache` directory.
 - **Manifest Validation**: On startup, `plugin.json` is verified for syntax and capability requirements.
 - **Hook Execution**: Plugins can intercept standard CLI events (e.g., `pre:add`) or register new top-level commands.
+- **Redundancy**: Pushed plugins are simultaneously mirrored to both Google Drive and Dropbox to ensure maximum availability.
 
 ### 6.2 Exhaustive Capability Reference
 Permissions are explicitly defined in the manifest. Requests for unlisted permissions will result in a runtime error.
