@@ -96,7 +96,7 @@ type WiFiEntry struct {
 }
 
 type GovIDEntry struct {
-	Type     string `json:"type"` // Passport, Driver's License, Voter ID
+	Type     string `json:"type"`
 	IDNumber string `json:"id_number"`
 	Name     string `json:"name"`
 	Expiry   string `json:"expiry"`
