@@ -7,10 +7,13 @@
 
 APM is a professional-grade, zero-knowledge command-line interface (CLI) for managing high-sensitivity credentials. Engineered for cryptographic performance and organizational scalability, it features a dual-engine architecture supporting both individual privacy and team-based collaboration.
 
-[![Tests Status](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/aaravmaloo/apm/actions)
-[![Vault Version](https://img.shields.io/badge/vault-v3-blue.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/aaravmaloo/apm/actions)
 [![License](https://img.shields.io/badge/license-MIT-red.svg)](LICENSE.md)
-[![APM](https://img.shields.io/badge/apm-v7-purple.svg)](#)
+[![Version](https://img.shields.io/badge/apm-v7-purple.svg)](#)
+[![Commits](https://img.shields.io/github/commit-activity/m/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
+[![Last Commit](https://img.shields.io/github/last-commit/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
+[![Issues](https://img.shields.io/github/issues/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/issues)
+[![PRs](https://img.shields.io/github/issues-pr/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/pulls)
 
 ---
 
