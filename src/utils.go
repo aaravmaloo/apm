@@ -243,3 +243,10 @@ func GenerateRandomWords() (string, error) {
 
 	return fmt.Sprintf("%s%s", adjectives[adjIdx.Int64()], nouns[nounIdx.Int64()]), nil
 }
+func GenerateRandomHex(n int) (string, error) {
+	bytes := make([]byte, n/2)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", bytes), nil
+}
