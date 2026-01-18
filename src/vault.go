@@ -251,6 +251,7 @@ type Vault struct {
 	AlertEmail              string                 `json:"alert_email,omitempty"`
 	AlertsEnabled           bool                   `json:"alerts_enabled,omitempty"`
 	AnomalyDetectionEnabled bool                   `json:"anomaly_detection_enabled,omitempty"`
+	LastCloudProvider       string                 `json:"last_cloud_provider,omitempty"`
 
 	CurrentProfileParams *CryptoProfile `json:"-"`
 }
