@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/drive/v3"
 )
 
-func (cm *CloudManager) EnsurePluginsFolder() (string, error) {
+func (cm *GoogleDriveManager) EnsurePluginsFolder() (string, error) {
 
 	query := fmt.Sprintf("name = 'plugins' and '%s' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false", DriveFolderID)
 	list, err := cm.Service.Files.List().Q(query).Fields("files(id)").Do()
@@ -35,7 +35,7 @@ func (cm *CloudManager) EnsurePluginsFolder() (string, error) {
 	return res.Id, nil
 }
 
-func (cm *CloudManager) UploadPlugin(name string, pluginPath string) error {
+func (cm *GoogleDriveManager) UploadPlugin(name string, pluginPath string) error {
 	pluginsFolderID, err := cm.EnsurePluginsFolder()
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (cm *CloudManager) UploadPlugin(name string, pluginPath string) error {
 	return err
 }
 
-func (cm *CloudManager) ListMarketplacePlugins() ([]string, error) {
+func (cm *GoogleDriveManager) ListMarketplacePlugins() ([]string, error) {
 	pluginsFolderID, err := cm.EnsurePluginsFolder()
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (cm *CloudManager) ListMarketplacePlugins() ([]string, error) {
 	return names, nil
 }
 
-func (cm *CloudManager) DownloadPlugin(name string, destDir string) error {
+func (cm *GoogleDriveManager) DownloadPlugin(name string, destDir string) error {
 	pluginsFolderID, err := cm.EnsurePluginsFolder()
 	if err != nil {
 		return err
