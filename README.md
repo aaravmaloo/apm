@@ -113,9 +113,9 @@ For those preferring air-gapped security, the `vault.dat` file can be manually c
 
 ## 4. Team Edition (pm-team)
 
-Designed for organizations, the Team Edition facilitates secure credential sharing via a multi-layered Role-Based Access Control (RBAC) model.
+Designed for organizations, the Team Edition facilitates secure credential sharing via a multi-layered Role-Based Access Control (RBAC) model with advanced permission overrides.
 
-### 4.1 Permission Matrix
+### 4.1 Permission Matrix (Default Roles)
 
 | Action | ADMIN | MANAGER | USER | AUDITOR | SECURITY |
 |--------|-------|---------|------|---------|----------|
@@ -125,13 +125,23 @@ Designed for organizations, the Team Edition facilitates secure credential shari
 | View Shared Secrets| All | Dept | Dept | None | Security |
 | View Audit Logs | Full | View | None | Full | Full |
 
-### 4.2 Key Team Commands
+### 4.2 Advanced Team Features
+- **Granular Permissions**: Admins can use `pm-team user permission grant/revoke` to override role permissions for specific users.
+- **Sensitive Entries**: Flag any entry as "sensitive". Modifications (edit/delete) by non-admins require explicit admin approval.
+- **Admin Approval Queue**: Approvals are managed via `pm-team approvals list/approve/deny`.
+- **Global Entries**: Mark entries as "global" to share them across the entire organization, bypassing department isolation.
+- **Admin Notifications**: Global cross-departmental notifications for sensitive entry changes appear upon admin login.
+- **Full CLI Parity**: All personal `pm` commands are available in `pm-team` (e.g., `pm-team totp`, `pm-team ssh`, `pm-team cert`).
+
+### 4.3 Key Team Commands
 
 | Command | Usage | Result |
 |---------|-------|--------|
 | `init` | `pm-team init "Corp" admin` | Sets up organization root environment. |
 | `dept create` | `pm-team dept create Engineering`| Creates a new isolated encryption domain. |
 | `user add` | `pm-team user add alice --role MANAGER`| Onboards a new member with specific permissions. |
+| `approvals` | `pm-team approvals list` | Manage pending sensitive entry requests. |
+| `user permission`| `pm-team user permission grant bob CanAddEntry` | Grant a specific override to a user. |
 | `audit` | `pm-team audit` | Visualizes the hashed, tamper-evident organization log. |
 
 ---
