@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rand"
 	"fmt"
 	"os"
@@ -2126,11 +2127,11 @@ func main() {
 
 	var cloudCmd = &cobra.Command{
 		Use:   "cloud",
-		Short: "Sync and retrieve vaults from cloud (Google Drive or Dropbox)",
+		Short: "Sync and retrieve vaults from cloud (Google Drive)",
 	}
 
 	var cloudInitCmd = &cobra.Command{
-		Use:   "init [dropbox|gdrive]",
+		Use:   "init [gdrive]",
 		Short: "Setup cloud sync and generate retrieval key",
 		Run: func(cmd *cobra.Command, args []string) {
 			provider := "gdrive"
@@ -2182,7 +2183,7 @@ func main() {
 	}
 
 	var cloudSyncCmd = &cobra.Command{
-		Use:   "sync [dropbox|gdrive]",
+		Use:   "sync [gdrive]",
 		Short: "Sync local vault to cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
@@ -2304,14 +2305,14 @@ func main() {
 	cloudAutoSyncCmd.Flags().Bool("true", false, "Enable auto-sync")
 
 	var cloudGetCmd = &cobra.Command{
-		Use:   "get [dropbox|gdrive] [retrieval_key]",
+		Use:   "get [gdrive] [retrieval_key]",
 		Short: "Download vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			provider := "gdrive"
 			var key string
 
 			if len(args) == 0 {
-				fmt.Print("Enter Provider (dropbox/gdrive) [gdrive]: ")
+				fmt.Print("Enter Provider (gdrive) [gdrive]: ")
 				pInput := readInput()
 				if pInput != "" {
 					provider = pInput
@@ -2367,7 +2368,7 @@ func main() {
 	}
 
 	var cloudDeleteCmd = &cobra.Command{
-		Use:   "delete [dropbox|gdrive]",
+		Use:   "delete [gdrive]",
 		Short: "Delete current vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
@@ -3000,54 +3001,51 @@ func displayEntry(res src.SearchResult, showPass bool) {
 }
 
 func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword string, provider string) (src.CloudProvider, error) {
+	if provider != "gdrive" {
+		return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
+	}
+
 	exe, _ := os.Executable()
 	installDir := filepath.Dir(exe)
 
 	migrated := false
-	if provider == "gdrive" {
-		if vault.LastCloudProvider != "" && vault.LastCloudProvider != "gdrive" {
-			vault.CloudToken = nil
-			vault.CloudCredentials = nil
-			migrated = true
-		}
-		if len(vault.CloudCredentials) == 0 {
-			credsPath := filepath.Join(installDir, "credentials.json")
-			if data, err := os.ReadFile(credsPath); err == nil {
-				vault.CloudCredentials = data
-				migrated = true
-			} else {
-				vault.CloudCredentials = src.GetDefaultCreds()
-				migrated = true
-			}
-		}
-		if len(vault.CloudToken) == 0 {
-			tokenPath := filepath.Join(installDir, "token.json")
-			if data, err := os.ReadFile(tokenPath); err == nil {
-				vault.CloudToken = data
-				migrated = true
-			} else {
-				vault.CloudToken = src.GetDefaultToken()
-				migrated = true
-			}
-		}
-	} else if provider == "dropbox" {
-		if vault.LastCloudProvider != "" && vault.LastCloudProvider != "dropbox" {
-			vault.CloudToken = nil
-			vault.CloudCredentials = nil
-			migrated = true
-		}
-		if len(vault.CloudToken) == 0 {
-			vault.CloudToken = src.GetDefaultDropboxToken()
+	var credentials []byte
+	var token []byte
+
+	// Priority 1: Local files in install directory
+	credsPath := filepath.Join(installDir, "credentials.json")
+	if data, err := os.ReadFile(credsPath); err == nil {
+		credentials = data
+	}
+	tokenPath := filepath.Join(installDir, "token.json")
+	if data, err := os.ReadFile(tokenPath); err == nil {
+		token = data
+	}
+
+	// Priority 2: Embedded defaults (if local files missing)
+	if len(credentials) == 0 {
+		credentials = src.GetDefaultCreds()
+	}
+	if len(token) == 0 {
+		token = src.GetDefaultToken()
+	}
+
+	// ALWAYS update vault with the credentials being used to purge old/corrupt ones
+	if vault != nil {
+		if !bytes.Equal(vault.CloudCredentials, credentials) || !bytes.Equal(vault.CloudToken, token) || vault.LastCloudProvider != "gdrive" {
+			vault.CloudCredentials = credentials
+			vault.CloudToken = token
+			vault.LastCloudProvider = "gdrive"
 			migrated = true
 		}
 	}
 
-	if migrated {
+	if migrated && vault != nil && masterPassword != "" {
 		data, err := src.EncryptVault(vault, masterPassword)
 		if err == nil {
 			src.SaveVault(vaultPath, data)
 		}
 	}
 
-	return src.GetCloudProvider(provider, ctx, vault.CloudCredentials, vault.CloudToken)
+	return src.GetCloudProvider(provider, ctx, credentials, token)
 }
