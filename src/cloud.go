@@ -112,7 +112,7 @@ func (cm *GoogleDriveManager) DownloadVault(fileID string) ([]byte, error) {
 	return DownloadPublicVault(fileID)
 }
 
-func extractFileID(input string) string {
+func ExtractFileID(input string) string {
 	if strings.Contains(input, "drive.google.com") {
 		if strings.Contains(input, "/file/d/") {
 			parts := strings.Split(input, "/file/d/")
@@ -161,7 +161,7 @@ func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
 }
 
 func DownloadPublicVault(input string) ([]byte, error) {
-	fileID := extractFileID(input)
+	fileID := ExtractFileID(input)
 
 	if len(fileID) > 20 || strings.Contains(input, "drive.google.com") {
 		url := fmt.Sprintf("https://drive.google.com/uc?export=download&id=%s", fileID)
