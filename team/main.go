@@ -229,18 +229,20 @@ func main() {
 		Use:   "create <name>",
 		Short: "Create a new department (Admin/Manager only)",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session. Run 'pm-team login' first.\n")
+				return
+			}
 			tv, _ := loadTeamVault()
 			user := getCurrentUser(tv, s)
-			if err != nil || !s.Role.CanManageDepartments(user) {
+			if !s.Role.CanManageDepartments(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
 
 			name := args[0]
 			id := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
-
-			tv, _ := loadTeamVault()
 
 			for _, d := range tv.Departments {
 				if d.ID == id {
@@ -559,9 +561,14 @@ func main() {
 		Use:   "add",
 		Short: "Add a shared entry (interactive)",
 		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
 			tv, _ := loadTeamVault()
 			user := getCurrentUser(tv, s)
-			if err != nil || !s.Role.CanAddEntry(user) {
+			if !s.Role.CanAddEntry(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -580,8 +587,6 @@ func main() {
 			fmt.Println("11. Document")
 			fmt.Print("Choice (1-11): ")
 			choice := readInput()
-
-			tv, _ := loadTeamVault()
 
 			switch choice {
 			case "1":
@@ -703,14 +708,17 @@ func main() {
 		Use:   "audit",
 		Short: "View organization audit trail",
 		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
 			tv, _ := loadTeamVault()
 			user := getCurrentUser(tv, s)
-			if err != nil || !s.Role.CanViewAudit(user) {
+			if !s.Role.CanViewAudit(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
-
-			tv, _ := loadTeamVault()
 
 			color.Cyan("=== Audit Trail for %s ===\n", tv.OrganizationID)
 			for _, e := range tv.AuditTrail {
@@ -794,38 +802,6 @@ func main() {
 			}
 
 			deleteSharedEntry(tv, s, res)
-		},
-	}
-
-	var totpCmd = &cobra.Command{
-		Use:   "totp <entry_name>",
-		Short: "Generate TOTP code for a shared entry",
-		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
-			if err != nil {
-				color.Red("No active session.\n")
-				return
-			}
-
-			tv, _ := loadTeamVault()
-			query := strings.ToLower(strings.Join(args, " "))
-
-			for _, t := range tv.SharedEntries.TOTPs {
-				if (t.DepartmentID == s.ActiveDeptID || s.Role == RoleAdmin) &&
-					strings.Contains(strings.ToLower(t.Name), query) {
-					decryptedSecret, _ := DecryptData(t.Secret, s.DeptKey)
-					code := generateTOTP(string(decryptedSecret))
-					remaining := 30 - (int(time.Now().Unix()) % 30)
-
-					color.Cyan("\n=== TOTP: %s ===\n", t.Name)
-					color.Green("Code: %s\n", code)
-					fmt.Printf("Time remaining: %d seconds\n", remaining)
-					return
-				}
-			}
-
-			color.Red("No TOTP entry found matching '%s'.\n", query)
 		},
 	}
 
