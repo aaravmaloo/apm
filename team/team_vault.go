@@ -16,37 +16,87 @@ const (
 	RoleSecurity Role = "SECURITY"
 )
 
-func (r Role) CanAddEntry() bool {
+func GetRoles() []Role {
+	return []Role{RoleAdmin, RoleManager, RoleUser, RoleAuditor, RoleSecurity}
+}
+
+type EntryMetadata struct {
+	ID           string    `json:"id"`
+	DepartmentID string    `json:"department_id"`
+	CreatedBy    string    `json:"created_by"`
+	CreatedAt    time.Time `json:"created_at"`
+	ModifiedBy   string    `json:"modified_by"`
+	ModifiedAt   time.Time `json:"modified_at"`
+	IsSensitive  bool      `json:"is_sensitive"`
+	IsGlobal     bool      `json:"is_global"`
+}
+
+func (r Role) CanAddEntry(user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["add_entry"]; ok {
+			return val
+		}
+	}
 	return r == RoleAdmin || r == RoleManager || r == RoleUser
 }
 
-func (r Role) CanEditEntry(createdBy string, currentUser string) bool {
+func (r Role) CanEditEntry(createdBy string, currentUser string, user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["edit_entry"]; ok {
+			return val
+		}
+	}
 	if r == RoleAdmin || r == RoleManager {
 		return true
 	}
 	return r == RoleUser && createdBy == currentUser
 }
 
-func (r Role) CanDeleteEntry(createdBy string, currentUser string) bool {
+func (r Role) CanDeleteEntry(createdBy string, currentUser string, user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["delete_entry"]; ok {
+			return val
+		}
+	}
 	if r == RoleAdmin || r == RoleManager {
 		return true
 	}
 	return r == RoleUser && createdBy == currentUser
 }
 
-func (r Role) CanShareEntry() bool {
+func (r Role) CanShareEntry(user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["share_entry"]; ok {
+			return val
+		}
+	}
 	return r == RoleAdmin || r == RoleManager
 }
 
-func (r Role) CanManageDepartments() bool {
+func (r Role) CanManageDepartments(user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["manage_depts"]; ok {
+			return val
+		}
+	}
 	return r == RoleAdmin || r == RoleManager
 }
 
-func (r Role) CanManageUsers() bool {
+func (r Role) CanManageUsers(user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["manage_users"]; ok {
+			return val
+		}
+	}
 	return r == RoleAdmin || r == RoleManager
 }
 
-func (r Role) CanViewAudit() bool {
+func (r Role) CanViewAudit(user *TeamUser) bool {
+	if user != nil && user.Permissions != nil {
+		if val, ok := user.Permissions["view_audit"]; ok {
+			return val
+		}
+	}
 	return r == RoleAdmin || r == RoleSecurity || r == RoleAuditor
 }
 
@@ -56,6 +106,7 @@ type TeamUser struct {
 	Role               Role              `json:"role"`
 	ActiveDepartmentID string            `json:"active_department_id"`
 	WrappedKeys        map[string][]byte `json:"wrapped_keys"`
+	Permissions        map[string]bool   `json:"permissions"`
 }
 
 type Department struct {
@@ -72,123 +123,96 @@ type TeamAuditEntry struct {
 	PrevHash  string    `json:"prev_hash"`
 }
 
-type SharedPassword struct {
+type ApprovalRequest struct {
 	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Username     string    `json:"username"`
-	Password     []byte    `json:"password"`
-	URL          string    `json:"url"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
-	ModifiedBy   string    `json:"modified_by"`
-	ModifiedAt   time.Time `json:"modified_at"`
+	Type         string    `json:"type"`       // Create, Edit, Delete
+	EntryType    string    `json:"entry_type"` // Password, TOTP, etc.
+	EntryID      string    `json:"entry_id"`
+	NewData      []byte    `json:"new_data"` // JSON marshaled entry
+	RequestedBy  string    `json:"requested_by"`
+	RequestedAt  time.Time `json:"requested_at"`
+	Status       string    `json:"status"` // Pending, Approved, Denied
+	DenialReason string    `json:"denial_reason,omitempty"`
+}
+
+type SharedPassword struct {
+	EntryMetadata
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password []byte `json:"password"`
+	URL      string `json:"url"`
 }
 
 type SharedTOTP struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Secret       []byte    `json:"secret"`
-	Issuer       string    `json:"issuer"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Name   string `json:"name"`
+	Secret []byte `json:"secret"`
+	Issuer string `json:"issuer"`
 }
 
 type SharedAPIKey struct {
-	ID           string    `json:"id"`
-	Label        string    `json:"label"`
-	Service      string    `json:"service"`
-	Key          []byte    `json:"key"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
-	ModifiedBy   string    `json:"modified_by"`
-	ModifiedAt   time.Time `json:"modified_at"`
+	EntryMetadata
+	Label   string `json:"label"`
+	Service string `json:"service"`
+	Key     []byte `json:"key"`
 }
 
 type SharedToken struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Token        []byte    `json:"token"`
-	Type         string    `json:"type"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Name  string `json:"name"`
+	Token []byte `json:"token"`
+	Type  string `json:"type"`
 }
 
 type SharedNote struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Content      []byte    `json:"content"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
-	ModifiedBy   string    `json:"modified_by"`
-	ModifiedAt   time.Time `json:"modified_at"`
+	EntryMetadata
+	Name    string `json:"name"`
+	Content []byte `json:"content"`
 }
 
 type SharedSSHKey struct {
-	ID           string    `json:"id"`
-	Label        string    `json:"label"`
-	PrivateKey   []byte    `json:"private_key"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Label      string `json:"label"`
+	PrivateKey []byte `json:"private_key"`
 }
 
 type SharedCertificate struct {
-	ID           string    `json:"id"`
-	Label        string    `json:"label"`
-	Issuer       string    `json:"issuer"`
-	Expiry       time.Time `json:"expiry"`
-	CertData     []byte    `json:"cert_data"`
-	PrivateKey   []byte    `json:"private_key,omitempty"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Label      string    `json:"label"`
+	Issuer     string    `json:"issuer"`
+	Expiry     time.Time `json:"expiry"`
+	CertData   []byte    `json:"cert_data"`
+	PrivateKey []byte    `json:"private_key,omitempty"`
 }
 
 type SharedWiFi struct {
-	ID           string    `json:"id"`
-	SSID         string    `json:"ssid"`
-	Password     []byte    `json:"password"`
-	Security     string    `json:"security"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	SSID     string `json:"ssid"`
+	Password []byte `json:"password"`
+	Security string `json:"security"`
 }
 
 type SharedRecoveryCode struct {
-	ID           string    `json:"id"`
-	Service      string    `json:"service"`
-	Codes        []byte    `json:"codes"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Service string `json:"service"`
+	Codes   []byte `json:"codes"`
 }
 
 type SharedBankingItem struct {
-	ID           string    `json:"id"`
-	Label        string    `json:"label"`
-	Type         string    `json:"type"`
-	Details      []byte    `json:"details"`
-	CVV          []byte    `json:"cvv,omitempty"`
-	Expiry       string    `json:"expiry,omitempty"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Label   string `json:"label"`
+	Type    string `json:"type"`
+	Details []byte `json:"details"`
+	CVV     []byte `json:"cvv,omitempty"`
+	Expiry  string `json:"expiry,omitempty"`
 }
 
 type SharedDocumentEntry struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	FileName     string    `json:"file_name"`
-	Content      []byte    `json:"content"`
-	Password     []byte    `json:"password"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	EntryMetadata
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Password []byte `json:"password"`
 }
 
 type SharedEntryStore struct {
@@ -206,12 +230,13 @@ type SharedEntryStore struct {
 }
 
 type TeamVault struct {
-	OrganizationID string           `json:"organization_id"`
-	Departments    []Department     `json:"departments"`
-	Users          []TeamUser       `json:"users"`
-	SharedEntries  SharedEntryStore `json:"shared_entries"`
-	Salt           []byte           `json:"salt"`
-	AuditTrail     []TeamAuditEntry `json:"audit_trail"`
+	OrganizationID   string            `json:"organization_id"`
+	Departments      []Department      `json:"departments"`
+	Users            []TeamUser        `json:"users"`
+	SharedEntries    SharedEntryStore  `json:"shared_entries"`
+	Salt             []byte            `json:"salt"`
+	AuditTrail       []TeamAuditEntry  `json:"audit_trail"`
+	PendingApprovals []ApprovalRequest `json:"pending_approvals"`
 }
 
 func (tv *TeamVault) AddAuditEntry(user, action, details string) {
@@ -239,62 +264,62 @@ func (tv *TeamVault) SearchAll(query string, deptID string, isAdmin bool) []Sear
 	var results []SearchResult
 	query = strings.ToLower(query)
 
-	checkAccess := func(itemDeptID string) bool {
-		return isAdmin || itemDeptID == deptID
+	checkAccess := func(meta EntryMetadata) bool {
+		return isAdmin || meta.IsGlobal || meta.DepartmentID == deptID
 	}
 
 	for _, p := range tv.SharedEntries.Passwords {
-		if checkAccess(p.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(p.Name), query)) {
+		if checkAccess(p.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(p.Name), query)) {
 			results = append(results, SearchResult{"Password", p.Name, p})
 		}
 	}
 	for _, t := range tv.SharedEntries.TOTPs {
-		if checkAccess(t.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(t.Name), query)) {
+		if checkAccess(t.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(t.Name), query)) {
 			results = append(results, SearchResult{"TOTP", t.Name, t})
 		}
 	}
 	for _, k := range tv.SharedEntries.APIKeys {
-		if checkAccess(k.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(k.Label), query)) {
+		if checkAccess(k.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(k.Label), query)) {
 			results = append(results, SearchResult{"API Key", k.Label, k})
 		}
 	}
 	for _, t := range tv.SharedEntries.Tokens {
-		if checkAccess(t.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(t.Name), query)) {
+		if checkAccess(t.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(t.Name), query)) {
 			results = append(results, SearchResult{"Token", t.Name, t})
 		}
 	}
 	for _, n := range tv.SharedEntries.Notes {
-		if checkAccess(n.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(n.Name), query)) {
+		if checkAccess(n.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(n.Name), query)) {
 			results = append(results, SearchResult{"Note", n.Name, n})
 		}
 	}
 	for _, s := range tv.SharedEntries.SSHKeys {
-		if checkAccess(s.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(s.Label), query)) {
+		if checkAccess(s.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(s.Label), query)) {
 			results = append(results, SearchResult{"SSH Key", s.Label, s})
 		}
 	}
 	for _, c := range tv.SharedEntries.Certificates {
-		if checkAccess(c.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(c.Label), query)) {
+		if checkAccess(c.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(c.Label), query)) {
 			results = append(results, SearchResult{"Certificate", c.Label, c})
 		}
 	}
 	for _, w := range tv.SharedEntries.WiFi {
-		if checkAccess(w.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(w.SSID), query)) {
+		if checkAccess(w.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(w.SSID), query)) {
 			results = append(results, SearchResult{"Wi-Fi", w.SSID, w})
 		}
 	}
 	for _, r := range tv.SharedEntries.RecoveryCodes {
-		if checkAccess(r.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(r.Service), query)) {
+		if checkAccess(r.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(r.Service), query)) {
 			results = append(results, SearchResult{"Recovery Code", r.Service, r})
 		}
 	}
 	for _, b := range tv.SharedEntries.BankingItems {
-		if checkAccess(b.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(b.Label), query)) {
+		if checkAccess(b.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(b.Label), query)) {
 			results = append(results, SearchResult{"Banking", b.Label, b})
 		}
 	}
 	for _, d := range tv.SharedEntries.Documents {
-		if checkAccess(d.DepartmentID) && (query == "" || strings.Contains(strings.ToLower(d.Name), query)) {
+		if checkAccess(d.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(d.Name), query)) {
 			results = append(results, SearchResult{"Document", d.Name, d})
 		}
 	}
