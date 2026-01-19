@@ -229,6 +229,7 @@ func main() {
 		Use:   "create <name>",
 		Short: "Create a new department (Admin/Manager only)",
 		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
 				color.Red("No active session. Run 'pm-team login' first.\n")
