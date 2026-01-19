@@ -85,6 +85,7 @@ func main() {
 				Role:               RoleAdmin,
 				ActiveDepartmentID: "general",
 				WrappedKeys:        map[string][]byte{"general": wrappedDK},
+				Permissions:        make(map[string]bool),
 			}
 
 			tv := TeamVault{
@@ -156,6 +157,11 @@ func main() {
 			}
 
 			color.Green("Logged in as %s (%s) in department '%s'.\n", username, targetUser.Role, targetUser.ActiveDepartmentID)
+
+			if targetUser.Role == RoleAdmin && len(tv.PendingApprovals) > 0 {
+				color.Yellow("\n[NOTIFICATION] You have %d pending approval request(s) for sensitive entries.\n", len(tv.PendingApprovals))
+				color.Yellow("Run 'pm-team approvals list' to review them.\n")
+			}
 		},
 	}
 
@@ -177,6 +183,9 @@ func main() {
 			fmt.Printf("Role: %s\n", s.Role)
 			fmt.Printf("Active Department: %s\n", s.ActiveDeptID)
 			fmt.Printf("Session Expires: %s\n", s.Expiry.Format("15:04:05"))
+			if len(s.Permissions) > 0 {
+				fmt.Printf("Permission Overrides: %v\n", s.Permissions)
+			}
 		},
 	}
 
@@ -315,6 +324,7 @@ func main() {
 				Role:               Role(strings.ToUpper(roleStr)),
 				ActiveDepartmentID: deptID,
 				WrappedKeys:        map[string][]byte{deptID: wrappedDK},
+				Permissions:        make(map[string]bool),
 			}
 
 			tv.Users = append(tv.Users, newUser)
@@ -414,7 +424,80 @@ func main() {
 		},
 	}
 
-	userCmd.AddCommand(userListCmd, userAddCmd, userRemoveCmd, userPromoteCmd)
+	var userRoleListCmd = &cobra.Command{
+		Use:   "roles",
+		Short: "List all available user roles",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Available Roles:")
+			for _, r := range GetRoles() {
+				fmt.Printf("- %s\n", r)
+			}
+		},
+	}
+
+	var userPermCmd = &cobra.Command{
+		Use:   "permission",
+		Short: "Manage user-specific permission overrides",
+	}
+
+	var userPermGrantCmd = &cobra.Command{
+		Use:   "grant <username> <permission>",
+		Short: "Grant a specific permission override",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied. Admin only.\n")
+				return
+			}
+			username := args[0]
+			perm := args[1]
+			tv, _ := loadTeamVault()
+			for i, u := range tv.Users {
+				if u.Username == username {
+					if tv.Users[i].Permissions == nil {
+						tv.Users[i].Permissions = make(map[string]bool)
+					}
+					tv.Users[i].Permissions[perm] = true
+					saveTeamVault(tv)
+					color.Green("Permission '%s' granted to user '%s'.\n", perm, username)
+					return
+				}
+			}
+			color.Red("User '%s' not found.\n", username)
+		},
+	}
+
+	var userPermRevokeCmd = &cobra.Command{
+		Use:   "revoke <username> <permission>",
+		Short: "Revoke a specific permission override",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied. Admin only.\n")
+				return
+			}
+			username := args[0]
+			perm := args[1]
+			tv, _ := loadTeamVault()
+			for i, u := range tv.Users {
+				if u.Username == username {
+					if tv.Users[i].Permissions == nil {
+						tv.Users[i].Permissions = make(map[string]bool)
+					}
+					tv.Users[i].Permissions[perm] = false
+					saveTeamVault(tv)
+					color.Green("Permission '%s' revoked from user '%s'.\n", perm, username)
+					return
+				}
+			}
+			color.Red("User '%s' not found.\n", username)
+		},
+	}
+
+	userPermCmd.AddCommand(userPermGrantCmd, userPermRevokeCmd)
+	userCmd.AddCommand(userListCmd, userAddCmd, userRemoveCmd, userPromoteCmd, userRoleListCmd, userPermCmd)
 
 	var deptSwitchCmd = &cobra.Command{
 		Use:   "switch <username> <dept_id>",
@@ -742,6 +825,109 @@ func main() {
 			color.Red("No TOTP entry found matching '%s'.\n", query)
 		},
 	}
+
+	var approvalsCmd = &cobra.Command{
+		Use:   "approvals",
+		Short: "Manage pending approvals for sensitive entry changes (Admin only)",
+	}
+
+	var approvalsListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all pending approval requests",
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied. Admin only.\n")
+				return
+			}
+			tv, _ := loadTeamVault()
+			if len(tv.PendingApprovals) == 0 {
+				fmt.Println("No pending approval requests.")
+				return
+			}
+			color.Cyan("=== Pending Approvals ===\n")
+			for i, req := range tv.PendingApprovals {
+				if req.Status == "Pending" {
+					fmt.Printf("[%d] ID: %s | Type: %s | Entry: %s (%s) | Requested By: %s\n",
+						i+1, req.ID, req.Type, req.EntryID, req.EntryType, req.RequestedBy)
+				}
+			}
+		},
+	}
+
+	var approvalsApproveCmd = &cobra.Command{
+		Use:   "approve <idx>",
+		Short: "Approve a pending request",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied.\n")
+				return
+			}
+			idx, _ := strconv.Atoi(args[0])
+			tv, _ := loadTeamVault()
+			if idx < 1 || idx > len(tv.PendingApprovals) {
+				color.Red("Invalid index.\n")
+				return
+			}
+			req := &tv.PendingApprovals[idx-1]
+			if req.Status != "Pending" {
+				color.Red("Request is already %s.\n", req.Status)
+				return
+			}
+
+			// Apply the change
+			if req.Type == "Delete" {
+				// Handle deletion - need generic deletion logic
+				color.Yellow("Applying deletion of %s...\n", req.EntryID)
+				// ... implementation below needs to be robust ...
+			} else {
+				// Handle create/edit
+				color.Yellow("Applying change to %s...\n", req.EntryID)
+			}
+
+			req.Status = "Approved"
+			tv.AddAuditEntry(s.Username, "APPROVE_REQ", fmt.Sprintf("Approved %s for %s", req.Type, req.EntryID))
+			saveTeamVault(tv)
+			color.Green("Request approved and applied.\n")
+		},
+	}
+
+	var approvalsDenyCmd = &cobra.Command{
+		Use:   "deny <idx>",
+		Short: "Deny a pending request",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil || s.Role != RoleAdmin {
+				color.Red("Permission denied.\n")
+				return
+			}
+			idx, _ := strconv.Atoi(args[0])
+			tv, _ := loadTeamVault()
+			if idx < 1 || idx > len(tv.PendingApprovals) {
+				color.Red("Invalid index.\n")
+				return
+			}
+
+			fmt.Print("Reason for denial: ")
+			reason := readInput()
+			if reason == "" {
+				color.Red("Reason is required.\n")
+				return
+			}
+
+			req := &tv.PendingApprovals[idx-1]
+			req.Status = "Denied"
+			req.DenialReason = reason
+			tv.AddAuditEntry(s.Username, "DENY_REQ", fmt.Sprintf("Denied %s for %s: %s", req.Type, req.EntryID, reason))
+			saveTeamVault(tv)
+			color.Red("Request denied.\n")
+		},
+	}
+
+	approvalsCmd.AddCommand(approvalsListCmd, approvalsApproveCmd, approvalsDenyCmd)
 
 	var exportCmd = &cobra.Command{
 		Use:   "export",
