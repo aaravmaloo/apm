@@ -56,6 +56,7 @@ func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []by
 		if err := json.Unmarshal(tokenJSON, tok); err != nil {
 			return nil, fmt.Errorf("unable to parse token: %v", err)
 		}
+		client = config.Client(ctx, tok)
 	} else {
 		return nil, fmt.Errorf("cloud token missing")
 	}
