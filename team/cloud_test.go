@@ -1,6 +1,7 @@
 package main
 
 import (
+	apm "password-manager/src"
 	"testing"
 )
 
@@ -39,9 +40,9 @@ func TestExtractFileID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractFileID(tt.input)
+			got := apm.ExtractFileID(tt.input)
 			if got != tt.expected {
-				t.Errorf("extractFileID(%q) = %v, want %v", tt.input, got, tt.expected)
+				t.Errorf("ExtractFileID(%q) = %v, want %v", tt.input, got, tt.expected)
 			}
 		})
 	}
