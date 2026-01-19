@@ -1040,26 +1040,46 @@ func addSharedPassword(tv *TeamVault, s *TeamSession) {
 
 	encryptedPass, _ := EncryptData([]byte(password), s.DeptKey)
 
-	entry := SharedPassword{
-		ID:           fmt.Sprintf("pwd_%d", time.Now().Unix()),
-		Name:         name,
-		Username:     username,
-		Password:     encryptedPass,
-		URL:          url,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
+	passwordEntry := SharedPassword{
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("pass_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Name:     name,
+		Username: username,
+		Password: encryptedPass,
+		URL:      url,
 	}
 
-	tv.SharedEntries.Passwords = append(tv.SharedEntries.Passwords, entry)
-	tv.AddAuditEntry(s.Username, "ADD_PASSWORD", "Added shared password: "+name)
-
-	if err := saveTeamVault(tv); err != nil {
-		color.Red("Error saving: %v\n", err)
-		return
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(passwordEntry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Password",
+			EntryID:     name,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.Passwords = append(tv.SharedEntries.Passwords, passwordEntry)
+		tv.AddAuditEntry(s.Username, "ADD_PASS", "Added shared password: "+name)
 	}
-
-	color.Green("Shared password '%s' added successfully.\n", name)
+	saveTeamVault(tv)
+	color.Green("Done.\n")
 }
 
 func addSharedTOTP(tv *TeamVault, s *TeamSession) {
