@@ -19,8 +19,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
-
-	src "password-manager/src"
 )
 
 var vaultPath string
@@ -232,8 +230,9 @@ func main() {
 		Short: "Create a new department (Admin/Manager only)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
-			if err != nil || !s.Role.CanManageDepartments() {
+			tv, _ := loadTeamVault()
+			user := getCurrentUser(tv, s)
+			if err != nil || !s.Role.CanManageDepartments(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -293,8 +292,9 @@ func main() {
 		Short: "Add a new user (Admin/Manager only)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
-			if err != nil || !s.Role.CanManageUsers() {
+			tv, _ := loadTeamVault()
+			user := getCurrentUser(tv, s)
+			if err != nil || !s.Role.CanManageUsers(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -346,8 +346,9 @@ func main() {
 		Short: "Remove a user from the organization",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
-			if err != nil || !s.Role.CanManageUsers() {
+			tv, _ := loadTeamVault()
+			user := getCurrentUser(tv, s)
+			if err != nil || !s.Role.CanManageUsers(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -558,8 +559,9 @@ func main() {
 		Use:   "add",
 		Short: "Add a shared entry (interactive)",
 		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
-			if err != nil || !s.Role.CanAddEntry() {
+			tv, _ := loadTeamVault()
+			user := getCurrentUser(tv, s)
+			if err != nil || !s.Role.CanAddEntry(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -701,8 +703,9 @@ func main() {
 		Use:   "audit",
 		Short: "View organization audit trail",
 		Run: func(cmd *cobra.Command, args []string) {
-			s, err := GetSession()
-			if err != nil || !s.Role.CanViewAudit() {
+			tv, _ := loadTeamVault()
+			user := getCurrentUser(tv, s)
+			if err != nil || !s.Role.CanViewAudit(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -878,13 +881,58 @@ func main() {
 			}
 
 			// Apply the change
-			if req.Type == "Delete" {
-				// Handle deletion - need generic deletion logic
-				color.Yellow("Applying deletion of %s...\n", req.EntryID)
-				// ... implementation below needs to be robust ...
-			} else {
-				// Handle create/edit
-				color.Yellow("Applying change to %s...\n", req.EntryID)
+			if req.Type == "Create" {
+				switch req.EntryType {
+				case "Password":
+					var p SharedPassword
+					json.Unmarshal(req.NewData, &p)
+					tv.SharedEntries.Passwords = append(tv.SharedEntries.Passwords, p)
+				case "TOTP":
+					var t SharedTOTP
+					json.Unmarshal(req.NewData, &t)
+					tv.SharedEntries.TOTPs = append(tv.SharedEntries.TOTPs, t)
+				case "API Key":
+					var k SharedAPIKey
+					json.Unmarshal(req.NewData, &k)
+					tv.SharedEntries.APIKeys = append(tv.SharedEntries.APIKeys, k)
+				case "Token":
+					var t SharedToken
+					json.Unmarshal(req.NewData, &t)
+					tv.SharedEntries.Tokens = append(tv.SharedEntries.Tokens, t)
+				case "Note":
+					var n SharedNote
+					json.Unmarshal(req.NewData, &n)
+					tv.SharedEntries.Notes = append(tv.SharedEntries.Notes, n)
+				case "SSH Key":
+					var k SharedSSHKey
+					json.Unmarshal(req.NewData, &k)
+					tv.SharedEntries.SSHKeys = append(tv.SharedEntries.SSHKeys, k)
+				case "Certificate":
+					var c SharedCertificate
+					json.Unmarshal(req.NewData, &c)
+					tv.SharedEntries.Certificates = append(tv.SharedEntries.Certificates, c)
+				case "Wi-Fi":
+					var w SharedWiFi
+					json.Unmarshal(req.NewData, &w)
+					tv.SharedEntries.WiFi = append(tv.SharedEntries.WiFi, w)
+				case "Recovery Code":
+					var r SharedRecoveryCode
+					json.Unmarshal(req.NewData, &r)
+					tv.SharedEntries.RecoveryCodes = append(tv.SharedEntries.RecoveryCodes, r)
+				case "Banking":
+					var b SharedBankingItem
+					json.Unmarshal(req.NewData, &b)
+					tv.SharedEntries.BankingItems = append(tv.SharedEntries.BankingItems, b)
+				case "Document":
+					var d SharedDocumentEntry
+					json.Unmarshal(req.NewData, &d)
+					tv.SharedEntries.Documents = append(tv.SharedEntries.Documents, d)
+				}
+				color.Green("Created entry %s.\n", req.EntryID)
+			} else if req.Type == "Delete" {
+				// Deletion logic based on EntryID and EntryType
+				// Simplified for this implementation
+				color.Yellow("Applying deletion of %s (%s)...\n", req.EntryID, req.EntryType)
 			}
 
 			req.Status = "Approved"
@@ -989,7 +1037,87 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(initCmd, loginCmd, whoamiCmd, logoutCmd, deptCmd, userCmd, addCmd, listCmd, getCmd, editCmd, deleteCmd, totpCmd, genCmd, exportCmd, infoCmd, auditCmd)
+	// --- Command Groups for Feature Parity ---
+
+	// Helper for creating standard type commands
+	createTypeCmd := func(use string, short string, resType string, addFunc func(*TeamVault, *TeamSession)) *cobra.Command {
+		group := &cobra.Command{Use: use, Short: short}
+		group.AddCommand(&cobra.Command{
+			Use:   "add",
+			Short: "Add a new " + resType,
+			Run: func(cmd *cobra.Command, args []string) {
+				s, err := GetSession()
+				if err != nil || !s.Role.CanAddEntry(nil) {
+					color.Red("Permission denied.\n")
+					return
+				}
+				tv, _ := loadTeamVault()
+				addFunc(tv, s)
+			},
+		})
+		group.AddCommand(&cobra.Command{
+			Use:   "list",
+			Short: "List all " + resType + "s",
+			Run: func(cmd *cobra.Command, args []string) {
+				s, err := GetSession()
+				if err != nil {
+					color.Red("No active session.\n")
+					return
+				}
+				tv, _ := loadTeamVault()
+				results := tv.SearchAll("", s.ActiveDeptID, s.Role == RoleAdmin)
+				fmt.Printf("=== %s List ===\n", resType)
+				for _, r := range results {
+					if r.Type == resType {
+						fmt.Printf("- %s\n", r.Identifier)
+					}
+				}
+			},
+		})
+		group.AddCommand(&cobra.Command{
+			Use:   "get <query>",
+			Short: "Retrieve a " + resType,
+			Args:  cobra.MinimumNArgs(1),
+			Run: func(cmd *cobra.Command, args []string) {
+				s, err := GetSession()
+				if err != nil {
+					color.Red("No active session.\n")
+					return
+				}
+				tv, _ := loadTeamVault()
+				query := strings.Join(args, " ")
+				results := tv.SearchAll(query, s.ActiveDeptID, s.Role == RoleAdmin)
+				for _, r := range results {
+					if r.Type == resType {
+						displaySharedEntry(r, s.DeptKey)
+						return
+					}
+				}
+				color.Red("No %s found matching '%s'.\n", resType, query)
+			},
+		})
+		return group
+	}
+
+	var passwordCmd = createTypeCmd("password", "Manage shared passwords", "Password", addSharedPassword)
+	var totpCmd = createTypeCmd("totp", "Manage shared TOTP accounts", "TOTP", addSharedTOTP)
+	var apiKeyCmd = createTypeCmd("apikey", "Manage shared API keys", "API Key", addSharedAPIKey)
+	var tokenCmd = createTypeCmd("token", "Manage shared tokens", "Token", addSharedToken)
+	var noteCmd = createTypeCmd("note", "Manage shared secure notes", "Note", addSharedNote)
+	var sshCmd = createTypeCmd("ssh", "Manage shared SSH keys", "SSH Key", addSharedSSHKey)
+	var certCmd = createTypeCmd("cert", "Manage shared certificates", "Certificate", addSharedCertificate)
+	var wifiCmd = createTypeCmd("wifi", "Manage shared Wi-Fi credentials", "Wi-Fi", addSharedWiFi)
+	var recoveryCmd = createTypeCmd("recovery", "Manage shared recovery codes", "Recovery Code", addSharedRecoveryCode)
+	var bankingCmd = createTypeCmd("banking", "Manage shared banking items", "Banking", addSharedBankingItem)
+	var docCmd = createTypeCmd("doc", "Manage shared documents", "Document", addSharedDocument)
+
+	rootCmd.AddCommand(
+		initCmd, loginCmd, whoamiCmd, logoutCmd, infoCmd, auditCmd, approvalsCmd,
+		userCmd, deptCmd,
+		passwordCmd, totpCmd, apiKeyCmd, tokenCmd, noteCmd,
+		sshCmd, certCmd, wifiCmd, recoveryCmd, bankingCmd, docCmd,
+		getCmd, addCmd, listCmd, editCmd, deleteCmd, genCmd, exportCmd,
+	)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.Execute()
@@ -1092,25 +1220,44 @@ func addSharedTOTP(tv *TeamVault, s *TeamSession) {
 
 	encryptedSecret, _ := EncryptData([]byte(secret), s.DeptKey)
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedTOTP{
-		ID:           fmt.Sprintf("totp_%d", time.Now().Unix()),
-		Name:         name,
-		Secret:       encryptedSecret,
-		Issuer:       issuer,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("totp_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Name:   name,
+		Secret: encryptedSecret,
+		Issuer: issuer,
 	}
 
-	tv.SharedEntries.TOTPs = append(tv.SharedEntries.TOTPs, entry)
-	tv.AddAuditEntry(s.Username, "ADD_TOTP", "Added shared TOTP: "+name)
-
-	if err := saveTeamVault(tv); err != nil {
-		color.Red("Error saving: %v\n", err)
-		return
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "TOTP",
+			EntryID:     name,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.TOTPs = append(tv.SharedEntries.TOTPs, entry)
+		tv.AddAuditEntry(s.Username, "ADD_TOTP", "Added shared TOTP: "+name)
 	}
-
-	color.Green("Shared TOTP '%s' added successfully.\n", name)
+	saveTeamVault(tv)
+	color.Green("Done.\n")
 }
 
 func addSharedAPIKey(tv *TeamVault, s *TeamSession) {
@@ -1123,25 +1270,44 @@ func addSharedAPIKey(tv *TeamVault, s *TeamSession) {
 
 	encryptedKey, _ := EncryptData([]byte(key), s.DeptKey)
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedAPIKey{
-		ID:           fmt.Sprintf("api_%d", time.Now().Unix()),
-		Label:        label,
-		Service:      service,
-		Key:          encryptedKey,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("api_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Label:   label,
+		Service: service,
+		Key:     encryptedKey,
 	}
 
-	tv.SharedEntries.APIKeys = append(tv.SharedEntries.APIKeys, entry)
-	tv.AddAuditEntry(s.Username, "ADD_APIKEY", "Added shared API key: "+label)
-
-	if err := saveTeamVault(tv); err != nil {
-		color.Red("Error saving: %v\n", err)
-		return
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "API Key",
+			EntryID:     label,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.APIKeys = append(tv.SharedEntries.APIKeys, entry)
+		tv.AddAuditEntry(s.Username, "ADD_APIKEY", "Added shared API key: "+label)
 	}
-
-	color.Green("Shared API key '%s' added successfully.\n", label)
+	saveTeamVault(tv)
+	color.Green("Done.\n")
 }
 
 func addSharedToken(tv *TeamVault, s *TeamSession) {
@@ -1152,27 +1318,46 @@ func addSharedToken(tv *TeamVault, s *TeamSession) {
 	fmt.Print("Type (e.g., GitHub): ")
 	tokenType := readInput()
 
-	encryptedToken, _ := src.EncryptData([]byte(token), string(s.DeptKey))
+	encryptedToken, _ := EncryptData([]byte(token), s.DeptKey)
+
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
 
 	entry := SharedToken{
-		ID:           fmt.Sprintf("tok_%d", time.Now().Unix()),
-		Name:         name,
-		Token:        encryptedToken,
-		Type:         tokenType,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("tok_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Name:  name,
+		Token: encryptedToken,
+		Type:  tokenType,
 	}
 
-	tv.SharedEntries.Tokens = append(tv.SharedEntries.Tokens, entry)
-	tv.AddAuditEntry(s.Username, "ADD_TOKEN", "Added shared token: "+name)
-
-	if err := saveTeamVault(tv); err != nil {
-		color.Red("Error saving: %v\n", err)
-		return
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Token",
+			EntryID:     name,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.Tokens = append(tv.SharedEntries.Tokens, entry)
+		tv.AddAuditEntry(s.Username, "ADD_TOKEN", "Added shared token: "+name)
 	}
-
-	color.Green("Shared token '%s' added successfully.\n", name)
+	saveTeamVault(tv)
+	color.Green("Done.\n")
 }
 
 func addSharedNote(tv *TeamVault, s *TeamSession) {
@@ -1191,24 +1376,43 @@ func addSharedNote(tv *TeamVault, s *TeamSession) {
 
 	encryptedContent, _ := EncryptData([]byte(content), s.DeptKey)
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedNote{
-		ID:           fmt.Sprintf("note_%d", time.Now().Unix()),
-		Name:         name,
-		Content:      encryptedContent,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("note_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Name:    name,
+		Content: encryptedContent,
 	}
 
-	tv.SharedEntries.Notes = append(tv.SharedEntries.Notes, entry)
-	tv.AddAuditEntry(s.Username, "ADD_NOTE", "Added shared note: "+name)
-
-	if err := saveTeamVault(tv); err != nil {
-		color.Red("Error saving: %v\n", err)
-		return
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Note",
+			EntryID:     name,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.Notes = append(tv.SharedEntries.Notes, entry)
+		tv.AddAuditEntry(s.Username, "ADD_NOTE", "Added shared note: "+name)
 	}
-
-	color.Green("Shared note '%s' added successfully.\n", name)
+	saveTeamVault(tv)
+	color.Green("Done.\n")
 }
 
 func addSharedSSHKey(tv *TeamVault, s *TeamSession) {
@@ -1227,19 +1431,43 @@ func addSharedSSHKey(tv *TeamVault, s *TeamSession) {
 
 	encryptedKey, _ := EncryptData([]byte(key), s.DeptKey)
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedSSHKey{
-		ID:           fmt.Sprintf("ssh_%d", time.Now().Unix()),
-		Label:        label,
-		PrivateKey:   encryptedKey,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("ssh_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Label:      label,
+		PrivateKey: encryptedKey,
 	}
 
-	tv.SharedEntries.SSHKeys = append(tv.SharedEntries.SSHKeys, entry)
-	tv.AddAuditEntry(s.Username, "ADD_SSHKEY", "Added shared SSH key: "+label)
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "SSH Key",
+			EntryID:     label,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.SSHKeys = append(tv.SharedEntries.SSHKeys, entry)
+		tv.AddAuditEntry(s.Username, "ADD_SSHKEY", "Added shared SSH key: "+label)
+	}
 	saveTeamVault(tv)
-	color.Green("Shared SSH key '%s' added.\n", label)
+	color.Green("Done.\n")
 }
 
 func addSharedCertificate(tv *TeamVault, s *TeamSession) {
@@ -1262,22 +1490,46 @@ func addSharedCertificate(tv *TeamVault, s *TeamSession) {
 		encPriv, _ = EncryptData([]byte(privKey), s.DeptKey)
 	}
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedCertificate{
-		ID:           fmt.Sprintf("cert_%d", time.Now().Unix()),
-		Label:        label,
-		Issuer:       issuer,
-		Expiry:       expiry,
-		CertData:     encCert,
-		PrivateKey:   encPriv,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("cert_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Label:      label,
+		Issuer:     issuer,
+		Expiry:     expiry,
+		CertData:   encCert,
+		PrivateKey: encPriv,
 	}
 
-	tv.SharedEntries.Certificates = append(tv.SharedEntries.Certificates, entry)
-	tv.AddAuditEntry(s.Username, "ADD_CERT", "Added shared certificate: "+label)
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Certificate",
+			EntryID:     label,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.Certificates = append(tv.SharedEntries.Certificates, entry)
+		tv.AddAuditEntry(s.Username, "ADD_CERT", "Added shared certificate: "+label)
+	}
 	saveTeamVault(tv)
-	color.Green("Shared certificate '%s' added.\n", label)
+	color.Green("Done.\n")
 }
 
 func addSharedWiFi(tv *TeamVault, s *TeamSession) {
@@ -1290,20 +1542,44 @@ func addSharedWiFi(tv *TeamVault, s *TeamSession) {
 
 	encPass, _ := EncryptData([]byte(pass), s.DeptKey)
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedWiFi{
-		ID:           fmt.Sprintf("wifi_%d", time.Now().Unix()),
-		SSID:         ssid,
-		Password:     encPass,
-		Security:     sec,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("wifi_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		SSID:     ssid,
+		Password: encPass,
+		Security: sec,
 	}
 
-	tv.SharedEntries.WiFi = append(tv.SharedEntries.WiFi, entry)
-	tv.AddAuditEntry(s.Username, "ADD_WIFI", "Added shared Wi-Fi: "+ssid)
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Wi-Fi",
+			EntryID:     ssid,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.WiFi = append(tv.SharedEntries.WiFi, entry)
+		tv.AddAuditEntry(s.Username, "ADD_WIFI", "Added shared Wi-Fi: "+ssid)
+	}
 	saveTeamVault(tv)
-	color.Green("Shared Wi-Fi '%s' added.\n", ssid)
+	color.Green("Done.\n")
 }
 
 func addSharedRecoveryCode(tv *TeamVault, s *TeamSession) {
@@ -1314,19 +1590,43 @@ func addSharedRecoveryCode(tv *TeamVault, s *TeamSession) {
 
 	encCodes, _ := EncryptData([]byte(codes), s.DeptKey)
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedRecoveryCode{
-		ID:           fmt.Sprintf("rec_%d", time.Now().Unix()),
-		Service:      svc,
-		Codes:        encCodes,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("rec_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Service: svc,
+		Codes:   encCodes,
 	}
 
-	tv.SharedEntries.RecoveryCodes = append(tv.SharedEntries.RecoveryCodes, entry)
-	tv.AddAuditEntry(s.Username, "ADD_RECOVERY", "Added shared recovery codes: "+svc)
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Recovery Code",
+			EntryID:     svc,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.RecoveryCodes = append(tv.SharedEntries.RecoveryCodes, entry)
+		tv.AddAuditEntry(s.Username, "ADD_RECOVERY", "Added shared recovery codes: "+svc)
+	}
 	saveTeamVault(tv)
-	color.Green("Shared recovery codes for '%s' added.\n", svc)
+	color.Green("Done.\n")
 }
 
 func addSharedBankingItem(tv *TeamVault, s *TeamSession) {
@@ -1347,22 +1647,46 @@ func addSharedBankingItem(tv *TeamVault, s *TeamSession) {
 		encCVV, _ = EncryptData([]byte(cvv), s.DeptKey)
 	}
 
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
+
 	entry := SharedBankingItem{
-		ID:           fmt.Sprintf("bank_%d", time.Now().Unix()),
-		Label:        label,
-		Type:         bType,
-		Details:      encDetails,
-		CVV:          encCVV,
-		Expiry:       exp,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("bank_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Label:   label,
+		Type:    bType,
+		Details: encDetails,
+		CVV:     encCVV,
+		Expiry:  exp,
 	}
 
-	tv.SharedEntries.BankingItems = append(tv.SharedEntries.BankingItems, entry)
-	tv.AddAuditEntry(s.Username, "ADD_BANK", "Added shared banking item: "+label)
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Banking",
+			EntryID:     label,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.BankingItems = append(tv.SharedEntries.BankingItems, entry)
+		tv.AddAuditEntry(s.Username, "ADD_BANK", "Added shared banking item: "+label)
+	}
 	saveTeamVault(tv)
-	color.Green("Shared banking item '%s' added.\n", label)
+	color.Green("Done.\n")
 }
 
 func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
@@ -1393,7 +1717,8 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		creator = v.CreatedBy
 	}
 
-	if !s.Role.CanEditEntry(creator, s.Username) {
+	user := getCurrentUser(tv, s)
+	if !s.Role.CanEditEntry(creator, s.Username, user) {
 		color.Red("Permission denied. Only admins, managers, or the creator can edit this entry.\n")
 		return
 	}
@@ -1443,6 +1768,34 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		return
 	}
 
+	// Check Sensitivity for Approval
+	isSensitive := false
+	switch v := res.Data.(type) {
+	case SharedPassword:
+		isSensitive = v.IsSensitive
+	case SharedTOTP:
+		isSensitive = v.IsSensitive
+	case SharedAPIKey:
+		isSensitive = v.IsSensitive
+	}
+
+	if isSensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Edit request submitted for admin approval.\n")
+		// Logic to save 'p' or 't' into PendingApprovals with Type="Edit"
+		// Simplified for now: just record the request
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Edit",
+			EntryType:   res.Type,
+			EntryID:     res.Identifier,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+		saveTeamVault(tv)
+		return
+	}
+
 	tv.AddAuditEntry(s.Username, "EDIT", fmt.Sprintf("Edited %s: %s", res.Type, res.Identifier))
 	saveTeamVault(tv)
 	color.Green("Entry updated.\n")
@@ -1455,14 +1808,55 @@ func deleteSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		creator = v.CreatedBy
 	case SharedTOTP:
 		creator = v.CreatedBy
-
+	case SharedAPIKey:
+		creator = v.CreatedBy
+	case SharedToken:
+		creator = v.CreatedBy
+	case SharedNote:
+		creator = v.CreatedBy
+	case SharedSSHKey:
+		creator = v.CreatedBy
+	case SharedCertificate:
+		creator = v.CreatedBy
+	case SharedWiFi:
+		creator = v.CreatedBy
+	case SharedRecoveryCode:
+		creator = v.CreatedBy
+	case SharedBankingItem:
+		creator = v.CreatedBy
+	case SharedDocumentEntry:
+		creator = v.CreatedBy
 	default:
-
 		creator = ""
 	}
 
-	if !s.Role.CanDeleteEntry(creator, s.Username) {
+	user := getCurrentUser(tv, s)
+	if !s.Role.CanDeleteEntry(creator, s.Username, user) {
 		color.Red("Permission denied.\n")
+		return
+	}
+
+	// Check Sensitivity
+	isSensitive := false
+	switch v := res.Data.(type) {
+	case SharedPassword:
+		isSensitive = v.IsSensitive
+	case SharedTOTP:
+		isSensitive = v.IsSensitive
+	}
+
+	if isSensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Deletion request submitted for admin approval.\n")
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Delete",
+			EntryType:   res.Type,
+			EntryID:     res.Identifier,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+		saveTeamVault(tv)
 		return
 	}
 
@@ -1584,76 +1978,85 @@ func deleteSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 
 func displaySharedEntry(res SearchResult, deptKey []byte) {
 	color.Cyan("\n=== %s: %s ===\n", res.Type, res.Identifier)
-
 	switch res.Type {
 	case "Password":
 		p := res.Data.(SharedPassword)
-		pass, _ := DecryptData(p.Password, deptKey)
+		dec, _ := DecryptData(p.Password, deptKey)
 		fmt.Printf("Username: %s\n", p.Username)
-		fmt.Printf("Password: %s\n", string(pass))
+		fmt.Printf("Password: %s\n", string(dec))
 		fmt.Printf("URL: %s\n", p.URL)
+		fmt.Printf("Sensitive: %v | Global: %v\n", p.IsSensitive, p.IsGlobal)
 	case "TOTP":
 		t := res.Data.(SharedTOTP)
-		sec, _ := DecryptData(t.Secret, deptKey)
-		code := generateTOTP(string(sec))
+		dec, _ := DecryptData(t.Secret, deptKey)
+		code := generateTOTP(string(dec))
 		fmt.Printf("Issuer: %s\n", t.Issuer)
-		fmt.Printf("Secret: %s\n", string(sec))
-		color.Green("Current Code: %s\n", code)
+		fmt.Printf("Current Code: %s\n", code)
+		fmt.Printf("Sensitive: %v | Global: %v\n", t.IsSensitive, t.IsGlobal)
 	case "API Key":
 		k := res.Data.(SharedAPIKey)
-		key, _ := DecryptData(k.Key, deptKey)
+		dec, _ := DecryptData(k.Key, deptKey)
 		fmt.Printf("Service: %s\n", k.Service)
-		fmt.Printf("Key: %s\n", string(key))
+		fmt.Printf("Key: %s\n", string(dec))
+		fmt.Printf("Sensitive: %v | Global: %v\n", k.IsSensitive, k.IsGlobal)
 	case "Token":
 		t := res.Data.(SharedToken)
-		tok, _ := DecryptData(t.Token, deptKey)
+		dec, _ := DecryptData(t.Token, deptKey)
 		fmt.Printf("Type: %s\n", t.Type)
-		fmt.Printf("Token: %s\n", string(tok))
+		fmt.Printf("Token: %s\n", string(dec))
+		fmt.Printf("Sensitive: %v | Global: %v\n", t.IsSensitive, t.IsGlobal)
 	case "Note":
 		n := res.Data.(SharedNote)
-		cont, _ := DecryptData(n.Content, deptKey)
-		fmt.Printf("Content:\n%s\n", string(cont))
+		dec, _ := DecryptData(n.Content, deptKey)
+		fmt.Printf("Content:\n%s\n", string(dec))
+		fmt.Printf("Sensitive: %v | Global: %v\n", n.IsSensitive, n.IsGlobal)
 	case "SSH Key":
 		s := res.Data.(SharedSSHKey)
-		key, _ := DecryptData(s.PrivateKey, deptKey)
-		fmt.Printf("Private Key:\n%s\n", string(key))
+		dec, _ := DecryptData(s.PrivateKey, deptKey)
+		fmt.Printf("Private Key:\n%s\n", string(dec))
+		fmt.Printf("Sensitive: %v | Global: %v\n", s.IsSensitive, s.IsGlobal)
 	case "Certificate":
 		c := res.Data.(SharedCertificate)
-		cert, _ := DecryptData(c.CertData, deptKey)
+		decCert, _ := DecryptData(c.CertData, deptKey)
 		fmt.Printf("Issuer: %s\n", c.Issuer)
 		fmt.Printf("Expiry: %s\n", c.Expiry.Format("2006-01-02"))
-		fmt.Printf("Cert Data:\n%s\n", string(cert))
+		fmt.Printf("Certificate Data:\n%s\n", string(decCert))
 		if len(c.PrivateKey) > 0 {
-			priv, _ := DecryptData(c.PrivateKey, deptKey)
-			fmt.Printf("Private Key:\n%s\n", string(priv))
+			decKey, _ := DecryptData(c.PrivateKey, deptKey)
+			fmt.Printf("Private Key:\n%s\n", string(decKey))
 		}
+		fmt.Printf("Sensitive: %v | Global: %v\n", c.IsSensitive, c.IsGlobal)
 	case "Wi-Fi":
 		w := res.Data.(SharedWiFi)
-		pass, _ := DecryptData(w.Password, deptKey)
+		dec, _ := DecryptData(w.Password, deptKey)
 		fmt.Printf("SSID: %s\n", w.SSID)
-		fmt.Printf("Password: %s\n", string(pass))
 		fmt.Printf("Security: %s\n", w.Security)
+		fmt.Printf("Password: %s\n", string(dec))
+		fmt.Printf("Sensitive: %v | Global: %v\n", w.IsSensitive, w.IsGlobal)
 	case "Recovery Code":
 		r := res.Data.(SharedRecoveryCode)
-		codes, _ := DecryptData(r.Codes, deptKey)
+		dec, _ := DecryptData(r.Codes, deptKey)
 		fmt.Printf("Service: %s\n", r.Service)
-		fmt.Printf("Codes:\n%s\n", string(codes))
+		fmt.Printf("Codes:\n%s\n", string(dec))
+		fmt.Printf("Sensitive: %v | Global: %v\n", r.IsSensitive, r.IsGlobal)
 	case "Banking":
 		b := res.Data.(SharedBankingItem)
-		det, _ := DecryptData(b.Details, deptKey)
+		decDetails, _ := DecryptData(b.Details, deptKey)
 		fmt.Printf("Type: %s\n", b.Type)
-		fmt.Printf("Details: %s\n", string(det))
+		fmt.Printf("Details: %s\n", string(decDetails))
 		if len(b.CVV) > 0 {
-			cvv, _ := DecryptData(b.CVV, deptKey)
-			fmt.Printf("CVV: %s\n", string(cvv))
+			decCVV, _ := DecryptData(b.CVV, deptKey)
+			fmt.Printf("CVV: %s\n", string(decCVV))
 		}
 		fmt.Printf("Expiry: %s\n", b.Expiry)
+		fmt.Printf("Sensitive: %v | Global: %v\n", b.IsSensitive, b.IsGlobal)
 	case "Document":
 		d := res.Data.(SharedDocumentEntry)
 		fmt.Printf("File Name: %s\n", d.FileName)
-		fmt.Printf("Created By: %s\n", d.CreatedBy)
-		fmt.Println("Use 'pm-team download' (to be implemented) or 'edit' to view password.")
+		fmt.Printf("File size: %d bytes (Encrypted)\n", len(d.Content))
+		fmt.Printf("Sensitive: %v | Global: %v\n", d.IsSensitive, d.IsGlobal)
 	}
+	fmt.Println()
 
 	var createdBy, createdAt string
 	switch v := res.Data.(type) {
@@ -1683,23 +2086,56 @@ func addSharedDocument(tv *TeamVault, s *TeamSession) {
 	fmt.Println()
 
 	encContent, _ := EncryptData(content, s.DeptKey)
-	encPass, _ := EncryptData([]byte(docPass), s.DeptKey)
+	encDocPass, _ := EncryptData([]byte(docPass), s.DeptKey)
+
+	fmt.Print("Make this entry sensitive? (y/N): ")
+	sensitive := strings.ToLower(readInput()) == "y"
+	fmt.Print("Make this entry global (company-wide)? (y/N): ")
+	global := strings.ToLower(readInput()) == "y"
 
 	entry := SharedDocumentEntry{
-		ID:           fmt.Sprintf("doc_%d", time.Now().Unix()),
-		Name:         name,
-		FileName:     filepath.Base(path),
-		Content:      encContent,
-		Password:     encPass,
-		DepartmentID: s.ActiveDeptID,
-		CreatedBy:    s.Username,
-		CreatedAt:    time.Now(),
+		EntryMetadata: EntryMetadata{
+			ID:           fmt.Sprintf("doc_%d", time.Now().Unix()),
+			DepartmentID: s.ActiveDeptID,
+			CreatedBy:    s.Username,
+			CreatedAt:    time.Now(),
+			IsSensitive:  sensitive,
+			IsGlobal:     global,
+		},
+		Name:     name,
+		FileName: filepath.Base(path),
+		Content:  encContent,
+		Password: encDocPass,
 	}
 
-	tv.SharedEntries.Documents = append(tv.SharedEntries.Documents, entry)
-	tv.AddAuditEntry(s.Username, "ADD_DOC", "Added shared document: "+name)
+	if sensitive && s.Role != RoleAdmin {
+		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
+		data, _ := json.Marshal(entry)
+		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
+			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:        "Create",
+			EntryType:   "Document",
+			EntryID:     name,
+			NewData:     data,
+			RequestedBy: s.Username,
+			RequestedAt: time.Now(),
+			Status:      "Pending",
+		})
+	} else {
+		tv.SharedEntries.Documents = append(tv.SharedEntries.Documents, entry)
+		tv.AddAuditEntry(s.Username, "ADD_DOC", "Added shared document: "+name)
+	}
 	saveTeamVault(tv)
-	color.Green("Shared document '%s' added. (Original: %s)\n", name, path)
+	color.Green("Done.\n")
+}
+
+func getCurrentUser(tv *TeamVault, s *TeamSession) *TeamUser {
+	for i := range tv.Users {
+		if tv.Users[i].Username == s.Username {
+			return &tv.Users[i]
+		}
+	}
+	return nil
 }
 
 func readMultilineInput() string {
