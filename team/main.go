@@ -309,8 +309,6 @@ func main() {
 			pass, _ := readPassword()
 			fmt.Println()
 
-			tv, _ := loadTeamVault()
-
 			userSalt, _ := GenerateSalt()
 			ukKeys := DeriveKeys(pass, userSalt, 3)
 
@@ -356,7 +354,6 @@ func main() {
 			}
 
 			username := args[0]
-			tv, _ := loadTeamVault()
 
 			foundIdx := -1
 			for i, u := range tv.Users {
