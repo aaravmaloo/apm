@@ -294,9 +294,14 @@ func main() {
 		Short: "Add a new user (Admin/Manager only)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session. Run 'pm-team login' first.\n")
+				return
+			}
 			tv, _ := loadTeamVault()
 			user := getCurrentUser(tv, s)
-			if err != nil || !s.Role.CanManageUsers(user) {
+			if !s.Role.CanManageUsers(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
@@ -346,9 +351,14 @@ func main() {
 		Short: "Remove a user from the organization",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			s, err := GetSession()
+			if err != nil {
+				color.Red("No active session.\n")
+				return
+			}
 			tv, _ := loadTeamVault()
 			user := getCurrentUser(tv, s)
-			if err != nil || !s.Role.CanManageUsers(user) {
+			if !s.Role.CanManageUsers(user) {
 				color.Red("Permission denied.\n")
 				return
 			}
