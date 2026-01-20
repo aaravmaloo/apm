@@ -142,22 +142,27 @@ func ExtractFileID(input string) string {
 }
 
 func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
-	query := fmt.Sprintf("'%s' in parents and description = '%s' and trashed = false", DriveFolderID, HashKey(key))
-	list, err := cm.Service.Files.List().Q(query).Fields("files(id, name)").Do()
+	query := fmt.Sprintf("'%s' in parents and trashed = false", DriveFolderID)
+	list, err := cm.Service.Files.List().Q(query).Fields("files(id, name, description)").Do()
 	if err != nil {
 		return "", err
 	}
 
-	if len(list.Files) == 0 {
-		queryLegacy := fmt.Sprintf("name = 'vault_%s.bin' and '%s' in parents and trashed = false", key, DriveFolderID)
-		listLegacy, err := cm.Service.Files.List().Q(queryLegacy).Fields("files(id, name)").Do()
-		if err == nil && len(listLegacy.Files) > 0 {
-			return listLegacy.Files[0].Id, nil
+	hashedKey := HashKey(key)
+	for _, f := range list.Files {
+		if f.Description == hashedKey {
+			return f.Id, nil
 		}
-		return "", fmt.Errorf("no vault found with key '%s'", key)
 	}
 
-	return list.Files[0].Id, nil
+	// Legacy fallback: vault_filename.bin
+	queryLegacy := fmt.Sprintf("name = 'vault_%s.bin' and '%s' in parents and trashed = false", key, DriveFolderID)
+	listLegacy, err := cm.Service.Files.List().Q(queryLegacy).Fields("files(id, name)").Do()
+	if err == nil && len(listLegacy.Files) > 0 {
+		return listLegacy.Files[0].Id, nil
+	}
+
+	return "", fmt.Errorf("no vault found with key '%s'", key)
 }
 
 func DownloadPublicVault(input string) ([]byte, error) {
