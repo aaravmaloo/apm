@@ -257,6 +257,24 @@ Linux: `~/.apm/`
 macOS: `/usr/local/bin/apm`
 (Make sure to add execute permissions to the binary)
 
+### 7.3 Privacy & Session Security (Recommended)
+To prevent session hijacking between different terminal windows, APM supports **Process-Scoped Sessions**. This ensures that unlocking the vault in one terminal does *not* unlock it in others.
+
+**Add the following to your shell profile:**
+
+**Windows (PowerShell Profile):**
+`notepad $PROFILE`
+```powershell
+$env:APM_SESSION_ID = [System.Guid]::NewGuid().ToString()
+```
+
+**Linux/macOS (.bashrc / .zshrc):**
+```bash
+export APM_SESSION_ID=$(uuidgen || cat /proc/sys/kernel/random/uuid)
+```
+
+Without this variable, APM defaults to a global session (per-user), which is less secure but more convenient.
+
 ---
 
 ## 8. Contact & Support
