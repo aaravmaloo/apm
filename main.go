@@ -2472,7 +2472,6 @@ func main() {
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
 
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, vsettingsCmd, sec_profileCmd, healthCmd, adupCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
@@ -2929,7 +2928,7 @@ func main() {
 
 	profileCmd.AddCommand(profileSwitchCmd, profileListCmd, profileCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(unlockCmd, lockCmd, setupCmd, policyCmd, profileCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, delCmd, editCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, vsettingsCmd, sec_profileCmd, healthCmd, adupCmd, policyCmd, profileCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
