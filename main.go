@@ -2501,7 +2501,7 @@ func main() {
 		Use:   "list",
 		Short: "List available plugins in Marketplace (Multi-Cloud)",
 		Run: func(cmd *cobra.Command, args []string) {
-			providers := []string{"gdrive", "dropbox"}
+			providers := []string{"gdrive"}
 			allPlugins := make(map[string]bool)
 
 			fmt.Println("Fetching plugins from Marketplace...")
@@ -2545,7 +2545,7 @@ func main() {
 			}
 			name := args[0]
 
-			providers := []string{"gdrive", "dropbox"}
+			providers := []string{"gdrive"}
 			success := false
 
 			targetDir := filepath.Join(pluginMgr.PluginsDir, name)
@@ -2616,7 +2616,7 @@ func main() {
 
 			fmt.Printf("Validating plugin '%s' v%s...\n", def.Name, def.Version)
 
-			providers := []string{"gdrive", "dropbox"}
+			providers := []string{"gdrive"}
 			anySuccess := false
 
 			for _, p := range providers {
@@ -2672,18 +2672,7 @@ func main() {
 			color.Yellow("Step 2: Cloud Sync Configuration")
 			fmt.Print("Would you like to configure cloud synchronization? (y/n): ")
 			if strings.ToLower(readInput()) == "y" {
-				fmt.Println("Select cloud provider:")
-				fmt.Println("1. Google Drive")
-				fmt.Println("2. Dropbox")
-				fmt.Print("Choice (1-2): ")
-				pChoice := readInput()
-				provider := "gdrive"
-				if pChoice == "2" {
-					provider = "dropbox"
-				}
-				fmt.Printf("Configuring %s sync...\n", provider)
-				// Note: cloudInitCmd.Run usually handles the heavy lifting
-				// We can invoke it directly if it were accessible, but here we can just suggest the command
+				fmt.Printf("Configuring Google Drive sync...\n")
 				color.Cyan("Please run 'pm cloud init' separately to complete authentication.")
 			}
 			fmt.Println()
@@ -2694,7 +2683,9 @@ func main() {
 			if strings.ToLower(readInput()) == "y" {
 				fmt.Print("Profile Name (e.g. Work, Personal): ")
 				pName := readInput()
-				color.Green("Profile '%s' added to configuration plan.", pName)
+				if pName != "" {
+					color.Green("Profile '%s' added to configuration plan. (Run 'pm profile create %s' after setup)", pName, pName)
+				}
 			}
 			fmt.Println()
 
@@ -2818,9 +2809,9 @@ func main() {
 		Short: "Manage custom profiles (namespaces)",
 	}
 
-	var profileSwitchCmd = &cobra.Command{
-		Use:   "switch [name]",
-		Short: "Switch to a specific profile",
+	var profileCreateCmd = &cobra.Command{
+		Use:   "create [name]",
+		Short: "Create a new profile section",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPwd, vault, _, err := src_unlockVault()
@@ -2829,7 +2820,15 @@ func main() {
 				return
 			}
 
-			vault.CurrentNamespace = args[0]
+			newProfile := args[0]
+			for _, p := range vault.Profiles {
+				if p == newProfile {
+					color.Yellow("Profile '%s' already exists.", newProfile)
+					return
+				}
+			}
+
+			vault.Profiles = append(vault.Profiles, newProfile)
 			data, err := src.EncryptVault(vault, masterPwd)
 			if err != nil {
 				color.Red("Error encrypting vault: %v\n", err)
@@ -2841,13 +2840,59 @@ func main() {
 				return
 			}
 
-			color.Green("Switched to profile: %s\n", args[0])
+			color.Green("Profile '%s' created successfully.\n", newProfile)
+		},
+	}
+
+	var profileSwitchCmd = &cobra.Command{
+		Use:   "switch [name]",
+		Short: "Switch to a specific profile",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPwd, vault, _, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			target := args[0]
+			found := false
+			if len(vault.Profiles) == 0 {
+				vault.Profiles = []string{"default"}
+			}
+
+			for _, p := range vault.Profiles {
+				if p == target {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				color.Red("Profile '%s' not found.", target)
+				color.Yellow("Available profiles: %v", vault.Profiles)
+				return
+			}
+
+			vault.CurrentNamespace = target
+			data, err := src.EncryptVault(vault, masterPwd)
+			if err != nil {
+				color.Red("Error encrypting vault: %v\n", err)
+				return
+			}
+
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+				return
+			}
+
+			color.Green("Switched to profile: %s\n", target)
 		},
 	}
 
 	var profileListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List all entries in all profiles",
+		Short: "List all available profiles",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2855,28 +2900,34 @@ func main() {
 				return
 			}
 
+			if len(vault.Profiles) == 0 {
+				vault.Profiles = []string{"default"} // Ensure at least default exists
+			}
+
+			// Count entries per profile for display
+			counts := make(map[string]int)
 			results := vault.SearchAll("")
-			namespaces := make(map[string]int)
 			for _, r := range results {
 				ns := r.Namespace
 				if ns == "" {
 					ns = "default"
 				}
-				namespaces[ns]++
+				counts[ns]++
 			}
 
-			fmt.Println("Available Profiles (estimated from entries):")
-			for ns, count := range namespaces {
+			fmt.Println("Available Profiles:")
+			for _, p := range vault.Profiles {
 				current := ""
-				if ns == vault.CurrentNamespace || (ns == "default" && vault.CurrentNamespace == "") {
+				if p == vault.CurrentNamespace || (p == "default" && vault.CurrentNamespace == "") {
 					current = "*"
 				}
-				fmt.Printf("%s %s (%d entries)\n", current, ns, count)
+				count := counts[p]
+				fmt.Printf("%s %s (%d entries)\n", current, p, count)
 			}
 		},
 	}
 
-	profileCmd.AddCommand(profileSwitchCmd, profileListCmd)
+	profileCmd.AddCommand(profileSwitchCmd, profileListCmd, profileCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
 	rootCmd.AddCommand(unlockCmd, lockCmd, setupCmd, policyCmd, profileCmd)
 
