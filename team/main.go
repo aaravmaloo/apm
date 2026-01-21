@@ -2140,6 +2140,9 @@ func readInput() string {
 }
 
 func readPassword() (string, error) {
+	if !term.IsTerminal(int(syscall.Stdin)) {
+		return readInput(), nil
+	}
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", err
