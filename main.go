@@ -1671,7 +1671,7 @@ func main() {
 		},
 	}
 
-	var profileCreateCmd = &cobra.Command{
+	var sec_profileCreateCmd = &cobra.Command{
 		Use:   "create <name>",
 		Short: "Create a custom profile",
 		Args:  cobra.ExactArgs(1),
@@ -1768,7 +1768,7 @@ func main() {
 			color.Green("Custom profile '%s' applied.", args[0])
 		},
 	}
-	sec_profileCmd.AddCommand(profileSetCmd, profileCreateCmd)
+	sec_profileCmd.AddCommand(profileSetCmd, sec_profileCreateCmd)
 
 	var healthCmd = &cobra.Command{
 		Use:   "health",
