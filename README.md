@@ -35,11 +35,16 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
   - [6.2 Exhaustive Capability Reference](#62-exhaustive-capability-reference)
   - [6.3 Action Glossary (Keywords)](#63-action-glossary-keywords)
   - [6.4 Variable Substitution Engine](#64-variable-substitution-engine)
-- [7. Installation and Deployment](#7-installation-and-deployment)
-  - [7.1 Requirements](#71-requirements)
-  - [7.2 Build Process](#72-build-process)
-- [8. Contact & Support](#8-contact--support)
-- [9. Development & Contributing](#9-development--contributing)
+- [7. Policy Engine & Compliance](#7-policy-engine--compliance)
+  - [7.1 Policy File Structure](#71-policy-file-structure)
+  - [7.2 Enforcement Logic](#72-enforcement-logic)
+  - [7.3 Command Reference](#73-command-reference)
+- [8. Installation and Deployment](#8-installation-and-deployment)
+  - [8.1 Requirements](#81-requirements)
+  - [8.2 Build Process](#82-build-process)
+  - [8.3 Privacy & Session Security](#83-privacy--session-security)
+- [9. Contact & Support](#9-contact--support)
+- [10. Development & Contributing](#10-development--contributing)
 
 ---
 
@@ -231,15 +236,54 @@ APM uses a high-performance templating engine for action fields.
 
 ---
 
-## 7. Installation and Deployment
+---
 
-### 7.1 Requirements
+## 7. Policy Engine & Compliance
+
+APM enforces security standards through a flexible, YAML-based policy engine. Policies are defined in human-readable files and can specify password complexity requirements, rotation intervals, and data classification rules.
+
+### 7.1 Policy File Structure
+Policies are loaded from the `policies/` directory. Each file (`.yaml` or `.yml`) defines a named policy.
+
+```yaml
+name: "Corporate Standard"
+password_policy:
+  min_length: 12
+  require_uppercase: true
+  require_numbers: true
+  require_symbols: true
+
+rotation_policy:
+  rotate_every_days: 90
+  notify_before_days: 7
+
+classification:
+  "db_prod":
+    max_access_level: "admin"
+    mfa_required: true
+```
+
+### 7.2 Enforcement Logic
+- **Password Complexity**: Validated during `apm add` and `apm edit`.
+- **Rotation**: Validated by `apm health` and during `apm get` (warnings for expired credentials).
+- **Classification**: Metadata tags that can trigger additional access checks (e.g., MFA prompts) in Team Edition.
+
+### 7.3 Command Reference
+- **`pm policy load <name>`**: Activates a specific policy from the available files.
+- **`pm policy show`**: Displays the currently active policy rules.
+- **`pm policy clear`**: Disables policy enforcement (reverts to default/unrestricted).
+
+---
+
+## 8. Installation and Deployment
+
+### 8.1 Requirements
 - Go 1.21+
 - Secure Terminal (Supports Password Hiding)
 
-### 7.2 Build Process
+### 8.2 Build Process
 You can either compile it from source, or use the releases page to download a pre-compiled binary/exe, for Windows, macOS, and Linux.
- 
+
 Steps to build from source:
 ```bash
 git clone https://github.com/aaravmaloo/apm.git
@@ -257,7 +301,7 @@ Linux: `~/.apm/`
 macOS: `/usr/local/bin/apm`
 (Make sure to add execute permissions to the binary)
 
-### 7.3 Privacy & Session Security (Recommended)
+### 8.3 Privacy & Session Security (Recommended)
 To prevent session hijacking between different terminal windows, APM supports **Process-Scoped Sessions**. This ensures that unlocking the vault in one terminal does *not* unlock it in others.
 
 **Add the following to your shell profile:**
@@ -277,7 +321,7 @@ Without this variable, APM defaults to a global session (per-user), which is les
 
 ---
 
-## 8. Contact & Support
+## 9. Contact & Support
 
 For security disclosures, technical support, or enterprise licensing inquiries, please use the following channels:
 
@@ -290,7 +334,7 @@ For security disclosures, technical support, or enterprise licensing inquiries, 
 
 ---
 
-## 9. Development & Contributing
+## 10. Development & Contributing
 
 APM is open-source and welcomes contributions. All PRs must pass the exhaustive E2E test suite located in `/tests`.
 
