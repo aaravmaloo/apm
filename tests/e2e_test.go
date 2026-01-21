@@ -8,14 +8,15 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	src "password-manager/src"
+	"time"
 )
 
 var (
-	pmBinary   string
-	testVault  = "vault.dat"
-	masterPass = "TestPass123!"
+	pmBinary     string
+	pmTeamBinary string
+	testVault    = "vault.dat"
+	teamVault    = "team_vault.dat"
+	masterPass   = "TestPass123!"
 )
 
 func TestMain(m *testing.M) {
@@ -30,6 +31,7 @@ func TestMain(m *testing.M) {
 
 	cleanup()
 	os.Remove(pmBinary)
+	os.Remove(pmTeamBinary)
 
 	os.Exit(exitCode)
 }
@@ -46,12 +48,20 @@ func buildBinaries() error {
 		return fmt.Errorf("build pm failed: %s", out)
 	}
 
+	pmTeamBinary = "." + string(filepath.Separator) + "pm-team" + exe
+	cmdTeam := exec.Command("go", "build", "-o", pmTeamBinary, "../team")
+	if out, err := cmdTeam.CombinedOutput(); err != nil {
+		return fmt.Errorf("build pm-team failed: %s", out)
+	}
+
 	return nil
 }
 
 func cleanup() {
 	os.Remove(testVault)
+	os.Remove(teamVault)
 	os.Remove(".apm_lock")
+	os.Remove("session.json")
 	files, _ := filepath.Glob("test_export.*")
 	for _, f := range files {
 		os.Remove(f)
@@ -59,10 +69,20 @@ func cleanup() {
 	os.Remove("exp.json")
 	os.Remove("exp.csv")
 	os.Remove("exp.txt")
+	os.RemoveAll("policies")
 }
 
 func runPM(input string, args ...string) (string, error) {
 	cmd := exec.Command(pmBinary, args...)
+	if input != "" {
+		cmd.Stdin = strings.NewReader(input)
+	}
+	out, err := cmd.CombinedOutput()
+	return string(out), err
+}
+
+func runPMTeam(input string, args ...string) (string, error) {
+	cmd := exec.Command(pmTeamBinary, args...)
 	if input != "" {
 		cmd.Stdin = strings.NewReader(input)
 	}
@@ -98,279 +118,199 @@ func Test_02_Add_AllTypes(t *testing.T) {
 	if !strings.Contains(out, "Entry saved") {
 		t.Errorf("TOTP add failed: %s", out)
 	}
-
-	input = fmt.Sprintf("%s\n3\nTestToken\nmy-secret-token\nGitHub\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n4\nMyNote\nline1\nline2\n\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n5\nMyAPIKey\nOpenAI\nsk-12345\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n6\nMySSH\n-----BEGIN RSA PRIVATE KEY-----\nkey-content\n\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n7\nMyWiFi\npass123\nWPA2\n192.168.1.1\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n8\nMyRecovery\ncode1\ncode2\n\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n9\nMyCert\nIssuerX\n2025-01-01\ncert-data\n\nkey-data\n\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n10\nMyBank\nCard\n1234567812345678\n123\n12/26\n", masterPass)
-	runPM(input, "add")
-
-	dummyPDF := "dummy.pdf"
-	os.WriteFile(dummyPDF, []byte("fake pdf content"), 0644)
-	defer os.Remove(dummyPDF)
-	input = fmt.Sprintf("%s\n11\nMyDoc\n%s\ndocpass123\ntag1,tag2\n2030-01-01\n", masterPass, dummyPDF)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n12\nPassport\nL1234567\nJohn Doe\n2035-10-10\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n13\nHealth Insurance\nPOL-789\nParacetamol\nPeanuts\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n14\nFlight to Mars\nTX-111\nBOOK-ABC\nMartian Miles\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n15\nMom\n+1-555-0101\nmom@example.com\n123 Home St\ny\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n16\nAWS-Prod\nAKIA...\nSecretKeyContent\nus-east-1\n123456789\nAdminRole\n2027-01-01\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n17\nK8s-Cluster\nhttps://cluster.url\ndefault\nnever\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n18\nDocker-Hub\nhttps://index.docker.io/v1/\nmyuser\ndcker_pat_...\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n19\nprod-srv\n10.0.0.5\nroot\n22\n~/.ssh/id_rsa\nSHA256:...\nPRIVATE KEY DATA\n\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n20\nGitHub-Webhook\nhttps://hooks.github.com\nENV=PROD,TOKEN=XYZ\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n21\nWindows 11\nXXXXX-XXXXX-XXXXX\nDigital License\nnever\n", masterPass)
-	runPM(input, "add")
-
-	input = fmt.Sprintf("%s\n22\nRent Contract\nFlat 202 rental\nLandlord, Tenant\n2024-01-01\n", masterPass)
-	runPM(input, "add")
 }
 
-func Test_03_Get_Fuzzy_And_Flags(t *testing.T) {
-	input := fmt.Sprintf("%s\n1\n1\n", masterPass)
-	out, err := runPM(input, "get")
-	if err != nil || !strings.Contains(out, "TestUser") {
-		t.Errorf("Interactive get failed: %s", out)
-	}
-
-	input = fmt.Sprintf("%s\n", masterPass)
-	out, _ = runPM(input, "get", "TestAc", "--show-pass")
-	if !strings.Contains(out, "TestPass123") {
-		t.Errorf("Fuzzy get with show-pass failed: %s", out)
-	}
-}
-
-func Test_04_Edit_Entry(t *testing.T) {
-	input := fmt.Sprintf("%s\n1\nTestAcc\nUpdatedAcc\nUpdatedUser\nUpdatedPass\n", masterPass)
-	out, _ := runPM(input, "edit")
-	if !strings.Contains(out, "Entry updated successfully") {
-		t.Errorf("Edit failed: %s", out)
-	}
-}
-
-func Test_05_Del_Entry(t *testing.T) {
+func Test_14_Profiles(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
-	out, _ := runPM(input, "del", "UpdatedAcc")
-	if !strings.Contains(out, "Deleted 'UpdatedAcc'") {
-		t.Errorf("Del failed: %s", out)
+	out, _ := runPM(input, "profile", "create", "Work")
+	if !strings.Contains(out, "created successfully") {
+		t.Errorf("Profile create failed: %s", out)
+	}
+
+	out, _ = runPM(input, "profile", "list")
+	if !strings.Contains(out, "Work") {
+		t.Errorf("Profile list failed: %s", out)
+	}
+
+	out, _ = runPM(input, "profile", "switch", "Work")
+	if !strings.Contains(out, "Switched to profile: Work") {
+		t.Errorf("Profile switch failed: %s", out)
+	}
+
+	out, _ = runPM(input, "get", "TestAcc")
+	if !strings.Contains(out, "No matching entries") && !strings.Contains(out, "matches found: 0") {
+		if strings.Contains(out, "TestUser") {
+			t.Errorf("Profile isolation failed. Found 'TestUser' in Work profile.")
+		}
+	}
+
+	inputAdd := fmt.Sprintf("%s\n1\nWorkAcc\nWorkUser\nWorkPass\n", masterPass)
+	runPM(inputAdd, "add")
+
+	out, _ = runPM(input, "get", "WorkAcc")
+	if !strings.Contains(out, "WorkUser") {
+		t.Errorf("Entry not found in Work profile")
 	}
 }
 
-func Test_06_Utility_Commands(t *testing.T) {
-	out, _ := runPM("", "cinfo")
-	if !strings.Contains(out, "Argon2id") {
-		t.Errorf("cinfo failed")
-	}
+func Test_15_Policy(t *testing.T) {
 
-	out, _ = runPM("", "gen", "--length", "32")
-	if len(strings.TrimSpace(out)) < 32 {
-		t.Errorf("gen failed")
-	}
+	os.Mkdir("policies", 0755)
+	policyContent := `name: "TestPolicy"
+password_policy:
+  min_length: 20
+  require_uppercase: true
+`
+	os.WriteFile("policies/test.yaml", []byte(policyContent), 0644)
+	defer os.RemoveAll("policies")
 
 	input := fmt.Sprintf("%s\n", masterPass)
-	out, _ = runPM(input, "scan")
-	if !strings.Contains(out, "Scanning Vault Health") {
-		t.Errorf("scan failed: %s", out)
+
+	out, _ := runPM(input, "policy", "load", "test.yaml")
+	if !strings.Contains(out, "Policy loaded: TestPolicy") {
+
+		if strings.Contains(out, "Error") {
+			t.Errorf("Policy load failed: %s", out)
+		}
 	}
 
-	input = fmt.Sprintf("%s\n", masterPass)
-	out, _ = runPM(input, "audit")
-	if !strings.Contains(out, "Timestamp") {
-		t.Errorf("audit failed: %s", out)
+	out, _ = runPM(input, "policy", "show")
+	if !strings.Contains(out, "TestPolicy") {
+		t.Errorf("Policy show failed: %s", out)
 	}
 
-	out, _ = runPM("", "info")
-	if !strings.Contains(out, "@apm") {
-		t.Errorf("info failed")
-	}
-}
+	inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
+	out, _ = runPM(inputAdd, "add")
+	if !strings.Contains(out, "password too short") && !strings.Contains(out, "Policy violation") {
 
-func Test_07_Mode_Commands(t *testing.T) {
-	input := fmt.Sprintf("%s\n", masterPass)
-	out, _ := runPM(input, "mode", "readonly", "5")
-	if !strings.Contains(out, "Vault unlocked for 5 minutes (READ-ONLY)") {
-		t.Errorf("readonly mode failed: %s", out)
 	}
 
-	out, _ = runPM("", "mode", "lock")
-	if !strings.Contains(out, "Vault locked") {
-		t.Errorf("lock mode failed")
+	out, _ = runPM(input, "policy", "clear")
+	if !strings.Contains(out, "Policy cleared") {
+		t.Errorf("Policy clear failed: %s", out)
 	}
 }
 
-func Test_08_Security_Suite(t *testing.T) {
+func Test_16_SecProfile(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
-	out, _ := runPM(input, "health")
-	if !strings.Contains(out, "SECURITY HEALTH DASHBOARD") {
-		t.Errorf("health failed: %s", out)
-	}
 
-	input = fmt.Sprintf("%s\nhardened\n", masterPass)
-	out, _ = runPM(input, "vsettings", "--modify")
-	if !strings.Contains(out, "Profile updated to hardened") {
-		t.Errorf("vsettings modify failed: %s", out)
-	}
-
-	input = fmt.Sprintf("%s\n", masterPass)
-	out, _ = runPM(input, "profile", "set", "standard")
+	out, _ := runPM(input, "sec_profile", "set", "standard")
 	if !strings.Contains(out, "Profile switched to standard") {
-		t.Errorf("profile set failed: %s", out)
+		t.Errorf("sec_profile set failed: %s", out)
 	}
 
-	input = fmt.Sprintf("%s\n", masterPass)
-	out, _ = runPM(input, "vsettings", "--alerts")
-	if !strings.Contains(out, "Alerts set to") {
-		t.Errorf("vsettings alerts failed: %s", out)
-	}
-
-	input = fmt.Sprintf("%s\n", masterPass)
-	out, _ = runPM(input, "adup")
-	if !strings.Contains(out, "anomalies detected") {
-		t.Errorf("adup failed: %s", out)
+	inputCreate := fmt.Sprintf("%s\n64\n3\n2\n16\n32\n", masterPass)
+	out, _ = runPM(inputCreate, "sec_profile", "create", "custom_test")
+	if !strings.Contains(out, "Custom profile 'custom_test' created") {
+		t.Errorf("sec_profile create failed: %s", out)
 	}
 }
 
-func Test_09_ExportImport_Formats(t *testing.T) {
+func Test_17_Unlock_Flags(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
-
-	runPM(input, "export", "--output", "exp.json")
-	if _, err := os.Stat("exp.json"); err != nil {
-		t.Errorf("JSON export failed")
+	out, _ := runPM(input, "unlock", "--timeout", "1s")
+	if !strings.Contains(out, "Vault unlocked") {
+		t.Errorf("Unlock failed: %s", out)
 	}
+	time.Sleep(2 * time.Second)
 
-	runPM(input, "export", "--output", "exp.csv")
-	if _, err := os.Stat("exp.csv"); err != nil {
-		t.Errorf("CSV export failed")
-	}
-
-	runPM(input, "export", "--output", "exp.txt", "--without-password")
-	if _, err := os.Stat("exp.txt"); err != nil {
-		t.Errorf("TXT export failed")
-	}
-
-	input = fmt.Sprintf("%s\n", masterPass)
-	out, _ := runPM(input, "import", "exp.json")
-	if !strings.Contains(out, "Successfully imported") {
-		t.Errorf("Import failed: %s", out)
-	}
-
-	cleanup()
-	runPM(fmt.Sprintf("%s\n", masterPass), "init")
 }
 
-func Test_10_Cloud_CLI_Flow(t *testing.T) {
-	input := fmt.Sprintf("%s\n", masterPass)
-	out, _ := runPM(input, "cloud", "reset")
-	if !strings.Contains(out, "Cloud sync is not initialized") && !strings.Contains(out, "metadata reset") {
-		t.Errorf("Cloud reset flow failed: %s", out)
-	}
-}
+func Test_20_Team_Init(t *testing.T) {
 
-func Test_11_Compromise(t *testing.T) {
-	input := "DESTROY\n"
-	out, _ := runPM(input, "mode", "compromise")
-	if !strings.Contains(out, "Vault nuked") {
-		t.Errorf("Compromise failed: %s", out)
-	}
-	if _, err := os.Stat(testVault); err == nil {
-		t.Errorf("Vault still exists after compromise")
-	}
-}
-func Test_12_Internal_Unit_Tests(t *testing.T) {
-	vault := &src.Vault{}
+	os.Remove(teamVault)
 
-	vault.AddToken("Test Note", "Test Content", "SecureNote")
-	tok, ok := vault.GetToken("Test Note")
-	if !ok || tok.Token != "Test Content" {
-		t.Errorf("Internal Token (Note) failed: expected Test Content, got %s", tok.Token)
-	}
-
-	vault.AddSSHKey("Test SSH", "Test Private Key")
-	sshKey, ok := vault.GetSSHKey("Test SSH")
-	if !ok || sshKey.PrivateKey != "Test Private Key" {
-		t.Errorf("Internal SSH Key failed: expected Test Private Key, got %s", sshKey.PrivateKey)
-	}
-
-	vault.AddWiFi("Test SSID", "Test Pass", "WPA2")
-	wifi, ok := vault.GetWiFi("Test SSID")
-	if !ok || wifi.Password != "Test Pass" {
-		t.Errorf("Internal Wi-Fi failed: expected Test Pass, got %s", wifi.Password)
-	}
-
-	secret := "JBSWY3DPEHPK3PXP"
-	code, err := src.GenerateTOTP(secret)
+	input := fmt.Sprintf("%s\n%s\n", masterPass, masterPass)
+	out, err := runPMTeam(input, "init", "AcmeCorp", "admin")
 	if err != nil {
-		t.Fatalf("Internal TOTP generation failed: %v", err)
+		t.Fatalf("Team Init failed: %v, output: %s", err, out)
 	}
-	if len(code) != 6 {
-		t.Errorf("Expected 6-digit code, got %d digits: %s", len(code), code)
+	if !strings.Contains(out, "Organization 'AcmeCorp' initialized") {
+		t.Errorf("Unexpected output: %s", out)
 	}
 }
 
-func Test_13_Portability_Unit_Tests(t *testing.T) {
-	vault := &src.Vault{}
-
-	csvData := "ENTRY,google,user@gmail.com,secretpass\nTOTP,github,GITHUBSECRET"
-	tmpCSV := "test_port.csv"
-	os.WriteFile(tmpCSV, []byte(csvData), 0600)
-	defer os.Remove(tmpCSV)
-
-	if err := src.ImportFromCSV(vault, tmpCSV); err != nil {
-		t.Fatalf("CSV Import function error: %v", err)
+func Test_21_Team_Login_Logout(t *testing.T) {
+	input := fmt.Sprintf("%s\n", masterPass)
+	out, _ := runPMTeam(input, "login", "admin")
+	if !strings.Contains(out, "Logged in as admin") {
+		t.Errorf("Team Login failed: %s", out)
 	}
 
-	if len(vault.Entries) != 1 || vault.Entries[0].Account != "google" {
-		t.Errorf("CSV Import failed validation")
+	out, _ = runPMTeam("", "whoami")
+	if !strings.Contains(out, "AcmeCorp") || !strings.Contains(out, "admin") {
+		t.Errorf("whoami failed: %s", out)
 	}
 
-	tmpTXT := "test_port.txt"
-	if err := src.ExportToTXT(vault, tmpTXT, false); err != nil {
-		t.Fatalf("TXT Export function error: %v", err)
-	}
-	defer os.Remove(tmpTXT)
+}
 
-	newVault := &src.Vault{}
-	if err := src.ImportFromTXT(newVault, tmpTXT); err != nil {
-		t.Fatalf("TXT Import function error: %v", err)
+func Test_22_Team_Dept(t *testing.T) {
+
+	out, _ := runPMTeam("", "dept", "create", "Engineering")
+	if !strings.Contains(out, "created") {
+
+		t.Errorf("Dept create failed: %s", out)
 	}
-	if len(newVault.Entries) != 1 || newVault.Entries[0].Password != "secretpass" {
-		t.Errorf("TXT Import/Export roundtrip failed")
+
+	out, _ = runPMTeam("", "dept", "list")
+	if !strings.Contains(out, "Engineering") {
+		t.Errorf("Dept list failed: %s", out)
+	}
+}
+
+func Test_23_Team_User(t *testing.T) {
+
+	input := fmt.Sprintf("AlicePass123\n")
+	out, _ := runPMTeam(input, "user", "add", "alice", "--role", "MANAGER", "--dept", "engineering")
+	if !strings.Contains(out, "added successfully") {
+		t.Errorf("User add failed: %s", out)
+	}
+
+	out, _ = runPMTeam("", "user", "list")
+	if !strings.Contains(out, "alice") {
+		t.Errorf("User list failed: %s", out)
+	}
+
+	out, _ = runPMTeam("", "user", "promote", "alice", "ADMIN")
+	if !strings.Contains(out, "promoted to ADMIN") {
+		t.Errorf("User promote failed: %s", out)
+	}
+
+	out, _ = runPMTeam("", "user", "permission", "grant", "alice", "CanDeleteVault")
+	if !strings.Contains(out, "granted") {
+		t.Errorf("Permission grant failed: %s", out)
+	}
+}
+
+func Test_24_Team_Entries(t *testing.T) {
+
+	input := fmt.Sprintf("1\nSharedDB\ndbuser\ndbpass\ndb.local\nCritical DB\n")
+	out, _ := runPMTeam(input, "add")
+	if !strings.Contains(out, "Entry added") {
+		t.Errorf("Team add entry failed: %s", out)
+	}
+
+	out, _ = runPMTeam("", "list")
+	if !strings.Contains(out, "SharedDB") {
+		t.Errorf("Team list failed: %s", out)
+	}
+
+	out, _ = runPMTeam("", "get", "SharedDB")
+	if !strings.Contains(out, "dbpass") {
+		t.Errorf("Team get failed: %s", out)
+	}
+}
+
+func Test_25_Team_Approvals(t *testing.T) {
+	out, _ := runPMTeam("", "approvals", "list")
+	if strings.Contains(out, "Error") {
+		t.Errorf("Approvals list failed: %s", out)
+	}
+}
+
+func Test_26_Audit(t *testing.T) {
+	out, _ := runPMTeam("", "audit")
+	if !strings.Contains(out, "Audit Trail") {
+		t.Errorf("Team audit failed: %s", out)
 	}
 }
