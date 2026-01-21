@@ -56,36 +56,42 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 }
 
 type Entry struct {
-	Account  string `json:"account"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Account   string `json:"account"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type TOTPEntry struct {
-	Account string `json:"account"`
-	Secret  string `json:"secret"`
+	Account   string `json:"account"`
+	Secret    string `json:"secret"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type TokenEntry struct {
-	Name  string `json:"name"`
-	Token string `json:"token"`
-	Type  string `json:"type"`
+	Name      string `json:"name"`
+	Token     string `json:"token"`
+	Type      string `json:"type"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type SecureNoteEntry struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	Name      string `json:"name"`
+	Content   string `json:"content"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type APIKeyEntry struct {
-	Name    string `json:"name"`
-	Service string `json:"service"`
-	Key     string `json:"key"`
+	Name      string `json:"name"`
+	Service   string `json:"service"`
+	Key       string `json:"key"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type SSHKeyEntry struct {
 	Name       string `json:"name"`
 	PrivateKey string `json:"private_key"`
+	Namespace  string `json:"namespace,omitempty"`
 }
 
 type WiFiEntry struct {
@@ -93,13 +99,15 @@ type WiFiEntry struct {
 	Password     string `json:"password"`
 	SecurityType string `json:"security_type"`
 	RouterIP     string `json:"router_ip"`
+	Namespace    string `json:"namespace,omitempty"`
 }
 
 type GovIDEntry struct {
-	Type     string `json:"type"`
-	IDNumber string `json:"id_number"`
-	Name     string `json:"name"`
-	Expiry   string `json:"expiry"`
+	Type      string `json:"type"`
+	IDNumber  string `json:"id_number"`
+	Name      string `json:"name"`
+	Expiry    string `json:"expiry"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type MedicalRecordEntry struct {
@@ -107,6 +115,7 @@ type MedicalRecordEntry struct {
 	InsuranceID   string `json:"insurance_id"`
 	Prescriptions string `json:"prescriptions"`
 	Allergies     string `json:"allergies"`
+	Namespace     string `json:"namespace,omitempty"`
 }
 
 type TravelEntry struct {
@@ -114,6 +123,7 @@ type TravelEntry struct {
 	TicketNumber   string `json:"ticket_number"`
 	BookingCode    string `json:"booking_code"`
 	LoyaltyProgram string `json:"loyalty_program"`
+	Namespace      string `json:"namespace,omitempty"`
 }
 
 type ContactEntry struct {
@@ -122,6 +132,7 @@ type ContactEntry struct {
 	Email     string `json:"email"`
 	Address   string `json:"address"`
 	Emergency bool   `json:"emergency"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type CloudCredentialEntry struct {
@@ -132,13 +143,15 @@ type CloudCredentialEntry struct {
 	AccountID  string `json:"account_id"`
 	Role       string `json:"role"`
 	Expiration string `json:"expiration"`
+	Namespace  string `json:"namespace,omitempty"`
 }
 
 type K8sSecretEntry struct {
-	Name       string `json:"name"`
-	ClusterURL string `json:"cluster_url"`
-	Namespace  string `json:"namespace"`
-	Expiration string `json:"expiration"`
+	Name         string `json:"name"`
+	ClusterURL   string `json:"cluster_url"`
+	K8sNamespace string `json:"namespace"`
+	Expiration   string `json:"expiration"`
+	Namespace    string `json:"apm_namespace,omitempty"`
 }
 
 type DockerRegistryEntry struct {
@@ -146,6 +159,7 @@ type DockerRegistryEntry struct {
 	RegistryURL string `json:"registry_url"`
 	Username    string `json:"username"`
 	Token       string `json:"token"`
+	Namespace   string `json:"namespace,omitempty"`
 }
 
 type SSHConfigEntry struct {
@@ -156,12 +170,14 @@ type SSHConfigEntry struct {
 	KeyPath     string `json:"key_path"`
 	PrivateKey  string `json:"private_key"`
 	Fingerprint string `json:"fingerprint"`
+	Namespace   string `json:"namespace,omitempty"`
 }
 
 type CICDSecretEntry struct {
-	Name    string `json:"name"`
-	Webhook string `json:"webhook"`
-	EnvVars string `json:"env_vars"`
+	Name      string `json:"name"`
+	Webhook   string `json:"webhook"`
+	EnvVars   string `json:"env_vars"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type SoftwareLicenseEntry struct {
@@ -169,6 +185,7 @@ type SoftwareLicenseEntry struct {
 	SerialKey      string `json:"serial_key"`
 	ActivationInfo string `json:"activation_info"`
 	Expiration     string `json:"expiration"`
+	Namespace      string `json:"namespace,omitempty"`
 }
 
 type LegalContractEntry struct {
@@ -176,11 +193,13 @@ type LegalContractEntry struct {
 	Summary         string `json:"summary"`
 	PartiesInvolved string `json:"parties_involved"`
 	SignedDate      string `json:"signed_date"`
+	Namespace       string `json:"namespace,omitempty"`
 }
 
 type RecoveryCodeEntry struct {
-	Service string   `json:"service"`
-	Codes   []string `json:"codes"`
+	Service   string   `json:"service"`
+	Codes     []string `json:"codes"`
+	Namespace string   `json:"namespace,omitempty"`
 }
 
 type HistoryEntry struct {
@@ -196,24 +215,27 @@ type CertificateEntry struct {
 	PrivateKey string    `json:"private_key"`
 	Issuer     string    `json:"issuer"`
 	Expiry     time.Time `json:"expiry"`
+	Namespace  string    `json:"namespace,omitempty"`
 }
 
 type BankingEntry struct {
-	Label    string `json:"label"`
-	Type     string `json:"type"`
-	Details  string `json:"details"`
-	CVV      string `json:"cvv,omitempty"`
-	Expiry   string `json:"expiry,omitempty"`
-	Redacted bool   `json:"redacted,omitempty"`
+	Label     string `json:"label"`
+	Type      string `json:"type"`
+	Details   string `json:"details"`
+	CVV       string `json:"cvv,omitempty"`
+	Expiry    string `json:"expiry,omitempty"`
+	Redacted  bool   `json:"redacted,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type DocumentEntry struct {
-	Name     string   `json:"name"`
-	FileName string   `json:"file_name"`
-	Content  []byte   `json:"content"`
-	Password string   `json:"password"`
-	Tags     []string `json:"tags,omitempty"`
-	Expiry   string   `json:"expiry,omitempty"`
+	Name      string   `json:"name"`
+	FileName  string   `json:"file_name"`
+	Content   []byte   `json:"content"`
+	Password  string   `json:"password"`
+	Tags      []string `json:"tags,omitempty"`
+	Expiry    string   `json:"expiry,omitempty"`
+	Namespace string   `json:"namespace,omitempty"`
 }
 
 type Vault struct {
@@ -252,6 +274,9 @@ type Vault struct {
 	AlertsEnabled           bool                   `json:"alerts_enabled,omitempty"`
 	AnomalyDetectionEnabled bool                   `json:"anomaly_detection_enabled,omitempty"`
 	LastCloudProvider       string                 `json:"last_cloud_provider,omitempty"`
+	CurrentNamespace        string                 `json:"current_namespace,omitempty"`
+	Profiles                []string               `json:"profiles"`
+	ActivePolicy            Policy                 `json:"active_policy,omitempty"`
 
 	CurrentProfileParams *CryptoProfile `json:"-"`
 }
@@ -553,19 +578,24 @@ func (v *Vault) logHistory(action, category, identifier string) {
 }
 
 func (v *Vault) AddEntry(account, username, password string) error {
-	for _, e := range v.Entries {
-		if e.Account == account {
-			return errors.New("account already exists")
+	if v.ActivePolicy.PasswordPolicy.MinLength > 0 {
+		if err := v.ActivePolicy.PasswordPolicy.Validate(password); err != nil {
+			return err
 		}
 	}
-	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password})
+	for _, e := range v.Entries {
+		if e.Account == account && e.Namespace == v.CurrentNamespace {
+			return errors.New("account already exists in this namespace")
+		}
+	}
+	v.Entries = append(v.Entries, Entry{Account: account, Username: username, Password: password, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "PASSWORD", account)
 	return nil
 }
 
 func (v *Vault) GetEntry(account string) (Entry, bool) {
 	for _, e := range v.Entries {
-		if e.Account == account {
+		if e.Account == account && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -585,18 +615,18 @@ func (v *Vault) DeleteEntry(account string) bool {
 
 func (v *Vault) AddTOTPEntry(account, secret string) error {
 	for _, e := range v.TOTPEntries {
-		if e.Account == account {
-			return errors.New("TOTP account already exists")
+		if e.Account == account && e.Namespace == v.CurrentNamespace {
+			return errors.New("TOTP account already exists in this namespace")
 		}
 	}
-	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret})
+	v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{Account: account, Secret: secret, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "TOTP", account)
 	return nil
 }
 
 func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
 	for _, e := range v.TOTPEntries {
-		if e.Account == account {
+		if e.Account == account && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -616,18 +646,18 @@ func (v *Vault) DeleteTOTPEntry(account string) bool {
 
 func (v *Vault) AddToken(name, token, tType string) error {
 	for _, e := range v.Tokens {
-		if e.Name == name {
-			return errors.New("token already exists")
+		if e.Name == name && e.Namespace == v.CurrentNamespace {
+			return errors.New("token already exists in this namespace")
 		}
 	}
-	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Token: token, Type: tType})
+	v.Tokens = append(v.Tokens, TokenEntry{Name: name, Token: token, Type: tType, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "TOKEN", name)
 	return nil
 }
 
 func (v *Vault) GetToken(name string) (TokenEntry, bool) {
 	for _, e := range v.Tokens {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -647,18 +677,18 @@ func (v *Vault) DeleteToken(name string) bool {
 
 func (v *Vault) AddSecureNote(name, content string) error {
 	for _, e := range v.SecureNotes {
-		if e.Name == name {
-			return errors.New("note already exists")
+		if e.Name == name && e.Namespace == v.CurrentNamespace {
+			return errors.New("note already exists in this namespace")
 		}
 	}
-	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content})
+	v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{Name: name, Content: content, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "NOTE", name)
 	return nil
 }
 
 func (v *Vault) GetSecureNote(name string) (SecureNoteEntry, bool) {
 	for _, e := range v.SecureNotes {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -678,18 +708,18 @@ func (v *Vault) DeleteSecureNote(name string) bool {
 
 func (v *Vault) AddAPIKey(name, service, key string) error {
 	for _, e := range v.APIKeys {
-		if e.Name == name {
-			return errors.New("API key already exists")
+		if e.Name == name && e.Namespace == v.CurrentNamespace {
+			return errors.New("API key already exists in this namespace")
 		}
 	}
-	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key})
+	v.APIKeys = append(v.APIKeys, APIKeyEntry{Name: name, Service: service, Key: key, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "APIKEY", name)
 	return nil
 }
 
 func (v *Vault) GetAPIKey(name string) (APIKeyEntry, bool) {
 	for _, e := range v.APIKeys {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -709,18 +739,18 @@ func (v *Vault) DeleteAPIKey(name string) bool {
 
 func (v *Vault) AddSSHKey(name, privateKey string) error {
 	for _, e := range v.SSHKeys {
-		if e.Name == name {
-			return errors.New("SSH key already exists")
+		if e.Name == name && e.Namespace == v.CurrentNamespace {
+			return errors.New("SSH key already exists in this namespace")
 		}
 	}
-	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey})
+	v.SSHKeys = append(v.SSHKeys, SSHKeyEntry{Name: name, PrivateKey: privateKey, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "SSHKEY", name)
 	return nil
 }
 
 func (v *Vault) GetSSHKey(name string) (SSHKeyEntry, bool) {
 	for _, e := range v.SSHKeys {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -740,18 +770,18 @@ func (v *Vault) DeleteSSHKey(name string) bool {
 
 func (v *Vault) AddWiFi(ssid, password, security string) error {
 	for _, e := range v.WiFiCredentials {
-		if e.SSID == ssid {
-			return errors.New("WiFi already exists")
+		if e.SSID == ssid && e.Namespace == v.CurrentNamespace {
+			return errors.New("WiFi already exists in this namespace")
 		}
 	}
-	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: security})
+	v.WiFiCredentials = append(v.WiFiCredentials, WiFiEntry{SSID: ssid, Password: password, SecurityType: security, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "WIFI", ssid)
 	return nil
 }
 
 func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
 	for _, e := range v.WiFiCredentials {
-		if e.SSID == ssid {
+		if e.SSID == ssid && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -760,7 +790,7 @@ func (v *Vault) GetWiFi(ssid string) (WiFiEntry, bool) {
 
 func (v *Vault) DeleteWiFi(ssid string) bool {
 	for i, e := range v.WiFiCredentials {
-		if e.SSID == ssid {
+		if e.SSID == ssid && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.WiFiCredentials = append(v.WiFiCredentials[:i], v.WiFiCredentials[i+1:]...)
 			v.logHistory("DEL", "WIFI", ssid)
 			return true
@@ -771,18 +801,18 @@ func (v *Vault) DeleteWiFi(ssid string) bool {
 
 func (v *Vault) AddRecoveryCode(service string, codes []string) error {
 	for _, e := range v.RecoveryCodeItems {
-		if e.Service == service {
-			return errors.New("recovery codes for service already exist")
+		if e.Service == service && e.Namespace == v.CurrentNamespace {
+			return errors.New("recovery codes for service already exist in this namespace")
 		}
 	}
-	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes})
+	v.RecoveryCodeItems = append(v.RecoveryCodeItems, RecoveryCodeEntry{Service: service, Codes: codes, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "RECOVERY", service)
 	return nil
 }
 
 func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
 	for _, e := range v.RecoveryCodeItems {
-		if e.Service == service {
+		if e.Service == service && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -791,7 +821,7 @@ func (v *Vault) GetRecoveryCode(service string) (RecoveryCodeEntry, bool) {
 
 func (v *Vault) DeleteRecoveryCode(service string) bool {
 	for i, e := range v.RecoveryCodeItems {
-		if e.Service == service {
+		if e.Service == service && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.RecoveryCodeItems = append(v.RecoveryCodeItems[:i], v.RecoveryCodeItems[i+1:]...)
 			v.logHistory("DEL", "RECOVERY", service)
 			return true
@@ -802,18 +832,18 @@ func (v *Vault) DeleteRecoveryCode(service string) bool {
 
 func (v *Vault) AddCertificate(label, cert, key, issuer string, expiry time.Time) error {
 	for _, e := range v.Certificates {
-		if e.Label == label {
-			return errors.New("certificate already exists")
+		if e.Label == label && e.Namespace == v.CurrentNamespace {
+			return errors.New("certificate already exists in this namespace")
 		}
 	}
-	v.Certificates = append(v.Certificates, CertificateEntry{Label: label, CertData: cert, PrivateKey: key, Issuer: issuer, Expiry: expiry})
+	v.Certificates = append(v.Certificates, CertificateEntry{Label: label, CertData: cert, PrivateKey: key, Issuer: issuer, Expiry: expiry, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "CERTIFICATE", label)
 	return nil
 }
 
 func (v *Vault) GetCertificate(label string) (CertificateEntry, bool) {
 	for _, e := range v.Certificates {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -822,7 +852,7 @@ func (v *Vault) GetCertificate(label string) (CertificateEntry, bool) {
 
 func (v *Vault) DeleteCertificate(label string) bool {
 	for i, e := range v.Certificates {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.Certificates = append(v.Certificates[:i], v.Certificates[i+1:]...)
 			v.logHistory("DEL", "CERTIFICATE", label)
 			return true
@@ -833,18 +863,18 @@ func (v *Vault) DeleteCertificate(label string) bool {
 
 func (v *Vault) AddBankingItem(label, bType, details, cvv, expiry string) error {
 	for _, e := range v.BankingItems {
-		if e.Label == label {
-			return errors.New("banking item already exists")
+		if e.Label == label && e.Namespace == v.CurrentNamespace {
+			return errors.New("banking item already exists in this namespace")
 		}
 	}
-	v.BankingItems = append(v.BankingItems, BankingEntry{Label: label, Type: bType, Details: details, CVV: cvv, Expiry: expiry})
+	v.BankingItems = append(v.BankingItems, BankingEntry{Label: label, Type: bType, Details: details, CVV: cvv, Expiry: expiry, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "BANKING", label)
 	return nil
 }
 
 func (v *Vault) GetBankingItem(label string) (BankingEntry, bool) {
 	for _, e := range v.BankingItems {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -853,7 +883,7 @@ func (v *Vault) GetBankingItem(label string) (BankingEntry, bool) {
 
 func (v *Vault) DeleteBankingItem(label string) bool {
 	for i, e := range v.BankingItems {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.BankingItems = append(v.BankingItems[:i], v.BankingItems[i+1:]...)
 			v.logHistory("DEL", "BANKING", label)
 			return true
@@ -864,18 +894,18 @@ func (v *Vault) DeleteBankingItem(label string) bool {
 
 func (v *Vault) AddDocument(name, fileName string, content []byte, password string, tags []string, expiry string) error {
 	for _, e := range v.Documents {
-		if e.Name == name {
-			return errors.New("document already exists")
+		if e.Name == name && e.Namespace == v.CurrentNamespace {
+			return errors.New("document already exists in this namespace")
 		}
 	}
-	v.Documents = append(v.Documents, DocumentEntry{Name: name, FileName: fileName, Content: content, Password: password, Tags: tags, Expiry: expiry})
+	v.Documents = append(v.Documents, DocumentEntry{Name: name, FileName: fileName, Content: content, Password: password, Tags: tags, Expiry: expiry, Namespace: v.CurrentNamespace})
 	v.logHistory("ADD", "DOCUMENT", name)
 	return nil
 }
 
 func (v *Vault) GetDocument(name string) (DocumentEntry, bool) {
 	for _, e := range v.Documents {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			return e, true
 		}
 	}
@@ -884,7 +914,7 @@ func (v *Vault) GetDocument(name string) (DocumentEntry, bool) {
 
 func (v *Vault) DeleteDocument(name string) bool {
 	for i, e := range v.Documents {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.Documents = append(v.Documents[:i], v.Documents[i+1:]...)
 			v.logHistory("DEL", "DOCUMENT", name)
 			return true
@@ -895,10 +925,11 @@ func (v *Vault) DeleteDocument(name string) bool {
 
 func (v *Vault) AddGovID(g GovIDEntry) error {
 	for _, e := range v.GovIDs {
-		if e.IDNumber == g.IDNumber && e.Type == g.Type {
-			return errors.New("government ID already exists")
+		if e.IDNumber == g.IDNumber && e.Type == g.Type && e.Namespace == v.CurrentNamespace {
+			return errors.New("government ID already exists in this namespace")
 		}
 	}
+	g.Namespace = v.CurrentNamespace
 	v.GovIDs = append(v.GovIDs, g)
 	v.logHistory("ADD", "GOVID", g.IDNumber)
 	return nil
@@ -906,7 +937,7 @@ func (v *Vault) AddGovID(g GovIDEntry) error {
 
 func (v *Vault) DeleteGovID(idNum string) bool {
 	for i, e := range v.GovIDs {
-		if e.IDNumber == idNum {
+		if e.IDNumber == idNum && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.GovIDs = append(v.GovIDs[:i], v.GovIDs[i+1:]...)
 			v.logHistory("DEL", "GOVID", idNum)
 			return true
@@ -916,6 +947,7 @@ func (v *Vault) DeleteGovID(idNum string) bool {
 }
 
 func (v *Vault) AddMedicalRecord(m MedicalRecordEntry) error {
+	m.Namespace = v.CurrentNamespace
 	v.MedicalRecords = append(v.MedicalRecords, m)
 	v.logHistory("ADD", "MEDICAL", m.Label)
 	return nil
@@ -923,7 +955,7 @@ func (v *Vault) AddMedicalRecord(m MedicalRecordEntry) error {
 
 func (v *Vault) DeleteMedicalRecord(label string) bool {
 	for i, e := range v.MedicalRecords {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.MedicalRecords = append(v.MedicalRecords[:i], v.MedicalRecords[i+1:]...)
 			v.logHistory("DEL", "MEDICAL", label)
 			return true
@@ -933,6 +965,7 @@ func (v *Vault) DeleteMedicalRecord(label string) bool {
 }
 
 func (v *Vault) AddTravelDoc(t TravelEntry) error {
+	t.Namespace = v.CurrentNamespace
 	v.TravelDocs = append(v.TravelDocs, t)
 	v.logHistory("ADD", "TRAVEL", t.Label)
 	return nil
@@ -940,7 +973,7 @@ func (v *Vault) AddTravelDoc(t TravelEntry) error {
 
 func (v *Vault) DeleteTravelDoc(label string) bool {
 	for i, e := range v.TravelDocs {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.TravelDocs = append(v.TravelDocs[:i], v.TravelDocs[i+1:]...)
 			v.logHistory("DEL", "TRAVEL", label)
 			return true
@@ -950,6 +983,7 @@ func (v *Vault) DeleteTravelDoc(label string) bool {
 }
 
 func (v *Vault) AddContact(c ContactEntry) error {
+	c.Namespace = v.CurrentNamespace
 	v.Contacts = append(v.Contacts, c)
 	v.logHistory("ADD", "CONTACT", c.Name)
 	return nil
@@ -957,7 +991,7 @@ func (v *Vault) AddContact(c ContactEntry) error {
 
 func (v *Vault) DeleteContact(name string) bool {
 	for i, e := range v.Contacts {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.Contacts = append(v.Contacts[:i], v.Contacts[i+1:]...)
 			v.logHistory("DEL", "CONTACT", name)
 			return true
@@ -967,6 +1001,7 @@ func (v *Vault) DeleteContact(name string) bool {
 }
 
 func (v *Vault) AddCloudCredential(c CloudCredentialEntry) error {
+	c.Namespace = v.CurrentNamespace
 	v.CloudCredentialsItems = append(v.CloudCredentialsItems, c)
 	v.logHistory("ADD", "CLOUDCRED", c.Label)
 	return nil
@@ -974,7 +1009,7 @@ func (v *Vault) AddCloudCredential(c CloudCredentialEntry) error {
 
 func (v *Vault) DeleteCloudCredential(label string) bool {
 	for i, e := range v.CloudCredentialsItems {
-		if e.Label == label {
+		if e.Label == label && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.CloudCredentialsItems = append(v.CloudCredentialsItems[:i], v.CloudCredentialsItems[i+1:]...)
 			v.logHistory("DEL", "CLOUDCRED", label)
 			return true
@@ -984,6 +1019,7 @@ func (v *Vault) DeleteCloudCredential(label string) bool {
 }
 
 func (v *Vault) AddK8sSecret(k K8sSecretEntry) error {
+	k.Namespace = v.CurrentNamespace
 	v.K8sSecrets = append(v.K8sSecrets, k)
 	v.logHistory("ADD", "K8S", k.Name)
 	return nil
@@ -991,7 +1027,7 @@ func (v *Vault) AddK8sSecret(k K8sSecretEntry) error {
 
 func (v *Vault) DeleteK8sSecret(name string) bool {
 	for i, e := range v.K8sSecrets {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.K8sSecrets = append(v.K8sSecrets[:i], v.K8sSecrets[i+1:]...)
 			v.logHistory("DEL", "K8S", name)
 			return true
@@ -1001,6 +1037,7 @@ func (v *Vault) DeleteK8sSecret(name string) bool {
 }
 
 func (v *Vault) AddDockerRegistry(d DockerRegistryEntry) error {
+	d.Namespace = v.CurrentNamespace
 	v.DockerRegistries = append(v.DockerRegistries, d)
 	v.logHistory("ADD", "DOCKER", d.Name)
 	return nil
@@ -1008,7 +1045,7 @@ func (v *Vault) AddDockerRegistry(d DockerRegistryEntry) error {
 
 func (v *Vault) DeleteDockerRegistry(name string) bool {
 	for i, e := range v.DockerRegistries {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.DockerRegistries = append(v.DockerRegistries[:i], v.DockerRegistries[i+1:]...)
 			v.logHistory("DEL", "DOCKER", name)
 			return true
@@ -1018,6 +1055,7 @@ func (v *Vault) DeleteDockerRegistry(name string) bool {
 }
 
 func (v *Vault) AddSSHConfig(s SSHConfigEntry) error {
+	s.Namespace = v.CurrentNamespace
 	v.SSHConfigs = append(v.SSHConfigs, s)
 	v.logHistory("ADD", "SSHCONFIG", s.Alias)
 	return nil
@@ -1025,7 +1063,7 @@ func (v *Vault) AddSSHConfig(s SSHConfigEntry) error {
 
 func (v *Vault) DeleteSSHConfig(alias string) bool {
 	for i, e := range v.SSHConfigs {
-		if e.Alias == alias {
+		if e.Alias == alias && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.SSHConfigs = append(v.SSHConfigs[:i], v.SSHConfigs[i+1:]...)
 			v.logHistory("DEL", "SSHCONFIG", alias)
 			return true
@@ -1035,6 +1073,7 @@ func (v *Vault) DeleteSSHConfig(alias string) bool {
 }
 
 func (v *Vault) AddCICDSecret(c CICDSecretEntry) error {
+	c.Namespace = v.CurrentNamespace
 	v.CICDSecrets = append(v.CICDSecrets, c)
 	v.logHistory("ADD", "CICD", c.Name)
 	return nil
@@ -1042,7 +1081,7 @@ func (v *Vault) AddCICDSecret(c CICDSecretEntry) error {
 
 func (v *Vault) DeleteCICDSecret(name string) bool {
 	for i, e := range v.CICDSecrets {
-		if e.Name == name {
+		if e.Name == name && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.CICDSecrets = append(v.CICDSecrets[:i], v.CICDSecrets[i+1:]...)
 			v.logHistory("DEL", "CICD", name)
 			return true
@@ -1052,6 +1091,7 @@ func (v *Vault) DeleteCICDSecret(name string) bool {
 }
 
 func (v *Vault) AddSoftwareLicense(s SoftwareLicenseEntry) error {
+	s.Namespace = v.CurrentNamespace
 	v.SoftwareLicenses = append(v.SoftwareLicenses, s)
 	v.logHistory("ADD", "LICENSE", s.ProductName)
 	return nil
@@ -1059,7 +1099,7 @@ func (v *Vault) AddSoftwareLicense(s SoftwareLicenseEntry) error {
 
 func (v *Vault) DeleteSoftwareLicense(product string) bool {
 	for i, e := range v.SoftwareLicenses {
-		if e.ProductName == product {
+		if e.ProductName == product && (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) {
 			v.SoftwareLicenses = append(v.SoftwareLicenses[:i], v.SoftwareLicenses[i+1:]...)
 			v.logHistory("DEL", "LICENSE", product)
 			return true
@@ -1069,6 +1109,7 @@ func (v *Vault) DeleteSoftwareLicense(product string) bool {
 }
 
 func (v *Vault) AddLegalContract(l LegalContractEntry) error {
+	l.Namespace = v.CurrentNamespace
 	v.LegalContracts = append(v.LegalContracts, l)
 	v.logHistory("ADD", "CONTRACT", l.Name)
 	return nil
@@ -1089,6 +1130,7 @@ type SearchResult struct {
 	Type       string
 	Identifier string
 	Data       interface{}
+	Namespace  string
 }
 
 func (v *Vault) SearchAll(query string) []SearchResult {
@@ -1096,113 +1138,113 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 	query = strings.ToLower(query)
 
 	for _, e := range v.Entries {
-		if query == "" || strings.Contains(strings.ToLower(e.Account), query) {
-			results = append(results, SearchResult{"Password", e.Account, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Account), query)) {
+			results = append(results, SearchResult{"Password", e.Account, e, e.Namespace})
 		}
 	}
 	for _, e := range v.TOTPEntries {
-		if query == "" || strings.Contains(strings.ToLower(e.Account), query) {
-			results = append(results, SearchResult{"TOTP", e.Account, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Account), query)) {
+			results = append(results, SearchResult{"TOTP", e.Account, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Tokens {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Token", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Token", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SecureNotes {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Note", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Note", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.APIKeys {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"API Key", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"API Key", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SSHKeys {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"SSH Key", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"SSH Key", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.WiFiCredentials {
-		if query == "" || strings.Contains(strings.ToLower(e.SSID), query) {
-			results = append(results, SearchResult{"Wi-Fi", e.SSID, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.SSID), query)) {
+			results = append(results, SearchResult{"Wi-Fi", e.SSID, e, e.Namespace})
 		}
 	}
 	for _, e := range v.RecoveryCodeItems {
-		if query == "" || strings.Contains(strings.ToLower(e.Service), query) {
-			results = append(results, SearchResult{"Recovery Codes", e.Service, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Service), query)) {
+			results = append(results, SearchResult{"Recovery Codes", e.Service, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Certificates {
-		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
-			results = append(results, SearchResult{"Certificate", e.Label, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+			results = append(results, SearchResult{"Certificate", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.BankingItems {
-		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
-			results = append(results, SearchResult{"Banking", e.Label, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+			results = append(results, SearchResult{"Banking", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Documents {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Document", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Document", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.GovIDs {
-		if query == "" || strings.Contains(strings.ToLower(e.IDNumber), query) || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Government ID", e.IDNumber, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.IDNumber), query) || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Government ID", e.IDNumber, e, e.Namespace})
 		}
 	}
 	for _, e := range v.MedicalRecords {
-		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
-			results = append(results, SearchResult{"Medical Record", e.Label, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+			results = append(results, SearchResult{"Medical Record", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.TravelDocs {
-		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
-			results = append(results, SearchResult{"Travel", e.Label, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+			results = append(results, SearchResult{"Travel", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Contacts {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Contact", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Contact", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.CloudCredentialsItems {
-		if query == "" || strings.Contains(strings.ToLower(e.Label), query) {
-			results = append(results, SearchResult{"Cloud Credentials", e.Label, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+			results = append(results, SearchResult{"Cloud Credentials", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.K8sSecrets {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Kubernetes Secret", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Kubernetes Secret", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.DockerRegistries {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Docker Registry", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Docker Registry", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SSHConfigs {
-		if query == "" || strings.Contains(strings.ToLower(e.Alias), query) {
-			results = append(results, SearchResult{"SSH Config", e.Alias, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Alias), query)) {
+			results = append(results, SearchResult{"SSH Config", e.Alias, e, e.Namespace})
 		}
 	}
 	for _, e := range v.CICDSecrets {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"CI/CD Secret", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"CI/CD Secret", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SoftwareLicenses {
-		if query == "" || strings.Contains(strings.ToLower(e.ProductName), query) {
-			results = append(results, SearchResult{"Software License", e.ProductName, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.ProductName), query)) {
+			results = append(results, SearchResult{"Software License", e.ProductName, e, e.Namespace})
 		}
 	}
 	for _, e := range v.LegalContracts {
-		if query == "" || strings.Contains(strings.ToLower(e.Name), query) {
-			results = append(results, SearchResult{"Legal Contract", e.Name, e})
+		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Legal Contract", e.Name, e, e.Namespace})
 		}
 	}
 	return results
