@@ -65,14 +65,15 @@ Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Count
 | Offline Brute-Force | Protected | Argon2id high-cost derivation. |
 | Vault Tampering | Protected | HMAC-SHA256 integrity signature. |
 | Credential Theft | Protected | Cloud tokens are encrypted inside the vault. |
+| Session Hijacking| Protected | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts. |
+| Weak Passwords | Controlled | Enforceable password policies via YAML Policy Engine. |
 | Compromised Host | Not Protected | Outside the security boundary (Keyloggers/Malware). |
-| Weak Passwords | Not Protected | User responsibility; use high-entropy passphrases. |
 
 ## 2. Core Technical Specifications
 
 ### 2.1 Performance Profiles
 
-Users can select from pre-defined profiles via `pm profile set` to balance security and latency.
+Users can select from pre-defined profiles via `pm sec_profile set` to balance security and latency.
 
 | Profile | Memory | Time | Parallelism | Nonce Size |
 |---------|--------|------|-------------|------------|
@@ -105,7 +106,12 @@ For those preferring air-gapped security, the `vault.dat` file can be manually c
 | **audit** | N/A | N/A | View an encrypted history of every vault interaction. |
 | **adup** | N/A | N/A | Anomaly Detection: Checks for suspicious access patterns. |
 | **health**| N/A | N/A | Security dashboard with vulnerability scoring. |
-| **mode** | `unlock`, `lock` | `--min 15` | Session duration and access control management. |
+| **unlock** | N/A | `--timeout 1h` | Unlocks the vault for the current shell session with inactivity timeout. |
+| **lock** | N/A | N/A | Kills the active shell session and locks the vault. |
+| **setup** | N/A | N/A | Interactive wizard for initial configuration (vault, cloud, profiles). |
+| **profile** | `switch`, `list` | N/A | Manage custom namespaces (Work, Personal, DevOps) within the vault. |
+| **policy** | `load`, `show`, `clear`| N/A | Human-first YAML policy engine for password complexity and rotation. |
+| **sec_profile**| `set`, `create` | N/A | Customize Argon2id internal cryptographic parameters. |
 | **cloud** | `init`, `sync`, `get` | `gdrive` | Cloud integration (GDrive) with randomized naming. |
 | **plugins**| `list`, `add`, `push` | N/A | Plugin Marketplace for extending APM functionality. |
 
