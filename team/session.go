@@ -21,7 +21,12 @@ type TeamSession struct {
 	Permissions  map[string]bool `json:"permissions"`
 }
 
-var SessionFile = filepath.Join(os.TempDir(), "pm_team_session.json")
+var SessionFile string
+
+func init() {
+	exe, _ := os.Executable()
+	SessionFile = filepath.Join(filepath.Dir(exe), "pm_team_session.json")
+}
 
 func CreateSession(user TeamUser, deptKey []byte, orgID string) error {
 	session := TeamSession{
