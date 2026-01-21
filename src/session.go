@@ -11,18 +11,38 @@ import (
 )
 
 type Session struct {
-	MasterPassword string    `json:"master_password"`
-	ReadOnly       bool      `json:"readonly"`
-	Expiry         time.Time `json:"expiry"`
+	MasterPassword    string        `json:"master_password"`
+	ReadOnly          bool          `json:"readonly"`
+	Expiry            time.Time     `json:"expiry"`
+	LastUsed          time.Time     `json:"last_used"`
+	InactivityTimeout time.Duration `json:"inactivity_timeout"`
 }
 
-var sessionFile = filepath.Join(os.TempDir(), "pm_session.json")
+func getSessionFile() string {
+	sessionID := os.Getenv("APM_SESSION_ID")
+	if sessionID == "" {
+		return filepath.Join(os.TempDir(), "pm_session_global.json")
+	}
+	// Sanitize sessionID to avoid path traversal or invalid filenames
+	sanitizedID := ""
+	for _, char := range sessionID {
+		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') {
+			sanitizedID += string(char)
+		}
+	}
+	if sanitizedID == "" {
+		sanitizedID = "unknown"
+	}
+	return filepath.Join(os.TempDir(), fmt.Sprintf("pm_session_%s.json", sanitizedID))
+}
 
-func CreateSession(password string, duration time.Duration, readonly bool) error {
+func CreateSession(password string, duration time.Duration, readonly bool, inactivity time.Duration) error {
 	session := Session{
-		MasterPassword: password,
-		ReadOnly:       readonly,
-		Expiry:         time.Now().Add(duration),
+		MasterPassword:    password,
+		ReadOnly:          readonly,
+		Expiry:            time.Now().Add(duration),
+		LastUsed:          time.Now(),
+		InactivityTimeout: inactivity,
 	}
 
 	data, err := json.Marshal(session)
@@ -30,6 +50,7 @@ func CreateSession(password string, duration time.Duration, readonly bool) error
 		return err
 	}
 
+	sessionFile := getSessionFile()
 	if err := os.WriteFile(sessionFile, data, 0600); err != nil {
 		return err
 	}
@@ -39,19 +60,17 @@ func CreateSession(password string, duration time.Duration, readonly bool) error
 		os.Remove(sessionFile)
 	}()
 
-	cleanupCmd(duration)
+	cleanupCmd(duration, sessionFile)
 
 	return nil
 }
 
-func cleanupCmd(duration time.Duration) {
+func cleanupCmd(duration time.Duration, sessionFile string) {
 	seconds := int(duration.Seconds())
 	var cmd *exec.Cmd
 	if filepath.Separator == '\\' {
-
 		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
 	} else {
-
 		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, sessionFile))
 	}
 
@@ -62,6 +81,7 @@ func cleanupCmd(duration time.Duration) {
 }
 
 func GetSession() (*Session, error) {
+	sessionFile := getSessionFile()
 	if _, err := os.Stat(sessionFile); os.IsNotExist(err) {
 		return nil, errors.New("no active session")
 	}
@@ -76,14 +96,25 @@ func GetSession() (*Session, error) {
 		return nil, err
 	}
 
-	if time.Now().After(session.Expiry) {
+	now := time.Now()
+	if now.After(session.Expiry) {
 		os.Remove(sessionFile)
 		return nil, errors.New("session expired")
 	}
+
+	if session.InactivityTimeout > 0 && now.Sub(session.LastUsed) > session.InactivityTimeout {
+		os.Remove(sessionFile)
+		return nil, errors.New("session locked due to inactivity")
+	}
+
+	// Update last used time
+	session.LastUsed = now
+	updatedData, _ := json.Marshal(session)
+	_ = os.WriteFile(sessionFile, updatedData, 0600)
 
 	return &session, nil
 }
 
 func KillSession() error {
-	return os.Remove(sessionFile)
+	return os.Remove(getSessionFile())
 }
