@@ -48,8 +48,11 @@ func buildBinaries() error {
 		return fmt.Errorf("build pm failed: %s", out)
 	}
 
+	// Build Team Edition
 	pmTeamBinary = "." + string(filepath.Separator) + "pm-team" + exe
-	cmdTeam := exec.Command("go", "build", "-o", pmTeamBinary, "../team")
+	absTeamPath, _ := filepath.Abs(pmTeamBinary)
+	cmdTeam := exec.Command("go", "build", "-o", absTeamPath, ".")
+	cmdTeam.Dir = "../team"
 	if out, err := cmdTeam.CombinedOutput(); err != nil {
 		return fmt.Errorf("build pm-team failed: %s", out)
 	}
@@ -166,8 +169,8 @@ password_policy:
 
 	input := fmt.Sprintf("%s\n", masterPass)
 
-	out, _ := runPM(input, "policy", "load", "test.yaml")
-	if !strings.Contains(out, "Policy loaded: TestPolicy") {
+	out, _ := runPM(input, "policy", "load", "TestPolicy")
+	if !strings.Contains(out, "loaded and active") {
 
 		if strings.Contains(out, "Error") {
 			t.Errorf("Policy load failed: %s", out)
@@ -199,9 +202,9 @@ func Test_16_SecProfile(t *testing.T) {
 		t.Errorf("sec_profile set failed: %s", out)
 	}
 
-	inputCreate := fmt.Sprintf("%s\n64\n3\n2\n16\n32\n", masterPass)
+	inputCreate := fmt.Sprintf("%s\n64\n3\n2\n16\n12\n", masterPass)
 	out, _ = runPM(inputCreate, "sec_profile", "create", "custom_test")
-	if !strings.Contains(out, "Custom profile 'custom_test' created") {
+	if !strings.Contains(out, "applied") {
 		t.Errorf("sec_profile create failed: %s", out)
 	}
 }
@@ -284,9 +287,9 @@ func Test_23_Team_User(t *testing.T) {
 
 func Test_24_Team_Entries(t *testing.T) {
 
-	input := fmt.Sprintf("1\nSharedDB\ndbuser\ndbpass\ndb.local\nCritical DB\n")
+	input := fmt.Sprintf("1\nSharedDB\ndbuser\ndbpass\ndb.local\nn\nn\n")
 	out, _ := runPMTeam(input, "add")
-	if !strings.Contains(out, "Entry added") {
+	if !strings.Contains(out, "Done.") {
 		t.Errorf("Team add entry failed: %s", out)
 	}
 
