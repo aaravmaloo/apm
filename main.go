@@ -1499,13 +1499,7 @@ func main() {
 				return
 			}
 
-			sessionID := os.Getenv("APM_SESSION_ID")
-			if sessionID == "" {
-				color.Yellow("\nWarning: APM_SESSION_ID is not set. This session will be global.")
-				color.Yellow("To use shell-scoped sessions, set APM_SESSION_ID in your environment.")
-			}
-
-			color.Green("Vault unlocked. Session will expire in %v or after %v of inactivity.\n", timeout, inactivity)
+			color.Green("Vault session updated. Expires in %v or after %v of inactivity.\n", timeout, inactivity)
 		},
 	}
 	unlockCmd.Flags().Duration("timeout", 1*time.Hour, "Session duration (e.g. 1h, 30m)")
@@ -1537,7 +1531,7 @@ func main() {
 				return
 			}
 
-			fmt.Printf("Vault unlocked for %d minutes (READ-ONLY).\n", mins)
+			fmt.Printf("Vault session updated to READ-ONLY mode for %d minutes.\n", mins)
 		},
 	}
 
@@ -2138,12 +2132,14 @@ func main() {
 
 	var cloudInitCmd = &cobra.Command{
 		Use:   "init [gdrive]",
-		Short: "Setup cloud sync and generate retrieval key",
+		Short: "Setup cloud sync and generate/set retrieval key",
 		Run: func(cmd *cobra.Command, args []string) {
 			provider := "gdrive"
 			if len(args) > 0 {
 				provider = args[0]
 			}
+
+			keyFlag, _ := cmd.Flags().GetString("key")
 
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2156,11 +2152,29 @@ func main() {
 				return
 			}
 
-			color.Cyan("Generating secure retrieval key...")
-			customKey, err := src.GenerateRetrievalKey()
-			if err != nil {
-				color.Red("Key generation failed: %v\n", err)
-				return
+			var customKey string
+
+			if keyFlag != "" {
+				customKey = keyFlag
+			} else {
+				fmt.Print("Use custom retrieval key? (y/n) [n]: ")
+				ans := strings.ToLower(readInput())
+				if ans == "y" {
+					fmt.Print("Enter Custom Retrieval Key: ")
+					customKey, _ = readPassword()
+					fmt.Println()
+					if customKey == "" {
+						color.Red("Key cannot be empty.")
+						return
+					}
+				} else {
+					color.Cyan("Generating secure retrieval key...")
+					customKey, err = src.GenerateRetrievalKey()
+					if err != nil {
+						color.Red("Key generation failed: %v\n", err)
+						return
+					}
+				}
 			}
 
 			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
@@ -2467,6 +2481,7 @@ func main() {
 		},
 	}
 
+	cloudInitCmd.Flags().StringP("key", "k", "", "Custom retrieval key")
 	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudResetCmd)
 
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
@@ -3071,6 +3086,9 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			updatedData, _ := src.EncryptVault(vault, pass)
 			src.SaveVault(vaultPath, updatedData)
 
+			src.CreateSession(pass, 1*time.Hour, false, 15*time.Minute)
+			color.Cyan("Vault unlocked and session initialized (expires in 1h). Subsequent commands will auto-unlock.")
+
 			return pass, vault, false, nil
 		}
 
@@ -3320,7 +3338,6 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 		token = src.GetDefaultToken()
 	}
 
-	// ALWAYS update vault with the credentials being used to purge old/corrupt ones
 	if vault != nil {
 		if !bytes.Equal(vault.CloudCredentials, credentials) || !bytes.Equal(vault.CloudToken, token) || vault.LastCloudProvider != "gdrive" {
 			vault.CloudCredentials = credentials
