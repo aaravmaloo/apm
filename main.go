@@ -3087,7 +3087,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			src.SaveVault(vaultPath, updatedData)
 
 			src.CreateSession(pass, 1*time.Hour, false, 15*time.Minute)
-			color.Cyan("Vault unlocked and session initialized (expires in 1h). Subsequent commands will auto-unlock.")
+			color.Cyan("vault has been unlocked. you will be asked to reauthenticate after 15 minutes of inactivity/1 hour.")
 
 			return pass, vault, false, nil
 		}
