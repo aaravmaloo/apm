@@ -17,9 +17,12 @@ var (
 	testVault    = "vault.dat"
 	teamVault    = "team_vault.dat"
 	masterPass   = "TestPass123!"
+	sessionFile  = filepath.Join(os.TempDir(), "pm_session_E2ETEST.json")
 )
 
 func TestMain(m *testing.M) {
+	os.Setenv("APM_SESSION_ID", "E2ETEST")
+
 	if err := buildBinaries(); err != nil {
 		fmt.Printf("Failed to build binaries: %v\n", err)
 		os.Exit(1)
@@ -64,7 +67,11 @@ func cleanup() {
 	os.Remove(testVault)
 	os.Remove(teamVault)
 	os.Remove(".apm_lock")
-	os.Remove("session.json")
+	os.Remove(sessionFile)
+	os.Remove("session.json") // Keep just in case
+	os.Remove("apm.bio")
+	os.Remove("apm.session")
+
 	files, _ := filepath.Glob("test_export.*")
 	for _, f := range files {
 		os.Remove(f)
@@ -110,12 +117,14 @@ func Test_01_Init(t *testing.T) {
 }
 
 func Test_02_Add_AllTypes(t *testing.T) {
+	os.Remove(sessionFile)
 	input := fmt.Sprintf("%s\n1\nTestAcc\nTestUser\nTestPass123\n", masterPass)
 	out, _ := runPM(input, "add")
 	if !strings.Contains(out, "Entry saved") {
 		t.Errorf("Password add failed: %s", out)
 	}
 
+	os.Remove(sessionFile)
 	input = fmt.Sprintf("%s\n2\nTestTOTP\nJBSWY3DPEHPK3PXP\n", masterPass)
 	out, _ = runPM(input, "add")
 	if !strings.Contains(out, "Entry saved") {
@@ -124,6 +133,7 @@ func Test_02_Add_AllTypes(t *testing.T) {
 }
 
 func Test_14_Profiles(t *testing.T) {
+	os.Remove(sessionFile)
 	input := fmt.Sprintf("%s\n", masterPass)
 	out, _ := runPM(input, "profile", "create", "Work")
 	if !strings.Contains(out, "created successfully") {
@@ -135,11 +145,13 @@ func Test_14_Profiles(t *testing.T) {
 		t.Errorf("Profile list failed: %s", out)
 	}
 
+	os.Remove(sessionFile)
 	out, _ = runPM(input, "profile", "switch", "Work")
 	if !strings.Contains(out, "Switched to profile: Work") {
 		t.Errorf("Profile switch failed: %s", out)
 	}
 
+	os.Remove(sessionFile)
 	out, _ = runPM(input, "get", "TestAcc")
 	if !strings.Contains(out, "No matching entries") && !strings.Contains(out, "matches found: 0") {
 		if strings.Contains(out, "TestUser") {
@@ -147,9 +159,11 @@ func Test_14_Profiles(t *testing.T) {
 		}
 	}
 
+	os.Remove(sessionFile)
 	inputAdd := fmt.Sprintf("%s\n1\nWorkAcc\nWorkUser\nWorkPass\n", masterPass)
 	runPM(inputAdd, "add")
 
+	os.Remove(sessionFile)
 	out, _ = runPM(input, "get", "WorkAcc")
 	if !strings.Contains(out, "WorkUser") {
 		t.Errorf("Entry not found in Work profile")
@@ -212,7 +226,7 @@ func Test_16_SecProfile(t *testing.T) {
 func Test_17_Unlock_Flags(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
 	out, _ := runPM(input, "unlock", "--timeout", "1s")
-	if !strings.Contains(out, "Vault unlocked") {
+	if !strings.Contains(out, "Vault unlocked") && !strings.Contains(out, "Vault session updated") {
 		t.Errorf("Unlock failed: %s", out)
 	}
 	time.Sleep(2 * time.Second)
