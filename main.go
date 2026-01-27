@@ -50,6 +50,59 @@ func main() {
 		color.Red("Error loading plugins: %v\n", err)
 	}
 
+	// Helper functions for cloud setup (Shared by init and init-all)
+	setupGDrive := func(v *src.Vault, mp string) {
+		color.Yellow("\nSetting up Google Drive...")
+		gdriveKey, err := src.GenerateRetrievalKey()
+		if err != nil {
+			color.Red("Key generation failed: %v", err)
+			return
+		}
+		cm, err := getCloudManagerEx(context.Background(), v, mp, "gdrive")
+		if err != nil {
+			color.Red("GDrive error: %v", err)
+			return
+		}
+		fileID, err := cm.UploadVault(vaultPath, gdriveKey)
+		if err != nil {
+			color.Red("Upload failed: %v", err)
+			return
+		}
+		v.RetrievalKey = gdriveKey
+		v.CloudFileID = fileID
+		v.LastCloudProvider = "gdrive"
+		color.Green("Google Drive sync setup successful.")
+		color.HiCyan("Retrieval Key: %s", gdriveKey)
+	}
+
+	setupGitHub := func(v *src.Vault, mp string) {
+		color.Yellow("\nSetting up GitHub...")
+		fmt.Println("To create a Personal Access Token, go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic) and create a token with 'repo' scope.")
+		fmt.Print("Enter GitHub Personal Access Token: ")
+		pat, _ := readPassword()
+		fmt.Println()
+		fmt.Print("Enter GitHub Repo (format: owner/repo): ")
+		repo := readInput()
+		if pat == "" || repo == "" {
+			color.Red("Missing token or repo.")
+			return
+		}
+		gm, err := src.NewGitHubManager(context.Background(), pat)
+		if err != nil {
+			color.Red("GitHub Error: %v", err)
+			return
+		}
+		gm.SetRepo(repo)
+		_, err = gm.UploadVault(vaultPath, "")
+		if err != nil {
+			color.Red("Upload failed: %v", err)
+			return
+		}
+		v.GitHubToken = pat
+		v.GitHubRepo = repo
+		color.Green("GitHub sync setup successful.")
+	}
+
 	var initCmd = &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a new vault",
@@ -91,10 +144,94 @@ func main() {
 
 			color.Green("Vault initialized successfully.\n")
 
-			fmt.Println("if this program even helps you, please consider donating to the developer.")
+			fmt.Print("Would you like to set up cloud sync now? (y/n) [n]: ")
+			if strings.ToLower(readInput()) == "y" {
+				fmt.Println("\nChoose Cloud Provider:")
+				fmt.Println("1. Google Drive")
+				fmt.Println("2. GitHub")
+				fmt.Println("3. Both")
+				fmt.Print("Selection (1/2/3): ")
+				choice := readInput()
+				switch choice {
+				case "1":
+					setupGDrive(vault, masterPassword)
+				case "2":
+					setupGitHub(vault, masterPassword)
+				case "3":
+					setupGDrive(vault, masterPassword)
+					setupGitHub(vault, masterPassword)
+				default:
+					color.Red("Invalid selection.")
+				}
+				data, _ := src.EncryptVault(vault, masterPassword)
+				src.SaveVault(vaultPath, data)
+			}
+
+			fmt.Println("\nif this program even helps you, please consider donating to the developer.")
 			fmt.Println("for donations contact: aaravmaloo06@gmail.com")
 		},
 	}
+
+	var initAllCmd = &cobra.Command{
+		Use:   "all",
+		Short: "Initialize a new vault and setup both Google Drive and GitHub sync",
+		Run: func(cmd *cobra.Command, args []string) {
+			if src.VaultExists(vaultPath) {
+				color.Red("Vault already exists.\n")
+				return
+			}
+			// Run standard init (manual implementation to avoid interactive cloud prompt in initCmd.Run)
+			var masterPassword string
+			for {
+				fmt.Print("Create Master Password: ")
+				var err error
+				masterPassword, err = readPassword()
+				if err != nil {
+					color.Red("\nError reading password: %v\n", err)
+					return
+				}
+				fmt.Println()
+
+				if err := src.ValidateMasterPassword(masterPassword); err != nil {
+					color.Red("Invalid password: %v\n", err)
+					continue
+				}
+				break
+			}
+
+			vault := &src.Vault{}
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				fmt.Printf("Error encrypting vault: %v\n", err)
+				return
+			}
+
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+				return
+			}
+
+			color.Green("Vault initialized successfully.\n")
+
+			// Now setup cloud sync for both
+			color.Cyan("\n--- Setting up Cloud Sync (All) ---")
+
+			// Re-unlock to get vault object
+			masterPassword, vault, _, err = src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			// Run helpers
+			setupGDrive(vault, masterPassword)
+			setupGitHub(vault, masterPassword)
+
+			data, _ = src.EncryptVault(vault, masterPassword)
+			src.SaveVault(vaultPath, data)
+			color.Green("\nInitial sync complete.")
+		},
+	}
+	initCmd.AddCommand(initAllCmd)
 
 	var addCmd = &cobra.Command{
 		Use:   "add",
@@ -2127,83 +2264,58 @@ func main() {
 
 	var cloudCmd = &cobra.Command{
 		Use:   "cloud",
-		Short: "Sync and retrieve vaults from cloud (Google Drive)",
+		Short: "Sync and retrieve vaults from cloud (Google Drive & GitHub)",
 	}
 
 	var cloudInitCmd = &cobra.Command{
-		Use:   "init [gdrive]",
+		Use:   "init [gdrive|github]",
 		Short: "Setup cloud sync and generate/set retrieval key",
 		Run: func(cmd *cobra.Command, args []string) {
-			provider := "gdrive"
-			if len(args) > 0 {
-				provider = args[0]
-			}
-
-			keyFlag, _ := cmd.Flags().GetString("key")
-
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			if vault.RetrievalKey != "" {
-				color.Yellow("Cloud sync already initialized. Key: %s\n", vault.RetrievalKey)
-				return
-			}
-
-			var customKey string
-
-			if keyFlag != "" {
-				customKey = keyFlag
+			provider := ""
+			if len(args) > 0 {
+				provider = strings.ToLower(args[0])
 			} else {
-				fmt.Print("Use custom retrieval key? (y/n) [n]: ")
-				ans := strings.ToLower(readInput())
-				if ans == "y" {
-					fmt.Print("Enter Custom Retrieval Key: ")
-					customKey, _ = readPassword()
-					fmt.Println()
-					if customKey == "" {
-						color.Red("Key cannot be empty.")
-						return
-					}
+				fmt.Println("Choose Cloud Provider:")
+				fmt.Println("1. Google Drive")
+				fmt.Println("2. GitHub")
+				fmt.Println("3. Both")
+				fmt.Print("Selection (1/2/3): ")
+				choice := readInput()
+				if choice == "1" {
+					provider = "gdrive"
+				} else if choice == "2" {
+					provider = "github"
+				} else if choice == "3" {
+					provider = "both"
 				} else {
-					color.Cyan("Generating secure retrieval key...")
-					customKey, err = src.GenerateRetrievalKey()
-					if err != nil {
-						color.Red("Key generation failed: %v\n", err)
-						return
-					}
+					color.Red("Invalid selection.")
+					return
 				}
 			}
 
-			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
-			if err != nil {
-				color.Red("Cloud Error: %v\n", err)
-				return
+			switch provider {
+			case "github":
+				setupGitHub(vault, masterPassword)
+			case "gdrive":
+				setupGDrive(vault, masterPassword)
+			case "both":
+				setupGDrive(vault, masterPassword)
+				setupGitHub(vault, masterPassword)
 			}
-
-			fileID, err := cm.UploadVault(vaultPath, customKey)
-			if err != nil {
-				color.Red("Upload failed: %v\n", err)
-				return
-			}
-
-			vault.RetrievalKey = customKey
-			vault.CloudFileID = fileID
-			vault.LastCloudProvider = provider
 
 			data, _ := src.EncryptVault(vault, masterPassword)
 			src.SaveVault(vaultPath, data)
-
-			color.Green("Cloud sync initialized (%s)!", provider)
-			color.HiCyan("Retrieval Key: %s\n", customKey)
-			color.Yellow("Keep this key safe! It's required to pull your vault on other devices.")
 		},
 	}
 
 	var cloudSyncCmd = &cobra.Command{
-		Use:   "sync [gdrive]",
+		Use:   "sync [gdrive|github]",
 		Short: "Sync local vault to cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
@@ -2212,31 +2324,42 @@ func main() {
 				return
 			}
 
-			if vault.RetrievalKey == "" {
+			syncTo := []string{}
+			if len(args) > 0 {
+				syncTo = append(syncTo, strings.ToLower(args[0]))
+			} else {
+				if vault.CloudFileID != "" {
+					syncTo = append(syncTo, "gdrive")
+				}
+				if vault.GitHubToken != "" {
+					syncTo = append(syncTo, "github")
+				}
+			}
+
+			if len(syncTo) == 0 {
 				color.Red("Cloud sync not initialized. Run 'pm cloud init' first.")
 				return
 			}
 
-			provider := vault.LastCloudProvider
-			if len(args) > 0 {
-				provider = args[0]
-			}
-			if provider == "" {
-				provider = "gdrive"
-			}
+			for _, provider := range syncTo {
+				cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
+				if err != nil {
+					color.Red("[%s] Cloud Error: %v", provider, err)
+					continue
+				}
 
-			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
-			if err != nil {
-				color.Red("Cloud Error: %v\n", err)
-				return
-			}
+				targetID := vault.CloudFileID
+				if provider == "github" {
+					targetID = vault.GitHubRepo
+				}
 
-			err = cm.SyncVault(vaultPath, vault.CloudFileID)
-			if err != nil {
-				color.Red("Sync failed: %v\n", err)
-				return
+				err = cm.SyncVault(vaultPath, targetID)
+				if err != nil {
+					color.Red("[%s] Sync failed: %v", provider, err)
+				} else {
+					color.Green("[%s] Vault synced to cloud.", provider)
+				}
 			}
-			color.Green("Vault synced to cloud (%s).", provider)
 		},
 	}
 
@@ -2256,19 +2379,19 @@ func main() {
 				return
 			}
 
-			if vault.RetrievalKey == "" {
-				color.Red("Cloud sync not initialized.")
-				return
+			syncConfigured := false
+			var syncTargets []string
+			if vault.CloudFileID != "" {
+				syncTargets = append(syncTargets, "gdrive")
+				syncConfigured = true
+			}
+			if vault.GitHubToken != "" {
+				syncTargets = append(syncTargets, "github")
+				syncConfigured = true
 			}
 
-			key := vault.RetrievalKey
-			provider := vault.LastCloudProvider
-			if provider == "" {
-				provider = "gdrive"
-			}
-			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
-			if err != nil {
-				color.Red("Cloud Error: %v\n", err)
+			if !syncConfigured {
+				color.Red("Cloud sync not initialized.")
 				return
 			}
 
@@ -2290,18 +2413,28 @@ func main() {
 						}
 						if event.Op&fsnotify.Write == fsnotify.Write {
 							if time.Since(lastSync) > 5*time.Second {
-								fmt.Printf("[%s] Change detected, syncing...\n", time.Now().Format("15:04:05"))
-								targetFileID := vault.CloudFileID
-								if targetFileID == "" {
-									targetFileID = key
+								fmt.Printf("[%s] Change detected, syncing to cloud...\n", time.Now().Format("15:04:05"))
+
+								for _, provider := range syncTargets {
+									cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, provider)
+									if err != nil {
+										color.Red("[%s] Cloud Error: %v", provider, err)
+										continue
+									}
+
+									targetID := vault.CloudFileID
+									if provider == "github" {
+										targetID = vault.GitHubRepo
+									}
+
+									err = cm.SyncVault(vaultPath, targetID)
+									if err != nil {
+										color.Red("[%s] Auto-sync failed: %v", provider, err)
+									} else {
+										color.Green("[%s] Auto-sync successful.", provider)
+									}
 								}
-								err := cm.SyncVault(vaultPath, targetFileID)
-								if err != nil {
-									color.Red("Auto-sync failed: %v\n", err)
-								} else {
-									color.Green("Auto-sync successful.")
-									lastSync = time.Now()
-								}
+								lastSync = time.Now()
 							}
 						}
 					case err, ok := <-watcher.Errors:
@@ -2318,36 +2451,97 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			color.Cyan("Auto-sync watcher started for %s. Press Ctrl+C to stop.", vaultPath)
+			color.Cyan("Auto-sync watcher started (Targets: %v). Press Ctrl+C to stop.", syncTargets)
 			<-done
 		},
 	}
 	cloudAutoSyncCmd.Flags().Bool("true", false, "Enable auto-sync")
 
 	var cloudGetCmd = &cobra.Command{
-		Use:   "get [gdrive] [retrieval_key]",
+		Use:   "get [gdrive|github] [retrieval_key|repo]",
 		Short: "Download vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			provider := "gdrive"
 			var key string
 
 			if len(args) == 0 {
-				fmt.Print("Enter Provider (gdrive) [gdrive]: ")
+				fmt.Print("Enter Provider (gdrive|github) [gdrive]: ")
 				pInput := readInput()
 				if pInput != "" {
-					provider = pInput
+					provider = strings.ToLower(pInput)
 				}
-				fmt.Print("Enter Retrieval Key: ")
-				key, _ = readPassword()
-				fmt.Println()
+				if provider == "github" {
+					fmt.Print("Enter GitHub Personal Access Token: ")
+					pat, _ := readPassword()
+					fmt.Println()
+					fmt.Print("Enter GitHub Repo (owner/repo): ")
+					key = readInput()
+
+					// Temporary manager for download
+					gm, err := src.NewGitHubManager(context.Background(), pat)
+					if err != nil {
+						color.Red("Cloud Error: %v", err)
+						return
+					}
+					data, err := gm.DownloadVault(key)
+					if err != nil {
+						color.Red("Download failed: %v", err)
+						return
+					}
+					handleDownloadedVault(data, pat, key)
+					return
+				} else {
+					fmt.Print("Enter Retrieval Key: ")
+					key, _ = readPassword()
+					fmt.Println()
+				}
 			} else if len(args) == 1 {
-				provider = args[0]
-				fmt.Print("Enter Retrieval Key: ")
-				key, _ = readPassword()
-				fmt.Println()
+				provider = strings.ToLower(args[0])
+				if provider == "github" {
+					fmt.Print("Enter GitHub Personal Access Token: ")
+					pat, _ := readPassword()
+					fmt.Println()
+					fmt.Print("Enter GitHub Repo (owner/repo): ")
+					key = readInput()
+
+					gm, err := src.NewGitHubManager(context.Background(), pat)
+					if err != nil {
+						color.Red("Cloud Error: %v", err)
+						return
+					}
+					data, err := gm.DownloadVault(key)
+					if err != nil {
+						color.Red("Download failed: %v", err)
+						return
+					}
+					handleDownloadedVault(data, pat, key)
+					return
+				} else {
+					fmt.Print("Enter Retrieval Key: ")
+					key, _ = readPassword()
+					fmt.Println()
+				}
 			} else {
-				provider = args[0]
+				provider = strings.ToLower(args[0])
 				key = args[1]
+				if provider == "github" {
+					fmt.Print("Enter GitHub Personal Access Token: ")
+					pat, _ := readPassword()
+					fmt.Println()
+
+					gm, err := src.NewGitHubManager(context.Background(), pat)
+					if err != nil {
+						color.Red("Cloud Error: %v", err)
+						return
+					}
+					data, err := gm.DownloadVault(key)
+					if err != nil {
+						color.Red("Download failed: %v", err)
+						return
+					}
+					handleDownloadedVault(data, pat, key)
+					return
+				}
 			}
 
 			cp, err := src.GetCloudProvider(provider, context.Background(), nil, nil)
@@ -2369,21 +2563,7 @@ func main() {
 				return
 			}
 
-			fmt.Print("Verify Master Password for downloaded vault: ")
-			pass, _ := readPassword()
-			fmt.Println()
-			_, err = src.DecryptVault(data, pass, 1)
-			if err != nil {
-				color.Red("Decryption failed. Vault not saved locally: %v\n", err)
-				return
-			}
-
-			err = src.SaveVault(vaultPath, data)
-			if err != nil {
-				color.Red("Error saving vault: %v\n", err)
-				return
-			}
-			color.Green("Vault retrieved and saved successfully.")
+			handleDownloadedVault(data, "", "")
 		},
 	}
 
@@ -2684,10 +2864,33 @@ func main() {
 
 			// 2. Cloud Sync
 			color.Yellow("Step 2: Cloud Sync Configuration")
-			fmt.Print("Would you like to configure cloud synchronization? (y/n): ")
+			fmt.Print("Would you like to configure cloud synchronization? (y/n) [n]: ")
 			if strings.ToLower(readInput()) == "y" {
-				fmt.Printf("Configuring Google Drive sync...\n")
-				color.Cyan("Please run 'pm cloud init' separately to complete authentication.")
+				masterPassword, vault, _, err := src_unlockVault()
+				if err != nil {
+					color.Red("Unlock failed: %v", err)
+				} else {
+					fmt.Println("\nChoose Cloud Provider:")
+					fmt.Println("1. Google Drive")
+					fmt.Println("2. GitHub")
+					fmt.Println("3. Both")
+					fmt.Print("Selection (1/2/3): ")
+					choice := readInput()
+					switch choice {
+					case "1":
+						setupGDrive(vault, masterPassword)
+					case "2":
+						setupGitHub(vault, masterPassword)
+					case "3":
+						setupGDrive(vault, masterPassword)
+						setupGitHub(vault, masterPassword)
+					default:
+						color.Red("Invalid selection.")
+					}
+					// Save changes if any
+					data, _ := src.EncryptVault(vault, masterPassword)
+					src.SaveVault(vaultPath, data)
+				}
 			}
 			fmt.Println()
 
@@ -3309,6 +3512,18 @@ func displayEntry(res src.SearchResult, showPass bool) {
 }
 
 func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword string, provider string) (src.CloudProvider, error) {
+	if provider == "github" {
+		if vault == nil || vault.GitHubToken == "" {
+			return nil, fmt.Errorf("github sync not initialized. run 'pm cloud init github' first")
+		}
+		gm, err := src.NewGitHubManager(ctx, vault.GitHubToken)
+		if err != nil {
+			return nil, err
+		}
+		gm.SetRepo(vault.GitHubRepo)
+		return gm, nil
+	}
+
 	if provider != "gdrive" {
 		return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
 	}
@@ -3342,7 +3557,9 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 		if !bytes.Equal(vault.CloudCredentials, credentials) || !bytes.Equal(vault.CloudToken, token) || vault.LastCloudProvider != "gdrive" {
 			vault.CloudCredentials = credentials
 			vault.CloudToken = token
-			vault.LastCloudProvider = "gdrive"
+			if vault.LastCloudProvider == "" {
+				vault.LastCloudProvider = "gdrive"
+			}
 			migrated = true
 		}
 	}
@@ -3355,4 +3572,29 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 	}
 
 	return src.GetCloudProvider(provider, ctx, credentials, token)
+}
+
+func handleDownloadedVault(data []byte, githubToken, githubRepo string) {
+	fmt.Print("Verify Master Password for downloaded vault: ")
+	pass, _ := readPassword()
+	fmt.Println()
+	vault, err := src.DecryptVault(data, pass, 1)
+	if err != nil {
+		color.Red("Decryption failed. Vault not saved locally: %v\n", err)
+		return
+	}
+
+	if githubToken != "" {
+		vault.GitHubToken = githubToken
+		vault.GitHubRepo = githubRepo
+
+		data, _ = src.EncryptVault(vault, pass)
+	}
+
+	err = src.SaveVault(vaultPath, data)
+	if err != nil {
+		color.Red("Error saving vault: %v\n", err)
+		return
+	}
+	color.Green("Vault retrieved and saved successfully.")
 }
