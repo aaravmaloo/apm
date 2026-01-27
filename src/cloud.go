@@ -13,6 +13,7 @@ import (
 
 	"strings"
 
+	"github.com/google/go-github/v60/github"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -252,7 +253,140 @@ func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte
 			tokenJSON = GetDefaultToken()
 		}
 		return NewGoogleDriveManager(ctx, credsJSON, tokenJSON)
+	case "github":
+		if len(tokenJSON) == 0 {
+			return nil, fmt.Errorf("github personal access token missing")
+		}
+		return NewGitHubManager(ctx, string(tokenJSON))
 	default:
 		return nil, fmt.Errorf("unsupported cloud provider: %s", providerName)
 	}
+}
+
+type GitHubManager struct {
+	Client *github.Client
+	Token  string
+	Repo   string
+	Ctx    context.Context
+}
+
+func NewGitHubManager(ctx context.Context, token string) (*GitHubManager, error) {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
+
+	return &GitHubManager{
+		Client: client,
+		Token:  token,
+		Ctx:    ctx,
+	}, nil
+}
+
+func (gm *GitHubManager) SetRepo(repo string) {
+	gm.Repo = repo
+}
+
+func (gm *GitHubManager) UploadVault(vaultPath string, customKey string) (string, error) {
+	content, err := os.ReadFile(vaultPath)
+	if err != nil {
+		return "", err
+	}
+
+	repoParts := strings.Split(gm.Repo, "/")
+	if len(repoParts) != 2 {
+		return "", fmt.Errorf("invalid repo format, expected owner/repo")
+	}
+	owner, repo := repoParts[0], repoParts[1]
+
+	// Check if repo exists, if not create it
+	_, _, err = gm.Client.Repositories.Get(gm.Ctx, owner, repo)
+	if err != nil {
+		newRepo := &github.Repository{
+			Name:        github.String(repo),
+			Private:     github.Bool(true), // Ensure it is private
+			Description: github.String("APM Secure Vault Storage"),
+		}
+		_, _, err = gm.Client.Repositories.Create(gm.Ctx, "", newRepo)
+		if err != nil {
+			return "", fmt.Errorf("failed to create private repo: %v", err)
+		}
+	}
+
+	// Try to get the file to get its SHA if it exists
+	fileContent, _, _, err := gm.Client.Repositories.GetContents(gm.Ctx, owner, repo, "vault.dat", nil)
+	var sha *string
+	if err == nil && fileContent != nil {
+		sha = fileContent.SHA
+	}
+
+	opts := &github.RepositoryContentFileOptions{
+		Message: github.String("update vault"),
+		Content: content,
+		SHA:     sha,
+	}
+
+	_, _, err = gm.Client.Repositories.UpdateFile(gm.Ctx, owner, repo, "vault.dat", opts)
+	if err != nil {
+		_, _, err = gm.Client.Repositories.CreateFile(gm.Ctx, owner, repo, "vault.dat", opts)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload vault to github: %v", err)
+		}
+	}
+
+	return gm.Repo, nil
+}
+
+func (gm *GitHubManager) DownloadVault(fileID string) ([]byte, error) {
+	repoParts := strings.Split(fileID, "/")
+	if len(repoParts) != 2 {
+		return nil, fmt.Errorf("invalid repo format in fileID")
+	}
+	owner, repo := repoParts[0], repoParts[1]
+
+	fileContent, _, _, err := gm.Client.Repositories.GetContents(gm.Ctx, owner, repo, "vault.dat", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get vault from github: %v", err)
+	}
+
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(content), nil
+}
+
+func (gm *GitHubManager) SyncVault(vaultPath, fileID string) error {
+	_, err := gm.UploadVault(vaultPath, "")
+	return err
+}
+
+func (gm *GitHubManager) DeleteVault(fileID string) error {
+	repoParts := strings.Split(fileID, "/")
+	if len(repoParts) != 2 {
+		return fmt.Errorf("invalid repo format")
+	}
+	owner, repo := repoParts[0], repoParts[1]
+
+	_, err := gm.Client.Repositories.Delete(gm.Ctx, owner, repo)
+	return err
+}
+
+func (gm *GitHubManager) ResolveKeyToID(key string) (string, error) {
+	// For GitHub, the "key" is expected to be the owner/repo string
+	return key, nil
+}
+
+func (gm *GitHubManager) ListMarketplacePlugins() ([]string, error) {
+	return nil, fmt.Errorf("plugins are only supported on Google Drive")
+}
+
+func (gm *GitHubManager) DownloadPlugin(name string, destDir string) error {
+	return fmt.Errorf("plugins are only supported on Google Drive")
+}
+
+func (gm *GitHubManager) UploadPlugin(name string, pluginPath string) error {
+	return fmt.Errorf("plugins are only supported on Google Drive")
 }
