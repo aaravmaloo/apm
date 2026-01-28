@@ -180,7 +180,6 @@ func main() {
 				color.Red("Vault already exists.\n")
 				return
 			}
-			// Run standard init (manual implementation to avoid interactive cloud prompt in initCmd.Run)
 			var masterPassword string
 			for {
 				fmt.Print("Create Master Password: ")
@@ -213,10 +212,8 @@ func main() {
 
 			color.Green("Vault initialized successfully.\n")
 
-			// Now setup cloud sync for both
 			color.Cyan("\n--- Setting up Cloud Sync (All) ---")
 
-			// Re-unlock to get vault object
 			masterPassword, vault, _, err = src_unlockVault()
 			if err != nil {
 				return
