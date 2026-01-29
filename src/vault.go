@@ -1139,113 +1139,125 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 	var results []SearchResult
 	query = strings.ToLower(query)
 
+	matchNamespace := func(ns string) bool {
+		current := v.CurrentNamespace
+		if current == "" {
+			current = "default"
+		}
+		target := ns
+		if target == "" {
+			target = "default"
+		}
+		return current == target
+	}
+
 	for _, e := range v.Entries {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Account), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Account), query)) {
 			results = append(results, SearchResult{"Password", e.Account, e, e.Namespace})
 		}
 	}
 	for _, e := range v.TOTPEntries {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Account), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Account), query)) {
 			results = append(results, SearchResult{"TOTP", e.Account, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Tokens {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Token", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SecureNotes {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Note", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.APIKeys {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"API Key", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SSHKeys {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"SSH Key", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.WiFiCredentials {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.SSID), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.SSID), query)) {
 			results = append(results, SearchResult{"Wi-Fi", e.SSID, e, e.Namespace})
 		}
 	}
 	for _, e := range v.RecoveryCodeItems {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Service), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Service), query)) {
 			results = append(results, SearchResult{"Recovery Codes", e.Service, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Certificates {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
 			results = append(results, SearchResult{"Certificate", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.BankingItems {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
 			results = append(results, SearchResult{"Banking", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Documents {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Document", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.GovIDs {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.IDNumber), query) || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.IDNumber), query) || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Government ID", e.IDNumber, e, e.Namespace})
 		}
 	}
 	for _, e := range v.MedicalRecords {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
 			results = append(results, SearchResult{"Medical Record", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.TravelDocs {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
 			results = append(results, SearchResult{"Travel", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.Contacts {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Contact", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.CloudCredentialsItems {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Label), query)) {
 			results = append(results, SearchResult{"Cloud Credentials", e.Label, e, e.Namespace})
 		}
 	}
 	for _, e := range v.K8sSecrets {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Kubernetes Secret", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.DockerRegistries {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Docker Registry", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SSHConfigs {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Alias), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Alias), query)) {
 			results = append(results, SearchResult{"SSH Config", e.Alias, e, e.Namespace})
 		}
 	}
 	for _, e := range v.CICDSecrets {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"CI/CD Secret", e.Name, e, e.Namespace})
 		}
 	}
 	for _, e := range v.SoftwareLicenses {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.ProductName), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.ProductName), query)) {
 			results = append(results, SearchResult{"Software License", e.ProductName, e, e.Namespace})
 		}
 	}
 	for _, e := range v.LegalContracts {
-		if (v.CurrentNamespace == "" || e.Namespace == v.CurrentNamespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+		if matchNamespace(e.Namespace) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Legal Contract", e.Name, e, e.Namespace})
 		}
 	}
