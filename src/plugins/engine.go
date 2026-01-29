@@ -98,8 +98,7 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		}
 		name := se.Context.Substitute(step.Key)
 		val := se.Context.Substitute(step.Message)
-		se.Vault.AddEntry(name, "plugin_user", val)
-		return nil
+		return se.Vault.AddEntry(name, "plugin_user", val)
 
 	case "vault.list":
 		if !hasPermission(permissions, "vault.read") {
@@ -128,7 +127,7 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 	case "prompt.input":
 		fmt.Printf("%s: ", se.Context.Substitute(step.Message))
 		var input string
-		fmt.Scanln(&input)
+		_, _ = fmt.Scanln(&input)
 		if step.AssignTo != "" {
 			se.Context.Variables[step.AssignTo] = input
 		}
@@ -248,7 +247,7 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 	case "prompt.confirm":
 		fmt.Printf("%s (y/n): ", se.Context.Substitute(step.Message))
 		var input string
-		fmt.Scanln(&input)
+		_, _ = fmt.Scanln(&input)
 		if step.AssignTo != "" {
 			se.Context.Variables[step.AssignTo] = strings.ToLower(input)
 		}
