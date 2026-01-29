@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -33,11 +34,12 @@ func LogAccess(action string) {
 	exe, _ := os.Executable()
 
 	path := strings.Replace(exe, "pm.exe", "apm_audit.log", 1)
+	path = filepath.Clean(path)
 
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err == nil {
 		defer f.Close()
-		f.WriteString(entry)
+		_, _ = f.WriteString(entry)
 	}
 }
 

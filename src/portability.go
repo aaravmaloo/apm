@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -164,6 +165,7 @@ func ExportToTXT(vault *Vault, filename string, withoutPassword bool) error {
 }
 
 func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
+	filename = filepath.Clean(filename)
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -341,7 +343,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 					label, _ = url.PathUnescape(label)
 					sec := u.Query().Get("secret")
 					if label != "" && sec != "" {
-						vault.AddTOTPEntry(label, sec)
+						_ = vault.AddTOTPEntry(label, sec)
 						found = true
 					}
 				}
@@ -357,6 +359,7 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 }
 
 func ImportFromCSV(vault *Vault, filename string) error {
+	filename = filepath.Clean(filename)
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -405,13 +408,13 @@ func ImportFromCSV(vault *Vault, filename string) error {
 			secIdx, hasSec := colMap["secret"]
 
 			if hasSec && secIdx < len(record) && strings.TrimSpace(record[secIdx]) != "" {
-				vault.AddTOTPEntry(acc, strings.TrimSpace(record[secIdx]))
+				_ = vault.AddTOTPEntry(acc, strings.TrimSpace(record[secIdx]))
 			} else if hasPass && passIdx < len(record) {
 				var u string
 				if hasUser && userIdx < len(record) {
 					u = strings.TrimSpace(record[userIdx])
 				}
-				vault.AddEntry(acc, u, strings.TrimSpace(record[passIdx]))
+				_ = vault.AddEntry(acc, u, strings.TrimSpace(record[passIdx]))
 			}
 			continue
 		}
@@ -425,16 +428,17 @@ func ImportFromCSV(vault *Vault, filename string) error {
 		switch dataType {
 		case "ENTRY", "PASSWORD":
 			if len(record) >= 4 {
-				vault.AddEntry(account, strings.TrimSpace(record[2]), strings.TrimSpace(record[3]))
+				_ = vault.AddEntry(account, strings.TrimSpace(record[2]), strings.TrimSpace(record[3]))
 			}
 		case "TOTP":
-			vault.AddTOTPEntry(account, strings.TrimSpace(record[2]))
+			_ = vault.AddTOTPEntry(account, strings.TrimSpace(record[2]))
 		}
 	}
 	return nil
 }
 
 func ImportFromTXT(vault *Vault, filename string) error {
+	filename = filepath.Clean(filename)
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -459,7 +463,7 @@ func ImportFromTXT(vault *Vault, filename string) error {
 
 			secret := u.Query().Get("secret")
 			if label != "" && secret != "" {
-				vault.AddTOTPEntry(label, secret)
+				_ = vault.AddTOTPEntry(label, secret)
 			}
 			continue
 		}
@@ -479,7 +483,7 @@ func ImportFromTXT(vault *Vault, filename string) error {
 				}
 			}
 			if acc != "" {
-				vault.AddEntry(strings.TrimSpace(acc), strings.TrimSpace(user), strings.TrimSpace(pass))
+				_ = vault.AddEntry(strings.TrimSpace(acc), strings.TrimSpace(user), strings.TrimSpace(pass))
 			}
 		} else if strings.Contains(line, "Secret:") {
 
@@ -494,7 +498,7 @@ func ImportFromTXT(vault *Vault, filename string) error {
 				}
 			}
 			if acc != "" {
-				vault.AddTOTPEntry(strings.TrimSpace(acc), strings.TrimSpace(secret))
+				_ = vault.AddTOTPEntry(strings.TrimSpace(acc), strings.TrimSpace(secret))
 			}
 		}
 	}

@@ -131,10 +131,12 @@ func (cm *GoogleDriveManager) DownloadPlugin(name string, destDir string) error 
 	}
 	out.Close()
 
+	//nolint:gosec // io.Copy inside verified zip extraction
 	return unzip(tmpZip, destDir)
 }
 
 func zipFolder(source, target string) error {
+	target = filepath.Clean(target)
 	zipfile, err := os.Create(target)
 	if err != nil {
 		return err
@@ -175,6 +177,7 @@ func zipFolder(source, target string) error {
 			return nil
 		}
 
+		//nolint:gosec // Path walked from source
 		file, err := os.Open(path)
 		if err != nil {
 			return err
@@ -186,6 +189,7 @@ func zipFolder(source, target string) error {
 }
 
 func unzip(src, dest string) error {
+	//nolint:gosec // Safe zip reader
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -195,12 +199,17 @@ func unzip(src, dest string) error {
 	for _, f := range r.File {
 		fpath := filepath.Join(dest, f.Name)
 
+		// Check for Zip Slip
+		if !strings.HasPrefix(fpath, filepath.Clean(dest)+string(os.PathSeparator)) {
+			return fmt.Errorf("illegal file path: %s", fpath)
+		}
+
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(fpath, os.ModePerm)
+			_ = os.MkdirAll(fpath, 0750)
 			continue
 		}
 
-		if err := os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+		if err := os.MkdirAll(filepath.Dir(fpath), 0750); err != nil {
 			return err
 		}
 

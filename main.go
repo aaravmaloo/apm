@@ -42,9 +42,9 @@ func init() {
 		vaultFile = "vault.dat"
 	}
 	if filepath.IsAbs(vaultFile) {
-		vaultPath = vaultFile
+		vaultPath = filepath.Clean(vaultFile)
 	} else {
-		vaultPath = filepath.Join(filepath.Dir(exe), vaultFile)
+		vaultPath = filepath.Clean(filepath.Join(filepath.Dir(exe), vaultFile))
 	}
 	inputReader = bufio.NewReader(os.Stdin)
 }
@@ -91,7 +91,11 @@ func main() {
 		color.Yellow("\nSetting up GitHub...")
 		fmt.Println("To create a Personal Access Token, go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic) and create a token with 'repo' scope.")
 		fmt.Print("Enter GitHub Personal Access Token: ")
-		pat, _ := readPassword()
+		pat, err := readPassword()
+		if err != nil {
+			color.Red("Error reading token: %v", err)
+			return
+		}
 		fmt.Println()
 		fmt.Print("Enter GitHub Repo (format: owner/repo): ")
 		repo := readInput()
@@ -2602,7 +2606,7 @@ func performSearch(v *src.Vault, query string) []src.SearchResult {
 
 func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, readonly bool, oldState *term.State) {
 	// Restore terminal for interactive prompt
-	term.Restore(int(os.Stdin.Fd()), oldState)
+	_ = term.Restore(int(os.Stdin.Fd()), oldState)
 	fmt.Print("\033[H\033[2J") // Clear
 
 	switch action {
@@ -2626,8 +2630,11 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 			if strings.ToLower(readInput()) == "y" {
 				if deleteEntryByResult(v, res) {
 					data, _ := src.EncryptVault(v, mp)
-					src.SaveVault(vaultPath, data)
-					color.Green("Deleted.")
+					if err := src.SaveVault(vaultPath, data); err != nil {
+						color.Red("Error saving vault: %v", err)
+					} else {
+						color.Green("Deleted.")
+					}
 				} else {
 					color.Red("Delete failed.")
 				}
@@ -2639,7 +2646,9 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 
 	// Re-enter raw mode
 	newState, _ := term.MakeRaw(int(os.Stdin.Fd()))
-	*oldState = *newState
+	if newState != nil {
+		*oldState = *newState
+	}
 }
 
 func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {

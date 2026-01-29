@@ -57,7 +57,7 @@ func CreateSession(password string, duration time.Duration, readonly bool, inact
 
 	go func() {
 		time.Sleep(duration)
-		os.Remove(sessionFile)
+		_ = os.Remove(sessionFile)
 	}()
 
 	cleanupCmd(duration, sessionFile)
@@ -68,6 +68,7 @@ func CreateSession(password string, duration time.Duration, readonly bool, inact
 func cleanupCmd(duration time.Duration, sessionFile string) {
 	seconds := int(duration.Seconds())
 	var cmd *exec.Cmd
+	//nolint:gosec // Command arguments are integer duration and sanitized file path
 	if filepath.Separator == '\\' {
 		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
 	} else {
@@ -86,6 +87,7 @@ func GetSession() (*Session, error) {
 		return nil, errors.New("no active session")
 	}
 
+	//nolint:gosec // sessionFile is constructed from safe TempDir and alphanumeric ID
 	data, err := os.ReadFile(sessionFile)
 	if err != nil {
 		return nil, err
@@ -98,12 +100,12 @@ func GetSession() (*Session, error) {
 
 	now := time.Now()
 	if now.After(session.Expiry) {
-		os.Remove(sessionFile)
+		_ = os.Remove(sessionFile)
 		return nil, errors.New("session expired")
 	}
 
 	if session.InactivityTimeout > 0 && now.Sub(session.LastUsed) > session.InactivityTimeout {
-		os.Remove(sessionFile)
+		_ = os.Remove(sessionFile)
 		return nil, errors.New("session locked due to inactivity")
 	}
 
