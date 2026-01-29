@@ -87,7 +87,7 @@ func main() {
 		color.HiCyan("Retrieval Key: %s", gdriveKey)
 	}
 
-	setupGitHub := func(v *src.Vault, mp string) {
+	setupGitHub := func(v *src.Vault) {
 		color.Yellow("\nSetting up GitHub...")
 		fmt.Println("To create a Personal Access Token, go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic) and create a token with 'repo' scope.")
 		fmt.Print("Enter GitHub Personal Access Token: ")
@@ -168,10 +168,10 @@ func main() {
 				case "1":
 					setupGDrive(vault, masterPassword)
 				case "2":
-					setupGitHub(vault, masterPassword)
+					setupGitHub(vault)
 				case "3":
 					setupGDrive(vault, masterPassword)
-					setupGitHub(vault, masterPassword)
+					setupGitHub(vault)
 				default:
 					color.Red("Invalid selection.")
 				}
@@ -233,7 +233,7 @@ func main() {
 
 			// Run helpers
 			setupGDrive(vault, masterPassword)
-			setupGitHub(vault, masterPassword)
+			setupGitHub(vault)
 
 			data, _ = src.EncryptVault(vault, masterPassword)
 			src.SaveVault(vaultPath, data)
@@ -1336,12 +1336,12 @@ func main() {
 
 			switch provider {
 			case "github":
-				setupGitHub(vault, masterPassword)
+				setupGitHub(vault)
 			case "gdrive":
 				setupGDrive(vault, masterPassword)
 			case "both":
 				setupGDrive(vault, masterPassword)
-				setupGitHub(vault, masterPassword)
+				setupGitHub(vault)
 			}
 
 			data, _ := src.EncryptVault(vault, masterPassword)
@@ -1660,14 +1660,6 @@ func main() {
 				color.Red("Vault is READ-ONLY. Cannot reset cloud metadata.")
 				return
 			}
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if readonly {
-				color.Red("Vault is READ-ONLY. Cannot reset cloud metadata.")
-				return
-			}
 
 			if vault.RetrievalKey == "" {
 				color.Yellow("Cloud sync is not initialized (no key found).")
@@ -1915,10 +1907,10 @@ func main() {
 					case "1":
 						setupGDrive(vault, masterPassword)
 					case "2":
-						setupGitHub(vault, masterPassword)
+						setupGitHub(vault)
 					case "3":
 						setupGDrive(vault, masterPassword)
-						setupGitHub(vault, masterPassword)
+						setupGitHub(vault)
 					default:
 						color.Red("Invalid selection.")
 					}
@@ -2516,21 +2508,21 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 
 		if b[0] == '\r' || b[0] == '\n' {
 			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, initialQuery, oldState)
+				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
 			}
 			continue
 		}
 
 		if b[0] == 'e' {
 			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, initialQuery, oldState)
+				handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
 			}
 			continue
 		}
 
 		if b[0] == 'd' {
 			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, initialQuery, oldState)
+				handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
 			}
 			continue
 		}
@@ -2566,7 +2558,7 @@ func performSearch(v *src.Vault, query string) []src.SearchResult {
 	return out
 }
 
-func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, readonly bool, initialQuery string, oldState *term.State) {
+func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, readonly bool, oldState *term.State) {
 	// Restore terminal for interactive prompt
 	term.Restore(int(os.Stdin.Fd()), oldState)
 	fmt.Print("\033[H\033[2J") // Clear
