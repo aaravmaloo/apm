@@ -161,7 +161,7 @@ func Test_14_Profiles(t *testing.T) {
 
 	os.Remove(sessionFile)
 	inputAdd := fmt.Sprintf("%s\n1\nWorkAcc\nWorkUser\nWorkPass\n", masterPass)
-	runPM(inputAdd, "add")
+	_, _ = runPM(inputAdd, "add")
 
 	os.Remove(sessionFile)
 	out, _ = runPM(input, "get", "WorkAcc")
@@ -172,13 +172,13 @@ func Test_14_Profiles(t *testing.T) {
 
 func Test_15_Policy(t *testing.T) {
 
-	os.Mkdir("policies", 0755)
+	_ = os.Mkdir("policies", 0755)
 	policyContent := `name: "TestPolicy"
 password_policy:
   min_length: 20
   require_uppercase: true
 `
-	os.WriteFile("policies/test.yaml", []byte(policyContent), 0644)
+	_ = os.WriteFile("policies/test.yaml", []byte(policyContent), 0644)
 	defer os.RemoveAll("policies")
 
 	input := fmt.Sprintf("%s\n", masterPass)
@@ -199,7 +199,7 @@ password_policy:
 	inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
 	out, _ = runPM(inputAdd, "add")
 	if !strings.Contains(out, "password too short") && !strings.Contains(out, "Policy violation") {
-
+		t.Errorf("Policy enforcement failed: %s", out)
 	}
 
 	out, _ = runPM(input, "policy", "clear")
