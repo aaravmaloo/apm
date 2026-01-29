@@ -24,5 +24,5 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
-    - name: Run E2E Tests
+    - run: run E2E Tests
 
