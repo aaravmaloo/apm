@@ -31,8 +31,8 @@ func LogAccess(action string) {
 	entry := fmt.Sprintf("%d|%s|%s\n", time.Now().Unix(), GetDeviceHash(), action)
 
 	exe, _ := os.Executable()
-	path := "apm_audit.log"
-	path = strings.Replace(exe, "pm.exe", "apm_audit.log", 1)
+
+	path := strings.Replace(exe, "pm.exe", "apm_audit.log", 1)
 
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err == nil {
