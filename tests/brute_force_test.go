@@ -1,6 +1,7 @@
 package apm_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,42 +11,42 @@ import (
 )
 
 func TestBruteForceResistance(t *testing.T) {
-	// 1. Build binary
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
 	exe := ""
 	if runtime.GOOS == "windows" {
 		exe = ".exe"
 	}
 	pmBinary := "./pm_brute" + exe
-	cmd := exec.Command("go", "build", "-o", pmBinary, "../main.go")
+	cmd := exec.CommandContext(ctx, "go", "build", "-o", pmBinary, "../main.go")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build: %s", out)
 	}
 	defer os.Remove(pmBinary)
 
-	// 2. Create a vault with a known weak password
 	weakPass := "password123"
 	vaultFile := "brute_vault.dat"
 	defer os.Remove(vaultFile)
 
-	initCmd := exec.Command(pmBinary, "init")
+	initCmd := exec.CommandContext(ctx, pmBinary, "init")
 	initCmd.Env = append(os.Environ(), "APM_VAULT_PATH="+vaultFile)
 	stdin, _ := initCmd.StdinPipe()
 	go func() {
-		fmt.Fprintln(stdin, weakPass) // Master Pass
-		fmt.Fprintln(stdin, "n")      // No cloud sync
+		fmt.Fprintln(stdin, weakPass)
+		fmt.Fprintln(stdin, "n")
 		stdin.Close()
 	}()
 	if out, err := initCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Init failed: %s", out)
 	}
 
-	// 3. Attempt brute force
 	wordlist := []string{"123456", "admin", "password", "password123", "secret"}
 	found := false
 	start := time.Now()
 
 	for _, p := range wordlist {
-		checkCmd := exec.Command(pmBinary, "get", "anything")
+		checkCmd := exec.CommandContext(ctx, pmBinary, "get", "anything")
 		checkCmd.Env = append(os.Environ(), "APM_VAULT_PATH="+vaultFile)
 		stdin, _ := checkCmd.StdinPipe()
 		go func() {
