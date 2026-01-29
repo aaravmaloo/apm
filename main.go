@@ -2111,6 +2111,9 @@ func main() {
 				}
 			}
 
+			if len(vault.Profiles) == 0 {
+				vault.Profiles = []string{"default"}
+			}
 			vault.Profiles = append(vault.Profiles, newProfile)
 			data, err := src.EncryptVault(vault, masterPwd)
 			if err != nil {
