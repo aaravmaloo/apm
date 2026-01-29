@@ -203,22 +203,13 @@ password_policy:
 		t.Errorf("Policy show failed: %s", out)
 	}
 
+	// Debug logs removed
 	if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
 		t.Logf("Warning: Failed to remove session file: %v", err)
 	}
 
-	// Debug: List files
-	entries, _ := os.ReadDir(".")
-	for _, e := range entries {
-		t.Logf("File: %s", e.Name())
-	}
-	if _, err := os.Stat(testVault); os.IsNotExist(err) {
-		t.Logf("CRITICAL: vault.dat does not exist!")
-	}
-
 	inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
 	out, _ = runPM(inputAdd, "add")
-	t.Logf("Add Command Output:\n%s", out)
 	if !strings.Contains(out, "password too short") && !strings.Contains(out, "Policy violation") {
 		t.Errorf("Policy enforcement failed: %s", out)
 	}
