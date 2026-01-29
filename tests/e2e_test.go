@@ -277,7 +277,7 @@ func Test_22_Team_Dept(t *testing.T) {
 
 func Test_23_Team_User(t *testing.T) {
 
-	input := fmt.Sprintf("AlicePass123\n")
+	input := "AlicePass123\n"
 	out, _ := runPMTeam(input, "user", "add", "alice", "--role", "MANAGER", "--dept", "engineering")
 	if !strings.Contains(out, "added successfully") {
 		t.Errorf("User add failed: %s", out)
@@ -301,7 +301,7 @@ func Test_23_Team_User(t *testing.T) {
 
 func Test_24_Team_Entries(t *testing.T) {
 
-	input := fmt.Sprintf("1\nSharedDB\ndbuser\ndbpass\ndb.local\nn\nn\n")
+	input := "1\nSharedDB\ndbuser\ndbpass\ndb.local\nn\nn\n"
 	out, _ := runPMTeam(input, "add")
 	if !strings.Contains(out, "Done.") {
 		t.Errorf("Team add entry failed: %s", out)
