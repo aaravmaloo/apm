@@ -168,6 +168,13 @@ func Test_14_Profiles(t *testing.T) {
 	if !strings.Contains(out, "WorkUser") {
 		t.Errorf("Entry not found in Work profile")
 	}
+
+	// Switch back to default profile
+	os.Remove(sessionFile)
+	out, _ = runPM(input, "profile", "switch", "default")
+	if !strings.Contains(out, "Switched to profile: default") {
+		t.Errorf("Failed to switch back to default profile: %s", out)
+	}
 }
 
 func Test_15_Policy(t *testing.T) {
@@ -199,6 +206,16 @@ password_policy:
 	if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
 		t.Logf("Warning: Failed to remove session file: %v", err)
 	}
+
+	// Debug: List files
+	entries, _ := os.ReadDir(".")
+	for _, e := range entries {
+		t.Logf("File: %s", e.Name())
+	}
+	if _, err := os.Stat(testVault); os.IsNotExist(err) {
+		t.Logf("CRITICAL: vault.dat does not exist!")
+	}
+
 	inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
 	out, _ = runPM(inputAdd, "add")
 	t.Logf("Add Command Output:\n%s", out)
