@@ -209,7 +209,7 @@ func TrackFailure() {
 	exe, _ := os.Executable()
 	path := filepath.Join(filepath.Dir(exe), ".apm_lock")
 	count := GetFailureCount()
-	os.WriteFile(path, []byte(strconv.Itoa(count+1)), 0600)
+	_ = os.WriteFile(path, []byte(strconv.Itoa(count+1)), 0600)
 }
 
 func ClearFailures() {
