@@ -196,9 +196,12 @@ password_policy:
 		t.Errorf("Policy show failed: %s", out)
 	}
 
-	os.Remove(sessionFile)
+	if err := os.Remove(sessionFile); err != nil && !os.IsNotExist(err) {
+		t.Logf("Warning: Failed to remove session file: %v", err)
+	}
 	inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
 	out, _ = runPM(inputAdd, "add")
+	t.Logf("Add Command Output:\n%s", out)
 	if !strings.Contains(out, "password too short") && !strings.Contains(out, "Policy violation") {
 		t.Errorf("Policy enforcement failed: %s", out)
 	}
