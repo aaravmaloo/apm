@@ -58,7 +58,7 @@ func SendAlert(vault *Vault, eventType, details string) {
 	f, err := os.OpenFile("email.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err == nil {
 		defer f.Close()
-		f.WriteString(msg)
+		_, _ = f.WriteString(msg)
 	}
 
 }
