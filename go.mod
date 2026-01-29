@@ -1,6 +1,6 @@
 module password-manager
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/google/go-github/v60 v60.0.0

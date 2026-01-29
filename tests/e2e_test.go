@@ -196,6 +196,7 @@ password_policy:
 		t.Errorf("Policy show failed: %s", out)
 	}
 
+	os.Remove(sessionFile)
 	inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
 	out, _ = runPM(inputAdd, "add")
 	if !strings.Contains(out, "password too short") && !strings.Contains(out, "Policy violation") {
