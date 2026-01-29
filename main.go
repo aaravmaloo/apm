@@ -176,7 +176,9 @@ func main() {
 					color.Red("Invalid selection.")
 				}
 				data, _ := src.EncryptVault(vault, masterPassword)
-				src.SaveVault(vaultPath, data)
+				if err := src.SaveVault(vaultPath, data); err != nil {
+					color.Red("Error saving vault: %v\n", err)
+				}
 			}
 
 			fmt.Println("\nif this program even helps you, please consider donating to the developer.")
@@ -236,7 +238,9 @@ func main() {
 			setupGitHub(vault)
 
 			data, _ = src.EncryptVault(vault, masterPassword)
-			src.SaveVault(vaultPath, data)
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+			}
 			color.Green("\nInitial sync complete.")
 		},
 	}
@@ -495,7 +499,10 @@ func main() {
 				name := readInput()
 				fmt.Print("Expiry Date: ")
 				exp := readInput()
-				vault.AddGovID(src.GovIDEntry{Type: tType, IDNumber: num, Name: name, Expiry: exp})
+				if err := vault.AddGovID(src.GovIDEntry{Type: tType, IDNumber: num, Name: name, Expiry: exp}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "13":
 				fmt.Print("Label: ")
 				label := readInput()
@@ -505,7 +512,10 @@ func main() {
 				pres := readInput()
 				fmt.Print("Allergies: ")
 				all := readInput()
-				vault.AddMedicalRecord(src.MedicalRecordEntry{Label: label, InsuranceID: iid, Prescriptions: pres, Allergies: all})
+				if err := vault.AddMedicalRecord(src.MedicalRecordEntry{Label: label, InsuranceID: iid, Prescriptions: pres, Allergies: all}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "14":
 				fmt.Print("Label: ")
 				label := readInput()
@@ -515,7 +525,10 @@ func main() {
 				code := readInput()
 				fmt.Print("Loyalty Program: ")
 				loy := readInput()
-				vault.AddTravelDoc(src.TravelEntry{Label: label, TicketNumber: tick, BookingCode: code, LoyaltyProgram: loy})
+				if err := vault.AddTravelDoc(src.TravelEntry{Label: label, TicketNumber: tick, BookingCode: code, LoyaltyProgram: loy}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "15":
 				fmt.Print("Name: ")
 				name := readInput()
@@ -527,7 +540,10 @@ func main() {
 				addr := readInput()
 				fmt.Print("Is Emergency Contact? (y/n): ")
 				em := strings.ToLower(readInput()) == "y"
-				vault.AddContact(src.ContactEntry{Name: name, Phone: phone, Email: email, Address: addr, Emergency: em})
+				if err := vault.AddContact(src.ContactEntry{Name: name, Phone: phone, Email: email, Address: addr, Emergency: em}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "16":
 				fmt.Print("Label: ")
 				label := readInput()
@@ -543,7 +559,10 @@ func main() {
 				role := readInput()
 				fmt.Print("Expiration: ")
 				exp := readInput()
-				vault.AddCloudCredential(src.CloudCredentialEntry{Label: label, AccessKey: ak, SecretKey: sk, Region: reg, AccountID: aid, Role: role, Expiration: exp})
+				if err := vault.AddCloudCredential(src.CloudCredentialEntry{Label: label, AccessKey: ak, SecretKey: sk, Region: reg, AccountID: aid, Role: role, Expiration: exp}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "17":
 				fmt.Print("Name: ")
 				name := readInput()
@@ -553,7 +572,10 @@ func main() {
 				ns := readInput()
 				fmt.Print("Expiration: ")
 				exp := readInput()
-				vault.AddK8sSecret(src.K8sSecretEntry{Name: name, ClusterURL: url, Namespace: ns, Expiration: exp})
+				if err := vault.AddK8sSecret(src.K8sSecretEntry{Name: name, ClusterURL: url, Namespace: ns, Expiration: exp}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "18":
 				fmt.Print("Name: ")
 				name := readInput()
@@ -563,7 +585,10 @@ func main() {
 				user := readInput()
 				fmt.Print("Token: ")
 				tok := readInput()
-				vault.AddDockerRegistry(src.DockerRegistryEntry{Name: name, RegistryURL: url, Username: user, Token: tok})
+				if err := vault.AddDockerRegistry(src.DockerRegistryEntry{Name: name, RegistryURL: url, Username: user, Token: tok}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "19":
 				fmt.Print("Alias: ")
 				alias := readInput()
@@ -586,7 +611,10 @@ func main() {
 					}
 					pkLines = append(pkLines, line)
 				}
-				vault.AddSSHConfig(src.SSHConfigEntry{Alias: alias, Host: host, User: user, Port: port, KeyPath: kp, PrivateKey: strings.Join(pkLines, "\n"), Fingerprint: fp})
+				if err := vault.AddSSHConfig(src.SSHConfigEntry{Alias: alias, Host: host, User: user, Port: port, KeyPath: kp, PrivateKey: strings.Join(pkLines, "\n"), Fingerprint: fp}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "20":
 				fmt.Print("Name: ")
 				name := readInput()
@@ -594,7 +622,10 @@ func main() {
 				wh := readInput()
 				fmt.Print("Environment Variables (comma separated): ")
 				ev := readInput()
-				vault.AddCICDSecret(src.CICDSecretEntry{Name: name, Webhook: wh, EnvVars: ev})
+				if err := vault.AddCICDSecret(src.CICDSecretEntry{Name: name, Webhook: wh, EnvVars: ev}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "21":
 				fmt.Print("Product Name: ")
 				prod := readInput()
@@ -604,7 +635,10 @@ func main() {
 				act := readInput()
 				fmt.Print("Expiration: ")
 				exp := readInput()
-				vault.AddSoftwareLicense(src.SoftwareLicenseEntry{ProductName: prod, SerialKey: key, ActivationInfo: act, Expiration: exp})
+				if err := vault.AddSoftwareLicense(src.SoftwareLicenseEntry{ProductName: prod, SerialKey: key, ActivationInfo: act, Expiration: exp}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			case "22":
 				fmt.Print("Name: ")
 				name := readInput()
@@ -614,7 +648,10 @@ func main() {
 				part := readInput()
 				fmt.Print("Signed Date: ")
 				date := readInput()
-				vault.AddLegalContract(src.LegalContractEntry{Name: name, Summary: sum, PartiesInvolved: part, SignedDate: date})
+				if err := vault.AddLegalContract(src.LegalContractEntry{Name: name, Summary: sum, PartiesInvolved: part, SignedDate: date}); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
 			default:
 				color.Red("Invalid selection.\n")
 				return
@@ -865,7 +902,7 @@ func main() {
 			memStr := readInput()
 			mem := uint32(64)
 			if memStr != "" {
-				fmt.Sscanf(memStr, "%d", &mem)
+				_, _ = fmt.Sscanf(memStr, "%d", &mem)
 			}
 
 			fmt.Println("\n[2] Time (Argon2 Iterations)")
@@ -876,7 +913,7 @@ func main() {
 			timeStr := readInput()
 			t := uint32(3)
 			if timeStr != "" {
-				fmt.Sscanf(timeStr, "%d", &t)
+				_, _ = fmt.Sscanf(timeStr, "%d", &t)
 			}
 
 			fmt.Println("\n[3] Parallelism (Argon2 Threads)")
@@ -887,7 +924,7 @@ func main() {
 			parStr := readInput()
 			p := uint8(2)
 			if parStr != "" {
-				fmt.Sscanf(parStr, "%d", &p)
+				_, _ = fmt.Sscanf(parStr, "%d", &p)
 			}
 
 			fmt.Println("\n[4] Salt Length")
@@ -898,7 +935,7 @@ func main() {
 			saltLenStr := readInput()
 			saltLen := 16
 			if saltLenStr != "" {
-				fmt.Sscanf(saltLenStr, "%d", &saltLen)
+				_, _ = fmt.Sscanf(saltLenStr, "%d", &saltLen)
 			}
 
 			fmt.Println("\n[5] Nonce Length (IV Size)")
@@ -909,7 +946,7 @@ func main() {
 			nonceLenStr := readInput()
 			nonceLen := 12
 			if nonceLenStr != "" {
-				fmt.Sscanf(nonceLenStr, "%d", &nonceLen)
+				_, _ = fmt.Sscanf(nonceLenStr, "%d", &nonceLen)
 			}
 
 			customProfile := src.CryptoProfile{
@@ -930,7 +967,9 @@ func main() {
 				color.Red("Encryption failed: %v", err)
 				return
 			}
-			src.SaveVault(vaultPath, data)
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+			}
 			color.Green("Custom profile '%s' applied.", args[0])
 		},
 	}
@@ -1070,7 +1109,7 @@ func main() {
 				f, _ := os.OpenFile(vaultPath, os.O_WRONLY, 0)
 				info, _ := f.Stat()
 				data := make([]byte, info.Size())
-				rand.Read(data)
+				_, _ = rand.Read(data)
 				f.Write(data)
 				f.Close()
 				os.Remove(vaultPath)
