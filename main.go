@@ -2701,6 +2701,15 @@ func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
 	return false
 }
 
+func prompt(label, current string) string {
+	fmt.Printf("%s [%s]: ", label, current)
+	input := readInput()
+	if input == "" {
+		return current
+	}
+	return input
+}
+
 func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	fmt.Printf("Editing %s: %s\n", res.Type, res.Identifier)
 	updated := false
@@ -2708,67 +2717,282 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	switch res.Type {
 	case "Password":
 		e := res.Data.(src.Entry)
-		fmt.Printf("New Account [%s]: ", e.Account)
-		newAcc := readInput()
-		if newAcc == "" {
-			newAcc = e.Account
-		}
-		fmt.Printf("New Username [%s]: ", e.Username)
-		newUser := readInput()
-		if newUser == "" {
-			newUser = e.Username
-		}
+		newAcc := prompt("New Account", e.Account)
+		newUser := prompt("New Username", e.Username)
+
 		fmt.Print("New Password (blank to keep): ")
 		newPass, _ := readPassword()
 		fmt.Println()
 		if newPass == "" {
 			newPass = e.Password
 		}
-		v.DeleteEntry(e.Account)
-		v.AddEntry(newAcc, newUser, newPass)
-		updated = true
-	// Simplified: For other types, we could add similar logic.
-	// For now, I'll implement a few more common ones.
+
+		if v.DeleteEntry(e.Account) {
+			v.AddEntry(newAcc, newUser, newPass)
+			updated = true
+		}
 	case "TOTP":
 		e := res.Data.(src.TOTPEntry)
-		fmt.Printf("New Account [%s]: ", e.Account)
-		newAcc := readInput()
-		if newAcc == "" {
-			newAcc = e.Account
+		newAcc := prompt("New Account", e.Account)
+		newSec := prompt("New Secret", e.Secret)
+
+		if v.DeleteTOTPEntry(e.Account) {
+			v.AddTOTPEntry(newAcc, newSec)
+			updated = true
 		}
-		fmt.Printf("New Secret [%s]: ", e.Secret)
-		newSec := readInput()
-		if newSec == "" {
-			newSec = e.Secret
+	case "Token":
+		e := res.Data.(src.TokenEntry)
+		newName := prompt("New Name", e.Name)
+		newToken := prompt("New Token", e.Token)
+		newType := prompt("New Type", e.Type)
+
+		if v.DeleteToken(e.Name) {
+			v.AddToken(newName, newToken, newType)
+			updated = true
 		}
-		v.DeleteTOTPEntry(e.Account)
-		v.AddTOTPEntry(newAcc, newSec)
-		updated = true
 	case "Note":
 		e := res.Data.(src.SecureNoteEntry)
-		fmt.Printf("New Name [%s]: ", e.Name)
-		newName := readInput()
-		if newName == "" {
-			newName = e.Name
+		newName := prompt("New Name", e.Name)
+		newContent := prompt("New Content", e.Content)
+
+		if v.DeleteSecureNote(e.Name) {
+			v.AddSecureNote(newName, newContent)
+			updated = true
 		}
-		fmt.Println("New Content (end with empty line, blank to keep):")
-		var lines []string
-		for {
-			l := readInput()
-			if l == "" {
-				break
+	case "API Key":
+		e := res.Data.(src.APIKeyEntry)
+		newName := prompt("New Name", e.Name)
+		newService := prompt("New Service", e.Service)
+		newKey := prompt("New Key", e.Key)
+
+		if v.DeleteAPIKey(e.Name) {
+			v.AddAPIKey(newName, newService, newKey)
+			updated = true
+		}
+	case "SSH Key":
+		e := res.Data.(src.SSHKeyEntry)
+		newName := prompt("New Name", e.Name)
+		newKey := prompt("New Private Key", e.PrivateKey)
+
+		if v.DeleteSSHKey(e.Name) {
+			v.AddSSHKey(newName, newKey)
+			updated = true
+		}
+	case "Wi-Fi":
+		e := res.Data.(src.WiFiEntry)
+		newSSID := prompt("New SSID", e.SSID)
+		newPass := prompt("New Password", e.Password)
+		newSec := prompt("New Security Type", e.SecurityType)
+
+		if v.DeleteWiFi(e.SSID) {
+			v.AddWiFi(newSSID, newPass, newSec)
+			updated = true
+		}
+	case "Recovery Codes":
+		e := res.Data.(src.RecoveryCodeEntry)
+		newService := prompt("New Service", e.Service)
+		newCodesStr := prompt("New Codes (comma sep)", strings.Join(e.Codes, ","))
+		newCodes := strings.Split(newCodesStr, ",")
+		for i := range newCodes {
+			newCodes[i] = strings.TrimSpace(newCodes[i])
+		}
+
+		if v.DeleteRecoveryCode(e.Service) {
+			v.AddRecoveryCode(newService, newCodes)
+			updated = true
+		}
+	case "Certificate":
+		e := res.Data.(src.CertificateEntry)
+		newLabel := prompt("New Label", e.Label)
+		newCert := prompt("New Cert Data", e.CertData)
+		newKey := prompt("New Private Key", e.PrivateKey)
+		newIssuer := prompt("New Issuer", e.Issuer)
+		newExpiryStr := prompt("New Expiry (RFC3339)", e.Expiry.Format(time.RFC3339))
+
+		newExpiry, err := time.Parse(time.RFC3339, newExpiryStr)
+		if err != nil {
+			fmt.Println("Invalid time format, keeping old expiry.")
+			newExpiry = e.Expiry
+		}
+
+		if v.DeleteCertificate(e.Label) {
+			v.AddCertificate(newLabel, newCert, newKey, newIssuer, newExpiry)
+			updated = true
+		}
+	case "Banking":
+		e := res.Data.(src.BankingEntry)
+		newLabel := prompt("New Label", e.Label)
+		newType := prompt("New Type", e.Type)
+		newDetails := prompt("New Details", e.Details)
+		newCVV := prompt("New CVV", e.CVV)
+		newExpiry := prompt("New Expiry", e.Expiry)
+
+		if v.DeleteBankingItem(e.Label) {
+			v.AddBankingItem(newLabel, newType, newDetails, newCVV, newExpiry)
+			updated = true
+		}
+	case "Document":
+		e := res.Data.(src.DocumentEntry)
+		newName := prompt("New Name", e.Name)
+		newPath := prompt("New File Path for Content (leave blank to keep)", "")
+		newPass := prompt("New Password", e.Password)
+		newTagsStr := prompt("New Tags (comma sep)", strings.Join(e.Tags, ","))
+		newExpiry := prompt("New Expiry", e.Expiry)
+
+		newContent := e.Content
+		if newPath != "" {
+			c, err := os.ReadFile(newPath)
+			if err == nil {
+				newContent = c
+			} else {
+				fmt.Printf("Error reading file: %v. Keeping old content.\n", err)
 			}
-			lines = append(lines, l)
 		}
-		newContent := strings.Join(lines, "\n")
-		if newContent == "" {
-			newContent = e.Content
+
+		newTags := strings.Split(newTagsStr, ",")
+		for i := range newTags {
+			newTags[i] = strings.TrimSpace(newTags[i])
 		}
-		v.DeleteSecureNote(e.Name)
-		v.AddSecureNote(newName, newContent)
-		updated = true
+
+		if v.DeleteDocument(e.Name) {
+			v.AddDocument(newName, e.FileName, newContent, newPass, newTags, newExpiry)
+			updated = true
+		}
+	case "Government ID":
+		e := res.Data.(src.GovIDEntry)
+		newType := prompt("New Type", e.Type)
+		newID := prompt("New ID Number", e.IDNumber)
+		newName := prompt("New Name", e.Name)
+		newExpiry := prompt("New Expiry", e.Expiry)
+
+		if v.DeleteGovID(e.IDNumber) {
+			v.AddGovID(src.GovIDEntry{Type: newType, IDNumber: newID, Name: newName, Expiry: newExpiry})
+			updated = true
+		}
+	case "Medical Record":
+		e := res.Data.(src.MedicalRecordEntry)
+		newLabel := prompt("New Label", e.Label)
+		newIns := prompt("New Insurance ID", e.InsuranceID)
+		newPres := prompt("New Prescriptions", e.Prescriptions)
+		newAllergies := prompt("New Allergies", e.Allergies)
+
+		if v.DeleteMedicalRecord(e.Label) {
+			v.AddMedicalRecord(src.MedicalRecordEntry{Label: newLabel, InsuranceID: newIns, Prescriptions: newPres, Allergies: newAllergies})
+			updated = true
+		}
+	case "Travel":
+		e := res.Data.(src.TravelEntry)
+		newLabel := prompt("New Label", e.Label)
+		newTicket := prompt("New Ticket Num", e.TicketNumber)
+		newBooking := prompt("New Booking Code", e.BookingCode)
+		newLoyalty := prompt("New Loyalty Prog", e.LoyaltyProgram)
+
+		if v.DeleteTravelDoc(e.Label) {
+			v.AddTravelDoc(src.TravelEntry{Label: newLabel, TicketNumber: newTicket, BookingCode: newBooking, LoyaltyProgram: newLoyalty})
+			updated = true
+		}
+	case "Contact":
+		e := res.Data.(src.ContactEntry)
+		newName := prompt("New Name", e.Name)
+		newPhone := prompt("New Phone", e.Phone)
+		newEmail := prompt("New Email", e.Email)
+		newAddress := prompt("New Address", e.Address)
+
+		emergStr := "n"
+		if e.Emergency {
+			emergStr = "y"
+		}
+		newEmergStr := prompt("Emergency Contact? (y/n)", emergStr)
+		newEmerg := strings.ToLower(newEmergStr) == "y"
+
+		if v.DeleteContact(e.Name) {
+			v.AddContact(src.ContactEntry{Name: newName, Phone: newPhone, Email: newEmail, Address: newAddress, Emergency: newEmerg})
+			updated = true
+		}
+	case "Cloud Credentials":
+		e := res.Data.(src.CloudCredentialEntry)
+		newLabel := prompt("New Label", e.Label)
+		newAK := prompt("New Access Key", e.AccessKey)
+		newSK := prompt("New Secret Key", e.SecretKey)
+		newRegion := prompt("New Region", e.Region)
+		newAccID := prompt("New Account ID", e.AccountID)
+		newRole := prompt("New Role", e.Role)
+		newExp := prompt("New Expiration", e.Expiration)
+
+		if v.DeleteCloudCredential(e.Label) {
+			v.AddCloudCredential(src.CloudCredentialEntry{Label: newLabel, AccessKey: newAK, SecretKey: newSK, Region: newRegion, AccountID: newAccID, Role: newRole, Expiration: newExp})
+			updated = true
+		}
+	case "Kubernetes Secret":
+		e := res.Data.(src.K8sSecretEntry)
+		newName := prompt("New Name", e.Name)
+		newCluster := prompt("New Cluster URL", e.ClusterURL)
+		newNS := prompt("New K8s Namespace", e.K8sNamespace)
+		newExp := prompt("New Expiration", e.Expiration)
+
+		if v.DeleteK8sSecret(e.Name) {
+			v.AddK8sSecret(src.K8sSecretEntry{Name: newName, ClusterURL: newCluster, K8sNamespace: newNS, Expiration: newExp})
+			updated = true
+		}
+	case "Docker Registry":
+		e := res.Data.(src.DockerRegistryEntry)
+		newName := prompt("New Name", e.Name)
+		newURL := prompt("New Registry URL", e.RegistryURL)
+		newUser := prompt("New Username", e.Username)
+		newToken := prompt("New Token", e.Token)
+
+		if v.DeleteDockerRegistry(e.Name) {
+			v.AddDockerRegistry(src.DockerRegistryEntry{Name: newName, RegistryURL: newURL, Username: newUser, Token: newToken})
+			updated = true
+		}
+	case "SSH Config":
+		e := res.Data.(src.SSHConfigEntry)
+		newAlias := prompt("New Alias", e.Alias)
+		newHost := prompt("New Host", e.Host)
+		newUser := prompt("New User", e.User)
+		newPort := prompt("New Port", e.Port)
+		newKeyPath := prompt("New Key Path", e.KeyPath)
+		newPrivKey := prompt("New Private Key", e.PrivateKey)
+		newFingerprint := prompt("New Fingerprint", e.Fingerprint)
+
+		if v.DeleteSSHConfig(e.Alias) {
+			v.AddSSHConfig(src.SSHConfigEntry{Alias: newAlias, Host: newHost, User: newUser, Port: newPort, KeyPath: newKeyPath, PrivateKey: newPrivKey, Fingerprint: newFingerprint})
+			updated = true
+		}
+	case "CI/CD Secret":
+		e := res.Data.(src.CICDSecretEntry)
+		newName := prompt("New Name", e.Name)
+		newUnknown := prompt("New Webhook", e.Webhook)
+		newEnvVars := prompt("New Env Vars", e.EnvVars)
+
+		if v.DeleteCICDSecret(e.Name) {
+			v.AddCICDSecret(src.CICDSecretEntry{Name: newName, Webhook: newUnknown, EnvVars: newEnvVars})
+			updated = true
+		}
+	case "Software License":
+		e := res.Data.(src.SoftwareLicenseEntry)
+		newProd := prompt("New Product Name", e.ProductName)
+		newKey := prompt("New Serial Key", e.SerialKey)
+		newInfo := prompt("New Activation Info", e.ActivationInfo)
+		newExp := prompt("New Expiration", e.Expiration)
+
+		if v.DeleteSoftwareLicense(e.ProductName) {
+			v.AddSoftwareLicense(src.SoftwareLicenseEntry{ProductName: newProd, SerialKey: newKey, ActivationInfo: newInfo, Expiration: newExp})
+			updated = true
+		}
+	case "Legal Contract":
+		e := res.Data.(src.LegalContractEntry)
+		newName := prompt("New Name", e.Name)
+		newSum := prompt("New Summary", e.Summary)
+		newParties := prompt("New Parties Involved", e.PartiesInvolved)
+		newDate := prompt("New Signed Date", e.SignedDate)
+
+		if v.DeleteLegalContract(e.Name) {
+			v.AddLegalContract(src.LegalContractEntry{Name: newName, Summary: newSum, PartiesInvolved: newParties, SignedDate: newDate})
+			updated = true
+		}
 	default:
-		color.Yellow("Direct editing for %s not fully implemented in TUI yet. Use 'add' to overwrite or delete/add.", res.Type)
+		color.Yellow("Editing for %s not implemented.", res.Type)
 	}
 
 	if updated {
