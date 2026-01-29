@@ -57,31 +57,31 @@ func ExportToCSV(vault *Vault, filename string) error {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	writer.Write([]string{"Type", "Account", "Username/Secret", "Password"})
+	_ = writer.Write([]string{"Type", "Account", "Username/Secret", "Password"})
 
 	for _, e := range vault.Entries {
-		writer.Write([]string{"PASSWORD", e.Account, e.Username, e.Password})
+		_ = writer.Write([]string{"PASSWORD", e.Account, e.Username, e.Password})
 	}
 	for _, t := range vault.TOTPEntries {
-		writer.Write([]string{"TOTP", t.Account, t.Secret, ""})
+		_ = writer.Write([]string{"TOTP", t.Account, t.Secret, ""})
 	}
 	for _, tok := range vault.Tokens {
-		writer.Write([]string{"TOKEN", tok.Name, tok.Token, ""})
+		_ = writer.Write([]string{"TOKEN", tok.Name, tok.Token, ""})
 	}
 	for _, n := range vault.SecureNotes {
-		writer.Write([]string{"NOTE", n.Name, n.Content, ""})
+		_ = writer.Write([]string{"NOTE", n.Name, n.Content, ""})
 	}
 	for _, k := range vault.APIKeys {
-		writer.Write([]string{"API_KEY", k.Name, k.Service, k.Key})
+		_ = writer.Write([]string{"API_KEY", k.Name, k.Service, k.Key})
 	}
 	for _, s := range vault.SSHKeys {
-		writer.Write([]string{"SSH_KEY", s.Name, s.PrivateKey, ""})
+		_ = writer.Write([]string{"SSH_KEY", s.Name, s.PrivateKey, ""})
 	}
 	for _, w := range vault.WiFiCredentials {
-		writer.Write([]string{"WIFI", w.SSID, w.SecurityType, w.Password})
+		_ = writer.Write([]string{"WIFI", w.SSID, w.SecurityType, w.Password})
 	}
 	for _, r := range vault.RecoveryCodeItems {
-		writer.Write([]string{"RECOVERY", r.Service, strings.Join(r.Codes, ","), ""})
+		_ = writer.Write([]string{"RECOVERY", r.Service, strings.Join(r.Codes, ","), ""})
 	}
 
 	return nil
@@ -179,28 +179,28 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	var data ExportData
 	if err := json.Unmarshal(bytes, &data); err == nil && (len(data.Entries) > 0 || len(data.TOTPEntries) > 0 || len(data.SecureNotes) > 0 || len(data.APIKeys) > 0 || len(data.SSHKeys) > 0 || len(data.WiFiCredentials) > 0 || len(data.RecoveryCodeItems) > 0) {
 		for _, e := range data.Entries {
-			vault.AddEntry(e.Account, e.Username, e.Password)
+			_ = vault.AddEntry(e.Account, e.Username, e.Password)
 		}
 		for _, t := range data.TOTPEntries {
-			vault.AddTOTPEntry(t.Account, t.Secret)
+			_ = vault.AddTOTPEntry(t.Account, t.Secret)
 		}
 		for _, tok := range data.Tokens {
-			vault.AddToken(tok.Name, tok.Token, tok.Type)
+			_ = vault.AddToken(tok.Name, tok.Token, tok.Type)
 		}
 		for _, n := range data.SecureNotes {
-			vault.AddSecureNote(n.Name, n.Content)
+			_ = vault.AddSecureNote(n.Name, n.Content)
 		}
 		for _, k := range data.APIKeys {
-			vault.AddAPIKey(k.Name, k.Service, k.Key)
+			_ = vault.AddAPIKey(k.Name, k.Service, k.Key)
 		}
 		for _, s := range data.SSHKeys {
-			vault.AddSSHKey(s.Name, s.PrivateKey)
+			_ = vault.AddSSHKey(s.Name, s.PrivateKey)
 		}
 		for _, w := range data.WiFiCredentials {
-			vault.AddWiFi(w.SSID, w.Password, w.SecurityType)
+			_ = vault.AddWiFi(w.SSID, w.Password, w.SecurityType)
 		}
 		for _, r := range data.RecoveryCodeItems {
-			vault.AddRecoveryCode(r.Service, r.Codes)
+			_ = vault.AddRecoveryCode(r.Service, r.Codes)
 		}
 		return nil
 	}
@@ -228,34 +228,34 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 					var innerData ExportData
 					if err := json.Unmarshal(decrypted, &innerData); err == nil && (len(innerData.Entries) > 0 || len(innerData.TOTPEntries) > 0 || len(innerData.SecureNotes) > 0 || len(innerData.APIKeys) > 0 || len(innerData.SSHKeys) > 0 || len(innerData.WiFiCredentials) > 0 || len(innerData.RecoveryCodeItems) > 0) {
 						for _, e := range innerData.Entries {
-							vault.AddEntry(e.Account, e.Username, e.Password)
+							_ = vault.AddEntry(e.Account, e.Username, e.Password)
 						}
 						for _, t := range innerData.TOTPEntries {
-							vault.AddTOTPEntry(t.Account, t.Secret)
+							_ = vault.AddTOTPEntry(t.Account, t.Secret)
 						}
 						for _, tok := range innerData.Tokens {
-							vault.AddToken(tok.Name, tok.Token, tok.Type)
+							_ = vault.AddToken(tok.Name, tok.Token, tok.Type)
 						}
 						for _, n := range innerData.SecureNotes {
-							vault.AddSecureNote(n.Name, n.Content)
+							_ = vault.AddSecureNote(n.Name, n.Content)
 						}
 						for _, k := range innerData.APIKeys {
-							vault.AddAPIKey(k.Name, k.Service, k.Key)
+							_ = vault.AddAPIKey(k.Name, k.Service, k.Key)
 						}
 						for _, s := range innerData.SSHKeys {
-							vault.AddSSHKey(s.Name, s.PrivateKey)
+							_ = vault.AddSSHKey(s.Name, s.PrivateKey)
 						}
 						for _, w := range innerData.WiFiCredentials {
-							vault.AddWiFi(w.SSID, w.Password, w.SecurityType)
+							_ = vault.AddWiFi(w.SSID, w.Password, w.SecurityType)
 						}
 						for _, r := range innerData.RecoveryCodeItems {
-							vault.AddRecoveryCode(r.Service, r.Codes)
+							_ = vault.AddRecoveryCode(r.Service, r.Codes)
 						}
 						return nil
 					}
 
 					bytes = decrypted
-					json.Unmarshal(bytes, &raw)
+					_ = json.Unmarshal(bytes, &raw)
 				}
 			}
 		}
@@ -296,12 +296,23 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 			otpauth, _ := m["otpauth"].(string)
 
 			if acc != "" && secret != "" {
-				vault.AddTOTPEntry(acc, secret)
+				_ = vault.AddTOTPEntry(acc, secret)
 				found = true
 			} else if acc != "" && (user != "" || pass != "") {
-				vault.AddEntry(acc, user, pass)
+				_ = vault.AddEntry(acc, user, pass)
 				found = true
 			} else if otpauth != "" && strings.HasPrefix(otpauth, "otpauth://") {
+				u, err := url.Parse(otpauth)
+				if err == nil {
+					label := strings.TrimPrefix(u.Path, "/")
+					label = strings.TrimPrefix(label, "totp/")
+					label, _ = url.PathUnescape(label)
+					sec := u.Query().Get("secret")
+					if label != "" && sec != "" {
+						_ = vault.AddTOTPEntry(label, sec)
+						found = true
+					}
+				}
 
 			}
 
