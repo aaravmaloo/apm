@@ -2410,11 +2410,15 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 	if !term.IsTerminal(int(os.Stdin.Fd())) {
 		results := performSearch(v, query)
 		if len(results) == 0 {
-			fmt.Println("No entries found.")
+			fmt.Println("No matching entries found.")
 			return
 		}
-		for i, r := range results {
-			fmt.Printf("[%d] %s (%s)\n", i+1, r.Identifier, r.Type)
+		if len(results) == 1 {
+			displayEntry(results[0], true)
+		} else {
+			for i, r := range results {
+				fmt.Printf("[%d] %s (%s)\n", i+1, r.Identifier, r.Type)
+			}
 		}
 		return
 	}
