@@ -20,4 +20,4 @@ jobs:
 
       - name: Run Fuzz Tests
         run: |
-          go test -fuzz=FuzzDecryptVault -fuzztime=1m ./src/...
+          go test -fuzz=FuzzDecryptVault -fuzztime=1m ./src
