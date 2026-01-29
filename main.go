@@ -37,7 +37,15 @@ func init() {
 		color.Red("Error getting executable path: %v\n", err)
 		os.Exit(1)
 	}
-	vaultPath = filepath.Join(filepath.Dir(exe), "vault.dat")
+	vaultFile := os.Getenv("APM_VAULT_PATH")
+	if vaultFile == "" {
+		vaultFile = "vault.dat"
+	}
+	if filepath.IsAbs(vaultFile) {
+		vaultPath = vaultFile
+	} else {
+		vaultPath = filepath.Join(filepath.Dir(exe), vaultFile)
+	}
 	inputReader = bufio.NewReader(os.Stdin)
 }
 
@@ -2231,7 +2239,11 @@ func readPassword() (string, error) {
 		}
 		return strings.TrimSpace(string(bytePassword)), nil
 	}
-	return readInput(), nil
+	input := readInput()
+	if input == "" {
+		return "", fmt.Errorf("EOF or empty input")
+	}
+	return input, nil
 }
 
 func copyToClipboardWithExpiry(text string) {
@@ -2296,7 +2308,10 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		}
 
 		fmt.Printf("Master Password (attempt %d/3): ", i+1)
-		pass, _ := readPassword()
+		pass, err := readPassword()
+		if err != nil {
+			return "", nil, false, err
+		}
 		fmt.Println()
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
