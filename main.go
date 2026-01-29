@@ -2429,8 +2429,13 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			selectedIndex = 0
 		}
 
+		profileDisplay := v.CurrentNamespace
+		if profileDisplay == "" {
+			profileDisplay = "default"
+		}
+
 		fmt.Print("\033[H\033[2J")
-		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m (readonly: %v)\n", readonly)
+		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Profile: \x1b[1;32m%s\x1b[0m (readonly: %v)\n", profileDisplay, readonly)
 		fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\x1b[5m_\x1b[0m\n", query)
 		fmt.Println("--------------------------------------------------")
 
@@ -2520,7 +2525,11 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 }
 
 func performSearch(v *src.Vault, query string) []src.SearchResult {
+	// Temporarily bypass namespace filtering to get ALL entries as requested
+	oldNS := v.CurrentNamespace
+	v.CurrentNamespace = ""
 	all := v.SearchAll("")
+	v.CurrentNamespace = oldNS
 	var scored []ScoredResult
 	for _, r := range all {
 		score := rankMatch(query, r.Identifier)
