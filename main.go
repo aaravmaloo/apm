@@ -1095,7 +1095,7 @@ func main() {
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
 
-			fmt.Println("APM Stable Release v8.1")
+			fmt.Println("APM Stable Release v9.2")
 			fmt.Println(processedHomeName, "@apm")
 			fmt.Printf("Installed: %s\n", installDir)
 			fmt.Printf("Vault Path: %s\n", vaultPath)
@@ -2540,11 +2540,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 }
 
 func performSearch(v *src.Vault, query string) []src.SearchResult {
-	// Temporarily bypass namespace filtering to get ALL entries as requested
-	oldNS := v.CurrentNamespace
-	v.CurrentNamespace = ""
 	all := v.SearchAll("")
-	v.CurrentNamespace = oldNS
 	var scored []ScoredResult
 	for _, r := range all {
 		score := rankMatch(query, r.Identifier)
