@@ -1,0 +1,27 @@
+name: Plugin Validation
+
+on:
+  push:
+    paths:
+      - 'plugins_cache/**'
+  pull_request:
+    paths:
+      - 'plugins_cache/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Plugin Manifests
+        run: |
+          for dir in plugins_cache/*/; do
+            if [ -d "$dir" ]; then
+              if [ ! -f "${dir}plugin.json" ]; then
+                echo "Missing plugin.json in $dir"
+                exit 1
+              fi
+              # Basic JSON validation
+              cat "${dir}plugin.json" | jq .
+            fi
+          done
