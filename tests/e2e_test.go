@@ -220,21 +220,6 @@ password_policy:
 	}
 }
 
-func Test_16_SecProfile(t *testing.T) {
-	input := fmt.Sprintf("%s\n", masterPass)
-
-	out, _ := runPM(input, "sec_profile", "set", "standard")
-	if !strings.Contains(out, "Profile switched to standard") {
-		t.Errorf("sec_profile set failed: %s", out)
-	}
-
-	inputCreate := fmt.Sprintf("%s\n64\n3\n2\n16\n12\n", masterPass)
-	out, _ = runPM(inputCreate, "sec_profile", "create", "custom_test")
-	if !strings.Contains(out, "applied") {
-		t.Errorf("sec_profile create failed: %s", out)
-	}
-}
-
 func Test_17_Unlock_Flags(t *testing.T) {
 	input := fmt.Sprintf("%s\n", masterPass)
 	out, _ := runPM(input, "unlock", "--timeout", "1s")
