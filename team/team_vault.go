@@ -215,18 +215,123 @@ type SharedDocumentEntry struct {
 	Password []byte `json:"password"`
 }
 
+type SharedGovID struct {
+	EntryMetadata
+	Type     string `json:"type"`
+	IDNumber string `json:"id_number"`
+	Name     string `json:"name"`
+	Expiry   string `json:"expiry"`
+}
+
+type SharedMedicalRecord struct {
+	EntryMetadata
+	Label         string `json:"label"`
+	InsuranceID   string `json:"insurance_id"`
+	Prescriptions []byte `json:"prescriptions"`
+	Allergies     []byte `json:"allergies"`
+}
+
+type SharedTravelDoc struct {
+	EntryMetadata
+	Label          string `json:"label"`
+	TicketNumber   string `json:"ticket_number"`
+	BookingCode    []byte `json:"booking_code"`
+	LoyaltyProgram string `json:"loyalty_program"`
+}
+
+type SharedContact struct {
+	EntryMetadata
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	Email     string `json:"email"`
+	Address   string `json:"address"`
+	Emergency bool   `json:"emergency"`
+}
+
+type SharedCloudCredential struct {
+	EntryMetadata
+	Label      string `json:"label"`
+	AccessKey  string `json:"access_key"`
+	SecretKey  []byte `json:"secret_key"`
+	Region     string `json:"region"`
+	AccountID  string `json:"account_id"`
+	Role       string `json:"role"`
+	Expiration string `json:"expiration"`
+}
+
+type SharedK8s struct {
+	EntryMetadata
+	Name         string `json:"name"`
+	ClusterURL   string `json:"cluster_url"`
+	K8sNamespace string `json:"k8s_namespace"`
+	Expiration   string `json:"expiration"`
+}
+
+type SharedDockerRegistry struct {
+	EntryMetadata
+	Name        string `json:"name"`
+	RegistryURL string `json:"registry_url"`
+	Username    string `json:"username"`
+	Token       []byte `json:"token"`
+}
+
+type SharedSSHConfig struct {
+	EntryMetadata
+	Alias       string `json:"alias"`
+	Host        string `json:"host"`
+	User        string `json:"user"`
+	Port        string `json:"port"`
+	KeyPath     string `json:"key_path"`
+	PrivateKey  []byte `json:"private_key"`
+	Fingerprint string `json:"fingerprint"`
+}
+
+type SharedCICD struct {
+	EntryMetadata
+	Name    string `json:"name"`
+	Webhook []byte `json:"webhook"`
+	EnvVars []byte `json:"env_vars"`
+}
+
+type SharedLicenseKey struct {
+	EntryMetadata
+	ProductName    string `json:"product_name"`
+	SerialKey      []byte `json:"serial_key"`
+	ActivationInfo string `json:"activation_info"`
+	Expiration     string `json:"expiration"`
+}
+
+type SharedLegalContract struct {
+	EntryMetadata
+	Name            string `json:"name"`
+	Summary         []byte `json:"summary"`
+	PartiesInvolved string `json:"parties_involved"`
+	SignedDate      string `json:"signed_date"`
+}
+
 type SharedEntryStore struct {
-	Passwords     []SharedPassword      `json:"passwords"`
-	TOTPs         []SharedTOTP          `json:"totps"`
-	APIKeys       []SharedAPIKey        `json:"api_keys"`
-	Tokens        []SharedToken         `json:"tokens"`
-	Notes         []SharedNote          `json:"notes"`
-	SSHKeys       []SharedSSHKey        `json:"ssh_keys"`
-	Certificates  []SharedCertificate   `json:"certificates"`
-	WiFi          []SharedWiFi          `json:"wifi"`
-	RecoveryCodes []SharedRecoveryCode  `json:"recovery_codes"`
-	BankingItems  []SharedBankingItem   `json:"banking_items"`
-	Documents     []SharedDocumentEntry `json:"documents"`
+	Passwords        []SharedPassword        `json:"passwords"`
+	TOTPs            []SharedTOTP            `json:"totps"`
+	APIKeys          []SharedAPIKey          `json:"api_keys"`
+	Tokens           []SharedToken           `json:"tokens"`
+	Notes            []SharedNote            `json:"notes"`
+	SSHKeys          []SharedSSHKey          `json:"ssh_keys"`
+	Certificates     []SharedCertificate     `json:"certificates"`
+	WiFi             []SharedWiFi            `json:"wifi"`
+	RecoveryCodes    []SharedRecoveryCode    `json:"recovery_codes"`
+	BankingItems     []SharedBankingItem     `json:"banking_items"`
+	Documents        []SharedDocumentEntry   `json:"documents"`
+	GovIDs           []SharedGovID           `json:"gov_ids"`
+	MedicalRecords   []SharedMedicalRecord   `json:"medical_records"`
+	TravelDocs       []SharedTravelDoc       `json:"travel_docs"`
+	Contacts         []SharedContact         `json:"contacts"`
+	CloudCredentials []SharedCloudCredential `json:"cloud_credentials"`
+	K8sSecrets       []SharedK8s             `json:"k8s_secrets"`
+	DockerRegistries []SharedDockerRegistry  `json:"docker_registries"`
+	SSHConfigs       []SharedSSHConfig       `json:"ssh_configs"`
+	CICDSecrets      []SharedCICD            `json:"cicd_secrets"`
+	LicenseKeys      []SharedLicenseKey      `json:"license_keys"`
+	LegalContracts   []SharedLegalContract   `json:"legal_contracts"`
 }
 
 type TeamVault struct {
@@ -321,6 +426,61 @@ func (tv *TeamVault) SearchAll(query string, deptID string, isAdmin bool) []Sear
 	for _, d := range tv.SharedEntries.Documents {
 		if checkAccess(d.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(d.Name), query)) {
 			results = append(results, SearchResult{"Document", d.Name, d})
+		}
+	}
+	for _, g := range tv.SharedEntries.GovIDs {
+		if checkAccess(g.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(g.Name), query)) {
+			results = append(results, SearchResult{"Gov ID", g.Name, g})
+		}
+	}
+	for _, m := range tv.SharedEntries.MedicalRecords {
+		if checkAccess(m.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(m.Label), query)) {
+			results = append(results, SearchResult{"Medical Record", m.Label, m})
+		}
+	}
+	for _, t := range tv.SharedEntries.TravelDocs {
+		if checkAccess(t.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(t.Label), query)) {
+			results = append(results, SearchResult{"Travel", t.Label, t})
+		}
+	}
+	for _, c := range tv.SharedEntries.Contacts {
+		if checkAccess(c.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(c.Name), query)) {
+			results = append(results, SearchResult{"Contact", c.Name, c})
+		}
+	}
+	for _, c := range tv.SharedEntries.CloudCredentials {
+		if checkAccess(c.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(c.Label), query)) {
+			results = append(results, SearchResult{"Cloud Credential", c.Label, c})
+		}
+	}
+	for _, k := range tv.SharedEntries.K8sSecrets {
+		if checkAccess(k.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(k.Name), query)) {
+			results = append(results, SearchResult{"K8s Secret", k.Name, k})
+		}
+	}
+	for _, r := range tv.SharedEntries.DockerRegistries {
+		if checkAccess(r.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(r.Name), query)) {
+			results = append(results, SearchResult{"Docker Registry", r.Name, r})
+		}
+	}
+	for _, s := range tv.SharedEntries.SSHConfigs {
+		if checkAccess(s.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(s.Alias), query)) {
+			results = append(results, SearchResult{"SSH Config", s.Alias, s})
+		}
+	}
+	for _, c := range tv.SharedEntries.CICDSecrets {
+		if checkAccess(c.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(c.Name), query)) {
+			results = append(results, SearchResult{"CI/CD Secret", c.Name, c})
+		}
+	}
+	for _, l := range tv.SharedEntries.LicenseKeys {
+		if checkAccess(l.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(l.ProductName), query)) {
+			results = append(results, SearchResult{"License Key", l.ProductName, l})
+		}
+	}
+	for _, l := range tv.SharedEntries.LegalContracts {
+		if checkAccess(l.EntryMetadata) && (query == "" || strings.Contains(strings.ToLower(l.Name), query)) {
+			results = append(results, SearchResult{"Legal Contract", l.Name, l})
 		}
 	}
 
