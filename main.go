@@ -795,190 +795,6 @@ func main() {
 		},
 	}
 
-	var vsettingsCmd = &cobra.Command{
-		Use:   "vsettings",
-		Short: "Manage vault security settings",
-		Run: func(cmd *cobra.Command, args []string) {
-			modify, _ := cmd.Flags().GetBool("modify")
-			alerts, _ := cmd.Flags().GetBool("alerts")
-
-			masterPassword, vault, readonly, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-
-			if modify {
-				if readonly {
-					color.Red("Vault is READ-ONLY. Cannot modify settings.")
-					return
-				}
-				fmt.Println("Interactive Security Settings")
-				fmt.Println("-----------------------------")
-				fmt.Printf("Current Profile: %s\n", vault.Profile)
-				fmt.Print("New Profile (leave blank to skip): ")
-				newProf := readInput()
-				if newProf != "" {
-					err := src.ChangeProfile(vault, newProf, masterPassword, vaultPath)
-					if err != nil {
-						color.Red("Error: %v", err)
-					} else {
-						color.Green("Profile updated to %s.", newProf)
-					}
-				}
-			}
-
-			if cmd.Flags().Changed("alerts") {
-				if readonly {
-					color.Red("Vault is READ-ONLY. Cannot toggle alerts.")
-					return
-				}
-				err := src.ConfigureAlerts(vault, alerts, "", masterPassword, vaultPath)
-				if err != nil {
-					color.Red("Error: %v", err)
-				} else {
-					color.Green("Alerts set to %v", alerts)
-				}
-			}
-
-			fmt.Printf("\nVault Settings:\n")
-			fmt.Printf("  Profile: %s\n", vault.Profile)
-			fmt.Printf("  Alerts:  %v\n", vault.AlertsEnabled)
-			if vault.AlertsEnabled {
-				fmt.Printf("  Email:   %s\n", vault.AlertEmail)
-			}
-		},
-	}
-	vsettingsCmd.Flags().Bool("modify", false, "Modify settings interactively")
-	vsettingsCmd.Flags().Bool("alerts", false, "Enable/disable alerts")
-
-	var sec_profileCmd = &cobra.Command{
-		Use:   "sec_profile",
-		Short: "Manage encryption profiles",
-	}
-
-	var profileSetCmd = &cobra.Command{
-		Use:   "set <name>",
-		Short: "Switch to a different profile",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			masterPassword, vault, readonly, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			if readonly {
-				color.Red("Vault is READ-ONLY.")
-				return
-			}
-			err = src.ChangeProfile(vault, args[0], masterPassword, vaultPath)
-			if err != nil {
-				color.Red("Error: %v", err)
-			} else {
-				color.Green("Profile switched to %s.", args[0])
-			}
-		},
-	}
-
-	var sec_profileCreateCmd = &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create a custom profile",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			masterPassword, vault, readonly, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			if readonly {
-				color.Red("Vault is READ-ONLY.")
-				return
-			}
-
-			fmt.Println("\n--- Custom Security Profile Creation ---")
-			fmt.Println("You are about to customize the underlying cryptographic parameters of your vault.")
-			fmt.Println("Each field below affects how hard it is for an attacker to crack your vault,")
-			fmt.Println("Do this at your own risk.")
-			fmt.Println("but also how long it takes for you to unlock it.")
-
-			fmt.Println("\n[1] Memory (Argon2 Memory Cost)")
-			fmt.Println("Explanation: The amount of RAM required to derive your encryption keys.")
-			fmt.Println("Security: Higher memory cost protects against GPU/ASIC brute-force attacks.")
-			fmt.Println("Tip: 64MB is standard. 256MB+ is hardened. Use what your system can comfortably spare.")
-			fmt.Print("Memory (MB) [64]: ")
-			memStr := readInput()
-			mem := uint32(64)
-			if memStr != "" {
-				_, _ = fmt.Sscanf(memStr, "%d", &mem)
-			}
-
-			fmt.Println("\n[2] Time (Argon2 Iterations)")
-			fmt.Println("Explanation: The number of times the hashing function is repeated.")
-			fmt.Println("Security: More iterations mean a slower hash, making brute-force much slower.")
-			fmt.Println("Tip: 3 is standard. Increase this if you want the 'unlock' process to take longer (more secure).")
-			fmt.Print("Time (Iterations) [3]: ")
-			timeStr := readInput()
-			t := uint32(3)
-			if timeStr != "" {
-				_, _ = fmt.Sscanf(timeStr, "%d", &t)
-			}
-
-			fmt.Println("\n[3] Parallelism (Argon2 Threads)")
-			fmt.Println("Explanation: The number of CPU threads used during key derivation.")
-			fmt.Println("Security: Typically matched to your CPU's core count.")
-			fmt.Println("Tip: 2-4 is usually ideal. Higher values don't necessarily increase security but use more CPU power.")
-			fmt.Print("Parallelism [2]: ")
-			parStr := readInput()
-			p := uint8(2)
-			if parStr != "" {
-				_, _ = fmt.Sscanf(parStr, "%d", &p)
-			}
-
-			fmt.Println("\n[4] Salt Length")
-			fmt.Println("Explanation: Random data added to your password before hashing.")
-			fmt.Println("Security: Prevents 'Rainbow Table' attacks where pre-computed hashes are used.")
-			fmt.Println("Tip: 16 bytes is standard. 32 bytes is very secure. Increasing this has negligible performance hit.")
-			fmt.Print("Salt Length (Bytes) [16]: ")
-			saltLenStr := readInput()
-			saltLen := 16
-			if saltLenStr != "" {
-				_, _ = fmt.Sscanf(saltLenStr, "%d", &saltLen)
-			}
-
-			fmt.Println("\n[5] Nonce Length (IV Size)")
-			fmt.Println("Explanation: A 'Number used ONCE' for the AES-GCM encryption process.")
-			fmt.Println("Security: Ensures that the same data encrypted twice looks different.")
-			fmt.Println("Tip: 12 bytes is standard for AES-GCM. 24 bytes is used for XChaCha20 (not yet supported) or special cases.")
-			fmt.Print("Nonce Length (Bytes) [12]: ")
-			nonceLenStr := readInput()
-			nonceLen := 12
-			if nonceLenStr != "" {
-				_, _ = fmt.Sscanf(nonceLenStr, "%d", &nonceLen)
-			}
-
-			customProfile := src.CryptoProfile{
-				Name:        args[0],
-				KDF:         "argon2id",
-				Memory:      mem * 1024,
-				Time:        t,
-				Parallelism: p,
-				SaltLen:     saltLen,
-				NonceLen:    nonceLen,
-			}
-
-			vault.CurrentProfileParams = &customProfile
-			vault.Profile = args[0]
-
-			data, err := src.EncryptVault(vault, masterPassword)
-			if err != nil {
-				color.Red("Encryption failed: %v", err)
-				return
-			}
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				color.Red("Error saving vault: %v\n", err)
-			}
-			color.Green("Custom profile '%s' applied.", args[0])
-		},
-	}
-	sec_profileCmd.AddCommand(profileSetCmd, sec_profileCreateCmd)
-
 	var healthCmd = &cobra.Command{
 		Use:   "health",
 		Short: "Security health dashboard",
@@ -993,79 +809,6 @@ func main() {
 			fmt.Printf("OVERALL SCORE: %d/100\n\n", score)
 			for _, r := range report {
 				fmt.Printf("- %s\n", r)
-			}
-		},
-	}
-
-	var adupCmd = &cobra.Command{
-		Use:   "adup",
-		Short: "Check for security anomalies",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			alerts := src.CheckAnomalies(vault)
-			if len(alerts) == 0 {
-				color.Green("No anomalies detected. Your account is likely safe.")
-			} else {
-				color.Red("⚠ ANOMALIES DETECTED:")
-				for _, a := range alerts {
-					color.Red("  - %s", a)
-				}
-			}
-		},
-	}
-
-	var scanCmd = &cobra.Command{
-		Use:   "scan",
-		Short: "Offline password health check",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-
-			fmt.Println("Scanning Vault Health...")
-			fmt.Println("------------------------")
-
-			weakCount := 0
-			reuseMap := make(map[string][]string)
-
-			for _, e := range vault.Entries {
-				score := 0
-				if len(e.Password) >= 12 {
-					score += 20
-				}
-				if strings.ContainsAny(e.Password, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") && strings.ContainsAny(e.Password, "abcdefghijklmnopqrstuvwxyz") {
-					score += 10
-				}
-				if strings.ContainsAny(e.Password, "0123456789") {
-					score += 10
-				}
-				if strings.ContainsAny(e.Password, "!@#$%^&*()-_=+") {
-					score += 15
-				}
-
-				if score < 40 {
-					fmt.Printf("[WEAK] %s: Score %d/55\n", e.Account, score)
-					weakCount++
-				}
-				reuseMap[e.Password] = append(reuseMap[e.Password], e.Account)
-			}
-
-			reusedCount := 0
-			for _, accs := range reuseMap {
-				if len(accs) > 1 {
-					fmt.Printf("[REUSE] Password reused on: %s\n", strings.Join(accs, ", "))
-					reusedCount++
-				}
-			}
-
-			if weakCount == 0 && reusedCount == 0 {
-				color.Green("All clear! No weak or reused passwords found.")
-			} else {
-				fmt.Printf("\nFound %d weak passwords and %d reused groups.\n", weakCount, reusedCount)
 			}
 		},
 	}
@@ -2219,7 +1962,7 @@ func main() {
 
 	profileCmd.AddCommand(profileSwitchCmd, profileListCmd, profileCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, scanCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, vsettingsCmd, sec_profileCmd, healthCmd, adupCmd, policyCmd, profileCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, profileCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
@@ -2327,16 +2070,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		return "", nil, false, err
 	}
 
-	src.LogAccess("ATTEMPT")
-	alerts := src.CheckAnomalies(nil)
-	if len(alerts) > 0 {
-		color.Red("\n⚠ SECURITY WARNING: Unusual activity detected!")
-		for _, a := range alerts {
-			color.Red("  - %s", a)
-		}
-		fmt.Println()
-	}
-
 	for i := 0; i < 3; i++ {
 		localFailures := src.GetFailureCount()
 		costMultiplier := 1
@@ -2354,17 +2087,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
-			src.LogAccess("UNLOCK")
-			if vault.EmergencyMode || localFailures >= 6 {
-				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
-			}
-			vault.FailedAttempts = 0
-			vault.EmergencyMode = false
-			src.ClearFailures()
-
-			if vault.AlertsEnabled && vault.AnomalyDetectionEnabled && len(alerts) > 0 {
-				src.SendAlert(vault, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
-			}
 
 			updatedData, _ := src.EncryptVault(vault, pass)
 			src.SaveVault(vaultPath, updatedData)
@@ -2375,7 +2097,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			return pass, vault, false, nil
 		}
 
-		src.LogAccess("FAIL")
 		src.TrackFailure()
 
 		fmt.Printf("Error: %v\n", err)
