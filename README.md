@@ -78,7 +78,7 @@ Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Count
 
 ### 2.1 Performance Profiles
 
-Users can select from pre-defined profiles via `pm sec_profile set` to balance security and latency.
+Users can select from pre-defined profiles via `pm profile switch` to balance security and latency.
 
 | Profile | Memory | Time | Parallelism | Nonce Size |
 |---------|--------|------|-------------|------------|
@@ -107,16 +107,13 @@ For those preferring air-gapped security, the `vault.dat` file can be manually c
 | **del** | [name] | N/A | Permanent deletion of an entry from the vault. |
 | **gen** | N/A | `--length 24` | High-entropy password generator. |
 | **totp** | `show [acc]`| N/A | Real-time generation of 2FA codes. |
-| **scan** | N/A | N/A | Offline diagnostic for weak/reused passwords. |
 | **audit** | N/A | N/A | View an encrypted history of every vault interaction. |
-| **adup** | N/A | N/A | Anomaly Detection: Checks for suspicious access patterns. |
 | **health**| N/A | N/A | Security dashboard with vulnerability scoring. |
 | **unlock** | N/A | `--timeout 1h` | Unlocks the vault for the current shell session with inactivity timeout. |
 | **lock** | N/A | N/A | Kills the active shell session and locks the vault. |
 | **setup** | N/A | N/A | Interactive wizard for initial configuration (vault, cloud, profiles). |
 | **profile** | `switch`, `list` | N/A | Manage custom namespaces (Work, Personal, DevOps) within the vault. |
 | **policy** | `load`, `show`, `clear`| N/A | Human-first YAML policy engine for password complexity and rotation. |
-| **sec_profile**| `set`, `create` | N/A | Customize Argon2id internal cryptographic parameters. |
 | **cloud** | `init`, `sync`, `get` | `gdrive` | Cloud integration (GDrive) with randomized naming. |
 | **plugins**| `list`, `add`, `push` | N/A | Plugin Marketplace for extending APM functionality. |
 
