@@ -34,14 +34,15 @@ type CommandDef struct {
 type HookAction CommandStep
 
 type PluginDef struct {
-	Name        string                  `json:"name"`
-	Version     string                  `json:"version"`
-	Description string                  `json:"description"`
-	Author      string                  `json:"author"`
-	Permissions []string                `json:"permissions"`
-	FileStorage FileStorageConfig       `json:"file_storage"`
-	Commands    map[string]CommandDef   `json:"commands"`
-	Hooks       map[string][]HookAction `json:"hooks"`
+	SchemaVersion string                  `json:"schema_version"`
+	Name          string                  `json:"name"`
+	Version       string                  `json:"version"`
+	Description   string                  `json:"description"`
+	Author        string                  `json:"author"`
+	Permissions   []string                `json:"permissions"`
+	FileStorage   FileStorageConfig       `json:"file_storage"`
+	Commands      map[string]CommandDef   `json:"commands"`
+	Hooks         map[string][]HookAction `json:"hooks"`
 }
 
 func (p *PluginDef) Validate() error {
