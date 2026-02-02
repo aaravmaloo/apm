@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 )
 
 type Manifest struct {
@@ -21,6 +22,12 @@ func (m *Manifest) Validate() error {
 	if m.Name == "" {
 		return fmt.Errorf("plugin name is required")
 	}
+
+	semverRegex := regexp.MustCompile(`^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`)
+	if !semverRegex.MatchString(m.Version) {
+		return fmt.Errorf("invalid version: %s (must follow semantic versioning)", m.Version)
+	}
+
 	allowedPermissions := map[string]bool{
 		"vault.read":       true,
 		"vault.write":      true,
