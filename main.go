@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -2155,7 +2158,176 @@ func main() {
 	pluginCmd.AddCommand(pluginUploadCmd)
 	rootCmd.AddCommand(pluginCmd)
 
+	var updateCmd = &cobra.Command{
+		Use:   "update",
+		Short: "Check for updates and self-update",
+		Run: func(cmd *cobra.Command, args []string) {
+			force, _ := cmd.Flags().GetBool("force")
+			checkForUpdates(force)
+		},
+	}
+	updateCmd.Flags().Bool("force", false, "Force update even if version is latest")
+	rootCmd.AddCommand(updateCmd)
+
 	rootCmd.Execute()
+}
+
+const Version = "9.2"
+
+func checkForUpdates(force bool) {
+	fmt.Printf("Checking for updates... (Current version: %s)\n", Version)
+
+	resp, err := http.Get("https://api.github.com/repos/aaravmaloo/apm/releases/latest")
+	if err != nil {
+		color.Red("Failed to check for updates: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		color.Red("Failed to fetch release info (Status: %d)", resp.StatusCode)
+		return
+	}
+
+	var release struct {
+		TagName string `json:"tag_name"`
+		HtmlUrl string `json:"html_url"`
+		Assets  []struct {
+			Name               string `json:"name"`
+			BrowserDownloadUrl string `json:"browser_download_url"`
+		} `json:"assets"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		color.Red("Failed to decode release info: %v", err)
+		return
+	}
+
+	latestVer := strings.TrimPrefix(release.TagName, "v")
+	currentVer := strings.TrimPrefix(Version, "v")
+
+	if !force && compareVersions(currentVer, latestVer) >= 0 {
+		color.Green("You are using the latest version (%s).", release.TagName)
+		return
+	}
+
+	fmt.Printf("New version available: %s\n", release.TagName)
+	fmt.Println("Identifying update asset...")
+
+	// Detect OS
+	targetOS := runtime.GOOS
+	if targetOS == "windows" {
+		targetOS = "windows" // explicit check if needed, but GOOS is usually enough partial match
+	}
+
+	var downloadUrl string
+	var assetName string
+
+	for _, asset := range release.Assets {
+		name := strings.ToLower(asset.Name)
+		if strings.Contains(name, targetOS) && (strings.HasSuffix(name, ".exe") || !strings.Contains(name, ".")) {
+			// Simple heuristic: match OS and exe extension if windows, or no extension/binary name
+			// Assuming asset naming convention: apm-windows-amd64.exe or similar
+			if targetOS == "windows" && !strings.HasSuffix(name, ".exe") {
+				continue
+			}
+			downloadUrl = asset.BrowserDownloadUrl
+			assetName = asset.Name
+			break
+		}
+	}
+
+	if downloadUrl == "" {
+		color.Yellow("No suitable binary found for your OS (%s) in the latest release.", runtime.GOOS)
+		color.Yellow("Please visit %s to download manually.", release.HtmlUrl)
+		return
+	}
+
+	fmt.Printf("Downloading %s...\n", assetName)
+	if err := doSelfUpdate(downloadUrl); err != nil {
+		color.Red("Update failed: %v", err)
+		return
+	}
+
+	color.Green("Update successful! Please restart the application.")
+}
+
+func compareVersions(v1, v2 string) int {
+	// Simple semver compare (pkg.ver.patch)
+	parts1 := strings.Split(v1, ".")
+	parts2 := strings.Split(v2, ".")
+
+	maxLen := len(parts1)
+	if len(parts2) > maxLen {
+		maxLen = len(parts2)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		n1 := 0
+		if i < len(parts1) {
+			n1, _ = strconv.Atoi(parts1[i])
+		}
+		n2 := 0
+		if i < len(parts2) {
+			n2, _ = strconv.Atoi(parts2[i])
+		}
+
+		if n1 > n2 {
+			return 1
+		}
+		if n1 < n2 {
+			return -1
+		}
+	}
+	return 0
+}
+
+func doSelfUpdate(url string) error {
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	exeDir := filepath.Dir(exe)
+
+	// Download new binary
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Download to temp file first
+	tmpFile := filepath.Join(exeDir, "apm.new")
+	out, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(out, resp.Body)
+	out.Close()
+	if err != nil {
+		os.Remove(tmpFile)
+		return err
+	}
+
+	// Rename current executable to .old
+	oldExe := exe + ".old"
+
+	// If .old exists (from previous update), try to remove it
+	os.Remove(oldExe)
+
+	if err := os.Rename(exe, oldExe); err != nil {
+		return fmt.Errorf("failed to rename current binary: %v", err)
+	}
+
+	// Rename new binary to original name
+	if err := os.Rename(tmpFile, exe); err != nil {
+		// Validation failed, try to rollback
+		os.Rename(oldExe, exe)
+		return fmt.Errorf("failed to replace binary: %v", err)
+	}
+
+	return nil
 }
 
 func readInput() string {
