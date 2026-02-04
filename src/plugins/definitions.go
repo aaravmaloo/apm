@@ -12,12 +12,8 @@ type FileStorageConfig struct {
 }
 
 type CommandStep struct {
-	Action   string `json:"action"`
-	Key      string `json:"key,omitempty"`
-	AssignTo string `json:"assign_to,omitempty"`
-	Message  string `json:"message,omitempty"`
-
-	Allowed []string `json:"allowed,omitempty"`
+	Op   string   `json:"op"`
+	Args []string `json:"args"`
 }
 
 type CommandFlag struct {
