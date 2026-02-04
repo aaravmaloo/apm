@@ -39,9 +39,10 @@ func GenerateRetrievalKey() (string, error) {
 
 type GoogleDriveManager struct {
 	Service *drive.Service
+	Mode    string // "apm_public" or "self_hosted"
 }
 
-func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []byte) (*GoogleDriveManager, error) {
+func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (*GoogleDriveManager, error) {
 	if len(credsJSON) == 0 {
 		return nil, fmt.Errorf("cloud credentials missing")
 	}
@@ -67,7 +68,7 @@ func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []by
 		return nil, fmt.Errorf("unable to retrieve Drive client: %v", err)
 	}
 
-	return &GoogleDriveManager{Service: srv}, nil
+	return &GoogleDriveManager{Service: srv, Mode: mode}, nil
 }
 
 func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (string, error) {
@@ -243,7 +244,7 @@ func GetDefaultToken() []byte {
 	return obf
 }
 
-func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte, tokenJSON []byte) (CloudProvider, error) {
+func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (CloudProvider, error) {
 	switch strings.ToLower(providerName) {
 	case "gdrive", "google":
 		if len(credsJSON) == 0 {
@@ -252,7 +253,10 @@ func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte
 		if len(tokenJSON) == 0 {
 			tokenJSON = GetDefaultToken()
 		}
-		return NewGoogleDriveManager(ctx, credsJSON, tokenJSON)
+		if mode == "" {
+			mode = "apm_public"
+		}
+		return NewGoogleDriveManager(ctx, credsJSON, tokenJSON, mode)
 	case "github":
 		if len(tokenJSON) == 0 {
 			return nil, fmt.Errorf("github personal access token missing")
