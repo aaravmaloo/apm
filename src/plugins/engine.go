@@ -50,219 +50,202 @@ func (se *StepExecutor) ExecuteSteps(steps []CommandStep, permissions []string) 
 	return nil
 }
 
+func (se *StepExecutor) getArg(args []string, idx int) string {
+	if idx < len(args) {
+		return se.Context.Substitute(args[idx])
+	}
+	return ""
+}
+
 func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) error {
-
-	switch step.Action {
-	case "print":
-		msg := se.Context.Substitute(step.Message)
-		fmt.Println(msg)
+	switch step.Op {
+	case "s:out":
+		fmt.Println(se.getArg(step.Args, 0))
 		return nil
 
-	case "vault.get":
-		if !hasPermission(permissions, "vault.read") {
-			return fmt.Errorf("permission denied: vault.read required for vault.get")
-		}
-		if se.Vault == nil {
-			return fmt.Errorf("vault not available")
-		}
-		key := se.Context.Substitute(step.Key)
-
-		var secretValue string
-		for _, e := range se.Vault.Entries {
-			if e.Account == key {
-				secretValue = e.Password
-				break
-			}
-		}
-
-		if secretValue == "" {
-			for _, t := range se.Vault.Tokens {
-				if t.Name == key {
-					secretValue = t.Token
-					break
-				}
-			}
-		}
-
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = secretValue
-		}
-		return nil
-
-	case "vault.add":
-		if !hasPermission(permissions, "vault.write") {
-			return fmt.Errorf("permission denied: vault.write required for vault.add")
-		}
-		if se.Vault == nil {
-			return fmt.Errorf("vault not available")
-		}
-		name := se.Context.Substitute(step.Key)
-		val := se.Context.Substitute(step.Message)
-		return se.Vault.AddEntry(name, "plugin_user", val)
-
-	case "vault.list":
+	case "v:get":
 		if !hasPermission(permissions, "vault.read") {
 			return fmt.Errorf("permission denied: vault.read")
 		}
 		if se.Vault == nil {
 			return fmt.Errorf("vault not available")
 		}
-		var names []string
+		key := se.getArg(step.Args, 0)
+		assignTo := se.getArg(step.Args, 1)
+
+		var val string
 		for _, e := range se.Vault.Entries {
-			names = append(names, e.Account)
+			if e.Account == key {
+				val = e.Password
+				break
+			}
 		}
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = strings.Join(names, ", ")
+		if val == "" {
+			for _, t := range se.Vault.Tokens {
+				if t.Name == key {
+					val = t.Token
+					break
+				}
+			}
+		}
+		if val == "" {
+			for _, t := range se.Vault.TOTPEntries {
+				if t.Account == key {
+					val = t.Secret // In a real app we might want to generate the code here
+					break
+				}
+			}
+		}
+
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = val
 		}
 		return nil
 
-	case "system.copy":
-		if !hasPermission(permissions, "system.write") {
-			return fmt.Errorf("permission denied: system.write")
-		}
-		text := se.Context.Substitute(step.Message)
-		fmt.Printf("[CLIPBOARD] %s\n", text)
-		return nil
-
-	case "prompt.input":
-		fmt.Printf("%s: ", se.Context.Substitute(step.Message))
-		var input string
-		_, _ = fmt.Scanln(&input)
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = input
-		}
-		return nil
-
-	case "vault.delete":
+	case "v:add":
 		if !hasPermission(permissions, "vault.write") {
 			return fmt.Errorf("permission denied: vault.write")
 		}
 		if se.Vault == nil {
 			return fmt.Errorf("vault not available")
 		}
-		key := se.Context.Substitute(step.Key)
+		account := se.getArg(step.Args, 0)
+		password := se.getArg(step.Args, 1)
+		username := se.getArg(step.Args, 2)
+		if username == "" {
+			username = "plugin_user"
+		}
+		return se.Vault.AddEntry(account, username, password)
+
+	case "v:list":
+		if !hasPermission(permissions, "vault.read") {
+			return fmt.Errorf("permission denied: vault.read")
+		}
+		if se.Vault == nil {
+			return fmt.Errorf("vault not available")
+		}
+		assignTo := se.getArg(step.Args, 0)
+		var names []string
+		for _, e := range se.Vault.Entries {
+			names = append(names, e.Account)
+		}
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = strings.Join(names, ", ")
+		}
+		return nil
+
+	case "v:del":
+		if !hasPermission(permissions, "vault.write") {
+			return fmt.Errorf("permission denied: vault.write")
+		}
+		if se.Vault == nil {
+			return fmt.Errorf("vault not available")
+		}
+		key := se.getArg(step.Args, 0)
 		if se.Vault.DeleteEntry(key) {
 			return nil
 		}
 		return fmt.Errorf("entry '%s' not found", key)
 
-	case "network.get":
+	case "s:clip":
+		if !hasPermission(permissions, "system.write") {
+			return fmt.Errorf("permission denied: system.write")
+		}
+		text := se.getArg(step.Args, 0)
+		fmt.Printf("[CLIPBOARD] %s\n", text)
+		return nil
+
+	case "s:in":
+		fmt.Printf("%s: ", se.getArg(step.Args, 0))
+		assignTo := se.getArg(step.Args, 1)
+		var input string
+		_, _ = fmt.Scanln(&input)
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = input
+		}
+		return nil
+
+	case "net:get":
 		if !hasPermission(permissions, "network.outbound") {
 			return fmt.Errorf("permission denied: network.outbound")
 		}
-		url := se.Context.Substitute(step.Key)
+		url := se.getArg(step.Args, 0)
+		assignTo := se.getArg(step.Args, 1)
 		resp, err := http.Get(url)
 		if err != nil {
 			return err
 		}
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = string(body)
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = string(body)
 		}
 		return nil
 
-	case "network.post":
+	case "net:post":
 		if !hasPermission(permissions, "network.outbound") {
 			return fmt.Errorf("permission denied: network.outbound")
 		}
-		url := se.Context.Substitute(step.Key)
-		payload := se.Context.Substitute(step.Message)
+		url := se.getArg(step.Args, 0)
+		payload := se.getArg(step.Args, 1)
+		assignTo := se.getArg(step.Args, 2)
 		resp, err := http.Post(url, "application/json", strings.NewReader(payload))
 		if err != nil {
 			return err
 		}
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = string(body)
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = string(body)
 		}
 		return nil
 
-	case "vault.edit":
-		if !hasPermission(permissions, "vault.write") {
-			return fmt.Errorf("permission denied: vault.write")
-		}
-		if se.Vault == nil {
-			return fmt.Errorf("vault not available")
-		}
-		key := se.Context.Substitute(step.Key)
-		val := se.Context.Substitute(step.Message)
-		for i, e := range se.Vault.Entries {
-			if e.Account == key {
-				se.Vault.Entries[i].Password = val
-				return nil
-			}
-		}
-		return fmt.Errorf("entry '%s' not found", key)
-
-	case "vault.get_totp":
-		if !hasPermission(permissions, "vault.read") {
-			return fmt.Errorf("permission denied: vault.read")
-		}
-		if se.Vault == nil {
-			return fmt.Errorf("vault not available")
-		}
-		key := se.Context.Substitute(step.Key)
-		for _, t := range se.Vault.TOTPEntries {
-			if t.Account == key {
-				se.Context.Variables[step.AssignTo] = "TOTP_FOR_" + t.Secret
-				return nil
-			}
-		}
-		return fmt.Errorf("TOTP entry '%s' not found", key)
-
-	case "system.env":
-		if !hasPermission(permissions, "system.read") {
-			return fmt.Errorf("permission denied: system.read")
-		}
-		key := se.Context.Substitute(step.Key)
-		val := os.Getenv(key)
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = val
-		}
-		return nil
-
-	case "crypto.hash":
+	case "crypto:hash":
 		if !hasPermission(permissions, "crypto.use") {
 			return fmt.Errorf("permission denied: crypto.use")
 		}
-		data := se.Context.Substitute(step.Message)
+		data := se.getArg(step.Args, 0)
+		assignTo := se.getArg(step.Args, 1)
 		hash := sha256.Sum256([]byte(data))
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = hex.EncodeToString(hash[:])
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = hex.EncodeToString(hash[:])
 		}
 		return nil
 
-	case "system.info":
-		if !hasPermission(permissions, "system.read") {
-			return fmt.Errorf("permission denied: system.read")
+	case "v:backup":
+		if !hasPermission(permissions, "vault.write") {
+			return fmt.Errorf("permission denied: vault.write")
 		}
-		info := fmt.Sprintf("OS: %s, User: %s", se.Context.Variables["OS"], se.Context.Variables["USER"])
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = info
+		vaultData, err := os.ReadFile(vaultPath)
+		if err != nil {
+			return err
 		}
+		backupPath := fmt.Sprintf("%s.backup_%d", vaultPath, time.Now().Unix())
+		return os.WriteFile(backupPath, vaultData, 0600)
+
+	case "s:sleep":
+		seconds := se.getArg(step.Args, 0)
+		d, _ := time.ParseDuration(seconds + "s")
+		time.Sleep(d)
 		return nil
 
-	case "prompt.confirm":
-		fmt.Printf("%s (y/n): ", se.Context.Substitute(step.Message))
-		var input string
-		_, _ = fmt.Scanln(&input)
-		if step.AssignTo != "" {
-			se.Context.Variables[step.AssignTo] = strings.ToLower(input)
+	case "c:sync":
+		if !hasPermission(permissions, "cloud.sync") {
+			return fmt.Errorf("permission denied: cloud.sync")
 		}
+		fmt.Println("Triggering cloud sync...")
+		// In a real app we would call the sync logic here.
+		// For now we just simulate.
 		return nil
 
-	case "vault.lock":
-		fmt.Println("Lock signal received from plugin.")
+	case "v:lock":
+		fmt.Println("Vault lock signal received.")
 		return nil
 
-	case "file.storage":
-
-		if !hasPermission(permissions, "file.storage") {
-			return fmt.Errorf("permission denied: file.storage")
-		}
-		return nil
+	default:
+		return fmt.Errorf("unknown op: %s", step.Op)
+	}
+}
 
 	default:
 		return fmt.Errorf("unknown action: %s", step.Action)
@@ -278,30 +261,19 @@ func hasPermission(perms []string, required string) bool {
 	return false
 }
 
-func (pm *PluginManager) ExecuteHooks(event, command string, data map[string]interface{}) error {
+func (pm *PluginManager) ExecuteHooks(event, command string, vault *apm.Vault) error {
 	hookKey := fmt.Sprintf("%s:%s", event, command)
+	ctx := NewExecutionContext()
+	se := NewStepExecutor(ctx, vault)
 
 	for _, plugin := range pm.Loaded {
 		if actions, ok := plugin.Definition.Hooks[hookKey]; ok {
 			for _, action := range actions {
-
-				if err := pm.runHookAction(action); err != nil {
+				if err := se.ExecuteStep(CommandStep(action), plugin.Definition.Permissions); err != nil {
 					return err
 				}
 			}
 		}
 	}
 	return nil
-}
-
-func (pm *PluginManager) runHookAction(action HookAction) error {
-	switch action.Action {
-	case "validate.file":
-
-		return nil
-	case "validate.file_type":
-		return nil
-	default:
-		return fmt.Errorf("unknown hook action: %s", action.Action)
-	}
 }
