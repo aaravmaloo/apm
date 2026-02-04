@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
+	"runtime"
 	"time"
 
 	"strings"
@@ -151,7 +153,12 @@ func ExtractFileID(input string) string {
 }
 
 func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
-	query := fmt.Sprintf("'%s' in parents and trashed = false", DriveFolderID)
+	parent := DriveFolderID
+	if cm.Mode == "self_hosted" {
+		parent = "root"
+	}
+
+	query := fmt.Sprintf("'%s' in parents and trashed = false", parent)
 	list, err := cm.Service.Files.List().Q(query).Fields("files(id, name, description)").Do()
 	if err != nil {
 		return "", err
@@ -165,7 +172,7 @@ func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
 	}
 
 	// Legacy fallback: vault_filename.bin
-	queryLegacy := fmt.Sprintf("name = 'vault_%s.bin' and '%s' in parents and trashed = false", key, DriveFolderID)
+	queryLegacy := fmt.Sprintf("name = 'vault_%s.bin' and '%s' in parents and trashed = false", key, parent)
 	listLegacy, err := cm.Service.Files.List().Q(queryLegacy).Fields("files(id, name)").Do()
 	if err == nil && len(listLegacy.Files) > 0 {
 		return listLegacy.Files[0].Id, nil
@@ -233,6 +240,43 @@ func (cm *GoogleDriveManager) ListVaults() ([]string, error) {
 		vaults = append(vaults, fmt.Sprintf("%-30s ID: %s", f.Name, f.Id))
 	}
 	return vaults, nil
+}
+
+func PerformDriveAuth(credsJSON []byte) ([]byte, error) {
+	config, err := google.ConfigFromJSON(credsJSON, drive.DriveFileScope)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse client secret: %v", err)
+	}
+
+	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	fmt.Printf("\nGo to the following link in your browser then type the authorization code: \n%v\n", authURL)
+
+	// Attempt to open browser
+	var errOpen error
+	switch runtime.GOOS {
+	case "linux":
+		errOpen = exec.Command("xdg-open", authURL).Start()
+	case "windows":
+		errOpen = exec.Command("rundll32", "url.dll,FileProtocolHandler", authURL).Start()
+	case "darwin":
+		errOpen = exec.Command("open", authURL).Start()
+	}
+	if errOpen != nil {
+		fmt.Println("Could not open browser automatically. Please open the link manually.")
+	}
+
+	fmt.Print("\nEnter Authorization Code: ")
+	var authCode string
+	if _, err := fmt.Scan(&authCode); err != nil {
+		return nil, fmt.Errorf("unable to read authorization code: %v", err)
+	}
+
+	tok, err := config.Exchange(context.TODO(), authCode)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve token from web: %v", err)
+	}
+
+	return json.Marshal(tok)
 }
 
 func GetDefaultCreds() []byte {
