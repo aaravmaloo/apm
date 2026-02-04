@@ -17,13 +17,17 @@
             },
             "steps": [
                 {
-                    "action": "vault.get",
-                    "key": "username",
-                    "assign_to": "vault_user"
+                    "op": "v:get",
+                    "args": [
+                        "username",
+                        "vault_user"
+                    ]
                 },
                 {
-                    "action": "print",
-                    "message": "Hello {{user}}! Vault says hello to {{vault_user}}."
+                    "op": "s:out",
+                    "args": [
+                        "Hello {{user}}! Vault says hello to {{vault_user}}."
+                    ]
                 }
             ]
         }
@@ -31,8 +35,10 @@
     "hooks": {
         "post:unlock": [
             {
-                "action": "print",
-                "message": "Vault successfully unlocked. Plugin system active."
+                "op": "s:out",
+                "args": [
+                    "Vault successfully unlocked. Plugin system active."
+                ]
             }
         ]
     }
