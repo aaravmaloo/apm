@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -69,12 +68,37 @@ func main() {
 	setupGDrive := func(v *src.Vault, mp string) {
 		color.Yellow("\nSetting up Google Drive...")
 
+		fmt.Println("Choose Sync Mode:")
+		fmt.Println("1. APM_PUBLIC (Fast, no signup, shared storage)")
+		fmt.Println("2. Self-Hosted (Secure, uses your own Drive, requires login)")
+		fmt.Print("Selection (1/2): ")
+		modeSelection := readInput()
+
+		var mode string
+		var token []byte
+		var err error
+
+		if modeSelection == "2" {
+			mode = "self_hosted"
+			// Start OAuth flow
+			token, err = src.PerformDriveAuth(src.GetDefaultCreds())
+			if err != nil {
+				color.Red("Authentication failed: %v", err)
+				return
+			}
+			v.CloudToken = token
+			v.CloudCredentials = src.GetDefaultCreds()
+		} else {
+			mode = "apm_public"
+			v.CloudToken = src.GetDefaultToken()
+			v.CloudCredentials = src.GetDefaultCreds()
+		}
+		v.DriveSyncMode = mode
+
 		fmt.Print("Enter Custom Retrieval Key (leave blank to generate randomly): ")
 		customKey := readInput()
 
 		var gdriveKey string
-		var err error
-
 		if customKey != "" {
 			gdriveKey = customKey
 		} else {
@@ -84,21 +108,29 @@ func main() {
 				return
 			}
 		}
+
 		cm, err := getCloudManagerEx(context.Background(), v, mp, "gdrive")
 		if err != nil {
 			color.Red("GDrive error: %v", err)
 			return
 		}
+
 		fileID, err := cm.UploadVault(vaultPath, gdriveKey)
 		if err != nil {
 			color.Red("Upload failed: %v", err)
 			return
 		}
+
 		v.RetrievalKey = gdriveKey
 		v.CloudFileID = fileID
 		v.LastCloudProvider = "gdrive"
 		color.Green("Google Drive sync setup successful.")
 		color.HiCyan("Retrieval Key: %s", gdriveKey)
+		if mode == "self_hosted" {
+			color.Cyan("Mode: Self-Hosted (Owner: You)")
+		} else {
+			color.Cyan("Mode: APM_PUBLIC")
+		}
 	}
 
 	setupGitHub := func(v *src.Vault) {
@@ -1375,13 +1407,50 @@ func main() {
 				}
 			}
 
-			cp, err := src.GetCloudProvider(provider, context.Background(), nil, nil)
+			fileID := ""
+			syncMode := "apm_public"
+
+			if provider == "gdrive" {
+				fmt.Println("Choose Sync Mode for Retrieval:")
+				fmt.Println("1. APM_PUBLIC (Current default)")
+				fmt.Println("2. Self-Hosted (Login to your account)")
+				fmt.Print("Selection (1/2): ")
+				modeSelection := readInput()
+				if modeSelection == "2" {
+					syncMode = "self_hosted"
+					// Get temporary token for download
+					token, err := src.PerformDriveAuth(src.GetDefaultCreds())
+					if err != nil {
+						color.Red("Authentication failed: %v", err)
+						return
+					}
+					cp, err := src.GetCloudProvider("gdrive", context.Background(), src.GetDefaultCreds(), token, "self_hosted")
+					if err != nil {
+						color.Red("Cloud Error: %v", err)
+						return
+					}
+					fileID, err = cp.ResolveKeyToID(key)
+					if err != nil {
+						color.Red("Key resolution failed: %v", err)
+						return
+					}
+					data, err := cp.DownloadVault(fileID)
+					if err != nil {
+						color.Red("Download failed: %v", err)
+						return
+					}
+					handleDownloadedVault(data, "", "")
+					return
+				}
+			}
+
+			cp, err := src.GetCloudProvider(provider, context.Background(), nil, nil, syncMode)
 			if err != nil {
 				color.Red("Cloud Error: %v\n", err)
 				return
 			}
 
-			fileID, err := cp.ResolveKeyToID(key)
+			fileID, err = cp.ResolveKeyToID(key)
 			if err != nil {
 				color.Red("Key resolution failed: %v\n", err)
 				return
@@ -1390,7 +1459,7 @@ func main() {
 			data, err := cp.DownloadVault(fileID)
 			if err != nil {
 				color.Red("Download failed: %v\n", err)
-				color.Yellow("Note: Only uploader needs credentials.json. For public retrieval, ensure the key is correct.")
+				color.Yellow("Note: For APM_PUBLIC, only uploader needs credentials.json. Ensure retrieval key is correct.")
 				return
 			}
 
@@ -1469,6 +1538,12 @@ func main() {
 			}
 
 			vault.RetrievalKey = ""
+			vault.CloudFileID = ""
+			vault.LastCloudProvider = ""
+			vault.DriveSyncMode = ""
+			vault.CloudCredentials = nil
+			vault.CloudToken = nil
+
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
 				color.Red("Error encrypting vault: %v\n", err)
@@ -3218,50 +3293,41 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 		return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
 	}
 
-	exe, _ := os.Executable()
-	installDir := filepath.Dir(exe)
-
-	migrated := false
 	var credentials []byte
 	var token []byte
+	syncMode := "apm_public"
 
-	// Priority 1: Local files in install directory
-	credsPath := filepath.Join(installDir, "credentials.json")
-	if data, err := os.ReadFile(credsPath); err == nil {
-		credentials = data
-	}
-	tokenPath := filepath.Join(installDir, "token.json")
-	if data, err := os.ReadFile(tokenPath); err == nil {
-		token = data
+	if vault != nil && vault.DriveSyncMode != "" {
+		syncMode = vault.DriveSyncMode
 	}
 
-	// Priority 2: Embedded defaults (if local files missing)
-	if len(credentials) == 0 {
-		credentials = src.GetDefaultCreds()
-	}
-	if len(token) == 0 {
-		token = src.GetDefaultToken()
-	}
+	if syncMode == "self_hosted" && vault != nil && len(vault.CloudToken) > 0 {
+		// Priority for self_hosted: Vault stored tokens
+		credentials = vault.CloudCredentials
+		token = vault.CloudToken
+	} else {
+		// Priority for apm_public: Local files then embedded defaults
+		exe, _ := os.Executable()
+		installDir := filepath.Dir(exe)
 
-	if vault != nil {
-		if !bytes.Equal(vault.CloudCredentials, credentials) || !bytes.Equal(vault.CloudToken, token) || vault.LastCloudProvider != "gdrive" {
-			vault.CloudCredentials = credentials
-			vault.CloudToken = token
-			if vault.LastCloudProvider == "" {
-				vault.LastCloudProvider = "gdrive"
-			}
-			migrated = true
+		credsPath := filepath.Join(installDir, "credentials.json")
+		if data, err := os.ReadFile(credsPath); err == nil {
+			credentials = data
+		}
+		tokenPath := filepath.Join(installDir, "token.json")
+		if data, err := os.ReadFile(tokenPath); err == nil {
+			token = data
+		}
+
+		if len(credentials) == 0 {
+			credentials = src.GetDefaultCreds()
+		}
+		if len(token) == 0 {
+			token = src.GetDefaultToken()
 		}
 	}
 
-	if migrated && vault != nil && masterPassword != "" {
-		data, err := src.EncryptVault(vault, masterPassword)
-		if err == nil {
-			src.SaveVault(vaultPath, data)
-		}
-	}
-
-	return src.GetCloudProvider(provider, ctx, credentials, token)
+	return src.GetCloudProvider(provider, ctx, credentials, token, syncMode)
 }
 
 func handleDownloadedVault(data []byte, githubToken, githubRepo string) {
