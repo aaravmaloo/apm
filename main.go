@@ -2527,7 +2527,7 @@ func rankMatch(query, target string) int {
 	t := strings.ToLower(target)
 
 	if q == t {
-		return 1000 // Exact match (top priority)
+		return 1000
 	}
 
 	terms := strings.Fields(q)
@@ -2650,14 +2650,14 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			break
 		}
 
-		if b[0] == 27 { // Escape or Arrow key
+		if b[0] == 27 {
 			if n >= 3 && b[1] == '[' {
-				if b[2] == 'A' { // Up
+				if b[2] == 'A' {
 					if selectedIndex > 0 {
 						selectedIndex--
 					}
 					continue
-				} else if b[2] == 'B' { // Down
+				} else if b[2] == 'B' {
 					if selectedIndex < len(results)-1 {
 						selectedIndex++
 					}
@@ -2665,16 +2665,16 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 				}
 			}
 			if n == 1 {
-				break // Escape
+				break
 			}
 			continue
 		}
 
-		if b[0] == 3 || b[0] == 4 { // Ctrl+C or Ctrl+D
+		if b[0] == 3 || b[0] == 4 {
 			break
 		}
 
-		if b[0] == 127 || b[0] == 8 { // Backspace
+		if b[0] == 127 || b[0] == 8 {
 			if len(query) > 0 {
 				query = query[:len(query)-1]
 				selectedIndex = 0
@@ -3326,11 +3326,11 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 	}
 
 	if syncMode == "self_hosted" && vault != nil && len(vault.CloudToken) > 0 {
-		// Priority for self_hosted: Vault stored tokens
+
 		credentials = vault.CloudCredentials
 		token = vault.CloudToken
 	} else {
-		// Priority for apm_public: Local files then embedded defaults
+
 		exe, _ := os.Executable()
 		installDir := filepath.Dir(exe)
 
