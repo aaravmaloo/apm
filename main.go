@@ -33,6 +33,7 @@ import (
 
 var vaultPath string
 var inputReader *bufio.Reader
+var pluginMgr *plugins.PluginManager
 
 func init() {
 	exe, err := os.Executable()
@@ -59,13 +60,12 @@ func main() {
 	}
 
 	exe, _ := os.Executable()
-	pluginMgr := plugins.NewPluginManager(filepath.Dir(exe))
+	pluginMgr = plugins.NewPluginManager(filepath.Dir(exe))
 
 	if err := pluginMgr.LoadPlugins(); err != nil {
 		color.Red("Error loading plugins: %v\n", err)
 	}
 
-	// Helper functions for cloud setup (Shared by init and init-all)
 	setupGDrive := func(v *src.Vault, mp string) {
 		color.Yellow("\nSetting up Google Drive...")
 
@@ -282,7 +282,7 @@ func main() {
 				"command": "add",
 			}
 
-			if err := pluginMgr.ExecuteHooks("pre", "add", hookData); err != nil {
+			if err := pluginMgr.ExecuteHooks("pre", "add", vault); err != nil {
 				color.Red("Hook executing blocked action: %v", err)
 				return
 			}
@@ -2417,6 +2417,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			src.CreateSession(pass, 1*time.Hour, false, 15*time.Minute)
 			color.Cyan("vault has been unlocked. you will be asked to reauthenticate after 15 minutes of inactivity/1 hour.")
 
+			pluginMgr.ExecuteHooks("post", "unlock", vault)
 			return pass, vault, false, nil
 		}
 
