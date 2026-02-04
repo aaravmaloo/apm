@@ -204,28 +204,26 @@ Permissions are explicitly defined in the manifest. Requests for unlisted permis
 
 | Capability | Scope | Description |
 |------------|-------|-------------|
-| `vault.read` | Reads | Access to `vault.get`, `vault.list`, and `vault.get_totp`. |
-| `vault.write`| Mutations | Access to `vault.add`, `vault.edit`, and `vault.delete`. |
-| `system.read`| Environment| Access to `system.env` (Reading OS environment variables). |
-| `system.write`| IO | Access to `system.copy` (Unified OS Clipboard integration). |
-| `network.outbound`| Network | Access to `network.get` and `network.post` (RESTful integrations). |
-| `crypto.use` | Cryptography| Access to `crypto.hash` (SHA-256) and RNG utilities. |
-| `file.storage`| Local Disk | Private sandboxed storage within the plugin's home directory. |
+| `vault.read` | Reads | Access to `v:get`, `v:list`. |
+| `vault.write`| Mutations | Access to `v:add`, `v:del`, `v:backup`. |
+| `system.write`| IO | Access to `s:clip` (System Clipboard). |
+| `network.outbound`| Network | Access to `net:get` and `net:post`. |
+| `crypto.use` | Cryptography| Access to `crypto:hash` (SHA-256). |
+| `cloud.sync` | Sync | Access to `c:sync` (Drive Sync). |
 
 ### 6.3 Action Glossary (Keywords)
 
-| Keyword | Target | Description | Variable Mapping |
-|---------|--------|-------------|------------------|
-| `print` | Console | Outputs a string to the terminal. | `message` |
-| `prompt.input`| User | Requests interactive input from the user. | `message` -> `assign_to` |
-| `vault.get` | Entry | Retrieves a secret by account name. | `key` -> `assign_to` |
-| `vault.add` | Entry | Creates a new entry with provided credentials. | `key`, `message` |
-| `vault.delete`| Entry | Irreversibly removes a specific account entry. | `key` |
-| `network.get` | URL | Performs an HTTP GET request to a remote endpoint. | `key` -> `assign_to` |
-| `network.post`| URL | Performs an HTTP POST with a specific payload. | `key`, `message` -> `assign_to` |
-| `system.copy` | Clipboard| Places the specified text into the system clipboard. | `message` |
-| `system.env` | Variable | Reads an environment variable into memory. | `key` -> `assign_to` |
-| `crypto.hash` | Data | Computes a SHA-256 hex-encoded hash of the input. | `message` -> `assign_to` |
+| `s:out` | Console | Outputs a string to the terminal. | `[message]` |
+| `s:in` | User | Requests interactive input. | `[prompt, assign_to]` |
+| `v:get` | Entry | Retrieves a secret by account name. | `[key, assign_to]` |
+| `v:add` | Entry | Creates a new entry with credentials. | `[acc, pass, user]` |
+| `v:del` | Entry | Removes a specific account entry. | `[key]` |
+| `net:get` | URL | Performs an HTTP GET request. | `[url, assign_to]` |
+| `net:post`| URL | Performs an HTTP POST with payload. | `[url, payload, assign_to]` |
+| `s:clip` | Clipboard| Places text into the system clipboard. | `[text]` |
+| `crypto:hash` | Data | Computes a SHA-256 hash. | `[data, assign_to]` |
+| `v:backup`| Vault | Creates a local timestamped backup. | `[]` |
+| `s:sleep` | System | Pauses execution for X seconds. | `[seconds]` |
 
 ### 6.4 Variable Substitution Engine
 APM uses a high-performance templating engine for action fields.
