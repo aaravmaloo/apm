@@ -248,8 +248,35 @@ func PerformDriveAuth(credsJSON []byte) ([]byte, error) {
 		return nil, fmt.Errorf("unable to parse client secret: %v", err)
 	}
 
+	// Use localhost with a specific port for automatic retrieval
+	config.RedirectURL = "http://localhost:8080"
+
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("\nGo to the following link in your browser then type the authorization code: \n%v\n", authURL)
+	fmt.Printf("\nWaiting for authentication in browser...\n")
+	fmt.Printf("If the browser does not open, visit: %v\n", authURL)
+
+	codeChan := make(chan string)
+	errChan := make(chan error)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		code := r.URL.Query().Get("code")
+		if code != "" {
+			fmt.Fprintf(w, "Authentication successful! You can close this window and return to the terminal.")
+			codeChan <- code
+		} else {
+			fmt.Fprintf(w, "Authentication failed. No code found.")
+			errChan <- fmt.Errorf("no code in redirect")
+		}
+	})
+
+	server := &http.Server{Addr: ":8080", Handler: mux}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
 
 	// Attempt to open browser
 	var errOpen error
@@ -265,11 +292,20 @@ func PerformDriveAuth(credsJSON []byte) ([]byte, error) {
 		fmt.Println("Could not open browser automatically. Please open the link manually.")
 	}
 
-	fmt.Print("\nEnter Authorization Code: ")
 	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		return nil, fmt.Errorf("unable to read authorization code: %v", err)
+	select {
+	case authCode = <-codeChan:
+		// Got it
+	case err := <-errChan:
+		return nil, err
+	case <-time.After(5 * time.Minute):
+		return nil, fmt.Errorf("authentication timed out")
 	}
+
+	// Shutdown server
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	server.Shutdown(ctx)
 
 	tok, err := config.Exchange(context.TODO(), authCode)
 	if err != nil {
