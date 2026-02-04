@@ -85,10 +85,15 @@ func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (s
 		randomName = fmt.Sprintf("v_%s.bin", randomName)
 	}
 
+	parent := DriveFolderID
+	if cm.Mode == "self_hosted" {
+		parent = "root"
+	}
+
 	driveFile := &drive.File{
 		Name:        randomName,
 		Description: HashKey(customKey),
-		Parents:     []string{DriveFolderID},
+		Parents:     []string{parent},
 	}
 
 	res, err := cm.Service.Files.Create(driveFile).Media(f).Do()
@@ -98,13 +103,15 @@ func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (s
 
 	fileID := res.Id
 
-	permission := &drive.Permission{
-		Type: "anyone",
-		Role: "reader",
-	}
-	_, err = cm.Service.Permissions.Create(fileID, permission).Do()
-	if err != nil {
-		return "", fmt.Errorf("unable to make file public: %v", err)
+	if cm.Mode == "apm_public" {
+		permission := &drive.Permission{
+			Type: "anyone",
+			Role: "reader",
+		}
+		_, err = cm.Service.Permissions.Create(fileID, permission).Do()
+		if err != nil {
+			return "", fmt.Errorf("unable to make file public: %v", err)
+		}
 	}
 
 	return fileID, nil
