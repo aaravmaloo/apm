@@ -282,7 +282,7 @@ func main() {
 				"command": "add",
 			}
 
-			if err := pluginMgr.ExecuteHooks("pre", "add", vault); err != nil {
+			if err := pluginMgr.ExecuteHooks("pre", "add", vault, vaultPath); err != nil {
 				color.Red("Hook executing blocked action: %v", err)
 				return
 			}
@@ -2002,7 +2002,7 @@ func main() {
 						color.Red("Error unlocking vault for plugin: %v\n", err)
 						return
 					}
-					executor := plugins.NewStepExecutor(ctx, vault)
+					executor := plugins.NewStepExecutor(ctx, vault, vaultPath)
 
 					if err := executor.ExecuteSteps(cmdDef.Steps, plugin.Definition.Permissions); err != nil {
 						color.Red("Plugin execution error: %v\n", err)
@@ -2417,7 +2417,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			src.CreateSession(pass, 1*time.Hour, false, 15*time.Minute)
 			color.Cyan("vault has been unlocked. you will be asked to reauthenticate after 15 minutes of inactivity/1 hour.")
 
-			pluginMgr.ExecuteHooks("post", "unlock", vault)
+			pluginMgr.ExecuteHooks("post", "unlock", vault, vaultPath)
 			return pass, vault, false, nil
 		}
 
