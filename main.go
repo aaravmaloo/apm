@@ -1516,37 +1516,27 @@ func main() {
 
 	var pluginsListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List available plugins in Marketplace (Multi-Cloud)",
+		Short: "List available plugins in Marketplace (Drive)",
 		Run: func(cmd *cobra.Command, args []string) {
-			providers := []string{"gdrive"}
-			allPlugins := make(map[string]bool)
-
 			fmt.Println("Fetching plugins from Marketplace...")
-			for _, p := range providers {
-				cm, err := getCloudManagerEx(context.Background(), nil, "", p)
-				if err != nil {
-					continue
-				}
-				plugins, err := cm.ListMarketplacePlugins()
-				if err != nil {
-					continue
-				}
-				for _, name := range plugins {
-					allPlugins[name] = true
-				}
+			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
+			if err != nil {
+				color.Red("Error connecting to marketplace: %v", err)
+				return
+			}
+			plugins, err := cm.ListMarketplacePlugins()
+			if err != nil {
+				color.Red("Error listing plugins: %v", err)
+				return
 			}
 
-			if len(allPlugins) == 0 {
+			if len(plugins) == 0 {
 				fmt.Println("No plugins found in Marketplace.")
 				return
 			}
 			fmt.Println("Available Plugins:")
-			var names []string
-			for name := range allPlugins {
-				names = append(names, name)
-			}
-			sort.Strings(names)
-			for _, n := range names {
+			sort.Strings(plugins)
+			for _, n := range plugins {
 				fmt.Printf("- %s\n", n)
 			}
 		},
@@ -1561,29 +1551,18 @@ func main() {
 				return
 			}
 			name := args[0]
-
-			providers := []string{"gdrive"}
-			success := false
-
 			targetDir := filepath.Join(pluginMgr.PluginsDir, name)
 
-			for _, p := range providers {
-				cm, err := getCloudManagerEx(context.Background(), nil, "", p)
-				if err != nil {
-					continue
-				}
-
-				fmt.Printf("Attempting to download '%s' from %s...\n", name, p)
-				if err := cm.DownloadPlugin(name, targetDir); err == nil {
-					success = true
-					break
-				} else {
-					os.RemoveAll(targetDir)
-				}
+			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
+			if err != nil {
+				color.Red("Error connecting to marketplace: %v", err)
+				return
 			}
 
-			if !success {
-				color.Red("Failed to install plugin '%s' from any marketplace.", name)
+			fmt.Printf("Attempting to download '%s' from Drive Marketplace...\n", name)
+			if err := cm.DownloadPlugin(name, targetDir); err != nil {
+				os.RemoveAll(targetDir)
+				color.Red("Failed to install plugin '%s': %v", name, err)
 				return
 			}
 
@@ -1605,58 +1584,6 @@ func main() {
 				return
 			}
 			color.Green("Plugin %s removed successfully.\n", name)
-		},
-	}
-
-	var pluginsPushCmd = &cobra.Command{
-		Use:   "push [name]",
-		Short: "Push a plugin to Marketplace (Multi-Cloud)",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) < 1 {
-				color.Red("Usage: pm plugins push <name>")
-				return
-			}
-			pluginName := args[0]
-			cwd, _ := os.Getwd()
-			pluginPath := filepath.Join(cwd, "plugins", pluginName)
-
-			if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
-				color.Red("Plugin %s not found in current directory.", pluginName)
-				return
-			}
-
-			def, err := plugins.LoadPluginDef(filepath.Join(pluginPath, "plugin.json"))
-			if err != nil {
-				color.Red("Invalid plugin.json: %v", err)
-				return
-			}
-
-			fmt.Printf("Validating plugin '%s' v%s...\n", def.Name, def.Version)
-
-			providers := []string{"gdrive"}
-			anySuccess := false
-
-			for _, p := range providers {
-				fmt.Printf("Uploading to %s...\n", p)
-				cm, err := getCloudManagerEx(context.Background(), nil, "", p)
-				if err != nil {
-					color.Yellow("Skipping %s: authentication failed", p)
-					continue
-				}
-
-				if err := cm.UploadPlugin(pluginName, pluginPath); err != nil {
-					color.Yellow("Failed to upload to %s: %v", p, err)
-					continue
-				}
-				anySuccess = true
-			}
-
-			if !anySuccess {
-				color.Red("Failed to push plugin to any marketplace.")
-				return
-			}
-
-			color.Green("Successfully pushed plugin '%s' to marketplace!", pluginName)
 		},
 	}
 
@@ -1715,8 +1642,7 @@ func main() {
 		},
 	}
 
-	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginsPushCmd, pluginLocalCmd, pluginSearchCmd)
-	rootCmd.AddCommand(pluginsCmd)
+	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginLocalCmd, pluginSearchCmd)
 
 	var setupCmd = &cobra.Command{
 		Use:   "setup",
@@ -1899,64 +1825,8 @@ func main() {
 		},
 	}
 
-	var vsettingsCmd = &cobra.Command{
-		Use:   "vsettings",
-		Short: "Manage vault security settings",
-		Run: func(cmd *cobra.Command, args []string) {
-			modify, _ := cmd.Flags().GetBool("modify")
-			alerts, _ := cmd.Flags().GetBool("alerts")
-
-			masterPassword, vault, readonly, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-
-			if modify {
-				if readonly {
-					color.Red("Vault is READ-ONLY. Cannot modify settings.")
-					return
-				}
-				fmt.Println("Interactive Security Settings")
-				fmt.Println("-----------------------------")
-				fmt.Printf("Current Profile: %s\n", vault.Profile)
-				fmt.Print("New Profile (leave blank to skip): ")
-				newProf := readInput()
-				if newProf != "" {
-					err := src.ChangeProfile(vault, newProf, masterPassword, vaultPath)
-					if err != nil {
-						color.Red("Error: %v", err)
-					} else {
-						color.Green("Profile updated to %s.", newProf)
-					}
-				}
-			}
-
-			if cmd.Flags().Changed("alerts") {
-				if readonly {
-					color.Red("Vault is READ-ONLY. Cannot toggle alerts.")
-					return
-				}
-				err := src.ConfigureAlerts(vault, alerts, "", masterPassword, vaultPath)
-				if err != nil {
-					color.Red("Error: %v", err)
-				} else {
-					color.Green("Alerts set to %v", alerts)
-				}
-			}
-
-			fmt.Printf("\nVault Settings:\n")
-			fmt.Printf("  Profile: %s\n", vault.Profile)
-			fmt.Printf("  Alerts:  %v\n", vault.AlertsEnabled)
-			if vault.AlertsEnabled {
-				fmt.Printf("  Email:   %s\n", vault.AlertEmail)
-			}
-		},
-	}
-	vsettingsCmd.Flags().Bool("modify", false, "Modify settings interactively")
-	vsettingsCmd.Flags().Bool("alerts", false, "Enable/disable alerts")
-
-	var sec_profileCmd = &cobra.Command{
-		Use:   "sec_profile",
+	var profileCmd = &cobra.Command{
+		Use:   "profile",
 		Short: "Manage encryption profiles",
 	}
 
@@ -1982,7 +1852,7 @@ func main() {
 		},
 	}
 
-	var sec_profileCreateCmd = &cobra.Command{
+	var profileCreateCmd = &cobra.Command{
 		Use:   "create <name>",
 		Short: "Create a custom profile",
 		Args:  cobra.ExactArgs(1),
@@ -2080,80 +1950,7 @@ func main() {
 			color.Green("Custom profile '%s' applied.", args[0])
 		},
 	}
-	sec_profileCmd.AddCommand(profileSetCmd, sec_profileCreateCmd)
-
-	var adupCmd = &cobra.Command{
-		Use:   "adup",
-		Short: "Check for security anomalies",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			alerts := src.CheckAnomalies(vault)
-			if len(alerts) == 0 {
-				color.Green("No anomalies detected. Your account is likely safe.")
-			} else {
-				color.Red("⚠ ANOMALIES DETECTED:")
-				for _, a := range alerts {
-					color.Red("  - %s", a)
-				}
-			}
-		},
-	}
-
-	var scanCmd = &cobra.Command{
-		Use:   "scan",
-		Short: "Offline password health check",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-
-			fmt.Println("Scanning Vault Health...")
-			fmt.Println("------------------------")
-
-			weakCount := 0
-			reuseMap := make(map[string][]string)
-
-			for _, e := range vault.Entries {
-				score := 0
-				if len(e.Password) >= 12 {
-					score += 20
-				}
-				if strings.ContainsAny(e.Password, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") && strings.ContainsAny(e.Password, "abcdefghijklmnopqrstuvwxyz") {
-					score += 10
-				}
-				if strings.ContainsAny(e.Password, "0123456789") {
-					score += 10
-				}
-				if strings.ContainsAny(e.Password, "!@#$%^&*()-_=+") {
-					score += 15
-				}
-
-				if score < 40 {
-					fmt.Printf("[WEAK] %s: Score %d/55\n", e.Account, score)
-					weakCount++
-				}
-				reuseMap[e.Password] = append(reuseMap[e.Password], e.Account)
-			}
-
-			reusedCount := 0
-			for _, accs := range reuseMap {
-				if len(accs) > 1 {
-					fmt.Printf("[REUSE] Password reused on: %s\n", strings.Join(accs, ", "))
-					reusedCount++
-				}
-			}
-
-			if weakCount == 0 && reusedCount == 0 {
-				color.Green("All clear! No weak or reused passwords found.")
-			} else {
-				fmt.Printf("\nFound %d weak passwords and %d reused groups.\n", weakCount, reusedCount)
-			}
-		},
-	}
+	profileCmd.AddCommand(profileSetCmd, profileCreateCmd)
 
 	var spaceCmd = &cobra.Command{
 		Use:   "space",
@@ -2283,7 +2080,7 @@ func main() {
 
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, vsettingsCmd, sec_profileCmd, adupCmd, scanCmd, compromiseCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
