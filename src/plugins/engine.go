@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	apm "password-manager/src"
 )
@@ -33,12 +34,13 @@ func (ctx *ExecutionContext) Substitute(input string) string {
 }
 
 type StepExecutor struct {
-	Context *ExecutionContext
-	Vault   *apm.Vault
+	Context   *ExecutionContext
+	Vault     *apm.Vault
+	VaultPath string
 }
 
-func NewStepExecutor(ctx *ExecutionContext, vault *apm.Vault) *StepExecutor {
-	return &StepExecutor{Context: ctx, Vault: vault}
+func NewStepExecutor(ctx *ExecutionContext, vault *apm.Vault, vaultPath string) *StepExecutor {
+	return &StepExecutor{Context: ctx, Vault: vault, VaultPath: vaultPath}
 }
 
 func (se *StepExecutor) ExecuteSteps(steps []CommandStep, permissions []string) error {
@@ -216,11 +218,11 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		if !hasPermission(permissions, "vault.write") {
 			return fmt.Errorf("permission denied: vault.write")
 		}
-		vaultData, err := os.ReadFile(vaultPath)
+		vaultData, err := os.ReadFile(se.VaultPath)
 		if err != nil {
 			return err
 		}
-		backupPath := fmt.Sprintf("%s.backup_%d", vaultPath, time.Now().Unix())
+		backupPath := fmt.Sprintf("%s.backup_%d", se.VaultPath, time.Now().Unix())
 		return os.WriteFile(backupPath, vaultData, 0600)
 
 	case "s:sleep":
@@ -247,11 +249,6 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 	}
 }
 
-	default:
-		return fmt.Errorf("unknown action: %s", step.Action)
-	}
-}
-
 func hasPermission(perms []string, required string) bool {
 	for _, p := range perms {
 		if p == required {
@@ -261,10 +258,10 @@ func hasPermission(perms []string, required string) bool {
 	return false
 }
 
-func (pm *PluginManager) ExecuteHooks(event, command string, vault *apm.Vault) error {
+func (pm *PluginManager) ExecuteHooks(event, command string, vault *apm.Vault, vaultPath string) error {
 	hookKey := fmt.Sprintf("%s:%s", event, command)
 	ctx := NewExecutionContext()
-	se := NewStepExecutor(ctx, vault)
+	se := NewStepExecutor(ctx, vault, vaultPath)
 
 	for _, plugin := range pm.Loaded {
 		if actions, ok := plugin.Definition.Hooks[hookKey]; ok {
