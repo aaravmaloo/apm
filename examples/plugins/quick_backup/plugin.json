@@ -2,7 +2,7 @@
     "name": "quick_backup",
     "version": "1.0.0",
     "description": "Create a timestamped local backup of your vault",
-    "author": "Antigravity",
+    "author": "Aarav Maloo",
     "permissions": [
         "vault.write"
     ],
