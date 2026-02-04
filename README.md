@@ -78,7 +78,7 @@ Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Count
 
 ### 2.1 Performance Profiles
 
-Users can select from pre-defined profiles via `pm profile switch` to balance security and latency.
+Users can select from pre-defined encryption profiles via `pm profile set` to balance security and latency.
 
 | Profile | Memory | Time | Parallelism | Nonce Size |
 |---------|--------|------|-------------|------------|
@@ -94,14 +94,13 @@ Users can select from pre-defined profiles via `pm profile switch` to balance se
 ### 3.1 Personal Edition (pm)
 
 The personal edition focuses on local-first security and privacy.
-The best feature of APM, to my belief is security of multi-cloud sync and how easily it is to maintain a portable vault. 
-The users' whole vault is stored in a single encrypted .dat file and remains fully opaque to unauthorized viewers. 
-The user can sync their vault to Google Drive. For maximum privacy, cloud vaults use randomized filenames (e.g., `v_1h2k3j.bin`) instead of the retrieval key. Retrieving a vault requires a two-word retrieval key (now hidden during input) and the master password.
-For those preferring air-gapped security, the `vault.dat` file can be manually carried on a physical hardware key.
+The core strength of APM lies in its multi-cloud synchronization (Google Drive) and portable vault architecture. 
+The vault is stored in a single encrypted `.dat` file, utilizing randomized filenames (e.g., `v_1h2k3j.bin`) for cloud storage to ensure maximum privacy. Retrieving a vault requires a unique retrieval key and the master password.
+
 | Command | Subcommands | Flag Examples | Description |
 |---------|-------------|---------------|-------------|
 | **init** | N/A | N/A | Initializes a new encrypted vault file (`vault.dat`). |
-| **add** | N/A | N/A | Launches an interactive menu to store one of the 22 secret types. |
+| **add** | N/A | N/A | Interactive menu to store one of the 22 secret types. |
 | **get** | [query] | `--show-pass` | Fuzzy searches and retrieves secret details. |
 | **edit** | [name] | N/A | Interactive modification of existing entry metadata. |
 | **del** | [name] | N/A | Permanent deletion of an entry from the vault. |
@@ -109,13 +108,15 @@ For those preferring air-gapped security, the `vault.dat` file can be manually c
 | **totp** | `show [acc]`| N/A | Real-time generation of 2FA codes. |
 | **audit** | N/A | N/A | View an encrypted history of every vault interaction. |
 | **health**| N/A | N/A | Security dashboard with vulnerability scoring. |
-| **unlock** | N/A | `--timeout 1h` | Unlocks the vault for the current shell session with inactivity timeout. |
-| **lock** | N/A | N/A | Kills the active shell session and locks the vault. |
-| **setup** | N/A | N/A | Interactive wizard for initial configuration (vault, cloud, profiles). |
-| **profile** | `switch`, `list` | N/A | Manage custom namespaces (Work, Personal, DevOps) within the vault. |
-| **policy** | `load`, `show`, `clear`| N/A | Human-first YAML policy engine for password complexity and rotation. |
-| **cloud** | `init`, `sync`, `get` | `gdrive` | Cloud integration (GDrive) with randomized naming. |
-| **plugins**| `list`, `add`, `push` | N/A | Plugin Marketplace for extending APM functionality. |
+| **unlock** | N/A | `--timeout 1h` | Session-scoped unlock with inactivity timeout. |
+| **lock** | N/A | N/A | Immediately terminates the active session. |
+| **setup** | N/A | N/A | Interactive wizard for initial configuration. |
+| **space** | `switch`, `list`, `create` | N/A | Manage custom compartments (e.g., Work, Personal, DevOps). |
+| **profile** | `set <name>`, `create <name>` | N/A | Manage encryption profiles and KDF parameters. |
+| **policy** | `load`, `show`, `clear`| N/A | YAML policy engine for password complexity. |
+| **cloud** | `init`, `sync`, `get` | `gdrive` | Private cloud integration via Google Drive. |
+| **plugins**| `list`, `add`, `local`, `search` | N/A | Extend APM via Drive-only Marketplace or local source. |
+| **compromise** | N/A | N/A | **EMERGENCY**: Permanently nuke the vault. |
 
 ---
 
@@ -193,10 +194,10 @@ APM supports 22 distinct data structures, each encrypted with unique nonces.
 APM features a declarative, JSON-driven plugin architecture. This allows for extensive customization and automation without requiring the compilation of Go code.
 
 ### 6.1 Plugin Lifecycle
-- **Discovery**: Plugins are located in the `/plugins_cache` directory.
+- **Discovery**: Plugins are located in the local `/plugins_cache` directory.
 - **Manifest Validation**: On startup, `plugin.json` is verified for syntax and capability requirements.
 - **Hook Execution**: Plugins can intercept standard CLI events (e.g., `pre:add`) or register new top-level commands.
-- **Availability**: Pushed plugins are mirrored to Google Drive to ensure maximum availability.
+- **Marketplace**: Verified plugins can be discovered and installed directly from the Google Drive Marketplace or via local source.
 
 ### 6.2 Exhaustive Capability Reference
 Permissions are explicitly defined in the manifest. Requests for unlisted permissions will result in a runtime error.
