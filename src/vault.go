@@ -274,6 +274,7 @@ type Vault struct {
 	AlertsEnabled           bool                   `json:"alerts_enabled,omitempty"`
 	AnomalyDetectionEnabled bool                   `json:"anomaly_detection_enabled,omitempty"`
 	LastCloudProvider       string                 `json:"last_cloud_provider,omitempty"`
+	DriveSyncMode           string                 `json:"drive_sync_mode,omitempty"` // "apm_public" or "self_hosted"
 	GitHubToken             string                 `json:"github_token,omitempty"`
 	GitHubRepo              string                 `json:"github_repo,omitempty"`
 	CurrentSpace            string                 `json:"current_space,omitempty"`
