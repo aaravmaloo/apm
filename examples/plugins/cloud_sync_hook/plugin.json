@@ -1,0 +1,17 @@
+{
+    "name": "cloud_sync_hook",
+    "version": "1.0.0",
+    "description": "Automatically trigger cloud sync after adding entries",
+    "author": "Antigravity",
+    "permissions": [
+        "cloud.sync"
+    ],
+    "hooks": {
+        "post:add": [
+            {
+                "op": "c:sync",
+                "args": []
+            }
+        ]
+    }
+}
