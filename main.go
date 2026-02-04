@@ -278,10 +278,6 @@ func main() {
 				return
 			}
 
-			hookData := map[string]interface{}{
-				"command": "add",
-			}
-
 			if err := pluginMgr.ExecuteHooks("pre", "add", vault, vaultPath); err != nil {
 				color.Red("Hook executing blocked action: %v", err)
 				return
