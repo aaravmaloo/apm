@@ -1,0 +1,34 @@
+{
+    "name": "vault_cleaner",
+    "version": "1.0.0",
+    "description": "Remove temporary or unwanted entries",
+    "author": "Antigravity",
+    "permissions": [
+        "vault.write"
+    ],
+    "commands": {
+        "remove": {
+            "description": "Delete an entry by name",
+            "flags": {
+                "name": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "steps": [
+                {
+                    "op": "v:del",
+                    "args": [
+                        "{{name}}"
+                    ]
+                },
+                {
+                    "op": "s:out",
+                    "args": [
+                        "Entry {{name}} removed if it existed."
+                    ]
+                }
+            ]
+        }
+    }
+}
