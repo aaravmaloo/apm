@@ -925,7 +925,7 @@ func main() {
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
 
-			fmt.Println("APM Stable Release v9.2")
+			fmt.Println("APM pre-release v9")
 			fmt.Println(processedHomeName, "@apm")
 			fmt.Printf("Installed: %s\n", installDir)
 			fmt.Printf("Vault Path: %s\n", vaultPath)
