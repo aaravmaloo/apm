@@ -1,0 +1,32 @@
+{
+    "name": "quick_backup",
+    "version": "1.0.0",
+    "description": "Create a timestamped local backup of your vault",
+    "author": "Antigravity",
+    "permissions": [
+        "vault.write"
+    ],
+    "commands": {
+        "run": {
+            "description": "Backup the vault",
+            "steps": [
+                {
+                    "op": "s:out",
+                    "args": [
+                        "Creating local backup..."
+                    ]
+                },
+                {
+                    "op": "v:backup",
+                    "args": []
+                },
+                {
+                    "op": "s:out",
+                    "args": [
+                        "Backup created successfully."
+                    ]
+                }
+            ]
+        }
+    }
+}
