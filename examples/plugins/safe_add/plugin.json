@@ -1,0 +1,43 @@
+{
+    "name": "safe_add",
+    "version": "1.0.0",
+    "description": "Quickly add a new entry with a generated password",
+    "author": "Aarav Maloo",
+    "permissions": [
+        "vault.write"
+    ],
+    "commands": {
+        "run": {
+            "description": "Add an entry quickly",
+            "steps": [
+                {
+                    "op": "s:in",
+                    "args": [
+                        "Enter Account Name",
+                        "new_acc"
+                    ]
+                },
+                {
+                    "op": "s:in",
+                    "args": [
+                        "Enter Password",
+                        "new_pass"
+                    ]
+                },
+                {
+                    "op": "v:add",
+                    "args": [
+                        "{{new_acc}}",
+                        "{{new_pass}}"
+                    ]
+                },
+                {
+                    "op": "s:out",
+                    "args": [
+                        "Entry {{new_acc}} added successfully."
+                    ]
+                }
+            ]
+        }
+    }
+}
