@@ -1,118 +1,97 @@
 # APM Plugin API Reference
 
-This document describes how to create plugins for the APM CLI. Plugins allow you to extend the functionality of the password manager with custom commands, hooks, and file handling capabilities.
+This document describes how to create plugins for the APM CLI. APM uses a declarative, JSON-driven execution engine that allows building complex workflows without writing Go code.
 
 ## Plugin Structure
 
-A plugin is a directory containing a `plugin.json` manifest file and any necessary executable scripts or binaries.
+A plugin is a directory containing a `plugin.json` manifest file. All assets are stored relative to this directory.
 
 ```text
 my-plugin/
-├── plugin.json      # Manifest file
-├── hook.sh          # (Optional) Hook script
-└── command.py       # (Optional) Command script
+└── plugin.json      # Manifest file
 ```
 
 ## Manifest (`plugin.json`)
 
-The manifest defines the plugin's metadata, permissions, and capabilities.
+The manifest defines the plugin's metadata, permissions, and command definitions.
 
-### Schema (`v1`)
+### Schema Example
 
 ```json
 {
-  "name": "my-plugin",
-  "version": "1.0.0",
-  "description": "A description of what the plugin does",
-  "author": "Your Name",
+  "name": "backup-tool",
+  "version": "1.2.0",
+  "description": "Backup vault to remote server",
+  "author": "Aarav Maloo",
   "permissions": [
     "vault.read",
     "network.outbound"
   ],
-  "file_storage": {
-    "enabled": true,
-    "allowed_types": [".json", ".txt"]
-  },
   "commands": {
-    "my-command": {
-      "description": "Does something cool",
-      "flags": {
-        "verbose": { "type": "bool", "default": "false" }
-      },
+    "backup-remote": {
+      "description": "Sync vault to remote endpoint",
       "steps": [
-        {
-          "action": "exec",
-          "command": "python command.py",
-          "message": "Running custom command..."
-        }
+        { "op": "v:get", "args": ["MySecret", "pass"] },
+        { "op": "net:post", "args": ["https://api.myapp.com/sync", "{\"key\": \"{{pass}}\"}", "resp"] },
+        { "op": "s:out", "args": ["Server Response: {{resp}}"] }
       ]
     }
-  },
-  "hooks": {
-    "pre-add": [
-      {
-        "action": "exec",
-        "command": "./hook.sh",
-        "message": "Validating entry..."
-      }
-    ]
   }
 }
 ```
 
-### Fields
+## Operations Glossary (`op`)
 
-| Field | Type | Required | Description |
+APM execute plugins through a series of "ops". Each op takes a list of `args`.
+
+### Vault Operations
+| Op | Args | Description | Permission |
 | :--- | :--- | :--- | :--- |
-| `name` | string | Yes | Unique identifier for the plugin (kebab-case). |
-| `version` | string | Yes | Semantic version (e.g., `1.0.0`). |
-| `description` | string | Yes | Short description of functionality. |
-| `author` | string | Yes | Author name or email. |
-| `permissions` | array | No | List of required permissions. |
+| `v:get` | `[key, assignTo]` | Retrieves password/token for `key`. | `vault.read` |
+| `v:add` | `[acc, pass, user]` | Adds a new entry to the vault. | `vault.write` |
+| `v:list` | `[assignTo]` | Lists all accounts as a CSV string. | `vault.read` |
+| `v:del` | `[key]` | Deletes an entry from the vault. | `vault.write` |
+| `v:backup`| `[]` | Creates a timestamped local backup. | `vault.write` |
+| `v:lock` | `[]` | Signals a vault lock event. | None |
 
-### Permissions
+### System & IO Operations
+| Op | Args | Description | Permission |
+| :--- | :--- | :--- | :--- |
+| `s:out` | `[message]` | Prints a message to the console. | None |
+| `s:in` | `[prompt, assignTo]` | Prompts for user input. | None |
+| `s:clip` | `[text]` | Copies text to system clipboard. | `system.write` |
+| `s:sleep` | `[seconds]` | Pauses execution. | None |
 
-- `vault.read`: Read entries from the vault.
-- `vault.write`: Add or modify vault entries.
-- `file.storage`: Store custom files in the plugin's data directory.
-- `crypto.use`: Access encryption/decryption helpers.
-- `network.outbound`: Make network requests.
+### Network Operations
+| Op | Args | Description | Permission |
+| :--- | :--- | :--- | :--- |
+| `net:get` | `[url, assignTo]` | Performs an HTTP GET request. | `network.outbound` |
+| `net:post`| `[url, payload, assignTo]` | Performs an HTTP POST request. | `network.outbound` |
 
-## Commands
+### Cryptographic Operations
+| Op | Args | Description | Permission |
+| :--- | :--- | :--- | :--- |
+| `crypto:hash` | `[data, assignTo]` | Computes SHA-256 hash. | `crypto.use` |
 
-Plugins can register custom CLI commands.
+## Variable Substitution
 
-### `commands` Object
+You can use variables stored via `assignTo` in any argument using the `{{name}}` syntax.
+- **System Reserved**: `{{USER}}`, `{{OS}}`, `{{TIMESTAMP}}` (Available at runtime).
 
-Keys are the command names (e.g., `pm my-command`). Values are command definitions.
+## Permissions
 
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `description` | string | Help text for the command. |
-| `flags` | map | Command line flags (not fully implemented yet). |
-| `steps` | array | List of steps to execute. |
+Permissions must be explicitly requested in the `permissions` array of the manifest.
+- `vault.read`: Access to `v:get`, `v:list`.
+- `vault.write`: Access to `v:add`, `v:del`, `v:backup`.
+- `system.write`: Access to `s:clip`.
+- `network.outbound`: Access to `net:get`, `net:post`.
+- `crypto.use`: Access to `crypto:hash`.
+- `cloud.sync`: Access to `c:sync`.
 
-### Command Steps
+## Implementation Details
 
-| Action | Description |
-| :--- | :--- |
-| `exec` | Execute a system command or script. |
-| `print` | Print a message to stdout. |
-| `http` | Make an HTTP request (requires `network.outbound`). |
+Plugins are installed via:
+1. `pm plugins add <name>` (Marketplace)
+2. `pm plugins local <path>` (Local Development)
 
-## Hooks
-
-Plugins can intercept APM events.
-
-### Supported Events
-
-- `pre-add`: Triggered before adding a new entry.
-- `post-add`: Triggered after adding a new entry.
-- `pre-unlock`: Triggered before unlocking the vault.
-
-## Versioning
-
-Plugins must follow [Semantic Versioning 2.0.0](https://semver.org/).
-- **Major** (X.y.z): Breaking changes.
-- **Minor** (x.Y.z): New features (backward compatible).
-- **Patch** (x.y.Z): Bug fixes.
+The manager stores them in `/plugins_cache/` and dynamically registers commands on startup.
