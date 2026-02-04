@@ -2,7 +2,7 @@
     "name": "cloud_sync_hook",
     "version": "1.0.0",
     "description": "Automatically trigger cloud sync after adding entries",
-    "author": "Antigravity",
+    "author": "Aarav Maloo",
     "permissions": [
         "cloud.sync"
     ],
