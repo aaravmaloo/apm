@@ -65,7 +65,7 @@ func main() {
 		color.Red("Error loading plugins: %v\n", err)
 	}
 
-	setupGDrive := func(v *src.Vault, mp string) {
+	setupGDrive := func(v *src.Vault, mp string) error {
 		color.Yellow("\nSetting up Google Drive...")
 
 		fmt.Println("Choose Sync Mode:")
@@ -84,7 +84,7 @@ func main() {
 			token, err = src.PerformDriveAuth(src.GetDefaultCreds())
 			if err != nil {
 				color.Red("Authentication failed: %v", err)
-				return
+				return err
 			}
 			v.CloudToken = token
 			v.CloudCredentials = src.GetDefaultCreds()
@@ -105,20 +105,20 @@ func main() {
 			gdriveKey, err = src.GenerateRetrievalKey()
 			if err != nil {
 				color.Red("Key generation failed: %v", err)
-				return
+				return err
 			}
 		}
 
 		cm, err := getCloudManagerEx(context.Background(), v, mp, "gdrive")
 		if err != nil {
 			color.Red("GDrive error: %v", err)
-			return
+			return err
 		}
 
 		fileID, err := cm.UploadVault(vaultPath, gdriveKey)
 		if err != nil {
 			color.Red("Upload failed: %v", err)
-			return
+			return err
 		}
 
 		v.RetrievalKey = gdriveKey
@@ -131,38 +131,40 @@ func main() {
 		} else {
 			color.Cyan("Mode: APM_PUBLIC")
 		}
+		return nil
 	}
 
-	setupGitHub := func(v *src.Vault) {
+	setupGitHub := func(v *src.Vault) error {
 		color.Yellow("\nSetting up GitHub...")
 		fmt.Println("To create a Personal Access Token, go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic) and create a token with 'repo' scope.")
 		fmt.Print("Enter GitHub Personal Access Token: ")
 		pat, err := readPassword()
 		if err != nil {
 			color.Red("Error reading token: %v", err)
-			return
+			return err
 		}
 		fmt.Println()
 		fmt.Print("Enter GitHub Repo (format: owner/repo): ")
 		repo := readInput()
 		if pat == "" || repo == "" {
 			color.Red("Missing token or repo.")
-			return
+			return fmt.Errorf("missing token or repo")
 		}
 		gm, err := src.NewGitHubManager(context.Background(), pat)
 		if err != nil {
 			color.Red("GitHub Error: %v", err)
-			return
+			return err
 		}
 		gm.SetRepo(repo)
 		_, err = gm.UploadVault(vaultPath, "")
 		if err != nil {
 			color.Red("Upload failed: %v", err)
-			return
+			return err
 		}
 		v.GitHubToken = pat
 		v.GitHubRepo = repo
 		color.Green("GitHub sync setup successful.")
+		return nil
 	}
 
 	var initCmd = &cobra.Command{
@@ -1140,6 +1142,19 @@ func main() {
 				return
 			}
 
+			if vault.CloudFileID != "" || vault.GitHubToken != "" {
+				color.Red("Cloud sync is already initialized.")
+				if vault.CloudFileID != "" {
+					color.Yellow("- Google Drive: Active (Mode: %s)", vault.DriveSyncMode)
+				}
+				if vault.GitHubToken != "" {
+					color.Yellow("- GitHub: Active")
+				}
+				fmt.Println("\nTo re-initialize, first remove the current configuration:")
+				fmt.Println("  pm cloud reset")
+				return
+			}
+
 			provider := ""
 			if len(args) > 0 {
 				provider = strings.ToLower(args[0])
@@ -1162,14 +1177,23 @@ func main() {
 				}
 			}
 
+			var errSetup error
 			switch provider {
 			case "github":
-				setupGitHub(vault)
+				errSetup = setupGitHub(vault)
 			case "gdrive":
-				setupGDrive(vault, masterPassword)
+				errSetup = setupGDrive(vault, masterPassword)
 			case "both":
-				setupGDrive(vault, masterPassword)
-				setupGitHub(vault)
+				if err := setupGDrive(vault, masterPassword); err != nil {
+					errSetup = err
+				} else {
+					errSetup = setupGitHub(vault)
+				}
+			}
+
+			if errSetup != nil {
+				// Don't save if setup failed
+				return
 			}
 
 			data, _ := src.EncryptVault(vault, masterPassword)
