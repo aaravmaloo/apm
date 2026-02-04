@@ -1,0 +1,52 @@
+{
+    "name": "clip_auto_clear",
+    "version": "1.0.0",
+    "description": "Copy to clipboard and clear after 10 seconds",
+    "author": "Aarav Maloo",
+    "permissions": [
+        "system.write"
+    ],
+    "commands": {
+        "copy": {
+            "description": "Copy secret and auto-clear",
+            "flags": {
+                "text": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "steps": [
+                {
+                    "op": "s:clip",
+                    "args": [
+                        "{{text}}"
+                    ]
+                },
+                {
+                    "op": "s:out",
+                    "args": [
+                        "Text copied. Clearing in 10 seconds..."
+                    ]
+                },
+                {
+                    "op": "s:sleep",
+                    "args": [
+                        "10"
+                    ]
+                },
+                {
+                    "op": "s:clip",
+                    "args": [
+                        " "
+                    ]
+                },
+                {
+                    "op": "s:out",
+                    "args": [
+                        "Clipboard cleared."
+                    ]
+                }
+            ]
+        }
+    }
+}
