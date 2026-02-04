@@ -1660,7 +1660,62 @@ func main() {
 		},
 	}
 
-	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginsPushCmd)
+	var pluginSearchCmd = &cobra.Command{
+		Use:   "search",
+		Short: "Search for plugins in the marketplace",
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPassword, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, "gdrive")
+			if err != nil {
+				color.Red("Error connecting to cloud: %v", err)
+				return
+			}
+			plugins, err := cm.ListMarketplacePlugins()
+			if err != nil {
+				color.Red("Error listing plugins: %v", err)
+				return
+			}
+			if len(plugins) == 0 {
+				fmt.Println("No plugins found in marketplace.")
+				return
+			}
+			fmt.Println("Marketplace Plugins:")
+			for _, p := range plugins {
+				fmt.Println(p)
+			}
+		},
+	}
+
+	var pluginLocalCmd = &cobra.Command{
+		Use:   "local [path]",
+		Short: "Install a plugin from a local directory",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginPath := args[0]
+			if _, err := os.Stat(filepath.Join(pluginPath, "plugin.json")); os.IsNotExist(err) {
+				color.Red("Invalid plugin directory: plugin.json not found")
+				return
+			}
+
+			// Load manifest to get name
+			def, err := plugins.LoadPluginDef(filepath.Join(pluginPath, "plugin.json"))
+			if err != nil {
+				color.Red("Invalid manifest: %v", err)
+				return
+			}
+
+			if err := pluginMgr.InstallPlugin(def.Name, pluginPath); err != nil {
+				color.Red("Installation failed: %v", err)
+				return
+			}
+			color.Green("Plugin '%s' installed successfully from local source.", def.Name)
+		},
+	}
+
+	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginsPushCmd, pluginLocalCmd, pluginSearchCmd)
 	rootCmd.AddCommand(pluginsCmd)
 
 	var setupCmd = &cobra.Command{
@@ -2269,146 +2324,6 @@ func main() {
 			rootCmd.AddCommand(dynamicCmd)
 		}
 	}
-
-	var pluginCmd = &cobra.Command{
-		Use:   "plugin",
-		Short: "Manage plugins",
-	}
-
-	var pluginListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List installed plugins",
-		Run: func(cmd *cobra.Command, args []string) {
-			plugins := pluginMgr.ListPlugins()
-			if len(plugins) == 0 {
-				fmt.Println("No plugins installed.")
-				return
-			}
-			fmt.Println("Installed Plugins:")
-			for _, p := range plugins {
-				fmt.Printf("- %s\n", p)
-			}
-		},
-	}
-
-	var pluginSearchCmd = &cobra.Command{
-		Use:   "search",
-		Short: "Search for plugins in the marketplace",
-		Run: func(cmd *cobra.Command, args []string) {
-			masterPassword, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, "gdrive")
-			if err != nil {
-				color.Red("Error connecting to cloud: %v", err)
-				return
-			}
-			plugins, err := cm.ListMarketplacePlugins()
-			if err != nil {
-				color.Red("Error listing plugins: %v", err)
-				return
-			}
-			if len(plugins) == 0 {
-				fmt.Println("No plugins found in marketplace.")
-				return
-			}
-			fmt.Println("Marketplace Plugins:")
-			for _, p := range plugins {
-				fmt.Println(p)
-			}
-		},
-	}
-
-	var pluginInstallCmd = &cobra.Command{
-		Use:   "install [name]",
-		Short: "Install a plugin from the marketplace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			pluginName := args[0]
-			masterPassword, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, "gdrive")
-			if err != nil {
-				color.Red("Error connecting to cloud: %v", err)
-				return
-			}
-
-			tmpDir, err := os.MkdirTemp("", "apm-plugin-install")
-			if err != nil {
-				color.Red("Error creating temp dir: %v", err)
-				return
-			}
-			defer os.RemoveAll(tmpDir)
-
-			fmt.Printf("Downloading plugin '%s'...\n", pluginName)
-			if err := cm.DownloadPlugin(pluginName, tmpDir); err != nil {
-				color.Red("Download failed: %v", err)
-				return
-			}
-
-			// DownloadPlugin extracts to tmpDir.
-			pluginPath := tmpDir
-			if _, err := os.Stat(filepath.Join(pluginPath, "plugin.json")); os.IsNotExist(err) {
-				// check subdirectories
-				entries, _ := os.ReadDir(tmpDir)
-				if len(entries) == 1 && entries[0].IsDir() {
-					pluginPath = filepath.Join(tmpDir, entries[0].Name())
-				}
-			}
-
-			if err := pluginMgr.InstallPlugin(pluginName, pluginPath); err != nil {
-				color.Red("Installation failed: %v", err)
-				return
-			}
-			color.Green("Plugin '%s' installed successfully.", pluginName)
-		},
-	}
-
-	var pluginUploadCmd = &cobra.Command{
-		Use:   "publish [path]",
-		Short: "Publish a plugin to the marketplace",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			pluginPath := args[0]
-			if _, err := os.Stat(filepath.Join(pluginPath, "plugin.json")); os.IsNotExist(err) {
-				color.Red("Invalid plugin directory: plugin.json not found")
-				return
-			}
-
-			// Load manifest to get name
-			def, err := plugins.LoadPluginDef(filepath.Join(pluginPath, "plugin.json"))
-			if err != nil {
-				color.Red("Invalid manifest: %v", err)
-				return
-			}
-
-			masterPassword, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			cm, err := getCloudManagerEx(context.Background(), vault, masterPassword, "gdrive")
-			if err != nil {
-				color.Red("Error connecting to cloud: %v", err)
-				return
-			}
-
-			fmt.Printf("Uploading plugin '%s'...\n", def.Name)
-			if err := cm.UploadPlugin(def.Name, pluginPath); err != nil {
-				color.Red("Upload failed: %v", err)
-				return
-			}
-			color.Green("Plugin '%s' published successfully.", def.Name)
-		},
-	}
-
-	pluginCmd.AddCommand(pluginListCmd)
-	pluginCmd.AddCommand(pluginSearchCmd)
-	pluginCmd.AddCommand(pluginInstallCmd)
-	pluginCmd.AddCommand(pluginUploadCmd)
-	rootCmd.AddCommand(pluginCmd)
 
 	var updateCmd = &cobra.Command{
 		Use:   "update",
