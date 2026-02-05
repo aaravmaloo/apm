@@ -80,7 +80,7 @@ func main() {
 
 		if modeSelection == "2" {
 			mode = "self_hosted"
-			// Start OAuth flow
+
 			token, err = src.PerformDriveAuth(src.GetDefaultCreds())
 			if err != nil {
 				color.Red("Authentication failed: %v", err)
@@ -285,7 +285,6 @@ func main() {
 				return
 			}
 
-			// Run helpers
 			setupGDrive(vault, masterPassword)
 			setupGitHub(vault)
 
@@ -340,7 +339,10 @@ func main() {
 			fmt.Println("20. CI/CD Pipeline Secret")
 			fmt.Println("21. Software License")
 			fmt.Println("22. Legal Contract/NDA")
-			fmt.Print("Selection (1-22): ")
+			fmt.Println("23. Audio File")
+			fmt.Println("24. Video File")
+			fmt.Println("25. Photo")
+			fmt.Print("Selection (1-25): ")
 			choice := readInput()
 
 			switch choice {
@@ -700,6 +702,51 @@ func main() {
 					color.Red("Error: %v\n", err)
 					return
 				}
+			case "23":
+				fmt.Print("Audio Name: ")
+				name := readInput()
+				fmt.Print("Path to File: ")
+				path := readInput()
+				content, err := os.ReadFile(path)
+				if err != nil {
+					color.Red("Error reading file: %v\n", err)
+					return
+				}
+				if err := vault.AddAudio(name, filepath.Base(path), content); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
+				color.HiYellow("Audio stored successfully.\n")
+			case "24":
+				fmt.Print("Video Name: ")
+				name := readInput()
+				fmt.Print("Path to File: ")
+				path := readInput()
+				content, err := os.ReadFile(path)
+				if err != nil {
+					color.Red("Error reading file: %v\n", err)
+					return
+				}
+				if err := vault.AddVideo(name, filepath.Base(path), content); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
+				color.HiYellow("Video stored successfully.\n")
+			case "25":
+				fmt.Print("Photo Name: ")
+				name := readInput()
+				fmt.Print("Path to File: ")
+				path := readInput()
+				content, err := os.ReadFile(path)
+				if err != nil {
+					color.Red("Error reading file: %v\n", err)
+					return
+				}
+				if err := vault.AddPhoto(name, filepath.Base(path), content); err != nil {
+					color.Red("Error: %v\n", err)
+					return
+				}
+				color.HiYellow("Photo stored successfully.\n")
 			default:
 				color.Red("Invalid selection.\n")
 				return
@@ -782,7 +829,7 @@ func main() {
 			}
 
 			duration := time.Duration(mins) * time.Minute
-			// Using 0 for inactivity timeout in old-style readonly unlock, or maybe a default?
+
 			if err := src.CreateSession(masterPassword, duration, true, 0); err != nil {
 				fmt.Printf("Error creating session: %v\n", err)
 				return
@@ -1192,7 +1239,7 @@ func main() {
 			}
 
 			if errSetup != nil {
-				// Don't save if setup failed
+
 				return
 			}
 
@@ -1364,7 +1411,6 @@ func main() {
 					fmt.Print("Enter GitHub Repo (owner/repo): ")
 					key = readInput()
 
-					// Temporary manager for download
 					gm, err := src.NewGitHubManager(context.Background(), pat)
 					if err != nil {
 						color.Red("Cloud Error: %v", err)
@@ -1442,7 +1488,7 @@ func main() {
 				modeSelection := readInput()
 				if modeSelection == "2" {
 					syncMode = "self_hosted"
-					// Get temporary token for download
+
 					token, err := src.PerformDriveAuth(src.GetDefaultCreds())
 					if err != nil {
 						color.Red("Authentication failed: %v", err)
@@ -1726,7 +1772,6 @@ func main() {
 				return
 			}
 
-			// Load manifest to get name
 			def, err := plugins.LoadPluginDef(filepath.Join(pluginPath, "plugin.json"))
 			if err != nil {
 				color.Red("Invalid manifest: %v", err)
@@ -1751,7 +1796,6 @@ func main() {
 			fmt.Println("This wizard will guide you through the initial configuration of APM.")
 			fmt.Println()
 
-			// 1. Vault Initialization
 			if !src.VaultExists(vaultPath) {
 				color.Yellow("Step 1: Vault Initialization")
 				fmt.Print("No vault found. Would you like to create one now? (y/n): ")
@@ -1765,7 +1809,6 @@ func main() {
 			}
 			fmt.Println()
 
-			// 2. Cloud Sync
 			color.Yellow("Step 2: Cloud Sync Configuration")
 			fmt.Print("Would you like to configure cloud synchronization? (y/n) [n]: ")
 			if strings.ToLower(readInput()) == "y" {
@@ -1790,14 +1833,13 @@ func main() {
 					default:
 						color.Red("Invalid selection.")
 					}
-					// Save changes if any
+
 					data, _ := src.EncryptVault(vault, masterPassword)
 					src.SaveVault(vaultPath, data)
 				}
 			}
 			fmt.Println()
 
-			// 3. Spaces
 			color.Yellow("Step 3: Custom Spaces")
 			fmt.Print("Would you like to create your first custom space? (y/n): ")
 			if strings.ToLower(readInput()) == "y" {
@@ -1809,7 +1851,6 @@ func main() {
 			}
 			fmt.Println()
 
-			// 4. Session Security
 			color.Yellow("Step 4: Session Security")
 			fmt.Println("APM supports shell-scoped sessions. To enable this, add the following to your shell profile:")
 			if runtime.GOOS == "windows" {
@@ -1908,7 +1949,7 @@ func main() {
 				return
 			}
 
-			vault.ActivePolicy = src.Policy{} // Empty policy
+			vault.ActivePolicy = src.Policy{}
 			data, err := src.EncryptVault(vault, masterPwd)
 			if err != nil {
 				color.Red("Error encrypting vault: %v\n", err)
@@ -2151,10 +2192,9 @@ func main() {
 			}
 
 			if len(vault.Spaces) == 0 {
-				vault.Spaces = []string{"default"} // Ensure at least default exists
+				vault.Spaces = []string{"default"}
 			}
 
-			// Count entries per space for display
 			counts := make(map[string]int)
 			results := vault.SearchAll("")
 			for _, r := range results {
@@ -2277,10 +2317,9 @@ func checkForUpdates(force bool) {
 	fmt.Printf("New version available: %s\n", release.TagName)
 	fmt.Println("Identifying update asset...")
 
-	// Detect OS
 	targetOS := runtime.GOOS
 	if targetOS == "windows" {
-		targetOS = "windows" // explicit check if needed, but GOOS is usually enough partial match
+		targetOS = "windows"
 	}
 
 	var downloadUrl string
@@ -2289,8 +2328,7 @@ func checkForUpdates(force bool) {
 	for _, asset := range release.Assets {
 		name := strings.ToLower(asset.Name)
 		if strings.Contains(name, targetOS) && (strings.HasSuffix(name, ".exe") || !strings.Contains(name, ".")) {
-			// Simple heuristic: match OS and exe extension if windows, or no extension/binary name
-			// Assuming asset naming convention: apm-windows-amd64.exe or similar
+
 			if targetOS == "windows" && !strings.HasSuffix(name, ".exe") {
 				continue
 			}
@@ -2316,7 +2354,7 @@ func checkForUpdates(force bool) {
 }
 
 func compareVersions(v1, v2 string) int {
-	// Simple semver compare (pkg.ver.patch)
+
 	parts1 := strings.Split(v1, ".")
 	parts2 := strings.Split(v2, ".")
 
@@ -2352,14 +2390,12 @@ func doSelfUpdate(url string) error {
 	}
 	exeDir := filepath.Dir(exe)
 
-	// Download new binary
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	// Download to temp file first
 	tmpFile := filepath.Join(exeDir, "apm.new")
 	out, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
@@ -2606,8 +2642,6 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		os.Exit(0)
 	}()
 
-	focusMode := 0 // 0: Search, 1: List
-
 	for {
 		results := performSearch(v, query)
 		if len(results) > 0 {
@@ -2624,33 +2658,17 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		}
 
 		fmt.Print("\033[H\033[2J")
-
-		// Header
 		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Space: \x1b[1;32m%s\x1b[0m (readonly: %v)\n", profileDisplay, readonly)
-
-		// Search Bar Rendering
-		if focusMode == 0 {
-			// Search Mode: Highlight Search Bar
-			fmt.Printf("\x1b[1;33mQuery:\x1b[0m \x1b[7m%s\x1b[0m\x1b[5m_\x1b[0m\n", query)
-		} else {
-			// List Mode: Normal Search Bar
-			fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\n", query)
-		}
+		fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\x1b[5m_\x1b[0m\n", query)
 		fmt.Println("--------------------------------------------------")
 
 		displayLimit := 20
 		for i := 0; i < len(results) && i < displayLimit; i++ {
 			r := results[i]
 			line := fmt.Sprintf("[%d] %-30s (%s)", i+1, r.Identifier, r.Type)
-
-			if focusMode == 1 && i == selectedIndex {
-				// List Mode & Selected: Inverted Colors
+			if i == selectedIndex {
 				fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
-			} else if focusMode == 0 {
-				// Search Mode: Dimmed List
-				fmt.Printf("\x1b[2m %s \x1b[0m\n", line)
 			} else {
-				// List Mode & Not Selected: Normal
 				fmt.Printf(" %s \n", line)
 			}
 		}
@@ -2660,11 +2678,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		}
 
 		fmt.Println("\n--------------------------------------------------------------")
-		if focusMode == 0 {
-			fmt.Println("\x1b[1;37mType\x1b[0m: Search | \x1b[1;37m↓\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
-		} else {
-			fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mType\x1b[0m: Switch to Search")
-		}
+		fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc\x1b[0m: Exit")
 
 		b := make([]byte, 3)
 		n, err := os.Stdin.Read(b)
@@ -2672,46 +2686,31 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			break
 		}
 
-		// Input Handling
-		if b[0] == 27 { // Escape sequence
+		if b[0] == 27 {
 			if n >= 3 && b[1] == '[' {
-				if b[2] == 'A' { // Up
-					if focusMode == 1 {
-						if selectedIndex > 0 {
-							selectedIndex--
-						} else {
-							focusMode = 0 // Return to Search
-						}
+				if b[2] == 'A' {
+					if selectedIndex > 0 {
+						selectedIndex--
 					}
 					continue
-				} else if b[2] == 'B' { // Down
-					if focusMode == 0 {
-						if len(results) > 0 {
-							focusMode = 1
-							selectedIndex = 0
-						}
-					} else {
-						if selectedIndex < len(results)-1 {
-							selectedIndex++
-						}
+				} else if b[2] == 'B' {
+					if selectedIndex < len(results)-1 {
+						selectedIndex++
 					}
 					continue
 				}
 			}
-			if n == 1 { // Literal ESC
+			if n == 1 {
 				break
 			}
 			continue
 		}
 
-		if b[0] == 3 || b[0] == 4 { // Ctrl+C / Ctrl+D
+		if b[0] == 3 || b[0] == 4 {
 			break
 		}
 
-		if b[0] == 127 || b[0] == 8 { // Backspace
-			if focusMode == 1 {
-				focusMode = 0 // Switch to Search
-			}
+		if b[0] == 127 || b[0] == 8 {
 			if len(query) > 0 {
 				query = query[:len(query)-1]
 				selectedIndex = 0
@@ -2719,26 +2718,29 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			continue
 		}
 
-		if b[0] == '\r' || b[0] == '\n' { // Enter
-			if focusMode == 1 && len(results) > 0 {
+		if b[0] == '\r' || b[0] == '\n' {
+			if len(results) > 0 {
 				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
 			}
 			continue
 		}
 
-		if focusMode == 1 && (b[0] == 'e' || b[0] == 'd') {
+		if b[0] == 'e' {
 			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], b[0], readonly, oldState)
+				handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
+			}
+			continue
+		}
+
+		if b[0] == 'd' {
+			if len(results) > 0 {
+				handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
 			}
 			continue
 		}
 
 		char := rune(b[0])
 		if unicode.IsPrint(char) {
-			if focusMode == 1 {
-				focusMode = 0 // Switch to Search
-				// Don't swallow the key, add it
-			}
 			query += string(char)
 			selectedIndex = 0
 		}
@@ -2769,9 +2771,8 @@ func performSearch(v *src.Vault, query string) []src.SearchResult {
 }
 
 func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, readonly bool, oldState *term.State) {
-	// Restore terminal for interactive prompt
 	_ = term.Restore(int(os.Stdin.Fd()), oldState)
-	fmt.Print("\033[H\033[2J") // Clear
+	fmt.Print("\033[H\033[2J")
 
 	switch action {
 	case 'v':
@@ -2812,7 +2813,6 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 		readInput()
 	}
 
-	// Re-enter raw mode
 	newState, _ := term.MakeRaw(int(os.Stdin.Fd()))
 	if newState != nil {
 		*oldState = *newState
@@ -2820,9 +2820,9 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 }
 
 func confirmIdentity() bool {
-	fmt.Print("\n🔒 Security Check: Did you initiate this action? (y/n): ")
+	fmt.Print("\n Security Check: Did you initiate this action? (y/n): ")
 	if strings.ToLower(readInput()) != "y" {
-		color.Red("\n⛔ ACTION BLOCKED.")
+		color.Red("\n ACTION BLOCKED.")
 		color.Yellow("Security Recommendation: If this wasn't you, your session may be compromised.")
 		color.Yellow("Immediate Action: Rotate your Master Password now.")
 		return false
@@ -2876,6 +2876,12 @@ func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
 		return v.DeleteSoftwareLicense(res.Identifier)
 	case "Legal Contract":
 		return v.DeleteLegalContract(res.Identifier)
+	case "Audio":
+		return v.DeleteAudio(res.Identifier)
+	case "Video":
+		return v.DeleteVideo(res.Identifier)
+	case "Photo":
+		return v.DeletePhoto(res.Identifier)
 	}
 	return false
 }
@@ -3345,6 +3351,87 @@ func displayEntry(res src.SearchResult, showPass bool) {
 	case "Legal Contract":
 		l := res.Data.(src.LegalContractEntry)
 		fmt.Printf("Type: Legal Contract\nName: %s\nSummary: %s\nParties: %s\nSigned: %s\n", l.Name, l.Summary, l.PartiesInvolved, l.SignedDate)
+	case "Audio":
+		a := res.Data.(src.AudioEntry)
+		fmt.Printf("Type: Audio\nName: %s\nFile: %s\n", a.Name, a.FileName)
+		fmt.Print("Open audio file? (y/n): ")
+		if strings.ToLower(readInput()) == "y" {
+			tmpDir := os.TempDir()
+			tmpFile := filepath.Join(tmpDir, a.FileName)
+			err := os.WriteFile(tmpFile, a.Content, 0600)
+			if err != nil {
+				color.Red("Error writing temporary file: %v\n", err)
+				return
+			}
+			defer func() {
+				time.Sleep(5 * time.Second)
+				os.Remove(tmpFile)
+			}()
+			color.Green("Opening audio...")
+			var cmd *exec.Cmd
+			if runtime.GOOS == "windows" {
+				cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
+			} else if runtime.GOOS == "darwin" {
+				cmd = exec.Command("open", tmpFile)
+			} else {
+				cmd = exec.Command("xdg-open", tmpFile)
+			}
+			cmd.Run()
+		}
+	case "Video":
+		vi := res.Data.(src.VideoEntry)
+		fmt.Printf("Type: Video\nName: %s\nFile: %s\n", vi.Name, vi.FileName)
+		fmt.Print("Open video file? (y/n): ")
+		if strings.ToLower(readInput()) == "y" {
+			tmpDir := os.TempDir()
+			tmpFile := filepath.Join(tmpDir, vi.FileName)
+			err := os.WriteFile(tmpFile, vi.Content, 0600)
+			if err != nil {
+				color.Red("Error writing temporary file: %v\n", err)
+				return
+			}
+			defer func() {
+				time.Sleep(5 * time.Second)
+				os.Remove(tmpFile)
+			}()
+			color.Green("Opening video...")
+			var cmd *exec.Cmd
+			if runtime.GOOS == "windows" {
+				cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
+			} else if runtime.GOOS == "darwin" {
+				cmd = exec.Command("open", tmpFile)
+			} else {
+				cmd = exec.Command("xdg-open", tmpFile)
+			}
+			cmd.Run()
+		}
+	case "Photo":
+		p := res.Data.(src.PhotoEntry)
+		fmt.Printf("Type: Photo\nName: %s\nFile: %s\n", p.Name, p.FileName)
+		fmt.Print("Open photo? (y/n): ")
+		if strings.ToLower(readInput()) == "y" {
+			tmpDir := os.TempDir()
+			tmpFile := filepath.Join(tmpDir, p.FileName)
+			err := os.WriteFile(tmpFile, p.Content, 0600)
+			if err != nil {
+				color.Red("Error writing temporary file: %v\n", err)
+				return
+			}
+			defer func() {
+				time.Sleep(5 * time.Second)
+				os.Remove(tmpFile)
+			}()
+			color.Green("Opening photo...")
+			var cmd *exec.Cmd
+			if runtime.GOOS == "windows" {
+				cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
+			} else if runtime.GOOS == "darwin" {
+				cmd = exec.Command("open", tmpFile)
+			} else {
+				cmd = exec.Command("xdg-open", tmpFile)
+			}
+			cmd.Run()
+		}
 	}
 	fmt.Println("---")
 }
