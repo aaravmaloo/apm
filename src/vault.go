@@ -247,7 +247,7 @@ type DocumentEntry struct {
 type RecoveryData struct {
 	EmailHash []byte `json:"email_hash,omitempty"`
 	KeyHash   []byte `json:"key_hash,omitempty"`
-	Expiry    int64  `json:"expiry,omitempty"`
+	DEKSlot   []byte `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
 }
 
 type AudioEntry struct {
@@ -319,6 +319,7 @@ type Vault struct {
 
 	CurrentProfileParams *CryptoProfile `json:"-"`
 	RecoveryEmail        string         `json:"recovery_email,omitempty"`
+	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
 	DEK                  []byte         `json:"dek,omitempty"`
 	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
 }
@@ -364,22 +365,20 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(keys.EncryptionKey)
+	// Encrypt jsonData with DEK
+	dekBlock, err := aes.NewCipher(vault.DEK)
 	if err != nil {
 		return nil, err
 	}
-
-	gcm, err := cipher.NewGCMWithNonceSize(block, profile.NonceLen)
+	dekGcm, err := cipher.NewGCMWithNonceSize(dekBlock, profile.NonceLen)
 	if err != nil {
 		return nil, err
 	}
-
-	nonce := make([]byte, gcm.NonceSize())
+	nonce := make([]byte, dekGcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
-
-	ciphertext := gcm.Seal(nil, nonce, jsonData, nil)
+	ciphertext := dekGcm.Seal(nil, nonce, jsonData, nil)
 
 	var payload []byte
 	payload = append(payload, []byte(VaultHeader)...)
@@ -402,7 +401,12 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		h := sha256.Sum256([]byte(strings.ToLower(vault.RecoveryEmail)))
 		rec.EmailHash = h[:]
 	}
-	// Note: KeyHash and Expiry are set by InitiateRecovery and persisted here
+
+	if len(vault.RecoverySlot) > 0 {
+		rec.DEKSlot = vault.RecoverySlot
+		rec.KeyHash = vault.RecoveryHash
+	}
+
 	encRec, _ := json.Marshal(rec)
 	recLenBytes := make([]byte, 2)
 	recLenBytes[0] = byte(len(encRec) >> 8)
@@ -413,6 +417,20 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, salt...)
 	payload = append(payload, keys.Validator...)
 	payload = append(payload, nonce...)
+
+	// Master Slot: Encrypt DEK with MasterPassword-derived key
+	block, err := aes.NewCipher(keys.EncryptionKey)
+	if err != nil {
+		return nil, err
+	}
+	masterSlotGcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	mNonce := make([]byte, masterSlotGcm.NonceSize())
+	masterSlot := masterSlotGcm.Seal(nil, mNonce, vault.DEK, nil)
+	payload = append(payload, masterSlot...)
+
 	payload = append(payload, ciphertext...)
 
 	signature := CalculateHMAC(payload, keys.AuthKey)
@@ -508,13 +526,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	nonce := data[offset : offset+profile.NonceLen]
 	offset += profile.NonceLen
 
-	rest := data[offset:]
-	if len(rest) < 32 {
-		return nil, errors.New("vault file corrupted (missing HMAC)")
-	}
-	ciphertext := rest[:len(rest)-32]
-	storedHMAC := rest[len(rest)-32:]
-
 	keys := DeriveKeys(masterPassword, salt, profile.Time, profile.Memory, profile.Parallelism)
 	defer Wipe(keys.EncryptionKey)
 	defer Wipe(keys.AuthKey)
@@ -525,22 +536,47 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	}
 
 	payloadForHMAC := data[:len(data)-32]
+	storedHMAC := data[len(data)-32:]
 	if !VerifyHMAC(payloadForHMAC, storedHMAC, keys.AuthKey) {
 		return nil, errors.New("vault file has been tampered with or corrupted")
 	}
 
-	block, err := aes.NewCipher(keys.EncryptionKey)
+	var dek []byte
+	if version == 4 {
+		// Decrypt Master Slot
+		masterSlotLen := 32 + 16 // DEK(32) + GCM tag(16)
+		if offset+masterSlotLen > len(data)-32 {
+			return nil, errors.New("corrupted master slot")
+		}
+		masterSlot := data[offset : offset+masterSlotLen]
+		offset += masterSlotLen
+
+		block, _ := aes.NewCipher(keys.EncryptionKey)
+		gcm, _ := cipher.NewGCM(block)
+		mNonce := make([]byte, gcm.NonceSize())
+		var err error
+		dek, err = gcm.Open(nil, mNonce, masterSlot, nil)
+		if err != nil {
+			return nil, errors.New("failed to decrypt master slot")
+		}
+	} else {
+		dek = keys.EncryptionKey
+	}
+
+	ciphertext := data[offset : len(data)-32]
+
+	dekBlock, err := aes.NewCipher(dek)
 	if err != nil {
 		return nil, err
 	}
-	gcm, err := cipher.NewGCMWithNonceSize(block, profile.NonceLen)
+	dekGcm, err := cipher.NewGCMWithNonceSize(dekBlock, profile.NonceLen)
 	if err != nil {
 		return nil, err
 	}
 
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	plaintext, err := dekGcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return nil, errors.New("decryption failed despite valid password")
+		return nil, errors.New("decryption failed")
 	}
 
 	var vault Vault
@@ -548,6 +584,51 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		return nil, err
 	}
 	vault.CurrentProfileParams = &profile
+	return &vault, nil
+}
+
+func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
+	offset := len(VaultHeader)
+	version := data[offset]
+	offset++
+
+	if version != 4 {
+		return nil, errors.New("direct DEK decryption only supported for V4")
+	}
+
+	// Skip Profile
+	pLen := int(data[offset])<<8 | int(data[offset+1])
+	offset += 2 + pLen
+	// Skip RecoveryData
+	rLen := int(data[offset])<<8 | int(data[offset+1])
+	offset += 2 + rLen
+	// Skip Salt
+	offset += 16
+	// Skip Validator
+	offset += 32
+
+	// Read Nonce
+	nonceLen := 12
+	nonce := data[offset : offset+nonceLen]
+	offset += nonceLen
+
+	// Skip Master Slot
+	offset += 32 + 16
+
+	ciphertext := data[offset : len(data)-32]
+
+	block, _ := aes.NewCipher(dek)
+	gcm, _ := cipher.NewGCMWithNonceSize(block, nonceLen)
+
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var vault Vault
+	if err := json.Unmarshal(plaintext, &vault); err != nil {
+		return nil, err
+	}
 	return &vault, nil
 }
 
@@ -612,6 +693,83 @@ func GenerateRecoveryKey() string {
 	part4 := gen(nums, 4)
 
 	return fmt.Sprintf("%s-%s-%s-%s", part1, part2, part3, part4)
+}
+
+func DeriveRecoveryKey(key string, salt []byte) []byte {
+	// Simple KDF for recovery key to secret
+	hash := sha256.New()
+	hash.Write([]byte(key))
+	hash.Write(salt)
+	return hash.Sum(nil)
+}
+
+func (v *Vault) SetRecoveryKey(key string, salt []byte) {
+	rk := DeriveRecoveryKey(key, salt)
+
+	// Create KeyHash for verification
+	h := sha256.Sum256(rk)
+	v.RecoveryHash = h[:]
+
+	// Encrypt DEK with RK to create RecoverySlot
+	block, _ := aes.NewCipher(rk)
+	gcm, _ := cipher.NewGCM(block)
+	nonce := make([]byte, gcm.NonceSize())
+	// Use zero nonce for deterministic recovery slot
+	v.RecoverySlot = gcm.Seal(nil, nonce, v.DEK, nil)
+}
+
+func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
+	rec, err := GetVaultRecoveryInfo(data)
+	if err != nil {
+		return nil, err
+	}
+	if len(rec.KeyHash) == 0 || len(rec.DEKSlot) == 0 {
+		return nil, errors.New("no recovery setup found in vault")
+	}
+
+	// Read salt from header to re-derive key
+	offset := len(VaultHeader) + 1 // Header + Version
+	// Skip Profile
+	if offset+2 > len(data) {
+		return nil, errors.New("corrupted header")
+	}
+	pLen := int(data[offset])<<8 | int(data[offset+1])
+	offset += 2 + pLen
+	// Skip RecoveryData
+	if offset+2 > len(data) {
+		return nil, errors.New("corrupted header")
+	}
+	rLen := int(data[offset])<<8 | int(data[offset+1])
+	offset += 2 + rLen
+
+	saltLen := 16 // Default
+	if offset+saltLen > len(data) {
+		return nil, errors.New("corrupted header (salt)")
+	}
+	salt := data[offset : offset+saltLen]
+
+	rk := DeriveRecoveryKey(key, salt)
+	h := sha256.Sum256(rk)
+
+	if !hmac.Equal(h[:], rec.KeyHash) {
+		return nil, errors.New("invalid recovery key")
+	}
+
+	// Decrypt DEK
+	block, err := aes.NewCipher(rk)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	dek, err := gcm.Open(nil, nonce, rec.DEKSlot, nil)
+	if err != nil {
+		return nil, errors.New("failed to decrypt recovery slot")
+	}
+	return dek, nil
 }
 
 func decryptOldVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
