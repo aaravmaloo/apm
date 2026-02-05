@@ -323,7 +323,8 @@ type Vault struct {
 	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
 	DEK                  []byte         `json:"dek,omitempty"`
 	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
-	RawRecoveryKey       string         `json:"-"` // Used during encryption to store obfuscated key if present
+	RawRecoveryKey       string         `json:"-"`
+	ObfuscatedKey        []byte         `json:"-"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -411,6 +412,8 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 
 	if vault.RawRecoveryKey != "" {
 		rec.ObfuscatedKey = XORRecoveryKey(vault.RawRecoveryKey)
+	} else if len(vault.ObfuscatedKey) > 0 {
+		rec.ObfuscatedKey = vault.ObfuscatedKey
 	}
 
 	encRec, _ := json.Marshal(rec)
@@ -589,6 +592,10 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
 	}
+	if version == 4 {
+		rec, _ := GetVaultRecoveryInfo(data)
+		vault.ObfuscatedKey = rec.ObfuscatedKey
+	}
 	vault.CurrentProfileParams = &profile
 	return &vault, nil
 }
@@ -677,6 +684,14 @@ func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 
 func (v *Vault) SetRecoveryEmail(email string) {
 	v.RecoveryEmail = email
+}
+
+func (v *Vault) ClearRecoveryInfo() {
+	v.RecoveryEmail = ""
+	v.RecoveryHash = nil
+	v.RecoverySlot = nil
+	v.RawRecoveryKey = ""
+	v.ObfuscatedKey = nil
 }
 
 func GenerateRecoveryKey() string {
