@@ -642,6 +642,11 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
 	}
+
+	if version == 4 {
+		rec, _ := GetVaultRecoveryInfo(data)
+		vault.ObfuscatedKey = rec.ObfuscatedKey
+	}
 	return &vault, nil
 }
 
