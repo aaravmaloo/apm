@@ -243,6 +243,27 @@ type DocumentEntry struct {
 	Space    string   `json:"space,omitempty"`
 }
 
+type AudioEntry struct {
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Space    string `json:"space,omitempty"`
+}
+
+type VideoEntry struct {
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Space    string `json:"space,omitempty"`
+}
+
+type PhotoEntry struct {
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Space    string `json:"space,omitempty"`
+}
+
 type Vault struct {
 	Salt                    []byte                 `json:"salt"`
 	Entries                 []Entry                `json:"entries"`
@@ -256,6 +277,9 @@ type Vault struct {
 	Certificates            []CertificateEntry     `json:"certificates"`
 	BankingItems            []BankingEntry         `json:"banking_items"`
 	Documents               []DocumentEntry        `json:"documents"`
+	AudioFiles              []AudioEntry           `json:"audio_files"`
+	VideoFiles              []VideoEntry           `json:"video_files"`
+	PhotoFiles              []PhotoEntry           `json:"photo_files"`
 	GovIDs                  []GovIDEntry           `json:"gov_ids"`
 	MedicalRecords          []MedicalRecordEntry   `json:"medical_records"`
 	TravelDocs              []TravelEntry          `json:"travel_docs"`
@@ -1225,6 +1249,21 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 	for _, e := range v.Documents {
 		if matchSpace(e.Space) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Document", e.Name, e, e.Space})
+		}
+	}
+	for _, e := range v.AudioFiles {
+		if matchSpace(e.Space) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Audio", e.Name, e, e.Space})
+		}
+	}
+	for _, e := range v.VideoFiles {
+		if matchSpace(e.Space) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Video", e.Name, e, e.Space})
+		}
+	}
+	for _, e := range v.PhotoFiles {
+		if matchSpace(e.Space) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
+			results = append(results, SearchResult{"Photo", e.Name, e, e.Space})
 		}
 	}
 	for _, e := range v.GovIDs {
