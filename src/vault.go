@@ -970,6 +970,99 @@ func (v *Vault) DeleteDocument(name string) bool {
 	return false
 }
 
+func (v *Vault) AddAudio(name, fileName string, content []byte) error {
+	for _, e := range v.AudioFiles {
+		if e.Name == name && e.Space == v.CurrentSpace {
+			return errors.New("audio file already exists in this space")
+		}
+	}
+	v.AudioFiles = append(v.AudioFiles, AudioEntry{Name: name, FileName: fileName, Content: content, Space: v.CurrentSpace})
+	v.logHistory("ADD", "AUDIO", name)
+	return nil
+}
+
+func (v *Vault) GetAudio(name string) (AudioEntry, bool) {
+	for _, e := range v.AudioFiles {
+		if e.Name == name && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			return e, true
+		}
+	}
+	return AudioEntry{}, false
+}
+
+func (v *Vault) DeleteAudio(name string) bool {
+	for i, e := range v.AudioFiles {
+		if e.Name == name && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			v.AudioFiles = append(v.AudioFiles[:i], v.AudioFiles[i+1:]...)
+			v.logHistory("DEL", "AUDIO", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddVideo(name, fileName string, content []byte) error {
+	for _, e := range v.VideoFiles {
+		if e.Name == name && e.Space == v.CurrentSpace {
+			return errors.New("video file already exists in this space")
+		}
+	}
+	v.VideoFiles = append(v.VideoFiles, VideoEntry{Name: name, FileName: fileName, Content: content, Space: v.CurrentSpace})
+	v.logHistory("ADD", "VIDEO", name)
+	return nil
+}
+
+func (v *Vault) GetVideo(name string) (VideoEntry, bool) {
+	for _, e := range v.VideoFiles {
+		if e.Name == name && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			return e, true
+		}
+	}
+	return VideoEntry{}, false
+}
+
+func (v *Vault) DeleteVideo(name string) bool {
+	for i, e := range v.VideoFiles {
+		if e.Name == name && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			v.VideoFiles = append(v.VideoFiles[:i], v.VideoFiles[i+1:]...)
+			v.logHistory("DEL", "VIDEO", name)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Vault) AddPhoto(name, fileName string, content []byte) error {
+	for _, e := range v.PhotoFiles {
+		if e.Name == name && e.Space == v.CurrentSpace {
+			return errors.New("photo file already exists in this space")
+		}
+	}
+	v.PhotoFiles = append(v.PhotoFiles, PhotoEntry{Name: name, FileName: fileName, Content: content, Space: v.CurrentSpace})
+	v.logHistory("ADD", "PHOTO", name)
+	return nil
+}
+
+func (v *Vault) GetPhoto(name string) (PhotoEntry, bool) {
+	for _, e := range v.PhotoFiles {
+		if e.Name == name && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			return e, true
+		}
+	}
+	return PhotoEntry{}, false
+}
+
+func (v *Vault) DeletePhoto(name string) bool {
+	for i, e := range v.PhotoFiles {
+		if e.Name == name && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			v.PhotoFiles = append(v.PhotoFiles[:i], v.PhotoFiles[i+1:]...)
+			v.logHistory("DEL", "PHOTO", name)
+			return true
+		}
+	}
+	return false
+}
+
 func (v *Vault) AddGovID(g GovIDEntry) error {
 	for _, e := range v.GovIDs {
 		if e.IDNumber == g.IDNumber && e.Type == g.Type && e.Space == v.CurrentSpace {
