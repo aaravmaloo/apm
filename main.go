@@ -2580,6 +2580,10 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		if err == nil {
 			vault, err := src.DecryptVault(data, session.MasterPassword, 1)
 			if err == nil {
+				if vault.NeedsRepair {
+					updatedData, _ := src.EncryptVault(vault, session.MasterPassword)
+					src.SaveVault(vaultPath, updatedData)
+				}
 				return session.MasterPassword, vault, session.ReadOnly, nil
 			}
 		}
