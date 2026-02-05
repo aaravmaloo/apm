@@ -552,6 +552,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		return nil, errors.New("vault file has been tampered with or corrupted")
 	}
 
+	var needsRepair bool
 	var dek []byte
 	if version == 4 {
 		// Decrypt Master Slot
@@ -581,7 +582,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 					if err == nil {
 						offset = i + masterSlotLen
 						found = true
-						vault.NeedsRepair = true
+						needsRepair = true
 						break
 					}
 				}
@@ -599,7 +600,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	} else {
 		dek = keys.EncryptionKey
 		if version < CurrentVersion {
-			// NeedsRepair will be set in CT discovery too
+			needsRepair = true
 		}
 	}
 
@@ -630,7 +631,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		if err == nil {
 			foundCT = true
 			if i != offset {
-				// We found it at a different offset than expected
+				needsRepair = true
 			}
 			offset = i
 			break
@@ -646,8 +647,12 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		return nil, err
 	}
 
+	vault.NeedsRepair = needsRepair
 	// If dek was raw key or offset was weird, mark for repair
 	if bytes.Equal(dek, keys.EncryptionKey) && version == 4 {
+		vault.NeedsRepair = true
+	}
+	if version < CurrentVersion {
 		vault.NeedsRepair = true
 	}
 	if i != ctSearchStart+256 { // Actually standard offset for CT is usually around header + profile + recovery + salt + validator + nonce
@@ -864,6 +869,11 @@ func DeObfuscateRecoveryKey(obf []byte) string {
 }
 
 func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
+	// Normalize key
+	key = strings.ReplaceAll(key, "-", "")
+	key = strings.ReplaceAll(key, " ", "")
+	key = strings.ToUpper(key)
+
 	rec, err := GetVaultRecoveryInfo(data)
 	if err != nil {
 		return nil, err
@@ -872,8 +882,15 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 		return nil, errors.New("no recovery setup found in vault")
 	}
 
-	// Read salt from header to re-derive key
-	offset := len(VaultHeader) + 1 // Header + Version
+	// Read profile to know salt length
+	profile, _, err := GetVaultParams(data)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find salt and validator
+	// We use fuzzy search because headers might be shifted
+	offset := len(VaultHeader) + 1
 	// Skip Profile
 	if offset+2 > len(data) {
 		return nil, errors.New("corrupted header")
@@ -887,16 +904,29 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 	rLen := int(data[offset])<<8 | int(data[offset+1])
 	offset += 2 + rLen
 
-	saltLen := 16 // Default
-	if offset+saltLen > len(data) {
-		return nil, errors.New("corrupted header (salt)")
+	// Search for valid salt/hash combination
+	found := false
+	var rk []byte
+	searchStart := offset - 128
+	if searchStart < 0 {
+		searchStart = 0
 	}
-	salt := data[offset : offset+saltLen]
+	for i := searchStart; i < offset+256; i++ {
+		if i+profile.SaltLen+32 > len(data) {
+			break
+		}
+		trialSalt := data[i : i+profile.SaltLen]
+		trialRk := DeriveRecoveryKey(key, trialSalt)
+		h := sha256.Sum256(trialRk)
 
-	rk := DeriveRecoveryKey(key, salt)
-	h := sha256.Sum256(rk)
+		if hmac.Equal(h[:], rec.KeyHash) {
+			rk = trialRk
+			found = true
+			break
+		}
+	}
 
-	if !hmac.Equal(h[:], rec.KeyHash) {
+	if !found {
 		return nil, errors.New("invalid recovery key")
 	}
 
