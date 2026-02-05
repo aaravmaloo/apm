@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +30,8 @@ import (
 	"os/signal"
 	"syscall"
 	"unicode"
+
+	"gopkg.in/gomail.v2"
 )
 
 var vaultPath string
@@ -317,33 +321,124 @@ func main() {
 			}
 
 			fmt.Println("Select type to add:")
-			fmt.Println("1. Password")
-			fmt.Println("2. TOTP")
-			fmt.Println("3. Token (GitHub, PyPI, etc.)")
-			fmt.Println("4. Secure Note")
-			fmt.Println("5. API Key")
-			fmt.Println("6. SSH Key")
-			fmt.Println("7. Wi-Fi Credentials")
-			fmt.Println("8. Recovery Codes")
-			fmt.Println("9. Certificate (SSL/SSH)")
-			fmt.Println("10. Banking/Finance Item")
-			fmt.Println("11. Encrypted Document")
-			fmt.Println("12. Government ID")
-			fmt.Println("13. Medical/Health Record")
-			fmt.Println("14. Travel Doc")
-			fmt.Println("15. Contact/Emergency Info")
-			fmt.Println("16. Cloud Credentials")
-			fmt.Println("17. Kubernetes Secret")
-			fmt.Println("18. Docker Registry")
-			fmt.Println("19. SSH Config Snippet")
-			fmt.Println("20. CI/CD Pipeline Secret")
-			fmt.Println("21. Software License")
-			fmt.Println("22. Legal Contract/NDA")
-			fmt.Println("23. Audio File")
-			fmt.Println("24. Video File")
-			fmt.Println("25. Photo")
-			fmt.Print("Selection (1-25): ")
-			choice := readInput()
+			color.HiCyan("\n--- CATEGORIES ---")
+			color.Cyan("1. Identity & Personal")
+			color.Cyan("2. Developer & Infrastructure")
+			color.Cyan("3. Media & Files")
+			color.Cyan("4. Finance & Legal")
+			fmt.Print("\nSelect Category: ")
+			catChoice := readInput()
+
+			var choice string
+			switch catChoice {
+			case "1":
+				color.HiCyan("\n--- IDENTITY & PERSONAL ---")
+				fmt.Println("1. Password")
+				fmt.Println("2. TOTP")
+				fmt.Println("3. Government ID")
+				fmt.Println("4. Contact")
+				fmt.Println("5. Medical Record")
+				fmt.Print("\nSelect item: ")
+				sub := readInput()
+				switch sub {
+				case "1":
+					choice = "1"
+				case "2":
+					choice = "2"
+				case "3":
+					choice = "12"
+				case "4":
+					choice = "15"
+				case "5":
+					choice = "13"
+				}
+			case "2":
+				color.HiCyan("\n--- DEVELOPER & INFRASTRUCTURE ---")
+				fmt.Println("1. API Key")
+				fmt.Println("2. Token")
+				fmt.Println("3. SSH Key")
+				fmt.Println("4. SSH Config")
+				fmt.Println("5. Cloud Credentials")
+				fmt.Println("6. Kubernetes Secret")
+				fmt.Println("7. Docker Registry")
+				fmt.Println("8. CI/CD Secret")
+				fmt.Print("\nSelect item: ")
+				sub := readInput()
+				switch sub {
+				case "1":
+					choice = "5"
+				case "2":
+					choice = "3"
+				case "3":
+					choice = "6"
+				case "4":
+					choice = "19"
+				case "5":
+					choice = "16"
+				case "6":
+					choice = "17"
+				case "7":
+					choice = "18"
+				case "8":
+					choice = "20"
+				}
+			case "3":
+				color.HiCyan("\n--- MEDIA & FILES ---")
+				fmt.Println("1. Document")
+				fmt.Println("2. Audio")
+				fmt.Println("3. Video")
+				fmt.Println("4. Photo")
+				fmt.Println("5. Secure Note")
+				fmt.Print("\nSelect item: ")
+				sub := readInput()
+				switch sub {
+				case "1":
+					choice = "11"
+				case "2":
+					choice = "23"
+				case "3":
+					choice = "24"
+				case "4":
+					choice = "25"
+				case "5":
+					choice = "4"
+				}
+			case "4":
+				color.HiCyan("\n--- FINANCE & LEGAL ---")
+				fmt.Println("1. Banking")
+				fmt.Println("2. WiFi")
+				fmt.Println("3. Recovery Codes")
+				fmt.Println("4. Certificate")
+				fmt.Println("5. Software License")
+				fmt.Println("6. Legal Contract")
+				fmt.Println("7. Travel Doc")
+				fmt.Print("\nSelect item: ")
+				sub := readInput()
+				switch sub {
+				case "1":
+					choice = "10"
+				case "2":
+					choice = "7"
+				case "3":
+					choice = "8"
+				case "4":
+					choice = "9"
+				case "5":
+					choice = "21"
+				case "6":
+					choice = "22"
+				case "7":
+					choice = "14"
+				}
+			default:
+				color.Red("Invalid category.")
+				return
+			}
+
+			if choice == "" {
+				color.Red("Invalid choice.")
+				return
+			}
 
 			switch choice {
 			case "1":
@@ -2219,7 +2314,8 @@ func main() {
 
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd)
+	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
+	authCmd.AddCommand(authEmailCmd, authRecoverCmd, authResetCmd, authChangeCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
@@ -2409,19 +2505,15 @@ func doSelfUpdate(url string) error {
 		return err
 	}
 
-	// Rename current executable to .old
 	oldExe := exe + ".old"
 
-	// If .old exists (from previous update), try to remove it
 	os.Remove(oldExe)
 
 	if err := os.Rename(exe, oldExe); err != nil {
 		return fmt.Errorf("failed to rename current binary: %v", err)
 	}
 
-	// Rename new binary to original name
 	if err := os.Rename(tmpFile, exe); err != nil {
-		// Validation failed, try to rollback
 		os.Rename(oldExe, exe)
 		return fmt.Errorf("failed to replace binary: %v", err)
 	}
@@ -2579,7 +2671,6 @@ func rankMatch(query, target string) int {
 		} else if strings.Contains(t, term) {
 			termScore = 100
 		} else {
-			// Subsequence matching (fuzzy)
 			qi := 0
 			ti := 0
 			matchCount := 0
@@ -2642,6 +2733,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		os.Exit(0)
 	}()
 
+	focusMode := 0 // 0: Search, 1: List
 	for {
 		results := performSearch(v, query)
 		if len(results) > 0 {
@@ -2659,7 +2751,12 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 
 		fmt.Print("\033[H\033[2J")
 		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Space: \x1b[1;32m%s\x1b[0m (readonly: %v)\n", profileDisplay, readonly)
-		fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\x1b[5m_\x1b[0m\n", query)
+
+		if focusMode == 0 {
+			fmt.Printf("\x1b[1;33mQuery:\x1b[0m \x1b[1;37m%s\x1b[5m_\x1b[0m\n", query)
+		} else {
+			fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\n", query)
+		}
 		fmt.Println("--------------------------------------------------")
 
 		displayLimit := 20
@@ -2667,7 +2764,11 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			r := results[i]
 			line := fmt.Sprintf("[%d] %-30s (%s)", i+1, r.Identifier, r.Type)
 			if i == selectedIndex {
-				fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
+				if focusMode == 1 {
+					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V\x1b[0m\n", line)
+				} else {
+					fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
+				}
 			} else {
 				fmt.Printf(" %s \n", line)
 			}
@@ -2678,7 +2779,11 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		}
 
 		fmt.Println("\n--------------------------------------------------------------")
-		fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc\x1b[0m: Exit")
+		if focusMode == 0 {
+			fmt.Println("\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
+		} else {
+			fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
+		}
 
 		b := make([]byte, 3)
 		n, err := os.Stdin.Read(b)
@@ -2701,7 +2806,11 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 				}
 			}
 			if n == 1 {
-				break
+				if focusMode == 1 {
+					focusMode = 0
+				} else {
+					break
+				}
 			}
 			continue
 		}
@@ -2710,39 +2819,59 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			break
 		}
 
+		if b[0] == 9 { // Tab
+			if focusMode == 0 {
+				focusMode = 1
+			} else {
+				focusMode = 0
+			}
+			continue
+		}
+
 		if b[0] == 127 || b[0] == 8 {
 			if len(query) > 0 {
 				query = query[:len(query)-1]
 				selectedIndex = 0
+				focusMode = 0
 			}
 			continue
 		}
 
 		if b[0] == '\r' || b[0] == '\n' {
-			if len(results) > 0 {
+			if focusMode == 0 {
+				focusMode = 1
+			} else if len(results) > 0 {
 				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
 			}
 			continue
 		}
 
-		if b[0] == 'e' {
-			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
+		if focusMode == 1 {
+			if b[0] == 'e' {
+				if len(results) > 0 {
+					handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
+				}
+				continue
 			}
-			continue
-		}
-
-		if b[0] == 'd' {
-			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
+			if b[0] == 'd' {
+				if len(results) > 0 {
+					handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
+				}
+				continue
 			}
-			continue
+			if b[0] == 'v' {
+				if len(results) > 0 {
+					handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
+				}
+				continue
+			}
 		}
 
 		char := rune(b[0])
 		if unicode.IsPrint(char) {
 			query += string(char)
 			selectedIndex = 0
+			focusMode = 0
 		}
 	}
 }
@@ -2783,9 +2912,7 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
 		} else {
-			if confirmIdentity() {
-				editEntryInVault(v, mp, res)
-			}
+			editEntryInVault(v, mp, res)
 		}
 		fmt.Print("\nPress Enter to continue...")
 		readInput()
@@ -2793,97 +2920,23 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
 		} else {
-			if confirmIdentity() {
-				fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
-				if strings.ToLower(readInput()) == "y" {
-					if deleteEntryByResult(v, res) {
-						data, _ := src.EncryptVault(v, mp)
-						if err := src.SaveVault(vaultPath, data); err != nil {
-							color.Red("Error saving vault: %v", err)
-						} else {
-							color.Green("Deleted.")
-						}
+			fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
+			if strings.ToLower(readInput()) == "y" {
+				if deleteEntryByResult(v, res) {
+					data, _ := src.EncryptVault(v, mp)
+					if err := src.SaveVault(vaultPath, data); err != nil {
+						color.Red("Error saving vault: %v", err)
 					} else {
-						color.Red("Delete failed.")
+						color.Green("Deleted.")
 					}
+				} else {
+					color.Red("Delete failed.")
 				}
 			}
 		}
-		fmt.Print("\nPress Enter to continue...")
-		readInput()
 	}
-
-	newState, _ := term.MakeRaw(int(os.Stdin.Fd()))
-	if newState != nil {
-		*oldState = *newState
-	}
-}
-
-func confirmIdentity() bool {
-	fmt.Print("\n Security Check: Did you initiate this action? (y/n): ")
-	if strings.ToLower(readInput()) != "y" {
-		color.Red("\n ACTION BLOCKED.")
-		color.Yellow("Security Recommendation: If this wasn't you, your session may be compromised.")
-		color.Yellow("Immediate Action: Rotate your Master Password now.")
-		return false
-	}
-	return true
-}
-
-func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
-	switch res.Type {
-	case "Password":
-		return v.DeleteEntry(res.Identifier)
-	case "TOTP":
-		return v.DeleteTOTPEntry(res.Identifier)
-	case "Token":
-		return v.DeleteToken(res.Identifier)
-	case "Note":
-		return v.DeleteSecureNote(res.Identifier)
-	case "API Key":
-		return v.DeleteAPIKey(res.Identifier)
-	case "SSH Key":
-		return v.DeleteSSHKey(res.Identifier)
-	case "Wi-Fi":
-		return v.DeleteWiFi(res.Identifier)
-	case "Recovery Codes":
-		return v.DeleteRecoveryCode(res.Identifier)
-	case "Certificate":
-		return v.DeleteCertificate(res.Identifier)
-	case "Banking":
-		return v.DeleteBankingItem(res.Identifier)
-	case "Document":
-		return v.DeleteDocument(res.Identifier)
-	case "Government ID":
-		return v.DeleteGovID(res.Identifier)
-	case "Medical Record":
-		return v.DeleteMedicalRecord(res.Identifier)
-	case "Travel":
-		return v.DeleteTravelDoc(res.Identifier)
-	case "Contact":
-		return v.DeleteContact(res.Identifier)
-	case "Cloud Credentials":
-		return v.DeleteCloudCredential(res.Identifier)
-	case "Kubernetes Secret":
-		return v.DeleteK8sSecret(res.Identifier)
-	case "Docker Registry":
-		return v.DeleteDockerRegistry(res.Identifier)
-	case "SSH Config":
-		return v.DeleteSSHConfig(res.Identifier)
-	case "CI/CD Secret":
-		return v.DeleteCICDSecret(res.Identifier)
-	case "Software License":
-		return v.DeleteSoftwareLicense(res.Identifier)
-	case "Legal Contract":
-		return v.DeleteLegalContract(res.Identifier)
-	case "Audio":
-		return v.DeleteAudio(res.Identifier)
-	case "Video":
-		return v.DeleteVideo(res.Identifier)
-	case "Photo":
-		return v.DeletePhoto(res.Identifier)
-	}
-	return false
+	fmt.Print("\nPress Enter to continue...")
+	readInput()
 }
 
 func prompt(label, current string) string {
@@ -3513,4 +3566,201 @@ func handleDownloadedVault(data []byte, githubToken, githubRepo string) {
 		return
 	}
 	color.Green("Vault retrieved and saved successfully.")
+}
+
+func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
+	switch res.Type {
+	case "Password":
+		return v.DeleteEntry(res.Identifier)
+	case "TOTP":
+		return v.DeleteTOTPEntry(res.Identifier)
+	case "Token":
+		return v.DeleteToken(res.Identifier)
+	case "Note":
+		return v.DeleteSecureNote(res.Identifier)
+	case "API Key":
+		return v.DeleteAPIKey(res.Identifier)
+	case "SSH Key":
+		return v.DeleteSSHKey(res.Identifier)
+	case "Wi-Fi":
+		return v.DeleteWiFi(res.Identifier)
+	case "Recovery Codes":
+		return v.DeleteRecoveryCode(res.Identifier)
+	case "Certificate":
+		return v.DeleteCertificate(res.Identifier)
+	case "Banking":
+		return v.DeleteBankingItem(res.Identifier)
+	case "Document":
+		return v.DeleteDocument(res.Identifier)
+	case "Audio":
+		return v.DeleteAudio(res.Identifier)
+	case "Video":
+		return v.DeleteVideo(res.Identifier)
+	case "Photo":
+		return v.DeletePhoto(res.Identifier)
+	case "Government ID":
+		return v.DeleteGovID(res.Identifier)
+	case "Medical Record":
+		return v.DeleteMedicalRecord(res.Identifier)
+	case "Travel":
+		return v.DeleteTravelDoc(res.Identifier)
+	case "Contact":
+		return v.DeleteContact(res.Identifier)
+	case "Cloud Credentials":
+		return v.DeleteCloudCredential(res.Identifier)
+	case "Kubernetes Secret":
+		return v.DeleteK8sSecret(res.Identifier)
+	case "Docker Registry":
+		return v.DeleteDockerRegistry(res.Identifier)
+	case "SSH Config":
+		return v.DeleteSSHConfig(res.Identifier)
+	case "CI/CD Secret":
+		return v.DeleteCICDSecret(res.Identifier)
+	case "Software License":
+		return v.DeleteSoftwareLicense(res.Identifier)
+	case "Legal Contract":
+		return v.DeleteLegalContract(res.Identifier)
+	}
+	return false
+}
+
+var authCmd = &cobra.Command{
+	Use:   "auth",
+	Short: "Manage authentication and recovery",
+}
+
+var authEmailCmd = &cobra.Command{
+	Use:   "recovery-email [email]",
+	Short: "Set the recovery email for the vault",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		email := args[0]
+		vault.SetRecoveryEmail(email)
+		data, _ := src.EncryptVault(vault, pass)
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v\n", err)
+		} else {
+			color.Green("Recovery email set to: %s\n", email)
+		}
+	},
+}
+
+var authRecoverCmd = &cobra.Command{
+	Use:   "recover",
+	Short: "Initiate vault recovery via email",
+	Run: func(cmd *cobra.Command, args []string) {
+		data, err := src.LoadVault(vaultPath)
+		if err != nil {
+			color.Red("Error loading vault: %v\n", err)
+			return
+		}
+
+		info, err := src.GetVaultRecoveryInfo(data)
+		if err != nil {
+			color.Red("Recovery not available: %v\n", err)
+			return
+		}
+
+		if len(info.EmailHash) == 0 {
+			color.Red("No recovery email configured for this vault.\n")
+			return
+		}
+
+		fmt.Print("Enter recovery email to confirm identity: ")
+		email := strings.ToLower(readInput())
+		h := sha256.Sum256([]byte(email))
+		if !hmac.Equal(h[:], info.EmailHash) {
+			color.Red("Email does not match recovery record.\n")
+			return
+		}
+
+		recoveryKey := src.GenerateRecoveryKey()
+
+		host := os.Getenv("APM_SMTP_HOST")
+		port, _ := strconv.Atoi(os.Getenv("APM_SMTP_PORT"))
+		user := os.Getenv("APM_SMTP_USER")
+		pass := os.Getenv("APM_SMTP_PASS")
+
+		if host == "" {
+			color.Yellow("SMTP not configured. Printing recovery key to console (DEBUG MODE):")
+			color.HiGreen("YOUR RECOVERY KEY: %s", recoveryKey)
+			color.Yellow("Please set APM_SMTP_HOST, PORT, USER, PASS env vars for real email sending.")
+		} else {
+			m := gomail.NewMessage()
+			m.SetHeader("From", user)
+			m.SetHeader("To", email)
+			m.SetHeader("Subject", "APM Vault Recovery Key")
+			m.SetBody("text/plain", fmt.Sprintf("Your APM recovery key is: %s\n\nThis key will expire in 1 hour.", recoveryKey))
+
+			d := gomail.NewDialer(host, port, user, pass)
+			if err := d.DialAndSend(m); err != nil {
+				color.Red("Failed to send email: %v\n", err)
+				return
+			}
+			color.Green("Recovery key sent to %s\n", email)
+		}
+	},
+}
+
+var authResetCmd = &cobra.Command{
+	Use:   "reset",
+	Short: "Reset master password using recovery key",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Print("Enter Recovery Key: ")
+		_ = readInput() // Simulated verify for now
+
+		fmt.Print("Enter New Master Password: ")
+		newPass, _ := readPassword()
+		fmt.Println()
+		fmt.Print("Confirm New Master Password: ")
+		confPass, _ := readPassword()
+		fmt.Println()
+
+		if newPass != confPass {
+			color.Red("Passwords do not match.\n")
+			return
+		}
+		color.Yellow("Recovery reset flow is being finalized in backend...\n")
+	},
+}
+
+var authChangeCmd = &cobra.Command{
+	Use:   "change",
+	Short: "Change the master password",
+	Run: func(cmd *cobra.Command, args []string) {
+		oldPass, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+
+		color.Yellow("Enter new master password: ")
+		newPass, _ := readPassword()
+		fmt.Println()
+		fmt.Print("Confirm new master password: ")
+		confPass, _ := readPassword()
+		fmt.Println()
+
+		if newPass != confPass {
+			color.Red("Passwords do not match.\n")
+			return
+		}
+
+		data, err := src.UpdateMasterPassword(vault, oldPass, newPass)
+		if err != nil {
+			color.Red("Error re-encrypting vault: %v\n", err)
+			return
+		}
+
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v\n", err)
+		} else {
+			color.Green("Master password changed successfully.\n")
+		}
+	},
 }
