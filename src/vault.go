@@ -245,9 +245,10 @@ type DocumentEntry struct {
 }
 
 type RecoveryData struct {
-	EmailHash []byte `json:"email_hash,omitempty"`
-	KeyHash   []byte `json:"key_hash,omitempty"`
-	DEKSlot   []byte `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
+	EmailHash     []byte `json:"email_hash,omitempty"`
+	KeyHash       []byte `json:"key_hash,omitempty"`
+	DEKSlot       []byte `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
+	ObfuscatedKey []byte `json:"obfuscated_key,omitempty"`
 }
 
 type AudioEntry struct {
@@ -322,6 +323,7 @@ type Vault struct {
 	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
 	DEK                  []byte         `json:"dek,omitempty"`
 	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
+	RawRecoveryKey       string         `json:"-"` // Used during encryption to store obfuscated key if present
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -405,6 +407,10 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	if len(vault.RecoverySlot) > 0 {
 		rec.DEKSlot = vault.RecoverySlot
 		rec.KeyHash = vault.RecoveryHash
+	}
+
+	if vault.RawRecoveryKey != "" {
+		rec.ObfuscatedKey = XORRecoveryKey(vault.RawRecoveryKey)
 	}
 
 	encRec, _ := json.Marshal(rec)
@@ -704,6 +710,7 @@ func DeriveRecoveryKey(key string, salt []byte) []byte {
 }
 
 func (v *Vault) SetRecoveryKey(key string, salt []byte) {
+	v.RawRecoveryKey = key
 	rk := DeriveRecoveryKey(key, salt)
 
 	// Create KeyHash for verification
@@ -716,6 +723,26 @@ func (v *Vault) SetRecoveryKey(key string, salt []byte) {
 	nonce := make([]byte, gcm.NonceSize())
 	// Use zero nonce for deterministic recovery slot
 	v.RecoverySlot = gcm.Seal(nil, nonce, v.DEK, nil)
+}
+
+func XORRecoveryKey(key string) []byte {
+	// Simple XOR obfuscation with a fixed key
+	xorKey := []byte("APM_RECOVERY_OBFUSCATION_SALT_2026")
+	data := []byte(key)
+	res := make([]byte, len(data))
+	for i := 0; i < len(data); i++ {
+		res[i] = data[i] ^ xorKey[i%len(xorKey)]
+	}
+	return res
+}
+
+func DeObfuscateRecoveryKey(obf []byte) string {
+	xorKey := []byte("APM_RECOVERY_OBFUSCATION_SALT_2026")
+	res := make([]byte, len(obf))
+	for i := 0; i < len(obf); i++ {
+		res[i] = obf[i] ^ xorKey[i%len(xorKey)]
+	}
+	return string(res)
 }
 
 func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
