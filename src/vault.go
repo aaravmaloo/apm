@@ -42,7 +42,7 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 		}
 		name := string(data[offset : offset+nameLen])
 		return GetProfile(name), 2, nil
-	} else if version == 3 {
+	} else if version == 3 || version == 4 {
 		if offset+2 > len(data) {
 			return CryptoProfile{}, 0, errors.New("short header")
 		}
@@ -649,14 +649,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 
 	vault.NeedsRepair = needsRepair
 	// If dek was raw key or offset was weird, mark for repair
+	// If dek was raw key or offset was weird, mark for repair
 	if bytes.Equal(dek, keys.EncryptionKey) && version == 4 {
-		vault.NeedsRepair = true
-	}
-	if version < CurrentVersion {
-		vault.NeedsRepair = true
-	}
-	if i != ctSearchStart+256 { // Actually standard offset for CT is usually around header + profile + recovery + salt + validator + nonce
-		// If we didn't start at the perfect spot, mark for repair
 		vault.NeedsRepair = true
 	}
 	if version < CurrentVersion {
