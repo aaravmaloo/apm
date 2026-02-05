@@ -1,6 +1,7 @@
 package apm
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -317,6 +318,7 @@ type Vault struct {
 	CurrentSpace            string                 `json:"current_space,omitempty"`
 	Spaces                  []string               `json:"spaces"`
 	ActivePolicy            Policy                 `json:"active_policy,omitempty"`
+	NeedsRepair             bool                   `json:"-"` // Internal flag for silent self-healing
 
 	CurrentProfileParams *CryptoProfile `json:"-"`
 	RecoveryEmail        string         `json:"recovery_email,omitempty"`
@@ -554,26 +556,55 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	if version == 4 {
 		// Decrypt Master Slot
 		masterSlotLen := 32 + 16 // DEK(32) + GCM tag(16)
-		if offset+masterSlotLen > len(data)-32 {
-			return nil, errors.New("corrupted master slot")
-		}
-		masterSlot := data[offset : offset+masterSlotLen]
-		offset += masterSlotLen
-
-		block, _ := aes.NewCipher(keys.EncryptionKey)
-		gcm, _ := cipher.NewGCM(block)
-		mNonce := make([]byte, gcm.NonceSize())
-		var err error
-		dek, err = gcm.Open(nil, mNonce, masterSlot, nil)
-		if err != nil {
-			return nil, errors.New("failed to decrypt master slot")
+		if offset+masterSlotLen <= len(data)-32 {
+			masterSlot := data[offset : offset+masterSlotLen]
+			block, _ := aes.NewCipher(keys.EncryptionKey)
+			gcm, _ := cipher.NewGCM(block)
+			mNonce := make([]byte, gcm.NonceSize())
+			var err error
+			dek, err = gcm.Open(nil, mNonce, masterSlot, nil)
+			if err == nil {
+				offset += masterSlotLen
+			} else {
+				// Fuzzy search for master slot (brute-force limited range)
+				found := false
+				searchStart := offset - 128
+				if searchStart < len(VaultHeader)+1 {
+					searchStart = len(VaultHeader) + 1
+				}
+				for i := searchStart; i < offset+256; i++ {
+					if i+masterSlotLen > len(data)-32 {
+						break
+					}
+					trialSlot := data[i : i+masterSlotLen]
+					dek, err = gcm.Open(nil, mNonce, trialSlot, nil)
+					if err == nil {
+						offset = i + masterSlotLen
+						found = true
+						vault.NeedsRepair = true
+						break
+					}
+				}
+				if !found {
+					// Deep Fallback: Try using raw EncryptionKey as DEK
+					// Some "V4" vaults created during early dev used direct encryption.
+					dek = keys.EncryptionKey
+					// Not setting NeedsRepair yet, will set in CT discovery
+				}
+			}
+		} else {
+			// Deep Fallback if data is too short for a master slot
+			dek = keys.EncryptionKey
 		}
 	} else {
 		dek = keys.EncryptionKey
+		if version < CurrentVersion {
+			// NeedsRepair will be set in CT discovery too
+		}
 	}
 
-	ciphertext := data[offset : len(data)-32]
-
+	// Fuzzy ciphertext discovery
+	// Trial decryption of the tail-end of the file.
 	dekBlock, err := aes.NewCipher(dek)
 	if err != nil {
 		return nil, err
@@ -583,18 +614,48 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		return nil, err
 	}
 
-	plaintext, err := dekGcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, errors.New("decryption failed")
+	var plaintext []byte
+	foundCT := false
+	// Start searching from current offset, but go back and forward significantly.
+	ctSearchStart := offset - 256
+	if ctSearchStart < len(VaultHeader)+1 {
+		ctSearchStart = len(VaultHeader) + 1
+	}
+	for i := ctSearchStart; i < offset+512; i++ {
+		if i >= len(data)-32 {
+			break
+		}
+		trialCT := data[i : len(data)-32]
+		plaintext, err = dekGcm.Open(nil, nonce, trialCT, nil)
+		if err == nil {
+			foundCT = true
+			if i != offset {
+				// We found it at a different offset than expected
+			}
+			offset = i
+			break
+		}
+	}
+
+	if !foundCT {
+		return nil, errors.New("failed to decrypt vault payload (incorrect password or corrupted data)")
 	}
 
 	var vault Vault
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
 	}
-	if version == 4 {
-		rec, _ := GetVaultRecoveryInfo(data)
-		vault.ObfuscatedKey = rec.ObfuscatedKey
+
+	// If dek was raw key or offset was weird, mark for repair
+	if bytes.Equal(dek, keys.EncryptionKey) && version == 4 {
+		vault.NeedsRepair = true
+	}
+	if i != ctSearchStart+256 { // Actually standard offset for CT is usually around header + profile + recovery + salt + validator + nonce
+		// If we didn't start at the perfect spot, mark for repair
+		vault.NeedsRepair = true
+	}
+	if version < CurrentVersion {
+		vault.NeedsRepair = true
 	}
 	vault.CurrentProfileParams = &profile
 	return &vault, nil
@@ -610,37 +671,74 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	}
 
 	// Skip Profile
+	// Parse Profile to know field lengths
 	pLen := int(data[offset])<<8 | int(data[offset+1])
-	offset += 2 + pLen
+	offset += 2
+	pBytes := data[offset : offset+pLen]
+	offset += pLen
+	var profile CryptoProfile
+	if err := json.Unmarshal(pBytes, &profile); err != nil {
+		return nil, fmt.Errorf("corrupted profile in DEK decryption: %v", err)
+	}
+
 	// Skip RecoveryData
+	if offset+2 > len(data) {
+		return nil, errors.New("corrupted header")
+	}
 	rLen := int(data[offset])<<8 | int(data[offset+1])
 	offset += 2 + rLen
+
 	// Skip Salt
-	offset += 16
+	offset += profile.SaltLen
 	// Skip Validator
 	offset += 32
 
 	// Read Nonce
-	nonceLen := 12
-	nonce := data[offset : offset+nonceLen]
-	offset += nonceLen
+	if offset+profile.NonceLen > len(data) {
+		return nil, errors.New("corrupted header (nonce)")
+	}
+	nonce := data[offset : offset+profile.NonceLen]
+	offset += profile.NonceLen
 
-	// Skip Master Slot
-	offset += 32 + 16
-
-	ciphertext := data[offset : len(data)-32]
-
+	// Search for Master Slot and Ciphertext
+	// Since we have the DEK, we can just skip the master slot and go to ciphertext.
+	var plaintext []byte
+	found := false
+	searchStart := offset - 128
+	if searchStart < 0 {
+		searchStart = 0
+	}
 	block, _ := aes.NewCipher(dek)
-	gcm, _ := cipher.NewGCMWithNonceSize(block, nonceLen)
+	gcm, _ := cipher.NewGCMWithNonceSize(block, profile.NonceLen)
 
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, err
+	for i := searchStart; i < offset+512; i++ {
+		if i >= len(data)-32 {
+			break
+		}
+		trialCT := data[i : len(data)-32]
+		var err error
+		plaintext, err = gcm.Open(nil, nonce, trialCT, nil)
+		if err == nil {
+			found = true
+			if i != offset {
+				// Different offset
+			}
+			offset = i
+			break
+		}
+	}
+
+	if !found {
+		return nil, errors.New("decryption with DEK failed: could not find valid ciphertext")
 	}
 
 	var vault Vault
 	if err := json.Unmarshal(plaintext, &vault); err != nil {
 		return nil, err
+	}
+
+	if offset != searchStart+128 { // standard offset for V4
+		vault.NeedsRepair = true
 	}
 
 	if version == 4 {
