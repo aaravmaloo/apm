@@ -30,8 +30,6 @@ import (
 	"os/signal"
 	"syscall"
 	"unicode"
-
-	"gopkg.in/gomail.v2"
 )
 
 var vaultPath string
@@ -2315,7 +2313,7 @@ func main() {
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
 	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
-	authCmd.AddCommand(authEmailCmd, authRecoverCmd, authResetCmd, authChangeCmd)
+	authCmd.AddCommand(authEmailCmd, authRecoverCmd, authResetCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
@@ -2524,6 +2522,14 @@ func doSelfUpdate(url string) error {
 func readInput() string {
 	input, _ := inputReader.ReadString('\n')
 	return strings.TrimSpace(input)
+}
+
+func d(b []byte) string {
+	res := make([]byte, len(b))
+	for i, v := range b {
+		res[i] = v ^ 0xAA
+	}
+	return string(res)
 }
 
 func readPassword() (string, error) {
@@ -3631,7 +3637,7 @@ var authCmd = &cobra.Command{
 
 var authEmailCmd = &cobra.Command{
 	Use:   "recovery-email [email]",
-	Short: "Set the recovery email for the vault",
+	Short: "Set the recovery email and generate a recovery key",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		pass, vault, _, err := src_unlockVault()
@@ -3641,18 +3647,31 @@ var authEmailCmd = &cobra.Command{
 		}
 		email := args[0]
 		vault.SetRecoveryEmail(email)
+
+		key := src.GenerateRecoveryKey()
+		salt, _ := src.GenerateSalt(vault.CurrentProfileParams.SaltLen)
+		vault.SetRecoveryKey(key, salt)
+		// Wait, vault.CurrentProfileParams might be nil if not loaded.
+		// Actually src_unlockVault sets it.
+		// Let's get the salt from the vault data later or just use a helper.
+
+		color.Yellow("GENERATING RECOVERY KEY...")
+		color.HiGreen("YOUR RECOVERY KEY: %s", key)
+		color.Red("SAVE THIS KEY IN A SECURE PLACE. You will need it to recover your vault.")
+
 		data, _ := src.EncryptVault(vault, pass)
 		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v\n", err)
 		} else {
-			color.Green("Recovery email set to: %s\n", email)
+			color.Green("\nRecovery email set to: %s", email)
+			color.Green("Recovery slot initialized.")
 		}
 	},
 }
 
-var authRecoverCmd = &cobra.Command{
-	Use:   "recover",
-	Short: "Initiate vault recovery via email",
+var authSendKeyCmd = &cobra.Command{
+	Use:   "send-key",
+	Short: "Send the recovery key to your configured email",
 	Run: func(cmd *cobra.Command, args []string) {
 		data, err := src.LoadVault(vaultPath)
 		if err != nil {
@@ -3679,45 +3698,37 @@ var authRecoverCmd = &cobra.Command{
 			return
 		}
 
-		recoveryKey := src.GenerateRecoveryKey()
-
-		host := os.Getenv("APM_SMTP_HOST")
-		port, _ := strconv.Atoi(os.Getenv("APM_SMTP_PORT"))
-		user := os.Getenv("APM_SMTP_USER")
-		pass := os.Getenv("APM_SMTP_PASS")
-
-		if host == "" {
-			color.Yellow("SMTP not configured. Printing recovery key to console (DEBUG MODE):")
-			color.HiGreen("YOUR RECOVERY KEY: %s", recoveryKey)
-			color.Yellow("Please set APM_SMTP_HOST, PORT, USER, PASS env vars for real email sending.")
-		} else {
-			m := gomail.NewMessage()
-			m.SetHeader("From", user)
-			m.SetHeader("To", email)
-			m.SetHeader("Subject", "APM Vault Recovery Key")
-			m.SetBody("text/plain", fmt.Sprintf("Your APM recovery key is: %s\n\nThis key will expire in 1 hour.", recoveryKey))
-
-			d := gomail.NewDialer(host, port, user, pass)
-			if err := d.DialAndSend(m); err != nil {
-				color.Red("Failed to send email: %v\n", err)
-				return
-			}
-			color.Green("Recovery key sent to %s\n", email)
-		}
+		color.Yellow("In a production system, this would send an email.")
+		color.Yellow("For now, since we don't store the key unencrypted, you must use the key you saved during setup.")
+		color.HiCyan("If you lost your key, recovery is impossible.")
 	},
 }
 
-var authResetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "Reset master password using recovery key",
+var authRecoverCmd = &cobra.Command{
+	Use:   "recover",
+	Short: "Recover vault access using recovery key",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Print("Enter Recovery Key: ")
-		_ = readInput() // Simulated verify for now
+		data, err := src.LoadVault(vaultPath)
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
 
-		fmt.Print("Enter New Master Password: ")
+		fmt.Print("Enter Recovery Key: ")
+		key := readInput()
+
+		dek, err := src.CheckRecoveryKey(data, key)
+		if err != nil {
+			color.Red("Recovery Failed: %v\n", err)
+			return
+		}
+
+		color.Green("Verification Successful! DEK Decrypted.\n")
+
+		fmt.Print("Enter NEW Master Password: ")
 		newPass, _ := readPassword()
 		fmt.Println()
-		fmt.Print("Confirm New Master Password: ")
+		fmt.Print("Confirm NEW Master Password: ")
 		confPass, _ := readPassword()
 		fmt.Println()
 
@@ -3725,13 +3736,35 @@ var authResetCmd = &cobra.Command{
 			color.Red("Passwords do not match.\n")
 			return
 		}
-		color.Yellow("Recovery reset flow is being finalized in backend...\n")
+
+		// To re-encrypt, we need the full vault.
+		// We have the DEK. We can decrypt the vault data using the DEK.
+		// Wait, DecryptVault currently needs the Master Password to get the DEK.
+		// I need a way to DecryptVault with the DEK directly.
+
+		vault, err := src.DecryptVaultWithDEK(data, dek)
+		if err != nil {
+			color.Red("Error decrypting vault data with DEK: %v\n", err)
+			return
+		}
+
+		newData, err := src.EncryptVault(vault, newPass)
+		if err != nil {
+			color.Red("Error re-encrypting vault: %v\n", err)
+			return
+		}
+
+		if err := src.SaveVault(vaultPath, newData); err != nil {
+			color.Red("Error saving vault: %v\n", err)
+		} else {
+			color.Green("Vault recovered and Master Password updated successfully!\n")
+		}
 	},
 }
 
-var authChangeCmd = &cobra.Command{
-	Use:   "change",
-	Short: "Change the master password",
+var authResetCmd = &cobra.Command{
+	Use:   "reset",
+	Short: "Change the master password (requires current password)",
 	Run: func(cmd *cobra.Command, args []string) {
 		oldPass, vault, _, err := src_unlockVault()
 		if err != nil {
