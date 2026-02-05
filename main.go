@@ -2606,6 +2606,8 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		os.Exit(0)
 	}()
 
+	focusMode := 0 // 0: Search, 1: List
+
 	for {
 		results := performSearch(v, query)
 		if len(results) > 0 {
@@ -2622,17 +2624,33 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		}
 
 		fmt.Print("\033[H\033[2J")
+
+		// Header
 		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Space: \x1b[1;32m%s\x1b[0m (readonly: %v)\n", profileDisplay, readonly)
-		fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\x1b[5m_\x1b[0m\n", query)
+
+		// Search Bar Rendering
+		if focusMode == 0 {
+			// Search Mode: Highlight Search Bar
+			fmt.Printf("\x1b[1;33mQuery:\x1b[0m \x1b[7m%s\x1b[0m\x1b[5m_\x1b[0m\n", query)
+		} else {
+			// List Mode: Normal Search Bar
+			fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\n", query)
+		}
 		fmt.Println("--------------------------------------------------")
 
 		displayLimit := 20
 		for i := 0; i < len(results) && i < displayLimit; i++ {
 			r := results[i]
 			line := fmt.Sprintf("[%d] %-30s (%s)", i+1, r.Identifier, r.Type)
-			if i == selectedIndex {
+
+			if focusMode == 1 && i == selectedIndex {
+				// List Mode & Selected: Inverted Colors
 				fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
+			} else if focusMode == 0 {
+				// Search Mode: Dimmed List
+				fmt.Printf("\x1b[2m %s \x1b[0m\n", line)
 			} else {
+				// List Mode & Not Selected: Normal
 				fmt.Printf(" %s \n", line)
 			}
 		}
@@ -2642,7 +2660,11 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		}
 
 		fmt.Println("\n--------------------------------------------------------------")
-		fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc\x1b[0m: Exit")
+		if focusMode == 0 {
+			fmt.Println("\x1b[1;37mType\x1b[0m: Search | \x1b[1;37m↓\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
+		} else {
+			fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mType\x1b[0m: Switch to Search")
+		}
 
 		b := make([]byte, 3)
 		n, err := os.Stdin.Read(b)
@@ -2650,31 +2672,46 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			break
 		}
 
-		if b[0] == 27 {
+		// Input Handling
+		if b[0] == 27 { // Escape sequence
 			if n >= 3 && b[1] == '[' {
-				if b[2] == 'A' {
-					if selectedIndex > 0 {
-						selectedIndex--
+				if b[2] == 'A' { // Up
+					if focusMode == 1 {
+						if selectedIndex > 0 {
+							selectedIndex--
+						} else {
+							focusMode = 0 // Return to Search
+						}
 					}
 					continue
-				} else if b[2] == 'B' {
-					if selectedIndex < len(results)-1 {
-						selectedIndex++
+				} else if b[2] == 'B' { // Down
+					if focusMode == 0 {
+						if len(results) > 0 {
+							focusMode = 1
+							selectedIndex = 0
+						}
+					} else {
+						if selectedIndex < len(results)-1 {
+							selectedIndex++
+						}
 					}
 					continue
 				}
 			}
-			if n == 1 {
+			if n == 1 { // Literal ESC
 				break
 			}
 			continue
 		}
 
-		if b[0] == 3 || b[0] == 4 {
+		if b[0] == 3 || b[0] == 4 { // Ctrl+C / Ctrl+D
 			break
 		}
 
-		if b[0] == 127 || b[0] == 8 {
+		if b[0] == 127 || b[0] == 8 { // Backspace
+			if focusMode == 1 {
+				focusMode = 0 // Switch to Search
+			}
 			if len(query) > 0 {
 				query = query[:len(query)-1]
 				selectedIndex = 0
@@ -2682,29 +2719,26 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			continue
 		}
 
-		if b[0] == '\r' || b[0] == '\n' {
-			if len(results) > 0 {
+		if b[0] == '\r' || b[0] == '\n' { // Enter
+			if focusMode == 1 && len(results) > 0 {
 				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
 			}
 			continue
 		}
 
-		if b[0] == 'e' {
+		if focusMode == 1 && (b[0] == 'e' || b[0] == 'd') {
 			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
-			}
-			continue
-		}
-
-		if b[0] == 'd' {
-			if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
+				handleAction(v, masterPassword, results[selectedIndex], b[0], readonly, oldState)
 			}
 			continue
 		}
 
 		char := rune(b[0])
 		if unicode.IsPrint(char) {
+			if focusMode == 1 {
+				focusMode = 0 // Switch to Search
+				// Don't swallow the key, add it
+			}
 			query += string(char)
 			selectedIndex = 0
 		}
@@ -2748,7 +2782,9 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
 		} else {
-			editEntryInVault(v, mp, res)
+			if confirmIdentity() {
+				editEntryInVault(v, mp, res)
+			}
 		}
 		fmt.Print("\nPress Enter to continue...")
 		readInput()
@@ -2756,17 +2792,19 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
 		} else {
-			fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
-			if strings.ToLower(readInput()) == "y" {
-				if deleteEntryByResult(v, res) {
-					data, _ := src.EncryptVault(v, mp)
-					if err := src.SaveVault(vaultPath, data); err != nil {
-						color.Red("Error saving vault: %v", err)
+			if confirmIdentity() {
+				fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
+				if strings.ToLower(readInput()) == "y" {
+					if deleteEntryByResult(v, res) {
+						data, _ := src.EncryptVault(v, mp)
+						if err := src.SaveVault(vaultPath, data); err != nil {
+							color.Red("Error saving vault: %v", err)
+						} else {
+							color.Green("Deleted.")
+						}
 					} else {
-						color.Green("Deleted.")
+						color.Red("Delete failed.")
 					}
-				} else {
-					color.Red("Delete failed.")
 				}
 			}
 		}
@@ -2779,6 +2817,17 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 	if newState != nil {
 		*oldState = *newState
 	}
+}
+
+func confirmIdentity() bool {
+	fmt.Print("\n🔒 Security Check: Did you initiate this action? (y/n): ")
+	if strings.ToLower(readInput()) != "y" {
+		color.Red("\n⛔ ACTION BLOCKED.")
+		color.Yellow("Security Recommendation: If this wasn't you, your session may be compromised.")
+		color.Yellow("Immediate Action: Rotate your Master Password now.")
+		return false
+	}
+	return true
 }
 
 func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
