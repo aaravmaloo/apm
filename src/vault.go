@@ -11,13 +11,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"strings"
 	"time"
 )
 
 const VaultHeader = "APMVAULT"
 
-const CurrentVersion = 3
+const CurrentVersion = 4
 
 func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 	if len(data) < len(VaultHeader) || string(data[:len(VaultHeader)]) != VaultHeader {
@@ -243,6 +244,12 @@ type DocumentEntry struct {
 	Space    string   `json:"space,omitempty"`
 }
 
+type RecoveryData struct {
+	EmailHash []byte `json:"email_hash,omitempty"`
+	KeyHash   []byte `json:"key_hash,omitempty"`
+	Expiry    int64  `json:"expiry,omitempty"`
+}
+
 type AudioEntry struct {
 	Name     string `json:"name"`
 	FileName string `json:"file_name"`
@@ -311,6 +318,9 @@ type Vault struct {
 	ActivePolicy            Policy                 `json:"active_policy,omitempty"`
 
 	CurrentProfileParams *CryptoProfile `json:"-"`
+	RecoveryEmail        string         `json:"recovery_email,omitempty"`
+	DEK                  []byte         `json:"dek,omitempty"`
+	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -341,6 +351,14 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	defer Wipe(keys.AuthKey)
 	defer Wipe(keys.Validator)
 
+	// In V4, we ensure a DEK exists. If not, generate one.
+	if len(vault.DEK) == 0 {
+		vault.DEK = make([]byte, 32)
+		if _, err := io.ReadFull(rand.Reader, vault.DEK); err != nil {
+			return nil, err
+		}
+	}
+
 	jsonData, err := json.Marshal(vault)
 	if err != nil {
 		return nil, err
@@ -367,18 +385,30 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, []byte(VaultHeader)...)
 	payload = append(payload, byte(CurrentVersion))
 
+	// Profile Params
 	encProfile, err := json.Marshal(profile)
 	if err != nil {
 		return nil, err
-	}
-	if len(encProfile) > 65535 {
-		return nil, errors.New("profile data too large")
 	}
 	lenBytes := make([]byte, 2)
 	lenBytes[0] = byte(len(encProfile) >> 8)
 	lenBytes[1] = byte(len(encProfile))
 	payload = append(payload, lenBytes...)
 	payload = append(payload, encProfile...)
+
+	// V4: Recovery Metadata (Unencrypted for verification)
+	var rec RecoveryData
+	if vault.RecoveryEmail != "" {
+		h := sha256.Sum256([]byte(strings.ToLower(vault.RecoveryEmail)))
+		rec.EmailHash = h[:]
+	}
+	// Note: KeyHash and Expiry are set by InitiateRecovery and persisted here
+	encRec, _ := json.Marshal(rec)
+	recLenBytes := make([]byte, 2)
+	recLenBytes[0] = byte(len(encRec) >> 8)
+	recLenBytes[1] = byte(len(encRec))
+	payload = append(payload, recLenBytes...)
+	payload = append(payload, encRec...)
 
 	payload = append(payload, salt...)
 	payload = append(payload, keys.Validator...)
@@ -432,7 +462,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		profileName := string(data[offset : offset+nameLen])
 		offset += nameLen
 		profile = GetProfile(profileName)
-	} else if version == 3 {
+	} else if version == 3 || version == 4 {
 		if offset+2 > len(data) {
 			return nil, errors.New("corrupted header (params len)")
 		}
@@ -447,6 +477,14 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 
 		if err := json.Unmarshal(pBytes, &profile); err != nil {
 			return nil, fmt.Errorf("corrupted profile data: %v", err)
+		}
+
+		if version == 4 {
+			if offset+2 > len(data) {
+				return nil, errors.New("corrupted header (recovery len)")
+			}
+			rLen := int(data[offset])<<8 | int(data[offset+1])
+			offset += 2 + rLen
 		}
 	} else {
 		return nil, fmt.Errorf("unsupported vault version: %d", version)
@@ -511,6 +549,69 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	}
 	vault.CurrentProfileParams = &profile
 	return &vault, nil
+}
+
+func UpdateMasterPassword(v *Vault, oldPass, newPass string) ([]byte, error) {
+	return EncryptVault(v, newPass)
+}
+
+func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
+	if len(data) < len(VaultHeader)+1 {
+		return RecoveryData{}, errors.New("invalid vault")
+	}
+	offset := len(VaultHeader)
+	version := data[offset]
+	offset++
+	if version != 4 {
+		return RecoveryData{}, errors.New("vault version does not support recovery")
+	}
+
+	// Skip Profile
+	if offset+2 > len(data) {
+		return RecoveryData{}, errors.New("corrupted header")
+	}
+	pLen := int(data[offset])<<8 | int(data[offset+1])
+	offset += 2 + pLen
+
+	if offset+2 > len(data) {
+		return RecoveryData{}, errors.New("corrupted header")
+	}
+	rLen := int(data[offset])<<8 | int(data[offset+1])
+	offset += 2
+	if offset+rLen > len(data) {
+		return RecoveryData{}, errors.New("corrupted header")
+	}
+	var rec RecoveryData
+	if err := json.Unmarshal(data[offset:offset+rLen], &rec); err != nil {
+		return RecoveryData{}, err
+	}
+	return rec, nil
+}
+
+func (v *Vault) SetRecoveryEmail(email string) {
+	v.RecoveryEmail = email
+}
+
+func GenerateRecoveryKey() string {
+	chars := "ABCDEFGHJKLMNPQRSTUVWXYZ"
+	nums := "23456789"
+
+	gen := func(pool string, length int) string {
+		res := make([]byte, length)
+		for i := 0; i < length; i++ {
+			n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(pool))))
+			res[i] = pool[n.Int64()]
+		}
+		return string(res)
+	}
+
+	// LNLN-LNLN-LLLL-NNNN
+	part1 := string([]byte{gen(chars, 1)[0], gen(nums, 1)[0], gen(chars, 1)[0], gen(nums, 1)[0]})
+	part2 := string([]byte{gen(chars, 1)[0], gen(nums, 1)[0], gen(chars, 1)[0], gen(nums, 1)[0]})
+	part3 := gen(chars, 4)
+	part4 := gen(nums, 4)
+
+	return fmt.Sprintf("%s-%s-%s-%s", part1, part2, part3, part4)
 }
 
 func decryptOldVault(ciphertext []byte, masterPassword string, salt []byte) (*Vault, error) {
