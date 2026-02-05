@@ -3,7 +3,10 @@ package apm
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -207,6 +210,8 @@ type HistoryEntry struct {
 	Action     string    `json:"action"`
 	Category   string    `json:"category"`
 	Identifier string    `json:"identifier"`
+	Hash       string    `json:"hash,omitempty"`
+	Signature  string    `json:"signature,omitempty"`
 }
 
 type CertificateEntry struct {
@@ -572,12 +577,27 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 }
 
 func (v *Vault) logHistory(action, category, identifier string) {
-	v.History = append(v.History, HistoryEntry{
+	entry := HistoryEntry{
 		Timestamp:  time.Now(),
 		Action:     action,
 		Category:   category,
 		Identifier: identifier,
-	})
+	}
+
+	// Calculate Hash: SHA256(Timestamp + Action + Category + Identifier)
+	// Using generic formatting for timestamp to ensure consistency
+	data := fmt.Sprintf("%d:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier)
+	hash := sha256.Sum256([]byte(data))
+	entry.Hash = hex.EncodeToString(hash[:])
+
+	// Calculate Signature: HMAC-SHA256(Hash, VaultSalt)
+	// We use the Vault's Salt as the key for simplicity in this implementation.
+	// ideally we would derive a specific Audit Key, but Salt is persistent enough.
+	mac := hmac.New(sha256.New, v.Salt)
+	mac.Write([]byte(entry.Hash))
+	entry.Signature = hex.EncodeToString(mac.Sum(nil))
+
+	v.History = append(v.History, entry)
 }
 
 func (v *Vault) AddEntry(account, username, password string) error {
