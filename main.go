@@ -896,9 +896,12 @@ func main() {
 			err = src.CreateSession(masterPassword, timeout, readonly, inactivity)
 			if err != nil {
 				color.Red("Error creating session: %v\n", err)
+				src.KillSession()
+				src.LogAction("VAULT_LOCKED", "Session terminated due to failed unlock")
+				color.Green("Vault locked. Session cleared.")
 				return
 			}
-
+			src.LogAction("VAULT_UNLOCKED", "Session updated")
 			color.Green("Vault session updated. Expires in %v or after %v of inactivity.\n", timeout, inactivity)
 		},
 	}
@@ -930,7 +933,7 @@ func main() {
 				fmt.Printf("Error creating session: %v\n", err)
 				return
 			}
-
+			src.LogAction("VAULT_UNLOCKED", "Read-only session created")
 			fmt.Printf("Vault session updated to READ-ONLY mode for %d minutes.\n", mins)
 		},
 	}
@@ -942,6 +945,7 @@ func main() {
 			if err := src.KillSession(); err != nil {
 				color.Yellow("No active session to kill or error: %v\n", err)
 			} else {
+				src.LogAction("VAULT_LOCKED", "Session terminated")
 				color.Green("Vault locked.\n")
 			}
 		},
@@ -955,7 +959,9 @@ func main() {
 				color.Red("No vault found.")
 				return
 			}
+			// Load Vault
 			data, err := src.LoadVault(vaultPath)
+			src.LogAction("VAULT_LOAD", fmt.Sprintf("Vault loaded from: %s", vaultPath))
 			if err != nil {
 				color.Red("Error loading vault: %v", err)
 				return
@@ -997,6 +1003,7 @@ func main() {
 			for _, r := range report {
 				fmt.Printf("- %s\n", r)
 			}
+			src.LogAction("HEALTH_CHECK", fmt.Sprintf("Score: %d", score))
 		},
 	}
 
@@ -1017,6 +1024,7 @@ func main() {
 			for _, h := range vault.History {
 				fmt.Printf("%s %-7s %-12s %s\n", h.Timestamp.Format("2006-01-02 15:04"), h.Action, h.Category, h.Identifier)
 			}
+			src.LogAction("AUDIT_VIEWED", "Audit logs displayed")
 		},
 	}
 
@@ -1027,6 +1035,7 @@ func main() {
 			length, _ := cmd.Flags().GetInt("length")
 			password, _ := src.GeneratePassword(length)
 			fmt.Println(password)
+			src.LogAction("PASSWORD_GENERATED", fmt.Sprintf("Length: %d", length))
 		},
 	}
 	genCmd.Flags().IntP("length", "l", 16, "Password length")
@@ -1048,6 +1057,7 @@ func main() {
 				f.Close()
 				os.Remove(vaultPath)
 				color.Green("Vault nuked.")
+				src.LogAction("VAULT_DESTROYED", "Vault permanently deleted")
 			}
 			src.KillSession()
 		},
@@ -1162,6 +1172,7 @@ func main() {
 						fmt.Printf("\r\x1b[K\x1b[1;36m>> Copied TOTP for %s to clipboard!\x1b[0m\n", targetEntry.Account)
 						time.Sleep(1 * time.Second)
 						fmt.Printf("\033[%dA", len(targets)+2)
+						src.LogAction("TOTP_COPIED", fmt.Sprintf("Account: %s", targetEntry.Account))
 					} else {
 						fmt.Printf("\033[%dA", len(targets)+1)
 					}
@@ -1223,6 +1234,7 @@ func main() {
 			}
 			src.SaveVault(vaultPath, data)
 			color.Green("Successfully imported data from %s.\n", filename)
+			src.LogAction("DATA_IMPORTED", fmt.Sprintf("File: %s, Type: %s", filename, ext))
 		},
 	}
 	importCmd.Flags().StringP("encrypt-pass", "e", "", "Password for decryption")
@@ -1264,6 +1276,7 @@ func main() {
 			}
 
 			color.Green("Successfully exported vault data to %s.\n", output)
+			src.LogAction("DATA_EXPORTED", fmt.Sprintf("File: %s, Type: %s", output, ext))
 		},
 	}
 	exportCmd.Flags().StringP("output", "o", "", "Output filename")
@@ -1335,12 +1348,13 @@ func main() {
 			}
 
 			if errSetup != nil {
-
+				src.LogAction("CLOUD_INIT_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, errSetup))
 				return
 			}
 
 			data, _ := src.EncryptVault(vault, masterPassword)
 			src.SaveVault(vaultPath, data)
+			src.LogAction("CLOUD_INIT_SUCCESS", fmt.Sprintf("Provider: %s", provider))
 		},
 	}
 
@@ -1386,8 +1400,10 @@ func main() {
 				err = cm.SyncVault(vaultPath, targetID)
 				if err != nil {
 					color.Red("[%s] Sync failed: %v", provider, err)
+					src.LogAction("CLOUD_SYNC_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, err))
 				} else {
 					color.Green("[%s] Vault synced to cloud.", provider)
+					src.LogAction("CLOUD_SYNC_SUCCESS", fmt.Sprintf("Provider: %s", provider))
 				}
 			}
 		},
@@ -1459,8 +1475,10 @@ func main() {
 
 									err = cm.SyncVault(vaultPath, targetID)
 									if err != nil {
+										src.LogAction("CLOUD_AUTOSYNC_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, err))
 										color.Red("[%s] Auto-sync failed: %v", provider, err)
 									} else {
+										src.LogAction("CLOUD_AUTOSYNC_SUCCESS", fmt.Sprintf("Provider: %s", provider))
 										color.Green("[%s] Auto-sync successful.", provider)
 									}
 								}
@@ -1515,9 +1533,11 @@ func main() {
 					data, err := gm.DownloadVault(key)
 					if err != nil {
 						color.Red("Download failed: %v", err)
+						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
 						return
 					}
 					handleDownloadedVault(data, pat, key)
+					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
 					return
 				} else {
 					fmt.Print("Enter Retrieval Key: ")
@@ -1541,9 +1561,11 @@ func main() {
 					data, err := gm.DownloadVault(key)
 					if err != nil {
 						color.Red("Download failed: %v", err)
+						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
 						return
 					}
 					handleDownloadedVault(data, pat, key)
+					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
 					return
 				} else {
 					fmt.Print("Enter Retrieval Key: ")
@@ -1566,9 +1588,11 @@ func main() {
 					data, err := gm.DownloadVault(key)
 					if err != nil {
 						color.Red("Download failed: %v", err)
+						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
 						return
 					}
 					handleDownloadedVault(data, pat, key)
+					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
 					return
 				}
 			}
@@ -1598,14 +1622,17 @@ func main() {
 					fileID, err = cp.ResolveKeyToID(key)
 					if err != nil {
 						color.Red("Key resolution failed: %v", err)
+						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: gdrive, Key: %s, Error: %v", key, err))
 						return
 					}
 					data, err := cp.DownloadVault(fileID)
 					if err != nil {
 						color.Red("Download failed: %v", err)
+						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: gdrive, Key: %s, Error: %v", key, err))
 						return
 					}
 					handleDownloadedVault(data, "", "")
+					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: gdrive, Key: %s", key))
 					return
 				}
 			}
@@ -1619,6 +1646,7 @@ func main() {
 			fileID, err = cp.ResolveKeyToID(key)
 			if err != nil {
 				color.Red("Key resolution failed: %v\n", err)
+				src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: %s, Key: %s, Error: %v", provider, key, err))
 				return
 			}
 
@@ -1626,10 +1654,12 @@ func main() {
 			if err != nil {
 				color.Red("Download failed: %v\n", err)
 				color.Yellow("Note: For APM_PUBLIC, only uploader needs credentials.json. Ensure retrieval key is correct.")
+				src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: %s, Key: %s, Error: %v", provider, key, err))
 				return
 			}
 
 			handleDownloadedVault(data, "", "")
+			src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: %s, Key: %s", provider, key))
 		},
 	}
 
@@ -1665,6 +1695,7 @@ func main() {
 			err = cm.DeleteVault(vault.CloudFileID)
 			if err != nil {
 				color.Red("Delete failed: %v\n", err)
+				src.LogAction("CLOUD_DELETE_FAILED", fmt.Sprintf("Provider: %s, FileID: %s, Error: %v", provider, vault.CloudFileID, err))
 				return
 			}
 
@@ -1675,6 +1706,7 @@ func main() {
 			src.SaveVault(vaultPath, data)
 
 			color.Green("Vault deleted from cloud.")
+			src.LogAction("CLOUD_DELETE_SUCCESS", fmt.Sprintf("Provider: %s, FileID: %s", provider, vault.CloudFileID))
 		},
 	}
 
@@ -1692,12 +1724,12 @@ func main() {
 				return
 			}
 
-			if vault.RetrievalKey == "" {
+			if vault.RetrievalKey == "" && vault.GitHubToken == "" {
 				color.Yellow("Cloud sync is not initialized (no key found).")
 				return
 			}
 
-			fmt.Printf("This will clear the local Retrieval Key: %s\n", vault.RetrievalKey)
+			fmt.Printf("This will clear the local Retrieval Key: %s and GitHub Token if set.\n", vault.RetrievalKey)
 			fmt.Print("Are you sure? (y/n): ")
 			if strings.ToLower(readInput()) != "y" {
 				return
@@ -1709,6 +1741,8 @@ func main() {
 			vault.DriveSyncMode = ""
 			vault.CloudCredentials = nil
 			vault.CloudToken = nil
+			vault.GitHubToken = ""
+			vault.GitHubRepo = ""
 
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
@@ -1722,6 +1756,7 @@ func main() {
 			}
 
 			color.Green("Cloud metadata reset successfully. You can now run 'pm cloud init' again.")
+			src.LogAction("CLOUD_RESET", "Cloud metadata cleared")
 		},
 	}
 
@@ -1804,10 +1839,12 @@ func main() {
 			if err := cm.DownloadPlugin(name, targetDir); err != nil {
 				os.RemoveAll(targetDir)
 				color.Red("Failed to install plugin '%s': %v", name, err)
+				src.LogAction("PLUGIN_INSTALL_FAILED", fmt.Sprintf("Plugin: %s, Error: %v", name, err))
 				return
 			}
 
 			color.Green("Plugin '%s' installed successfully.", name)
+			src.LogAction("PLUGIN_INSTALLED", fmt.Sprintf("Plugin: %s", name))
 		},
 	}
 
@@ -1822,9 +1859,11 @@ func main() {
 			name := args[0]
 			if err := pluginMgr.RemovePlugin(name); err != nil {
 				color.Red("Error removing plugin: %v\n", err)
+				src.LogAction("PLUGIN_REMOVE_FAILED", fmt.Sprintf("Plugin: %s, Error: %v", name, err))
 				return
 			}
 			color.Green("Plugin %s removed successfully.\n", name)
+			src.LogAction("PLUGIN_REMOVED", fmt.Sprintf("Plugin: %s", name))
 		},
 	}
 
@@ -1876,9 +1915,11 @@ func main() {
 
 			if err := pluginMgr.InstallPlugin(def.Name, pluginPath); err != nil {
 				color.Red("Installation failed: %v", err)
+				src.LogAction("PLUGIN_INSTALL_FAILED", fmt.Sprintf("Plugin: %s, Error: %v", def.Name, err))
 				return
 			}
 			color.Green("Plugin '%s' installed successfully from local source.", def.Name)
+			src.LogAction("PLUGIN_INSTALLED", fmt.Sprintf("Plugin: %s (local)", def.Name))
 		},
 	}
 
@@ -1897,6 +1938,7 @@ func main() {
 				fmt.Print("No vault found. Would you like to create one now? (y/n): ")
 				if strings.ToLower(readInput()) == "y" {
 					initCmd.Run(cmd, nil)
+					src.LogAction("SETUP_VAULT_INIT", "Vault initialized via setup wizard")
 				} else {
 					fmt.Println("Skipping vault initialization.")
 				}
@@ -1921,11 +1963,14 @@ func main() {
 					switch choice {
 					case "1":
 						setupGDrive(vault, masterPassword)
+						src.LogAction("SETUP_CLOUD_INIT", "Google Drive configured via setup wizard")
 					case "2":
 						setupGitHub(vault)
+						src.LogAction("SETUP_CLOUD_INIT", "GitHub configured via setup wizard")
 					case "3":
 						setupGDrive(vault, masterPassword)
 						setupGitHub(vault)
+						src.LogAction("SETUP_CLOUD_INIT", "Google Drive and GitHub configured via setup wizard")
 					default:
 						color.Red("Invalid selection.")
 					}
@@ -1943,6 +1988,7 @@ func main() {
 				pName := readInput()
 				if pName != "" {
 					color.Green("Space '%s' added to configuration plan. (Run 'pm space create %s' after setup)", pName, pName)
+					src.LogAction("SETUP_SPACE_CREATE_PLANNED", fmt.Sprintf("Space: %s", pName))
 				}
 			}
 			fmt.Println()
@@ -1958,6 +2004,7 @@ func main() {
 
 			color.HiGreen("Setup completed successfully!")
 			fmt.Println("Run 'pm' to see all available commands.")
+			src.LogAction("SETUP_COMPLETED", "Setup wizard completed")
 		},
 	}
 	var policyCmd = &cobra.Command{
@@ -2009,6 +2056,7 @@ func main() {
 			}
 
 			color.Green("Policy '%s' loaded and active.\n", args[0])
+			src.LogAction("POLICY_LOADED", fmt.Sprintf("Policy: %s", args[0]))
 		},
 	}
 
@@ -2058,6 +2106,7 @@ func main() {
 			}
 
 			color.Green("Policy cleared. Enforcement disabled.\n")
+			src.LogAction("POLICY_CLEARED", "Active policy removed")
 		},
 	}
 
@@ -2082,8 +2131,10 @@ func main() {
 			err = src.ChangeProfile(vault, args[0], masterPassword, vaultPath)
 			if err != nil {
 				color.Red("Error: %v", err)
+				src.LogAction("PROFILE_CHANGE_FAILED", fmt.Sprintf("Profile: %s, Error: %v", args[0], err))
 			} else {
 				color.Green("Profile switched to %s.", args[0])
+				src.LogAction("PROFILE_CHANGED", fmt.Sprintf("Profile: %s", args[0]))
 			}
 		},
 	}
@@ -2184,6 +2235,7 @@ func main() {
 				color.Red("Error saving vault: %v\n", err)
 			}
 			color.Green("Custom profile '%s' applied.", args[0])
+			src.LogAction("PROFILE_CREATED", fmt.Sprintf("Profile: %s, Params: Mem=%d, Time=%d, Par=%d", args[0], mem, t, p))
 		},
 	}
 	profileCmd.AddCommand(profileSetCmd, profileCreateCmd)
@@ -3901,15 +3953,22 @@ var mcpTokenCmd = &cobra.Command{
 	Short: "Interactive setup for MCP access tokens",
 	Run: func(cmd *cobra.Command, args []string) {
 		color.HiCyan("APM MCP Server Setup")
-		color.Cyan("Select the permissions (scopes) you want to grant to the AI agent:")
+
+		var name string
+		promptName := &survey.Input{Message: "Token Name (e.g. 'Cursor', 'Windsurf'):"}
+		survey.AskOne(promptName, &name)
+		if name == "" {
+			color.Red("Token name is required.")
+			return
+		}
 
 		permissions := []string{}
-		prompt := &survey.MultiSelect{
+		promptPerms := &survey.MultiSelect{
 			Message: "Permissions:",
 			Options: []string{"read", "write", "delete", "secrets", "all"},
 			Default: []string{"read", "secrets"},
 		}
-		err := survey.AskOne(prompt, &permissions)
+		err := survey.AskOne(promptPerms, &permissions)
 		if err != nil {
 			color.Red("Setup aborted: %v", err)
 			return
@@ -3920,7 +3979,13 @@ var mcpTokenCmd = &cobra.Command{
 			return
 		}
 
-		token, err := src.GenerateMCPToken(permissions)
+		var expiryStr string
+		promptExpiry := &survey.Input{Message: "Expiry in minutes (0 for no expiry):", Default: "0"}
+		survey.AskOne(promptExpiry, &expiryStr)
+		var expiry int
+		fmt.Sscanf(expiryStr, "%d", &expiry)
+
+		token, err := src.GenerateMCPToken(name, permissions, expiry)
 		if err != nil {
 			color.Red("Token generation failed: %v", err)
 			return
@@ -3955,6 +4020,55 @@ var mcpTokenCmd = &cobra.Command{
 	},
 }
 
+var mcpListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List active MCP tokens",
+	Run: func(cmd *cobra.Command, args []string) {
+		tokens, err := src.ListMCPTokens()
+		if err != nil {
+			color.Red("Error listing tokens: %v", err)
+			return
+		}
+
+		if len(tokens) == 0 {
+			fmt.Println("No active MCP tokens.")
+			return
+		}
+
+		fmt.Printf("%-20s %-25s %-10s %-25s\n", "NAME", "CREATED", "USES", "EXPIRES")
+		fmt.Println(strings.Repeat("-", 85))
+		for _, t := range tokens {
+			expires := "Never"
+			if !t.ExpiresAt.IsZero() {
+				expires = t.ExpiresAt.Format("2006-01-02 15:04")
+			}
+			fmt.Printf("%-20s %-25s %-10d %-25s\n",
+				t.Name,
+				t.CreatedAt.Format("2006-01-02 15:04"),
+				t.UsageCount,
+				expires)
+		}
+	},
+}
+
+var mcpRevokeCmd = &cobra.Command{
+	Use:   "revoke [name_or_token]",
+	Short: "Revoke an MCP token",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		success, err := src.RevokeMCPToken(args[0])
+		if err != nil {
+			color.Red("Error revoking token: %v", err)
+			return
+		}
+		if success {
+			color.Green("Token '%s' revoked successfully.", args[0])
+		} else {
+			color.Yellow("Token '%s' not found.", args[0])
+		}
+	},
+}
+
 var mcpServeCmd = &cobra.Command{
 	Use:    "serve",
 	Short:  "Internal command to start the MCP server (stdio)",
@@ -3973,7 +4087,7 @@ var mcpServeCmd = &cobra.Command{
 }
 
 func init() {
-	mcpCmd.AddCommand(mcpTokenCmd, mcpServeCmd)
+	mcpCmd.AddCommand(mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
 	mcpTokenCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
 }
