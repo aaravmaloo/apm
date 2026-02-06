@@ -249,6 +249,7 @@ type RecoveryData struct {
 	EmailHash     []byte `json:"email_hash,omitempty"`
 	KeyHash       []byte `json:"key_hash,omitempty"`
 	DEKSlot       []byte `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
+	Salt          []byte `json:"salt,omitempty"`     // Stable salt for recovery key
 	ObfuscatedKey []byte `json:"obfuscated_key,omitempty"`
 }
 
@@ -325,6 +326,7 @@ type Vault struct {
 	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
 	DEK                  []byte         `json:"dek,omitempty"`
 	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
+	RecoverySalt         []byte         `json:"recovery_salt,omitempty"`
 	RawRecoveryKey       string         `json:"-"`
 	ObfuscatedKey        []byte         `json:"-"`
 }
@@ -410,6 +412,7 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	if len(vault.RecoverySlot) > 0 {
 		rec.DEKSlot = vault.RecoverySlot
 		rec.KeyHash = vault.RecoveryHash
+		rec.Salt = vault.RecoverySalt
 	}
 
 	if vault.RawRecoveryKey != "" {
@@ -762,26 +765,53 @@ func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 		return RecoveryData{}, errors.New("vault version does not support recovery")
 	}
 
-	// Skip Profile
-	if offset+2 > len(data) {
-		return RecoveryData{}, errors.New("corrupted header")
+	// Try standard parsing first
+	if offset+2 <= len(data) {
+		pLen := int(data[offset])<<8 | int(data[offset+1])
+		rOffset := offset + 2 + pLen
+		if rOffset+2 <= len(data) {
+			rLen := int(data[rOffset])<<8 | int(data[rOffset+1])
+			jsonStart := rOffset + 2
+			if jsonStart+rLen <= len(data) {
+				var rec RecoveryData
+				if err := json.Unmarshal(data[jsonStart:jsonStart+rLen], &rec); err == nil && len(rec.EmailHash) > 0 {
+					return rec, nil
+				}
+			}
+		}
 	}
-	pLen := int(data[offset])<<8 | int(data[offset+1])
-	offset += 2 + pLen
 
-	if offset+2 > len(data) {
-		return RecoveryData{}, errors.New("corrupted header")
+	// Fuzzy Search: Look for the JSON markers
+	// RecoveryData usually starts with {"email_hash"
+	searchRange := 1024
+	if searchRange > len(data) {
+		searchRange = len(data)
 	}
-	rLen := int(data[offset])<<8 | int(data[offset+1])
-	offset += 2
-	if offset+rLen > len(data) {
-		return RecoveryData{}, errors.New("corrupted header")
+
+	for i := len(VaultHeader); i < searchRange; i++ {
+		// Minimum JSON size for RecoveryData is roughly 100 bytes
+		if i+50 > len(data) {
+			break
+		}
+		// Look for opening brace
+		if data[i] == '{' {
+			// Try unmarshaling various lengths
+			for l := 50; l < 1000; l++ {
+				if i+l > len(data) {
+					break
+				}
+				var rec RecoveryData
+				if err := json.Unmarshal(data[i:i+l], &rec); err == nil {
+					// Validate it looks like our recovery data
+					if len(rec.EmailHash) > 0 && (len(rec.KeyHash) > 0 || len(rec.ObfuscatedKey) > 0) {
+						return rec, nil
+					}
+				}
+			}
+		}
 	}
-	var rec RecoveryData
-	if err := json.Unmarshal(data[offset:offset+rLen], &rec); err != nil {
-		return RecoveryData{}, err
-	}
-	return rec, nil
+
+	return RecoveryData{}, errors.New("could not locate recovery record in vault")
 }
 
 func (v *Vault) SetRecoveryEmail(email string) {
@@ -828,6 +858,7 @@ func DeriveRecoveryKey(key string, salt []byte) []byte {
 
 func (v *Vault) SetRecoveryKey(key string, salt []byte) {
 	v.RawRecoveryKey = key
+	v.RecoverySalt = salt
 	rk := DeriveRecoveryKey(key, salt)
 
 	// Create KeyHash for verification
@@ -911,13 +942,29 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 	// Search for valid salt/hash combination
 	found := false
 	var rk []byte
-	searchStart := offset - 128
-	if searchStart < 0 {
-		searchStart = 0
-	}
 
 	// Try all candidates
 	for _, candidate := range candidates {
+		// Priority 1: Use specific salt from RecoveryData (Robust way)
+		if len(rec.Salt) > 0 {
+			trialRk := DeriveRecoveryKey(candidate, rec.Salt)
+			h := sha256.Sum256(trialRk)
+			if hmac.Equal(h[:], rec.KeyHash) {
+				rk = trialRk
+				found = true
+			}
+		}
+
+		if found {
+			break
+		}
+
+		// Priority 2: Fallback to fuzzy search in header (Legacy/Shifted way)
+		searchStart := offset - 128
+		if searchStart < 0 {
+			searchStart = 0
+		}
+
 		for i := searchStart; i < offset+256; i++ {
 			if i+profile.SaltLen+32 > len(data) {
 				break
