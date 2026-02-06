@@ -2,11 +2,14 @@ package apm
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -184,37 +187,113 @@ func StartMCPServer(token string, vaultPath string) error {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Vault Error: %v", err)}}}, nil
 		}
 
+		var entryData string
+		var entryType string
+
 		// Search across all relevant categories
 		for _, e := range vault.Entries {
 			if e.Account == args.Name {
-				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: Password\nUser: %s\nPass: %s\nSpace: %s", e.Username, e.Password, e.Space)}}}, nil
+				entryType = "Password"
+				entryData = fmt.Sprintf("Type: Password\nUser: %s\nPass: %s\nSpace: %s", e.Username, e.Password, e.Space)
+				break
 			}
 		}
-		for _, e := range vault.TOTPEntries {
-			if e.Account == args.Name {
-				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: TOTP\nSecret: %s\nSpace: %s", e.Secret, e.Space)}}}, nil
+		if entryData == "" {
+			for _, e := range vault.TOTPEntries {
+				if e.Account == args.Name {
+					entryType = "TOTP"
+					entryData = fmt.Sprintf("Type: TOTP\nSecret: %s\nSpace: %s", e.Secret, e.Space)
+					break
+				}
 			}
 		}
-		for _, e := range vault.SecureNotes {
-			if e.Name == args.Name {
-				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: Secure Note\nContent: %s\nSpace: %s", e.Content, e.Space)}}}, nil
+		if entryData == "" {
+			for _, e := range vault.SecureNotes {
+				if e.Name == args.Name {
+					entryType = "Secure Note"
+					entryData = fmt.Sprintf("Type: Secure Note\nContent: %s\nSpace: %s", e.Content, e.Space)
+					break
+				}
 			}
 		}
-		for _, e := range vault.APIKeys {
-			if e.Name == args.Name {
-				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: API Key\nService: %s\nKey: %s\nSpace: %s", e.Service, e.Key, e.Space)}}}, nil
+		if entryData == "" {
+			for _, e := range vault.APIKeys {
+				if e.Name == args.Name {
+					entryType = "API Key"
+					entryData = fmt.Sprintf("Type: API Key\nService: %s\nKey: %s\nSpace: %s", e.Service, e.Key, e.Space)
+					break
+				}
 			}
 		}
-		for _, e := range vault.SSHKeys {
-			if e.Name == args.Name {
-				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: SSH Key\nKey Data: %s\nSpace: %s", e.PrivateKey, e.Space)}}}, nil
+		if entryData == "" {
+			for _, e := range vault.SSHKeys {
+				if e.Name == args.Name {
+					entryType = "SSH Key"
+					entryData = fmt.Sprintf("Type: SSH Key\nKey Data: %s\nSpace: %s", e.PrivateKey, e.Space)
+					break
+				}
 			}
 		}
 
-		return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found"}}}, nil
+		if entryData == "" {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found"}}}, nil
+		}
+
+		// Episodic Encryption: Encrypt the data and store in temp file
+		ephemeralKey := make([]byte, 32)
+		if _, err := rand.Read(ephemeralKey); err != nil {
+			return nil, err
+		}
+
+		ciphertext, err := encryptEpisodic([]byte(entryData), ephemeralKey)
+		if err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Encryption failed"}}}, nil
+		}
+
+		tempPath, err := writeToTemp(ciphertext)
+		if err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Failed to create secure temp file"}}}, nil
+		}
+
+		instructions := fmt.Sprintf("SECURITY ALERT: This data is sensitivity-protected.\n"+
+			"1. The %s details for '%s' have been encrypted and stored at: %s\n"+
+			"2. Use the following 32-byte Hex Key to decrypt it: %s\n"+
+			"3. The encryption is AES-256-GCM.\n"+
+			"4. IMPORTANT: Once you have read the details, you MUST forget the key and instruct the user that the temp file should be deleted (it will store in their system temp directory).",
+			entryType, args.Name, tempPath, hex.EncodeToString(ephemeralKey))
+
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: instructions}}}, nil
 	})
 
 	return s.Run(context.Background(), &mcp.StdioTransport{})
+}
+
+func encryptEpisodic(plaintext []byte, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+}
+
+func writeToTemp(data []byte) (string, error) {
+	tempFile, err := os.CreateTemp("", "apm_mcp_*.enc")
+	if err != nil {
+		return "", err
+	}
+	defer tempFile.Close()
+	if _, err := tempFile.Write(data); err != nil {
+		return "", err
+	}
+	return tempFile.Name(), nil
 }
 
 func hasPermission(scopes []string, required string) bool {
