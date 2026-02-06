@@ -99,10 +99,10 @@ func StartMCPServer(token string, vaultPath string) error {
 		Version: "1.2.0",
 	}, nil)
 
-	// Add list_entries tool
+	// List all entries across all categories
 	s.AddTool(&mcp.Tool{
-		Name:        "list_entries",
-		Description: "List all account/service names stored in the vault",
+		Name:        "list_vault",
+		Description: "List all entries across all categories in the vault (Accounts, TOTP, Notes, API Keys, etc.)",
 		InputSchema: map[string]any{"type": "object"},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "read") {
@@ -112,23 +112,60 @@ func StartMCPServer(token string, vaultPath string) error {
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Vault Error: %v", err)}}}, nil
 		}
-		var res []string
-		for _, e := range vault.Entries {
-			res = append(res, e.Account)
+
+		var sb strings.Builder
+		sb.WriteString("Vault Content Overview:\n")
+
+		if len(vault.Entries) > 0 {
+			sb.WriteString("\n[Accounts]\n")
+			for _, e := range vault.Entries {
+				sb.WriteString("- " + e.Account + "\n")
+			}
 		}
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: strings.Join(res, "\n")}}}, nil
+		if len(vault.TOTPEntries) > 0 {
+			sb.WriteString("\n[TOTP Accounts]\n")
+			for _, e := range vault.TOTPEntries {
+				sb.WriteString("- " + e.Account + "\n")
+			}
+		}
+		if len(vault.SecureNotes) > 0 {
+			sb.WriteString("\n[Secure Notes]\n")
+			for _, e := range vault.SecureNotes {
+				sb.WriteString("- " + e.Name + "\n")
+			}
+		}
+		if len(vault.APIKeys) > 0 {
+			sb.WriteString("\n[API Keys]\n")
+			for _, e := range vault.APIKeys {
+				sb.WriteString("- " + e.Name + "\n")
+			}
+		}
+		if len(vault.SSHKeys) > 0 {
+			sb.WriteString("\n[SSH Keys]\n")
+			for _, e := range vault.SSHKeys {
+				sb.WriteString("- " + e.Name + "\n")
+			}
+		}
+		if len(vault.WiFiCredentials) > 0 {
+			sb.WriteString("\n[WiFi]\n")
+			for _, e := range vault.WiFiCredentials {
+				sb.WriteString("- " + e.SSID + "\n")
+			}
+		}
+
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: sb.String()}}}, nil
 	})
 
-	// Add get_details tool
+	// Get full details for any entry by name
 	s.AddTool(&mcp.Tool{
-		Name:        "get_details",
-		Description: "Get username and password for a specific account",
+		Name:        "get_entry",
+		Description: "Get the full details (including secrets) for any vault entry by name",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"account": map[string]any{"type": "string"},
+				"name": map[string]any{"type": "string", "description": "The name or account identifier of the entry"},
 			},
-			"required": []string{"account"},
+			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "secrets") {
@@ -136,71 +173,45 @@ func StartMCPServer(token string, vaultPath string) error {
 		}
 
 		var args struct {
-			Account string `json:"account"`
+			Name string `json:"name"`
 		}
-		if len(req.Params.Arguments) > 0 {
-			if err := json.Unmarshal(req.Params.Arguments, &args); err != nil {
-				return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Invalid arguments"}}}, nil
-			}
-		}
-
-		if args.Account == "" {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Missing account argument"}}}, nil
+		if err := json.Unmarshal(req.Params.Arguments, &args); err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Invalid arguments"}}}, nil
 		}
 
 		vault, _, err := unlockVaultForMCP(vaultPath)
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Vault Error: %v", err)}}}, nil
 		}
+
+		// Search across all relevant categories
 		for _, e := range vault.Entries {
-			if e.Account == args.Account {
-				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("User: %s\nPass: %s", e.Username, e.Password)}}}, nil
+			if e.Account == args.Name {
+				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: Password\nUser: %s\nPass: %s\nSpace: %s", e.Username, e.Password, e.Space)}}}, nil
 			}
 		}
-		return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Not found"}}}, nil
-	})
-
-	// Add search tool
-	s.AddTool(&mcp.Tool{
-		Name:        "search",
-		Description: "Search for entries matching a query",
-		InputSchema: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"query": map[string]any{"type": "string"},
-			},
-			"required": []string{"query"},
-		},
-	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "read") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		for _, e := range vault.TOTPEntries {
+			if e.Account == args.Name {
+				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: TOTP\nSecret: %s\nSpace: %s", e.Secret, e.Space)}}}, nil
+			}
 		}
-
-		var args struct {
-			Query string `json:"query"`
+		for _, e := range vault.SecureNotes {
+			if e.Name == args.Name {
+				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: Secure Note\nContent: %s\nSpace: %s", e.Content, e.Space)}}}, nil
+			}
 		}
-		if len(req.Params.Arguments) > 0 {
-			if err := json.Unmarshal(req.Params.Arguments, &args); err != nil {
-				return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Invalid arguments"}}}, nil
+		for _, e := range vault.APIKeys {
+			if e.Name == args.Name {
+				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: API Key\nService: %s\nKey: %s\nSpace: %s", e.Service, e.Key, e.Space)}}}, nil
+			}
+		}
+		for _, e := range vault.SSHKeys {
+			if e.Name == args.Name {
+				return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Type: SSH Key\nKey Data: %s\nSpace: %s", e.PrivateKey, e.Space)}}}, nil
 			}
 		}
 
-		if args.Query == "" {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Missing query argument"}}}, nil
-		}
-
-		vault, _, err := unlockVaultForMCP(vaultPath)
-		if err != nil {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Vault Error: %v", err)}}}, nil
-		}
-		query := strings.ToLower(args.Query)
-		var res []string
-		for _, e := range vault.Entries {
-			if strings.Contains(strings.ToLower(e.Account), query) {
-				res = append(res, e.Account)
-			}
-		}
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: strings.Join(res, "\n")}}}, nil
+		return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found"}}}, nil
 	})
 
 	return s.Run(context.Background(), &mcp.StdioTransport{})
