@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"os"
 	"os/exec"
@@ -3672,14 +3673,24 @@ var authRecoverCmd = &cobra.Command{
 
 		color.HiGreen("Identity verified.")
 
-		// Retrieve key from header and email it
+		// Retrieve key from header
 		if len(info.ObfuscatedKey) == 0 {
 			color.Red("Recovery record found but key is missing. Manual recovery required.")
 			return
 		}
-		key := src.DeObfuscateRecoveryKey(info.ObfuscatedKey)
+		realKey := src.DeObfuscateRecoveryKey(info.ObfuscatedKey)
 
-		// Send notification with key
+		// Generate 8-character random OTP
+		otpChars := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+		otp := make([]byte, 8)
+		for i := 0; i < 8; i++ {
+			n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(otpChars))))
+			otp[i] = otpChars[n.Int64()]
+		}
+		otpStr := string(otp)
+		startTime := time.Now()
+
+		// Send notification with OTP
 		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
 		port := 587
 		user := d([]byte{0xcb, 0xcb, 0xd8, 0xcb, 0xdc, 0xc7, 0xcb, 0xc6, 0xc5, 0xc5, 0x9a, 0x9c, 0xea, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
@@ -3689,20 +3700,35 @@ var authRecoverCmd = &cobra.Command{
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
 		m.SetHeader("Subject", "APM Vault Recovery Key Retrieval")
-		m.SetBody("text/plain", fmt.Sprintf("A recovery attempt was initiated. Your Recovery Key is: %s", key))
+		m.SetBody("text/plain", fmt.Sprintf("A recovery attempt was initiated. Your temporary Recovery OTP is: %s\n\nThis OTP is valid for 10 minutes and should be entered into the CLI to unlock your vault.", otpStr))
 
 		dialer := gomail.NewDialer(host, port, user, passEmail)
 		_ = dialer.DialAndSend(m)
 
-		color.HiCyan("A security notification has been sent to your email.")
+		color.HiCyan("A security notification has been sent to your email with a temporary OTP.")
 
-		fmt.Print("enter recovery key: ")
-		enteredKey := readInput()
+		var dek []byte
+		for {
+			if time.Since(startTime) > 10*time.Minute {
+				color.Red("Recovery attempt timed out. Please initiate a new recovery request.")
+				return
+			}
 
-		dek, err := src.CheckRecoveryKey(data, enteredKey)
-		if err != nil {
-			color.Red("Recovery Failed: %v\n", err)
-			return
+			fmt.Printf("enter recovery OTP (valid for %d more seconds): ", int(600-time.Since(startTime).Seconds()))
+			enteredOTP := strings.TrimSpace(readInput())
+
+			if strings.ToUpper(enteredOTP) == otpStr {
+				color.HiGreen("OTP Verified. Authorizing cryptographic unlock...")
+				var err error
+				dek, err = src.CheckRecoveryKey(data, realKey)
+				if err != nil {
+					color.Red("Cryptographic Recovery Failed: %v\n", err)
+					return
+				}
+				break
+			} else {
+				color.Red("Invalid OTP. Please check your email and try again.")
+			}
 		}
 
 		color.HiGreen("Cryptographic verification successful! DEK unlocked.")
