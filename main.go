@@ -3880,9 +3880,9 @@ var mcpCmd = &cobra.Command{
 	Short: "Configure or start the APM MCP server",
 }
 
-var mcpSetupCmd = &cobra.Command{
-	Use:   "setup",
-	Short: "Interactive setup for MCP access",
+var mcpTokenCmd = &cobra.Command{
+	Use:   "token",
+	Short: "Interactive setup for MCP access tokens",
 	Run: func(cmd *cobra.Command, args []string) {
 		color.HiCyan("APM MCP Server Setup")
 		color.Cyan("Select the permissions (scopes) you want to grant to the AI agent:")
@@ -3957,7 +3957,7 @@ var mcpServeCmd = &cobra.Command{
 }
 
 func init() {
-	mcpCmd.AddCommand(mcpSetupCmd, mcpServeCmd)
-	mcpSetupCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
+	mcpCmd.AddCommand(mcpTokenCmd, mcpServeCmd)
+	mcpTokenCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
 }
