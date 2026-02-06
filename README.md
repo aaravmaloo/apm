@@ -9,7 +9,7 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/aaravmaloo/apm/actions)
 [![License](https://img.shields.io/badge/license-MIT-red.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/apm-v7-purple.svg)](#)
+[![Version](https://img.shields.io/badge/apm-v9.2-purple.svg)](#)
 [![Commits](https://img.shields.io/github/commit-activity/m/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
 [![Last Commit](https://img.shields.io/github/last-commit/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
 [![Issues](https://img.shields.io/github/issues/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/issues)
@@ -19,39 +19,23 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
 
 ## Table of Contents
 - [1. Security Architecture](#1-security-architecture)
-  - [1.1 Key Derivation: Argon2id](#11-key-derivation-argon2id)
-  - [1.2 Authenticated Encryption: AES-256-GCM](#12-authenticated-encryption-aes-256-gcm)
-  - [1.3 Threat Model Summary](#13-threat-model-summary)
 - [2. Core Technical Specifications](#2-core-technical-specifications)
-  - [2.1 Performance Profiles](#21-performance-profiles)
 - [3. Comprehensive Command Glossary](#3-comprehensive-command-glossary)
-  - [3.1 Personal Edition (pm)](#31-personal-edition-pm)
-- [4. Team Edition (pm-team)](#4-team-edition-pm-team)
-  - [4.1 Permission Matrix](#41-permission-matrix)
-  - [4.2 Key Team Commands](#42-key-team-commands)
-- [5. Supported Secret Types](#5-supported-secret-types)
-- [6. Plugin Architecture and SDK Reference](#6-plugin-architecture-and-sdk-reference)
-  - [6.1 Plugin Lifecycle](#61-plugin-lifecycle)
-  - [6.2 Exhaustive Capability Reference](#62-exhaustive-capability-reference)
-  - [6.3 Action Glossary (Keywords)](#63-action-glossary-keywords)
-  - [6.4 Variable Substitution Engine](#64-variable-substitution-engine)
-- [7. Policy Engine & Compliance](#7-policy-engine--compliance)
-  - [7.1 Policy File Structure](#71-policy-file-structure)
-  - [7.2 Enforcement Logic](#72-enforcement-logic)
-  - [7.3 Command Reference](#73-command-reference)
-- [8. Installation and Deployment](#8-installation-and-deployment)
-  - [8.1 Requirements](#81-requirements)
-  - [8.2 Build Process](#82-build-process)
-  - [8.3 Privacy & Session Security](#83-privacy--session-security)
-- [9. Contact & Support](#9-contact--support)
-- [10. Development & Contributing](#10-development--contributing)
-- [11. AI Usage](#11-ai-usage)
+- [4. MCP Server (Model Context Protocol)](#4-mcp-server-model-context-protocol)
+- [5. Team Edition (pm-team)](#5-team-edition-pm-team)
+- [6. Supported Secret Types](#6-supported-secret-types)
+- [7. Plugin Architecture and SDK Reference](#7-plugin-architecture-and-sdk-reference)
+- [8. Policy Engine & Compliance](#8-policy-engine--compliance)
+- [9. Installation and Deployment](#9-installation-and-deployment)
+- [10. Contact & Support](#10-contact--support)
+- [11. Development & Contributing](#11-development--contributing)
+- [12. AI Usage](#12-ai-usage)
+
 ---
 
 ## 1. Security Architecture
 
 APM uses industry-standard, high-performance cryptographic primitives designed to withstand modern attack vectors, including high-end GPU clusters and dictionary attacks.
-
 
 ### 1.1 Key Derivation: Argon2id
 The master password is never stored. Keys are derived using **Argon2id**, the winner of the Password Hashing Competition.
@@ -62,7 +46,7 @@ The master password is never stored. Keys are derived using **Argon2id**, the wi
 Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Counter Mode)**.
 - **Authenticated Encryption**: GCM ensures data hasn't been modified.
 - **Encrypt-then-MAC**: Extra protection with an HMAC-SHA256 signature over the entire vault file.
-- **Nonce Integrity**: Every save operation generates a unique 12 or 24-byte nonce to prevent replay attacks and pattern analysis.
+- **Nonce Integrity**: Every save operation generates a unique nonce to prevent replay attacks and pattern analysis.
 
 ### 1.3 Threat Model Summary
 | Vector | Status | Mitigation |
@@ -77,7 +61,6 @@ Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Count
 ## 2. Core Technical Specifications
 
 ### 2.1 Performance Profiles
-
 Users can select from pre-defined encryption profiles via `pm profile set` to balance security and latency.
 
 | Profile | Memory | Time | Parallelism | Nonce Size |
@@ -93,252 +76,152 @@ Users can select from pre-defined encryption profiles via `pm profile set` to ba
 
 ### 3.1 Personal Edition (pm)
 
-The personal edition focuses on local-first security and privacy.
-The core strength of APM lies in its multi-cloud synchronization (Google Drive) and portable vault architecture. 
-The vault is stored in a single encrypted `.dat` file, utilizing randomized filenames (e.g., `v_1h2k3j.bin`) for cloud storage to ensure maximum privacy. Retrieving a vault requires a unique retrieval key and the master password.
+The personal edition focuses on local-first security and privacy with native multi-cloud synchronization.
 
-| Command | Subcommands | Flag Examples | Description |
-|---------|-------------|---------------|-------------|
-| **init** | N/A | N/A | Initializes a new encrypted vault file (`vault.dat`). |
-| **add** | N/A | N/A | Interactive menu to store one of the 22 secret types. |
-| **get** | [query] | `--show-pass` | Fuzzy searches and retrieves secret details. |
-| **edit** | [name] | N/A | Interactive modification of existing entry metadata. |
-| **del** | [name] | N/A | Permanent deletion of an entry from the vault. |
-| **gen** | N/A | `--length 24` | High-entropy password generator. |
-| **totp** | `show [acc]`| N/A | Real-time generation of 2FA codes. |
-| **audit** | N/A | N/A | View an encrypted history of every vault interaction. |
-| **health**| N/A | N/A | Security dashboard with vulnerability scoring. |
-| **unlock** | N/A | `--timeout 1h` | Session-scoped unlock with inactivity timeout. |
-| **lock** | N/A | N/A | Immediately terminates the active session. |
-| **setup** | N/A | N/A | Interactive wizard for initial configuration. |
-| **space** | `switch`, `list`, `create` | N/A | Manage custom compartments (e.g., Work, Personal, DevOps). |
-| **profile** | `set <name>`, `create <name>` | N/A | Manage encryption profiles and KDF parameters. |
-| **policy** | `load`, `show`, `clear`| N/A | YAML policy engine for password complexity. |
-| **cloud** | `init`, `sync`, `get` | `gdrive` | Private cloud integration via Google Drive. |
-| **plugins**| `list`, `add`, `local`, `search` | N/A | Extend APM via Drive-only Marketplace or local source. |
-| **compromise** | N/A | N/A | **EMERGENCY**: Permanently nuke the vault. |
+| Command | Category | Description |
+|:---|:---|:---|
+| `init` | Lifecycle | Initializes a new zero-knowledge encrypted vault. |
+| `add` | Mutation | Interactive menu to store any of the 22 supported secret types. |
+| `get [q]` | Retrieval | Fuzzy search and display entry details. Use `--show-pass` for secrets. |
+| `edit [n]` | Mutation | Interactive modification of existing entry metadata. |
+| `del [n]` | Mutation | Permanent deletion of an entry from the vault. |
+| `gen` | Utility | High-entropy password generator. |
+| `totp show`| Security | Real-time generation of 2FA codes with live countdowns. |
+| `unlock` | Session | Starts a session-scoped unlock instance with inactivity timeout. |
+| `lock` | Session | Immediately terminates and wipes the active session. |
+| `auth` | Account | Consistently manage `email`, `reset`, `change`, and `recover`. |
+| `cloud` | Sync | Google Drive & GitHub integration for cross-device syncing. |
+| `space` | Org | Manage isolated compartments (e.g., Work, Personal, DevOps). |
+| `mcp` | Agentic | Connect AI agents to your vault via Model Context Protocol. |
+| `health` | Audit | Dashboard with security scoring and vulnerability reporting. |
+| `audit` | History | Tamper-evident log of every vault interaction. |
+| `import` | IO | Ingest data from external files (JSON, CSV, KDBX). |
+| `export` | IO | Securely dump vault data to encrypted or plaintext formats. |
+| `policy` | Compliance | Load and enforce YAML-based password requirement policies. |
+| `plugins` | Extension | Extend APM via the declarative plugin SDK. |
+| `info` | System | Display version, install path, and environment details. |
+| `cinfo` | Crypto | Inspection of current vault cryptographic parameters. |
+| `update` | System | Automated self-update engine to fetch the latest builds. |
 
 ---
 
-## 4. Team Edition (pm-team)
+## 4. MCP Server (Model Context Protocol)
 
-Designed for organizations, the Team Edition facilitates secure credential sharing via a multi-layered Role-Based Access Control (RBAC) model with advanced permission overrides.
+APM includes a native MCP server for integration with AI assistants (Claude Desktop, Cursor, etc.). This allows AI agents to read your vault entries, search for credentials, and even retrieve TOTP codes securely if granted permission.
 
-### 4.1 Permission Matrix (Default Roles)
+### 4.1 Configuration Guide
 
-| Action | ADMIN | MANAGER | USER | AUDITOR | SECURITY |
-|--------|-------|---------|------|---------|----------|
-| Create Departments | Full | Own | None | None | None |
-| Manage Users | Full | Dept | None | None | None |
-| Add Secrets | Yes | Yes | Yes | No | No |
-| View Shared Secrets| All | Dept | Dept | None | Security |
-| View Audit Logs | Full | View | None | Full | Full |
+To use the APM MCP server, you must first generate a dedicated access token:
 
-### 4.2 Advanced Team Features
-- **Granular Permissions**: Admins can use `pm-team user permission grant/revoke` to override role permissions for specific users.
-- **Sensitive Entries**: Flag any entry as "sensitive". Modifications (edit/delete) by non-admins require explicit admin approval.
-- **Admin Approval Queue**: Approvals are managed via `pm-team approvals list/approve/deny`.
-- **Global Entries**: Mark entries as "global" to share them across the entire organization, bypassing department isolation.
-- **Admin Notifications**: Global cross-departmental notifications for sensitive entry changes appear upon admin login.
-- **Full CLI Parity**: All personal `pm` commands are available in `pm-team` (e.g., `pm-team totp`, `pm-team ssh`, `pm-team cert`).
+```bash
+pm mcp token
+```
 
-### 4.3 Key Team Commands
+Follow the prompts to select permissions (`read`, `secrets`, etc.). Once generated, manually add the following configuration to your MCP client.
+
+#### For Claude Desktop
+Add this to your `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "apm": {
+      "command": "C:\\path\\to\\pm.exe",
+      "args": ["mcp", "serve", "--token", "YOUR_TOKEN_HERE"]
+    }
+  }
+}
+```
+
+#### For Cursor / Windsurf / Others
+Add the following manual configuration:
+```json
+{
+  "mcpServers": {
+    "apm": {
+      "command": "C:\\path\\to\\pm.exe",
+      "args": ["mcp", "serve", "--token", "YOUR_TOKEN_HERE"],
+      "capabilities": ["tools"],
+      "env": {
+        "APM_VAULT_PATH": "C:\\path\\to\\vault.dat"
+      }
+    }
+  }
+}
+```
+
+> [!IMPORTANT]
+> The MCP server requires an active APM session. You MUST run `pm unlock` in your terminal before the AI agent can access the vault.
+
+---
+
+## 5. Team Edition (pm-team)
+
+Designed for organizations, the Team Edition facilitates secure credential sharing via a multi-layered RBAC model.
 
 | Command | Usage | Result |
 |---------|-------|--------|
-| `init` | `pm-team init "Corp" admin` | Sets up organization root environment. |
-| `dept create` | `pm-team dept create Engineering`| Creates a new isolated encryption domain. |
-| `user add` | `pm-team user add alice --role MANAGER`| Onboards a new member with specific permissions. |
+| `init` | `pm-team init "Corp"` | Sets up organization root environment. |
+| `dept` | `pm-team dept create Engineering`| Creates a new isolated encryption domain. |
+| `user` | `pm-team user add alice` | Onboards a new member with specific roles. |
 | `approvals` | `pm-team approvals list` | Manage pending sensitive entry requests. |
-| `user permission`| `pm-team user permission grant bob CanAddEntry` | Grant a specific override to a user. |
-| `audit` | `pm-team audit` | Visualizes the hashed, tamper-evident organization log. |
 
 ---
 
-## 5. Supported Secret Types
+## 6. Supported Secret Types
 
-APM supports 22 distinct data structures, each encrypted with unique nonces.
-
-#### Personal & Lifestyle
-1. **Passwords**: Account, Username, Password, URL string.
-2. **TOTP**: Account mapping and Base32 secrets.
-3. **Government IDs**: Passport, Driver's License, and Voter ID templates with ID Numbers and Expiry.
-4. **Medical Records**: Insurance IDs, Prescriptions, and Allergies.
-5. **Travel Docs**: Ticket Numbers, Booking Codes, and Loyalty Programs.
-6. **Contacts**: Encrypted address book with Emergency contact flags.
-7. **Wi-Fi**: SSID, Password, Security Type, and **Router IP**.
-
-#### Developer & DevOps
-8. **API Keys**: Service name, Label, and Key material.
-9. **Tokens**: Bearer/Auth tokens with Type classification.
-10. **SSH Keys**: Private key blocks for remote server access.
-11. **SSH Configs**: Host Alias, Key Path, User, Port, and Fingerprints.
-12. **Cloud Credentials**: Access/Secret Keys, Region, Account, and Roles.
-13. **Kubernetes Secrets**: Cluster URL, Namespace, and Expiration.
-14. **Docker Registry**: Registry URL with associated credentials.
-15. **CI/CD Secrets**: Webhook URLs and environment variable groups.
-
-#### Documents & Licenses
-16. **Secure Notes**: Multi-line markdown-capable notes.
-17. **Recovery Codes**: Array-based storage for backup codes.
-18. **Certificates**: X.509/SSL data, Issuers, and Expiry tracking.
-19. **Banking**: Card/IBAN details including CVV and Expiry dates.
-20. **Documents**: Encrypted binary storage with **Tags** and **Expiry Dates**.
-21. **Software Licenses**: Serial Keys, Product Name, and Activation Info.
-22. **Legal Contracts**: Summary, Involved Parties, and Signed Dates.
+APM supports 22 distinct data structures:
+1. **Passwords** | 2. **TOTP** | 3. **Gov IDs** | 4. **Medical** | 5. **Travel** | 6. **Contacts** | 7. **Wi-Fi** | 8. **API Keys** | 9. **Tokens** | 10. **SSH Keys** | 11. **SSH Configs** | 12. **Cloud Creds** | 13. **K8s** | 14. **Docker** | 15. **CI/CD** | 16. **Notes** | 17. **Recovery** | 18. **Certs** | 19. **Banking** | 20. **Docs** | 21. **Software Licenses** | 22. **Legal**
 
 ---
 
-## 6. Plugin Architecture and SDK Reference
+## 7. Plugin Architecture and SDK Reference
 
-APM features a declarative, JSON-driven plugin architecture. This allows for extensive customization and automation without requiring the compilation of Go code.
-
-### 6.1 Plugin Lifecycle
-- **Discovery**: Plugins are located in the local `/plugins_cache` directory.
-- **Manifest Validation**: On startup, `plugin.json` is verified for syntax and capability requirements.
-- **Hook Execution**: Plugins can intercept standard CLI events (e.g., `pre:add`) or register new top-level commands.
-- **Marketplace**: Verified plugins can be discovered and installed directly from the Google Drive Marketplace or via local source.
-
-### 6.2 Exhaustive Capability Reference
-Permissions are explicitly defined in the manifest. Requests for unlisted permissions will result in a runtime error.
-
-| Capability | Scope | Description |
-|------------|-------|-------------|
-| `vault.read` | Reads | Access to `v:get`, `v:list`. |
-| `vault.write`| Mutations | Access to `v:add`, `v:del`, `v:backup`. |
-| `system.write`| IO | Access to `s:clip` (System Clipboard). |
-| `network.outbound`| Network | Access to `net:get` and `net:post`. |
-| `crypto.use` | Cryptography| Access to `crypto:hash` (SHA-256). |
-| `cloud.sync` | Sync | Access to `c:sync` (Drive Sync). |
-
-### 6.3 Action Glossary (Keywords)
-
-| `s:out` | Console | Outputs a string to the terminal. | `[message]` |
-| `s:in` | User | Requests interactive input. | `[prompt, assign_to]` |
-| `v:get` | Entry | Retrieves a secret by account name. | `[key, assign_to]` |
-| `v:add` | Entry | Creates a new entry with credentials. | `[acc, pass, user]` |
-| `v:del` | Entry | Removes a specific account entry. | `[key]` |
-| `net:get` | URL | Performs an HTTP GET request. | `[url, assign_to]` |
-| `net:post`| URL | Performs an HTTP POST with payload. | `[url, payload, assign_to]` |
-| `s:clip` | Clipboard| Places text into the system clipboard. | `[text]` |
-| `crypto:hash` | Data | Computes a SHA-256 hash. | `[data, assign_to]` |
-| `v:backup`| Vault | Creates a local timestamped backup. | `[]` |
-| `s:sleep` | System | Pauses execution for X seconds. | `[seconds]` |
-
-### 6.4 Variable Substitution Engine
-APM uses a high-performance templating engine for action fields.
-- **System Reserved**: `{{USER}}`, `{{OS}}`, `{{TIMESTAMP}}`, `{{VAULT_VERSION}}`.
-- **User Defined**: Any variable mapped via `assign_to` (e.g., `{{my_secret_key}}`).
+APM features a declarative, JSON-driven plugin architecture.
+- **Hook Execution**: Plugins can intercept standard events (e.g., `pre:add`) or register commands.
+- **Capabilities**: Explicitly defined permissions: `vault.read`, `vault.write`, `system.write`, `network.outbound`, `cloud.sync`.
 
 ---
 
----
+## 8. Policy Engine & Compliance
 
-## 7. Policy Engine & Compliance
-
-APM enforces security standards through a flexible, YAML-based policy engine. Policies are defined in human-readable files and can specify password complexity requirements, rotation intervals, and data classification rules.
-
-### 7.1 Policy File Structure
-Policies are loaded from the `policies/` directory. Each file (`.yaml` or `.yml`) defines a named policy.
-
-```yaml
-name: "Corporate Standard"
-password_policy:
-  min_length: 12
-  require_uppercase: true
-  require_numbers: true
-  require_symbols: true
-
-rotation_policy:
-  rotate_every_days: 90
-  notify_before_days: 7
-
-classification:
-  "db_prod":
-    max_access_level: "admin"
-    mfa_required: true
-```
-
-### 7.2 Enforcement Logic
-- **Password Complexity**: Validated during `apm add` and `apm edit`.
-- **Rotation**: Validated by `apm health` and during `apm get` (warnings for expired credentials).
-- **Classification**: Metadata tags that can trigger additional access checks (e.g., MFA prompts) in Team Edition.
-
-### 7.3 Command Reference
-- **`pm policy load <name>`**: Activates a specific policy from the available files.
-- **`pm policy show`**: Displays the currently active policy rules.
-- **`pm policy clear`**: Disables policy enforcement (reverts to default/unrestricted).
+APM enforces security standards through a flexible, YAML-based policy engine.
+- **Password Complexity**: Validated during `pm add`.
+- **Rotation**: Tracked via `pm health`.
 
 ---
 
-## 8. Installation and Deployment
+## 9. Installation and Deployment
 
-### 8.1 Requirements
-- Go 1.21+
-- Secure Terminal (Supports Password Hiding)
-
-### 8.2 Build Process
-You can either compile it from source, or use the releases page to download a pre-compiled binary/exe, for Windows, macOS, and Linux.
-
-Steps to build from source:
+### 9.1 Build from Source
 ```bash
 git clone https://github.com/aaravmaloo/apm.git
 cd apm
 go build -o pm.exe main.go
 ./pm.exe init
 ```
-It is highly recommended to add environment vairables so that you can access APM from anywhere. Rename the binary to `pm` or the name you would like to call for APM and move it to the below specified locations for each opearting system.
-Windows: `C:\Users\<user_name>\Appdata\Local\apm`
-(You will need to create the apm folder manually)
 
-Linux: `~/.apm/`
-(Make sure to add execute permissions to the binary)
-
-macOS: `/usr/local/bin/apm`
-(Make sure to add execute permissions to the binary)
-
-### 8.3 Privacy & Session Security (Recommended)
-To prevent session hijacking between different terminal windows, APM supports **Process-Scoped Sessions**. This ensures that unlocking the vault in one terminal does *not* unlock it in others.
-
-**Add the following to your shell profile:**
-
-**Windows (PowerShell Profile):**
-`notepad $PROFILE`
-```powershell
-$env:APM_SESSION_ID = [System.Guid]::NewGuid().ToString()
-```
-
-**Linux/macOS (.bashrc / .zshrc):**
-```bash
-export APM_SESSION_ID=$(uuidgen || cat /proc/sys/kernel/random/uuid)
-```
-
-Without this variable, APM defaults to a global session (per-user), which is less secure but more convenient.
+### 9.2 Build Requirements
+- Go 1.21+
+- Windows, macOS, or Linux
 
 ---
 
-## 9. Contact & Support
-
-For security disclosures, technical support, or enterprise licensing inquiries, please use the following channels:
-
-| Channel | Identifier |
-|---------|------------|
-| **Primary Maintainer** | Aarav Maloo |
-| **GitHub Issues** | [Report Bug / Request Feature](https://github.com/aaravmaloo/apm/issues) |
-| **Security Alerts** | aaravmaloo06@gmail.com |
-| **Support Email** | aaravmaloo06@gmail.com |
+## 10. Contact & Support
+- **Primary Maintainer**: Aarav Maloo
+- **Security Alerts**: aaravmaloo06@gmail.com
+- **GitHub Issues**: aaravmaloo/apm/issues
 
 ---
 
-## 10. Development & Contributing
-
-APM is open-source and welcomes contributions. All PRs must pass the exhaustive E2E test suite located in `/tests`.
+## 11. Development & Contributing
+APM is open-source. All PRs must pass the test suite in `/tests`.
 
 ---
+
+## 12. AI Usage
+
+The code written for APM is completely hand-written by me. Some exceptions include the `examples/` folder, which was generated by AI; keep in mind that the plugins parser was completely human-written. AI was used to refactor the code for better naming schemes and readability. Each change made by the AI is monitored. 
+
+I acknowledge that AI is a great tool for productivity and I am not against it; however, I feel AI is not perfect at security, nor is a human. Though a human is much preferred for security tools. Hence, I write code by myself, which makes development slower but keeps APM secure.
 
 Copyright (c) 2025-2026 Aarav Maloo. Licensed under the MIT License.
-
-## 11. AI Usage
-
-The code written for APM is completely hand-written by me. Some exceptions include the exmaples/ folder, which was genreated AI; keep in mind that the pligins parser was completely human written. AI was used to refactor the code for better naming schemes and readability. Each change made by the AI is monitered. 
-I do acknowledge the fact that AI is a great tool for productivity and I am not against it; however I feel AI is not perfect at security, nor is a human. Though a human is much preferred for security tools. Hence, I write code by myself, which makes the develop slow, but keeps APM secure.
