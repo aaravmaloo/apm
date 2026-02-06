@@ -23,6 +23,7 @@ import (
 	src "password-manager/src"
 	"password-manager/src/plugins"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
@@ -2367,6 +2368,7 @@ func main() {
 	}
 	updateCmd.Flags().Bool("force", false, "Force update even if version is latest")
 	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(mcpCmd)
 
 	rootCmd.Execute()
 }
@@ -3871,4 +3873,91 @@ var authChangeCmd = &cobra.Command{
 			color.Green("Master password changed successfully.\n")
 		}
 	},
+}
+
+var mcpCmd = &cobra.Command{
+	Use:   "mcp",
+	Short: "Configure or start the APM MCP server",
+}
+
+var mcpSetupCmd = &cobra.Command{
+	Use:   "setup",
+	Short: "Interactive setup for MCP access",
+	Run: func(cmd *cobra.Command, args []string) {
+		color.HiCyan("APM MCP Server Setup")
+		color.Cyan("Select the permissions (scopes) you want to grant to the AI agent:")
+
+		permissions := []string{}
+		prompt := &survey.MultiSelect{
+			Message: "Permissions:",
+			Options: []string{"read", "write", "delete", "secrets", "all"},
+			Default: []string{"read", "secrets"},
+		}
+		err := survey.AskOne(prompt, &permissions)
+		if err != nil {
+			color.Red("Setup aborted: %v", err)
+			return
+		}
+
+		if len(permissions) == 0 {
+			color.Red("You must select at least one permission.")
+			return
+		}
+
+		token, err := src.GenerateMCPToken(permissions)
+		if err != nil {
+			color.Red("Token generation failed: %v", err)
+			return
+		}
+
+		exe, _ := os.Executable()
+		mcpConfig := map[string]interface{}{
+			"command": "cmd",
+			"args":    []string{"/c", exe, "mcp", "serve", "--token", token},
+			"env":     map[string]string{},
+		}
+
+		if runtime.GOOS != "windows" {
+			mcpConfig["command"] = exe
+			mcpConfig["args"] = []string{"mcp", "serve", "--token", token}
+		}
+
+		// Show full structure
+		fullConfig := map[string]interface{}{
+			"mcpServers": map[string]interface{}{
+				"apm": mcpConfig,
+			},
+		}
+
+		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
+
+		color.HiGreen("\nMCP Token generated successfully!")
+		color.HiCyan("Token: %s", token)
+		color.HiYellow("\nAdd the following configuration to your MCP settings (e.g., mcp.json or Claude Desktop config):")
+		fmt.Println(string(configJSON))
+		color.HiCyan("\nNote: The MCP server requires an active APM session. Run 'pm unlock' to start a session before using the agent.")
+	},
+}
+
+var mcpServeCmd = &cobra.Command{
+	Use:    "serve",
+	Short:  "Internal command to start the MCP server (stdio)",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		token, _ := cmd.Flags().GetString("token")
+		if token == "" {
+			fmt.Println("Error: --token flag is required for serve mode")
+			os.Exit(1)
+		}
+		if err := src.StartMCPServer(token, vaultPath); err != nil {
+			fmt.Fprintf(os.Stderr, "MCP Server Error: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+func init() {
+	mcpCmd.AddCommand(mcpSetupCmd, mcpServeCmd)
+	mcpSetupCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
+	mcpServeCmd.Flags().String("token", "", "MCP access token")
 }
