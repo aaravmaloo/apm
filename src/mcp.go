@@ -23,9 +23,13 @@ type MCPAuthConfig struct {
 }
 
 type MCPToken struct {
+	Name        string    `json:"name"`
 	Token       string    `json:"token"`
 	Permissions []string  `json:"permissions"`
 	CreatedAt   time.Time `json:"created_at"`
+	ExpiresAt   time.Time `json:"expires_at"`   // Zero time means never
+	LastUsedAt  time.Time `json:"last_used_at"` // Zero time means never
+	UsageCount  int       `json:"usage_count"`
 }
 
 func getMCPConfigFile() string {
@@ -62,7 +66,7 @@ func SaveMCPConfig(config *MCPAuthConfig) error {
 	return os.WriteFile(getMCPConfigFile(), data, 0600)
 }
 
-func GenerateMCPToken(permissions []string) (string, error) {
+func GenerateMCPToken(name string, permissions []string, expiryMinutes int) (string, error) {
 	b := make([]byte, 24)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
@@ -74,16 +78,64 @@ func GenerateMCPToken(permissions []string) (string, error) {
 		return "", err
 	}
 
+	expiresAt := time.Time{}
+	if expiryMinutes > 0 {
+		expiresAt = time.Now().Add(time.Duration(expiryMinutes) * time.Minute)
+	}
+
 	config.Tokens[token] = MCPToken{
+		Name:        name,
 		Token:       token,
 		Permissions: permissions,
 		CreatedAt:   time.Now(),
+		ExpiresAt:   expiresAt,
 	}
 
 	if err := SaveMCPConfig(config); err != nil {
 		return "", err
 	}
+
+	LogAction("MCP_TOKEN_CREATED", fmt.Sprintf("Created token '%s'", name))
 	return token, nil
+}
+
+func RevokeMCPToken(query string) (bool, error) {
+	config, err := LoadMCPConfig()
+	if err != nil {
+		return false, err
+	}
+
+	// Try by token first, then by name
+	if _, ok := config.Tokens[query]; ok {
+		delete(config.Tokens, query)
+		SaveMCPConfig(config)
+		LogAction("MCP_TOKEN_REVOKED", fmt.Sprintf("Revoked token by ID"))
+		return true, nil
+	}
+
+	// By Name
+	for t, data := range config.Tokens {
+		if data.Name == query {
+			delete(config.Tokens, t)
+			SaveMCPConfig(config)
+			LogAction("MCP_TOKEN_REVOKED", fmt.Sprintf("Revoked token '%s'", query))
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func ListMCPTokens() ([]MCPToken, error) {
+	config, err := LoadMCPConfig()
+	if err != nil {
+		return nil, err
+	}
+	var list []MCPToken
+	for _, t := range config.Tokens {
+		list = append(list, t)
+	}
+	return list, nil
 }
 
 func StartMCPServer(token string, vaultPath string) error {
@@ -94,8 +146,21 @@ func StartMCPServer(token string, vaultPath string) error {
 
 	mcpToken, ok := config.Tokens[token]
 	if !ok {
+		LogAction("MCP_AUTH_FAILED", "Invalid token used")
 		return errors.New("invalid or revoked MCP token")
 	}
+
+	// Check Expiry
+	if !mcpToken.ExpiresAt.IsZero() && time.Now().After(mcpToken.ExpiresAt) {
+		LogAction("MCP_AUTH_FAILED", fmt.Sprintf("Expired token '%s' used", mcpToken.Name))
+		return errors.New("token expired")
+	}
+
+	// Update Stats
+	mcpToken.LastUsedAt = time.Now()
+	mcpToken.UsageCount++
+	config.Tokens[token] = mcpToken
+	SaveMCPConfig(config) // Ignore error for stats update to prevent blocking
 
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "APM-Server",
@@ -262,6 +327,7 @@ func StartMCPServer(token string, vaultPath string) error {
 			"4. IMPORTANT: Once you have read the details, you MUST forget the key and instruct the user that the temp file should be deleted (it will store in their system temp directory).",
 			entryType, args.Name, tempPath, hex.EncodeToString(ephemeralKey))
 
+		LogAction("MCP_ENTRY_ACCESSED", fmt.Sprintf("Token '%s' accessed entry '%s'", mcpToken.Name, args.Name))
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: instructions}}}, nil
 	})
 
