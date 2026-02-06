@@ -863,10 +863,20 @@ func DeObfuscateRecoveryKey(obf []byte) string {
 }
 
 func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
-	// Normalize key
-	key = strings.ReplaceAll(key, "-", "")
-	key = strings.ReplaceAll(key, " ", "")
+	// Normalize basic input
+	key = strings.TrimSpace(key)
 	key = strings.ToUpper(key)
+
+	// Create candidates: as-is (with dashes), and without dashes
+	candidates := []string{key}
+	if strings.Contains(key, "-") {
+		candidates = append(candidates, strings.ReplaceAll(key, "-", ""))
+	} else {
+		// If user entered without dashes, maybe add them?
+		// Actually, just checking raw (no dashes) is better as a fallback
+		// if the original was somehow set without them.
+		// But mostly we expect SetRecoveryKey to have added dashes.
+	}
 
 	rec, err := GetVaultRecoveryInfo(data)
 	if err != nil {
@@ -905,17 +915,24 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 	if searchStart < 0 {
 		searchStart = 0
 	}
-	for i := searchStart; i < offset+256; i++ {
-		if i+profile.SaltLen+32 > len(data) {
-			break
-		}
-		trialSalt := data[i : i+profile.SaltLen]
-		trialRk := DeriveRecoveryKey(key, trialSalt)
-		h := sha256.Sum256(trialRk)
 
-		if hmac.Equal(h[:], rec.KeyHash) {
-			rk = trialRk
-			found = true
+	// Try all candidates
+	for _, candidate := range candidates {
+		for i := searchStart; i < offset+256; i++ {
+			if i+profile.SaltLen+32 > len(data) {
+				break
+			}
+			trialSalt := data[i : i+profile.SaltLen]
+			trialRk := DeriveRecoveryKey(candidate, trialSalt)
+			h := sha256.Sum256(trialRk)
+
+			if hmac.Equal(h[:], rec.KeyHash) {
+				rk = trialRk
+				found = true
+				break
+			}
+		}
+		if found {
 			break
 		}
 	}
