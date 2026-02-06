@@ -4079,7 +4079,7 @@ var mcpServeCmd = &cobra.Command{
 			fmt.Println("Error: --token flag is required for serve mode")
 			os.Exit(1)
 		}
-		if err := src.StartMCPServer(token, vaultPath); err != nil {
+		if err := src.StartMCPServer(token, vaultPath, nil, pluginMgr); err != nil {
 			fmt.Fprintf(os.Stderr, "MCP Server Error: %v\n", err)
 			os.Exit(1)
 		}
