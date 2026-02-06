@@ -2369,8 +2369,24 @@ func main() {
 	updateCmd.Flags().Bool("force", false, "Force update even if version is latest")
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(mcpCmd)
+	rootCmd.AddCommand(bruteCmd)
 
 	rootCmd.Execute()
+}
+
+var bruteCmd = &cobra.Command{
+	Use:   "brutetest [minutes]",
+	Short: "Stress-test vault security using brute force (simulated attack)",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		mins := 5 // Default
+		if len(args) > 0 {
+			if m, err := strconv.Atoi(args[0]); err == nil {
+				mins = m
+			}
+		}
+		src.RunBruteTest(vaultPath, mins)
+	},
 }
 
 const Version = "9.2"
