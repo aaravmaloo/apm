@@ -45,7 +45,7 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
   - [8.3 Privacy & Session Security](#83-privacy--session-security)
 - [9. Contact & Support](#9-contact--support)
 - [10. Development & Contributing](#10-development--contributing)
-
+- [11. AI Usage](#11-ai-usage)
 ---
 
 ## 1. Security Architecture
@@ -337,3 +337,8 @@ APM is open-source and welcomes contributions. All PRs must pass the exhaustive 
 ---
 
 Copyright (c) 2025-2026 Aarav Maloo. Licensed under the MIT License.
+
+## 11. AI Usage
+
+The code written for APM is completely hand-written by me. Some exceptions include the exmaples/ folder, which was genreated AI; keep in mind that the pligins parser was completely human written. AI was used to refactor the code for better naming schemes and readability. Each change made by the AI is monitered. 
+I do acknowledge the fact that AI is a great tool for productivity and I am not against it; however I feel AI is not perfect at security, nor is a human. Though a human is much preferred for security tools. Hence, I write code by myself, which makes the develop slow, but keeps APM secure.
