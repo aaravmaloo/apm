@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"bufio"
@@ -59,8 +59,8 @@ func init() {
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "pm",
-		Short: "A simple password manager CLI",
+		Use:	"pm",
+		Short:	"A simple password manager CLI",
 	}
 
 	exe, _ := os.Executable()
@@ -173,8 +173,8 @@ func main() {
 	}
 
 	var initCmd = &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a new vault",
+		Use:	"init",
+		Short:	"Initialize a new vault",
 		Run: func(cmd *cobra.Command, args []string) {
 			if src.VaultExists(vaultPath) {
 				color.Red("Vault already exists.\n")
@@ -244,8 +244,8 @@ func main() {
 	}
 
 	var initAllCmd = &cobra.Command{
-		Use:   "all",
-		Short: "Initialize a new vault and setup both Google Drive and GitHub sync",
+		Use:	"all",
+		Short:	"Initialize a new vault and setup both Google Drive and GitHub sync",
 		Run: func(cmd *cobra.Command, args []string) {
 			if src.VaultExists(vaultPath) {
 				color.Red("Vault already exists.\n")
@@ -303,8 +303,8 @@ func main() {
 	initCmd.AddCommand(initAllCmd)
 
 	var addCmd = &cobra.Command{
-		Use:   "add",
-		Short: "Add a new entry to the vault interactively",
+		Use:	"add",
+		Short:	"Add a new entry to the vault interactively",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
@@ -861,8 +861,8 @@ func main() {
 	}
 
 	var getCmd = &cobra.Command{
-		Use:   "get [query]",
-		Short: "Search and manage vault entries interactively",
+		Use:	"get [query]",
+		Short:	"Search and manage vault entries interactively",
 		Run: func(cmd *cobra.Command, args []string) {
 			initialQuery := ""
 			if len(args) > 0 {
@@ -881,8 +881,8 @@ func main() {
 	getCmd.Flags().Bool("show-pass", false, "Show password in output")
 
 	var unlockCmd = &cobra.Command{
-		Use:   "unlock",
-		Short: "Unlock the vault for the current shell session",
+		Use:	"unlock",
+		Short:	"Unlock the vault for the current shell session",
 		Run: func(cmd *cobra.Command, args []string) {
 			timeout, _ := cmd.Flags().GetDuration("timeout")
 			inactivity, _ := cmd.Flags().GetDuration("inactivity")
@@ -909,9 +909,9 @@ func main() {
 	unlockCmd.Flags().Duration("inactivity", 15*time.Minute, "Inactivity timeout (e.g. 15m, 5m)")
 
 	var readonlyCmd = &cobra.Command{
-		Use:   "readonly <mins>",
-		Short: "Unlock the vault in READ-ONLY mode",
-		Args:  cobra.ExactArgs(1),
+		Use:	"readonly <mins>",
+		Short:	"Unlock the vault in READ-ONLY mode",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			mins := 0
 			_, err := fmt.Sscanf(args[0], "%d", &mins)
@@ -939,8 +939,8 @@ func main() {
 	}
 
 	var lockCmd = &cobra.Command{
-		Use:   "lock",
-		Short: "Immediately lock the vault (kill active session)",
+		Use:	"lock",
+		Short:	"Immediately lock the vault (kill active session)",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := src.KillSession(); err != nil {
 				color.Yellow("No active session to kill or error: %v\n", err)
@@ -952,14 +952,14 @@ func main() {
 	}
 
 	var cinfoCmd = &cobra.Command{
-		Use:   "cinfo",
-		Short: "Show cryptographic parameters",
+		Use:	"cinfo",
+		Short:	"Show cryptographic parameters",
 		Run: func(cmd *cobra.Command, args []string) {
 			if !src.VaultExists(vaultPath) {
 				color.Red("No vault found.")
 				return
 			}
-			// Load Vault
+
 			data, err := src.LoadVault(vaultPath)
 			src.LogAction("VAULT_LOAD", fmt.Sprintf("Vault loaded from: %s", vaultPath))
 			if err != nil {
@@ -989,8 +989,8 @@ func main() {
 	}
 
 	var healthCmd = &cobra.Command{
-		Use:   "health",
-		Short: "Security health dashboard",
+		Use:	"health",
+		Short:	"Security health dashboard",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -1008,8 +1008,8 @@ func main() {
 	}
 
 	var auditCmd = &cobra.Command{
-		Use:   "audit",
-		Short: "View secure access logs",
+		Use:	"audit",
+		Short:	"View secure access logs",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -1029,8 +1029,8 @@ func main() {
 	}
 
 	var genCmd = &cobra.Command{
-		Use:   "gen",
-		Short: "Generate a random secure password",
+		Use:	"gen",
+		Short:	"Generate a random secure password",
 		Run: func(cmd *cobra.Command, args []string) {
 			length, _ := cmd.Flags().GetInt("length")
 			password, _ := src.GeneratePassword(length)
@@ -1041,8 +1041,8 @@ func main() {
 	genCmd.Flags().IntP("length", "l", 16, "Password length")
 
 	var compromiseCmd = &cobra.Command{
-		Use:   "compromise",
-		Short: "EMERGENCY: Permanently delete the vault",
+		Use:	"compromise",
+		Short:	"EMERGENCY: Permanently delete the vault",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Print("WARNING: PERMANENTLY DELETE VAULT? Type 'DESTROY': ")
 			if readInput() != "DESTROY" {
@@ -1064,8 +1064,8 @@ func main() {
 	}
 
 	var infoCmd = &cobra.Command{
-		Use:   "info",
-		Short: "Show information about your current version of APM",
+		Use:	"info",
+		Short:	"Show information about your current version of APM",
 		Run: func(cmd *cobra.Command, args []string) {
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
@@ -1088,13 +1088,13 @@ func main() {
 	}
 
 	var totpCmd = &cobra.Command{
-		Use:   "totp",
-		Short: "Manage TOTP accounts",
+		Use:	"totp",
+		Short:	"Manage TOTP accounts",
 	}
 
 	var totpShowCmd = &cobra.Command{
-		Use:   "show [account]",
-		Short: "Show TOTP code(s) with live updates",
+		Use:	"show [account]",
+		Short:	"Show TOTP code(s) with live updates",
 		Run: func(cmd *cobra.Command, args []string) {
 			company, _ := cmd.Flags().GetString("company")
 			_, vault, _, err := src_unlockVault()
@@ -1187,9 +1187,9 @@ func main() {
 	totpCmd.AddCommand(totpShowCmd)
 
 	var importCmd = &cobra.Command{
-		Use:   "import <file>",
-		Short: "Import data from JSON, CSV, or TXT file",
-		Args:  cobra.ExactArgs(1),
+		Use:	"import <file>",
+		Short:	"Import data from JSON, CSV, or TXT file",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			filename := args[0]
 			encryptPass, _ := cmd.Flags().GetString("encrypt-pass")
@@ -1240,8 +1240,8 @@ func main() {
 	importCmd.Flags().StringP("encrypt-pass", "e", "", "Password for decryption")
 
 	var exportCmd = &cobra.Command{
-		Use:   "export",
-		Short: "Export vault data safely",
+		Use:	"export",
+		Short:	"Export vault data safely",
 		Run: func(cmd *cobra.Command, args []string) {
 			withoutPass, _ := cmd.Flags().GetBool("without-password")
 			output, _ := cmd.Flags().GetString("output")
@@ -1284,13 +1284,13 @@ func main() {
 	exportCmd.Flags().Bool("without-password", false, "Exclude secrets")
 
 	var cloudCmd = &cobra.Command{
-		Use:   "cloud",
-		Short: "Sync and retrieve vaults from cloud (Google Drive & GitHub)",
+		Use:	"cloud",
+		Short:	"Sync and retrieve vaults from cloud (Google Drive & GitHub)",
 	}
 
 	var cloudInitCmd = &cobra.Command{
-		Use:   "init [gdrive|github]",
-		Short: "Setup cloud sync and generate/set retrieval key",
+		Use:	"init [gdrive|github]",
+		Short:	"Setup cloud sync and generate/set retrieval key",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -1359,8 +1359,8 @@ func main() {
 	}
 
 	var cloudSyncCmd = &cobra.Command{
-		Use:   "sync [gdrive|github]",
-		Short: "Sync local vault to cloud",
+		Use:	"sync [gdrive|github]",
+		Short:	"Sync local vault to cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -1410,8 +1410,8 @@ func main() {
 	}
 
 	var cloudAutoSyncCmd = &cobra.Command{
-		Use:   "auto-sync",
-		Short: "Start background auto-sync watcher",
+		Use:	"auto-sync",
+		Short:	"Start background auto-sync watcher",
 		Run: func(cmd *cobra.Command, args []string) {
 			enabled, _ := cmd.Flags().GetBool("true")
 			if !enabled {
@@ -1506,8 +1506,8 @@ func main() {
 	cloudAutoSyncCmd.Flags().Bool("true", false, "Enable auto-sync")
 
 	var cloudGetCmd = &cobra.Command{
-		Use:   "get [gdrive|github] [retrieval_key|repo]",
-		Short: "Download vault from cloud",
+		Use:	"get [gdrive|github] [retrieval_key|repo]",
+		Short:	"Download vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			provider := "gdrive"
 			var key string
@@ -1664,8 +1664,8 @@ func main() {
 	}
 
 	var cloudDeleteCmd = &cobra.Command{
-		Use:   "delete [gdrive]",
-		Short: "Delete current vault from cloud",
+		Use:	"delete [gdrive]",
+		Short:	"Delete current vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -1711,8 +1711,8 @@ func main() {
 	}
 
 	var cloudResetCmd = &cobra.Command{
-		Use:   "reset",
-		Short: "Clear local cloud metadata (Retrieval Key)",
+		Use:	"reset",
+		Short:	"Clear local cloud metadata (Retrieval Key)",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
@@ -1770,13 +1770,13 @@ func main() {
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
 	var pluginsCmd = &cobra.Command{
-		Use:   "plugins",
-		Short: "Manage APM plugins",
+		Use:	"plugins",
+		Short:	"Manage APM plugins",
 	}
 
 	var pluginsInstalledCmd = &cobra.Command{
-		Use:   "installed",
-		Short: "List installed plugins",
+		Use:	"installed",
+		Short:	"List installed plugins",
 		Run: func(cmd *cobra.Command, args []string) {
 			list := pluginMgr.ListPlugins()
 			if len(list) == 0 {
@@ -1791,8 +1791,8 @@ func main() {
 	}
 
 	var pluginsListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List available plugins in Marketplace (Drive)",
+		Use:	"list",
+		Short:	"List available plugins in Marketplace (Drive)",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Fetching plugins from Marketplace...")
 			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
@@ -1819,8 +1819,8 @@ func main() {
 	}
 
 	var pluginsAddCmd = &cobra.Command{
-		Use:   "add [name]",
-		Short: "Install a plugin from Marketplace",
+		Use:	"add [name]",
+		Short:	"Install a plugin from Marketplace",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				color.Red("Usage: pm plugins add <name>")
@@ -1849,8 +1849,8 @@ func main() {
 	}
 
 	var pluginsRemoveCmd = &cobra.Command{
-		Use:   "remove [name]",
-		Short: "Remove a plugin",
+		Use:	"remove [name]",
+		Short:	"Remove a plugin",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				color.Red("Usage: pm plugins remove <name>")
@@ -1868,8 +1868,8 @@ func main() {
 	}
 
 	var pluginSearchCmd = &cobra.Command{
-		Use:   "search",
-		Short: "Search for plugins in the marketplace",
+		Use:	"search",
+		Short:	"Search for plugins in the marketplace",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -1897,9 +1897,9 @@ func main() {
 	}
 
 	var pluginLocalCmd = &cobra.Command{
-		Use:   "local [path]",
-		Short: "Install a plugin from a local directory",
-		Args:  cobra.ExactArgs(1),
+		Use:	"local [path]",
+		Short:	"Install a plugin from a local directory",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			pluginPath := args[0]
 			if _, err := os.Stat(filepath.Join(pluginPath, "plugin.json")); os.IsNotExist(err) {
@@ -1926,8 +1926,8 @@ func main() {
 	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginLocalCmd, pluginSearchCmd)
 
 	var setupCmd = &cobra.Command{
-		Use:   "setup",
-		Short: "Interactive setup wizard for apm",
+		Use:	"setup",
+		Short:	"Interactive setup wizard for apm",
 		Run: func(cmd *cobra.Command, args []string) {
 			color.HiCyan("Welcome to the APM Setup Wizard!\n")
 			fmt.Println("This wizard will guide you through the initial configuration of APM.")
@@ -2008,14 +2008,14 @@ func main() {
 		},
 	}
 	var policyCmd = &cobra.Command{
-		Use:   "policy",
-		Short: "Manage vault policies",
+		Use:	"policy",
+		Short:	"Manage vault policies",
 	}
 
 	var policyLoadCmd = &cobra.Command{
-		Use:   "load [name]",
-		Short: "Load a policy by name from the policies directory",
-		Args:  cobra.ExactArgs(1),
+		Use:	"load [name]",
+		Short:	"Load a policy by name from the policies directory",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPwd, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2061,8 +2061,8 @@ func main() {
 	}
 
 	var policyShowCmd = &cobra.Command{
-		Use:   "show",
-		Short: "Show the currently active policy",
+		Use:	"show",
+		Short:	"Show the currently active policy",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2084,8 +2084,8 @@ func main() {
 	}
 
 	var policyClearCmd = &cobra.Command{
-		Use:   "clear",
-		Short: "Clear the active policy (disable enforcement)",
+		Use:	"clear",
+		Short:	"Clear the active policy (disable enforcement)",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPwd, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2111,14 +2111,14 @@ func main() {
 	}
 
 	var profileCmd = &cobra.Command{
-		Use:   "profile",
-		Short: "Manage encryption profiles",
+		Use:	"profile",
+		Short:	"Manage encryption profiles",
 	}
 
 	var profileSetCmd = &cobra.Command{
-		Use:   "set <name>",
-		Short: "Switch to a different profile",
-		Args:  cobra.ExactArgs(1),
+		Use:	"set <name>",
+		Short:	"Switch to a different profile",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
@@ -2140,9 +2140,9 @@ func main() {
 	}
 
 	var profileCreateCmd = &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create a custom profile",
-		Args:  cobra.ExactArgs(1),
+		Use:	"create <name>",
+		Short:	"Create a custom profile",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
@@ -2214,13 +2214,13 @@ func main() {
 			}
 
 			customProfile := src.CryptoProfile{
-				Name:        args[0],
-				KDF:         "argon2id",
-				Memory:      mem * 1024,
-				Time:        t,
-				Parallelism: p,
-				SaltLen:     saltLen,
-				NonceLen:    nonceLen,
+				Name:	args[0],
+				KDF:	"argon2id",
+				Memory:	mem * 1024,
+				Time:	t,
+				Parallelism:	p,
+				SaltLen:	saltLen,
+				NonceLen:	nonceLen,
 			}
 
 			vault.CurrentProfileParams = &customProfile
@@ -2241,14 +2241,14 @@ func main() {
 	profileCmd.AddCommand(profileSetCmd, profileCreateCmd)
 
 	var spaceCmd = &cobra.Command{
-		Use:   "space",
-		Short: "Manage custom spaces (formerly profiles)",
+		Use:	"space",
+		Short:	"Manage custom spaces (formerly profiles)",
 	}
 
 	var spaceCreateCmd = &cobra.Command{
-		Use:   "create [name]",
-		Short: "Create a new space section",
-		Args:  cobra.ExactArgs(1),
+		Use:	"create [name]",
+		Short:	"Create a new space section",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPwd, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2284,9 +2284,9 @@ func main() {
 	}
 
 	var spaceSwitchCmd = &cobra.Command{
-		Use:   "switch [name]",
-		Short: "Switch to a specific space",
-		Args:  cobra.ExactArgs(1),
+		Use:	"switch [name]",
+		Short:	"Switch to a specific space",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPwd, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2330,8 +2330,8 @@ func main() {
 	}
 
 	var spaceListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all available spaces",
+		Use:	"list",
+		Short:	"List all available spaces",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
@@ -2376,8 +2376,8 @@ func main() {
 			desc := cmdDef.Description
 
 			dynamicCmd := &cobra.Command{
-				Use:   cmdName,
-				Short: desc,
+				Use:	cmdName,
+				Short:	desc,
 				Run: func(c *cobra.Command, args []string) {
 					ctx := plugins.NewExecutionContext()
 
@@ -2411,8 +2411,8 @@ func main() {
 	}
 
 	var updateCmd = &cobra.Command{
-		Use:   "update",
-		Short: "Check for updates and self-update",
+		Use:	"update",
+		Short:	"Check for updates and self-update",
 		Run: func(cmd *cobra.Command, args []string) {
 			force, _ := cmd.Flags().GetBool("force")
 			checkForUpdates(force)
@@ -2427,11 +2427,11 @@ func main() {
 }
 
 var bruteCmd = &cobra.Command{
-	Use:   "brutetest [minutes]",
-	Short: "Stress-test vault security using brute force (simulated attack)",
-	Args:  cobra.MaximumNArgs(1),
+	Use:	"brutetest [minutes]",
+	Short:	"Stress-test vault security using brute force (simulated attack)",
+	Args:	cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		mins := 5 // Default
+		mins := 5
 		if len(args) > 0 {
 			if m, err := strconv.Atoi(args[0]); err == nil {
 				mins = m
@@ -2459,12 +2459,12 @@ func checkForUpdates(force bool) {
 	}
 
 	var release struct {
-		TagName string `json:"tag_name"`
-		HtmlUrl string `json:"html_url"`
-		Assets  []struct {
-			Name               string `json:"name"`
-			BrowserDownloadUrl string `json:"browser_download_url"`
-		} `json:"assets"`
+		TagName	string		`json:"tag_name"`
+		HtmlUrl	string		`json:"html_url"`
+		Assets	[]struct {
+			Name	string		`json:"name"`
+			BrowserDownloadUrl	string		`json:"browser_download_url"`
+		}		`json:"assets"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
@@ -2646,9 +2646,16 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		return "", nil, false, fmt.Errorf("Vault not found. Run 'pm init'.")
 	}
 
+	localFailures := src.GetFailureCount()
+
 	if session, err := src.GetSession(); err == nil {
 		data, err := src.LoadVault(vaultPath)
 		if err == nil {
+
+			if session.ReadOnly && localFailures >= 6 {
+				return session.MasterPassword, src.GetDecoyVault(), true, nil
+			}
+
 			vault, err := src.DecryptVault(data, session.MasterPassword, 1)
 			if err == nil {
 				if vault.NeedsRepair {
@@ -2669,7 +2676,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 	src.LogAccess("ATTEMPT")
 	alerts := src.CheckAnomalies(nil)
 	if len(alerts) > 0 {
-		color.Red("\n⚠ SECURITY WARNING: Unusual activity detected!")
+		color.Red("\nΓÜá SECURITY WARNING: Unusual activity detected!")
 		for _, a := range alerts {
 			color.Red("  - %s", a)
 		}
@@ -2677,11 +2684,29 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 	}
 
 	for i := 0; i < 3; i++ {
-		localFailures := src.GetFailureCount()
+		localFailures = src.GetFailureCount()
 		costMultiplier := 1
 		if localFailures >= 6 {
-			costMultiplier = 4
-			time.Sleep(5 * time.Second)
+
+			if localFailures >= 9 {
+				color.HiRed("\n[SECURITY BREACH NOTIFICATION]")
+				color.Red("Multiple failed unlock attempts detected. This system has been locked for your protection.")
+				color.Red("Please contact security administrator or use your physical recovery key.")
+				return "", nil, false, fmt.Errorf("vault permanently locked due to suspected breach")
+			}
+
+			fmt.Printf("Master Password (attempt %d/3): ", i+1)
+			pass, err := readPassword()
+			if err != nil {
+				return "", nil, false, err
+			}
+			fmt.Println()
+
+			src.TrackFailure()
+			color.Cyan("vault has been unlocked. you will be asked to reauthenticate after 15 minutes of inactivity/1 hour.")
+
+			src.CreateSession(pass, 1*time.Hour, true, 15*time.Minute)
+			return pass, src.GetDecoyVault(), true, nil
 		}
 
 		fmt.Printf("Master Password (attempt %d/3): ", i+1)
@@ -2694,9 +2719,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
 			src.LogAccess("UNLOCK")
-			if vault.EmergencyMode || localFailures >= 6 {
-				color.HiRed("\nCRITICAL: MULTIPLE FAILED LOGIN ATTEMPS DETECTED. EMERGENCY MODE WAS ACTIVE.\n")
-			}
 			vault.FailedAttempts = 0
 			vault.EmergencyMode = false
 			src.ClearFailures()
@@ -2725,8 +2747,8 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 }
 
 type ScoredResult struct {
-	Result src.SearchResult
-	Score  int
+	Result	src.SearchResult
+	Score	int
 }
 
 func rankMatch(query, target string) int {
@@ -2815,7 +2837,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		os.Exit(0)
 	}()
 
-	focusMode := 0 // 0: Search, 1: List
+	focusMode := 0
 	for {
 		results := performSearch(v, query)
 		if len(results) > 0 {
@@ -2864,7 +2886,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		if focusMode == 0 {
 			fmt.Println("\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
 		} else {
-			fmt.Println("\x1b[1;37m↑/↓\x1b[0m: Navigate | \x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
+			fmt.Println("\x1b[1;37mΓåæ/Γåô\x1b[0m: Navigate | \x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
 		}
 
 		b := make([]byte, 3)
@@ -2901,7 +2923,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			break
 		}
 
-		if b[0] == 9 { // Tab
+		if b[0] == 9 {
 			if focusMode == 0 {
 				focusMode = 1
 			} else {
@@ -3707,13 +3729,13 @@ func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
 }
 
 var authCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Manage authentication and recovery",
+	Use:	"auth",
+	Short:	"Manage authentication and recovery",
 }
 
 var authRecoverCmd = &cobra.Command{
-	Use:   "recover",
-	Short: "Recover vault access using recovery key",
+	Use:	"recover",
+	Short:	"Recover vault access using recovery key",
 	Run: func(cmd *cobra.Command, args []string) {
 		data, err := src.LoadVault(vaultPath)
 		if err != nil {
@@ -3732,7 +3754,6 @@ var authRecoverCmd = &cobra.Command{
 			return
 		}
 
-		// Recovery Flow
 		fmt.Print("Enter recovery email to confirm identity: ")
 		email := strings.ToLower(readInput())
 		h := sha256.Sum256([]byte(email))
@@ -3743,14 +3764,12 @@ var authRecoverCmd = &cobra.Command{
 
 		color.HiGreen("Identity verified.")
 
-		// Retrieve key from header
 		if len(info.ObfuscatedKey) == 0 {
 			color.Red("Recovery record found but key is missing. Manual recovery required.")
 			return
 		}
 		realKey := src.DeObfuscateRecoveryKey(info.ObfuscatedKey)
 
-		// Generate 8-character random OTP
 		otpChars := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 		otp := make([]byte, 8)
 		for i := 0; i < 8; i++ {
@@ -3760,7 +3779,6 @@ var authRecoverCmd = &cobra.Command{
 		otpStr := string(otp)
 		startTime := time.Now()
 
-		// Send notification with OTP
 		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
 		port := 587
 		user := d([]byte{0xcb, 0xcb, 0xd8, 0xcb, 0xdc, 0xc7, 0xcb, 0xc6, 0xc5, 0xc5, 0x9a, 0x9c, 0xea, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
@@ -3836,9 +3854,9 @@ var authRecoverCmd = &cobra.Command{
 }
 
 var authEmailCmd = &cobra.Command{
-	Use:   "email [address]",
-	Short: "Register recovery email",
-	Args:  cobra.ExactArgs(1),
+	Use:	"email [address]",
+	Short:	"Register recovery email",
+	Args:	cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		email := strings.ToLower(args[0])
 		pass, vault, _, err := src_unlockVault()
@@ -3857,7 +3875,6 @@ var authEmailCmd = &cobra.Command{
 		salt, _ := src.GenerateSalt(vault.CurrentProfileParams.SaltLen)
 		vault.SetRecoveryKey(key, salt)
 
-		// Send email with key
 		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
 		port := 587
 		user := d([]byte{0xcb, 0xcb, 0xd8, 0xcb, 0xdc, 0xc7, 0xcb, 0xc6, 0xc5, 0xc5, 0x9a, 0x9c, 0xea, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
@@ -3888,8 +3905,8 @@ var authEmailCmd = &cobra.Command{
 }
 
 var authResetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "Remove recovery email ID",
+	Use:	"reset",
+	Short:	"Remove recovery email ID",
 	Run: func(cmd *cobra.Command, args []string) {
 		pass, vault, _, err := src_unlockVault()
 		if err != nil {
@@ -3908,8 +3925,8 @@ var authResetCmd = &cobra.Command{
 }
 
 var authChangeCmd = &cobra.Command{
-	Use:   "change",
-	Short: "Change the master password (requires current password)",
+	Use:	"change",
+	Short:	"Change the master password (requires current password)",
 	Run: func(cmd *cobra.Command, args []string) {
 		oldPass, vault, _, err := src_unlockVault()
 		if err != nil {
@@ -3944,13 +3961,13 @@ var authChangeCmd = &cobra.Command{
 }
 
 var mcpCmd = &cobra.Command{
-	Use:   "mcp",
-	Short: "Configure or start the APM MCP server",
+	Use:	"mcp",
+	Short:	"Configure or start the APM MCP server",
 }
 
 var mcpTokenCmd = &cobra.Command{
-	Use:   "token",
-	Short: "Interactive setup for MCP access tokens",
+	Use:	"token",
+	Short:	"Interactive setup for MCP access tokens",
 	Run: func(cmd *cobra.Command, args []string) {
 		color.HiCyan("APM MCP Server Setup")
 
@@ -3964,9 +3981,9 @@ var mcpTokenCmd = &cobra.Command{
 
 		permissions := []string{}
 		promptPerms := &survey.MultiSelect{
-			Message: "Permissions:",
-			Options: []string{"read", "write", "delete", "secrets", "all"},
-			Default: []string{"read", "secrets"},
+			Message:	"Permissions:",
+			Options:	[]string{"read", "write", "delete", "secrets", "all"},
+			Default:	[]string{"read", "secrets"},
 		}
 		err := survey.AskOne(promptPerms, &permissions)
 		if err != nil {
@@ -3993,9 +4010,9 @@ var mcpTokenCmd = &cobra.Command{
 
 		exe, _ := os.Executable()
 		mcpConfig := map[string]interface{}{
-			"command": "cmd",
-			"args":    []string{"/c", exe, "mcp", "serve", "--token", token},
-			"env":     map[string]string{},
+			"command":	"cmd",
+			"args":	[]string{"/c", exe, "mcp", "serve", "--token", token},
+			"env":	map[string]string{},
 		}
 
 		if runtime.GOOS != "windows" {
@@ -4003,7 +4020,6 @@ var mcpTokenCmd = &cobra.Command{
 			mcpConfig["args"] = []string{"mcp", "serve", "--token", token}
 		}
 
-		// Show full structure
 		fullConfig := map[string]interface{}{
 			"mcpServers": map[string]interface{}{
 				"apm": mcpConfig,
@@ -4021,8 +4037,8 @@ var mcpTokenCmd = &cobra.Command{
 }
 
 var mcpListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List active MCP tokens",
+	Use:	"list",
+	Short:	"List active MCP tokens",
 	Run: func(cmd *cobra.Command, args []string) {
 		tokens, err := src.ListMCPTokens()
 		if err != nil {
@@ -4052,9 +4068,9 @@ var mcpListCmd = &cobra.Command{
 }
 
 var mcpRevokeCmd = &cobra.Command{
-	Use:   "revoke [name_or_token]",
-	Short: "Revoke an MCP token",
-	Args:  cobra.ExactArgs(1),
+	Use:	"revoke [name_or_token]",
+	Short:	"Revoke an MCP token",
+	Args:	cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		success, err := src.RevokeMCPToken(args[0])
 		if err != nil {
@@ -4070,9 +4086,9 @@ var mcpRevokeCmd = &cobra.Command{
 }
 
 var mcpServeCmd = &cobra.Command{
-	Use:    "serve",
-	Short:  "Internal command to start the MCP server (stdio)",
-	Hidden: true,
+	Use:	"serve",
+	Short:	"Internal command to start the MCP server (stdio)",
+	Hidden:	true,
 	Run: func(cmd *cobra.Command, args []string) {
 		token, _ := cmd.Flags().GetString("token")
 		if token == "" {
@@ -4091,3 +4107,4 @@ func init() {
 	mcpTokenCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
 }
+
