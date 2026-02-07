@@ -9,11 +9,11 @@ import (
 type Role string
 
 const (
-	RoleAdmin    Role = "ADMIN"
-	RoleManager  Role = "MANAGER"
-	RoleUser     Role = "USER"
-	RoleAuditor  Role = "AUDITOR"
-	RoleSecurity Role = "SECURITY"
+	RoleAdmin	Role	= "ADMIN"
+	RoleManager	Role	= "MANAGER"
+	RoleUser	Role	= "USER"
+	RoleAuditor	Role	= "AUDITOR"
+	RoleSecurity	Role	= "SECURITY"
 )
 
 func GetRoles() []Role {
@@ -21,14 +21,14 @@ func GetRoles() []Role {
 }
 
 type EntryMetadata struct {
-	ID           string    `json:"id"`
-	DepartmentID string    `json:"department_id"`
-	CreatedBy    string    `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
-	ModifiedBy   string    `json:"modified_by"`
-	ModifiedAt   time.Time `json:"modified_at"`
-	IsSensitive  bool      `json:"is_sensitive"`
-	IsGlobal     bool      `json:"is_global"`
+	ID	string		`json:"id"`
+	DepartmentID	string		`json:"department_id"`
+	CreatedBy	string		`json:"created_by"`
+	CreatedAt	time.Time		`json:"created_at"`
+	ModifiedBy	string		`json:"modified_by"`
+	ModifiedAt	time.Time		`json:"modified_at"`
+	IsSensitive	bool		`json:"is_sensitive"`
+	IsGlobal	bool		`json:"is_global"`
 }
 
 func (r Role) CanAddEntry(user *TeamUser) bool {
@@ -101,255 +101,255 @@ func (r Role) CanViewAudit(user *TeamUser) bool {
 }
 
 type TeamUser struct {
-	ID                 string            `json:"id"`
-	Username           string            `json:"username"`
-	Role               Role              `json:"role"`
-	ActiveDepartmentID string            `json:"active_department_id"`
-	WrappedKeys        map[string][]byte `json:"wrapped_keys"`
-	Permissions        map[string]bool   `json:"permissions"`
+	ID	string		`json:"id"`
+	Username	string		`json:"username"`
+	Role	Role		`json:"role"`
+	ActiveDepartmentID	string		`json:"active_department_id"`
+	WrappedKeys	map[string][]byte		`json:"wrapped_keys"`
+	Permissions	map[string]bool		`json:"permissions"`
 }
 
 type Department struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	EncryptedKey []byte `json:"encrypted_key,omitempty"`
+	ID	string		`json:"id"`
+	Name	string		`json:"name"`
+	EncryptedKey	[]byte		`json:"encrypted_key,omitempty"`
 }
 
 type TeamAuditEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	User      string    `json:"user"`
-	Action    string    `json:"action"`
-	Details   string    `json:"details"`
-	PrevHash  string    `json:"prev_hash"`
+	Timestamp	time.Time		`json:"timestamp"`
+	User	string		`json:"user"`
+	Action	string		`json:"action"`
+	Details	string		`json:"details"`
+	PrevHash	string		`json:"prev_hash"`
 }
 
 type ApprovalRequest struct {
-	ID           string    `json:"id"`
-	Type         string    `json:"type"`       // Create, Edit, Delete
-	EntryType    string    `json:"entry_type"` // Password, TOTP, etc.
-	EntryID      string    `json:"entry_id"`
-	NewData      []byte    `json:"new_data"` // JSON marshaled entry
-	RequestedBy  string    `json:"requested_by"`
-	RequestedAt  time.Time `json:"requested_at"`
-	Status       string    `json:"status"` // Pending, Approved, Denied
-	DenialReason string    `json:"denial_reason,omitempty"`
+	ID	string		`json:"id"`
+	Type	string		`json:"type"`	// Create, Edit, Delete
+	EntryType	string		`json:"entry_type"`	// Password, TOTP, etc.
+	EntryID	string		`json:"entry_id"`
+	NewData	[]byte		`json:"new_data"`	// JSON marshaled entry
+	RequestedBy	string		`json:"requested_by"`
+	RequestedAt	time.Time		`json:"requested_at"`
+	Status	string		`json:"status"`	// Pending, Approved, Denied
+	DenialReason	string		`json:"denial_reason,omitempty"`
 }
 
 type SharedPassword struct {
 	EntryMetadata
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	Password []byte `json:"password"`
-	URL      string `json:"url"`
+	Name	string		`json:"name"`
+	Username	string		`json:"username"`
+	Password	[]byte		`json:"password"`
+	URL	string		`json:"url"`
 }
 
 type SharedTOTP struct {
 	EntryMetadata
-	Name   string `json:"name"`
-	Secret []byte `json:"secret"`
-	Issuer string `json:"issuer"`
+	Name	string		`json:"name"`
+	Secret	[]byte		`json:"secret"`
+	Issuer	string		`json:"issuer"`
 }
 
 type SharedAPIKey struct {
 	EntryMetadata
-	Label   string `json:"label"`
-	Service string `json:"service"`
-	Key     []byte `json:"key"`
+	Label	string		`json:"label"`
+	Service	string		`json:"service"`
+	Key	[]byte		`json:"key"`
 }
 
 type SharedToken struct {
 	EntryMetadata
-	Name  string `json:"name"`
-	Token []byte `json:"token"`
-	Type  string `json:"type"`
+	Name	string		`json:"name"`
+	Token	[]byte		`json:"token"`
+	Type	string		`json:"type"`
 }
 
 type SharedNote struct {
 	EntryMetadata
-	Name    string `json:"name"`
-	Content []byte `json:"content"`
+	Name	string		`json:"name"`
+	Content	[]byte		`json:"content"`
 }
 
 type SharedSSHKey struct {
 	EntryMetadata
-	Label      string `json:"label"`
-	PrivateKey []byte `json:"private_key"`
+	Label	string		`json:"label"`
+	PrivateKey	[]byte		`json:"private_key"`
 }
 
 type SharedCertificate struct {
 	EntryMetadata
-	Label      string    `json:"label"`
-	Issuer     string    `json:"issuer"`
-	Expiry     time.Time `json:"expiry"`
-	CertData   []byte    `json:"cert_data"`
-	PrivateKey []byte    `json:"private_key,omitempty"`
+	Label	string		`json:"label"`
+	Issuer	string		`json:"issuer"`
+	Expiry	time.Time		`json:"expiry"`
+	CertData	[]byte		`json:"cert_data"`
+	PrivateKey	[]byte		`json:"private_key,omitempty"`
 }
 
 type SharedWiFi struct {
 	EntryMetadata
-	SSID     string `json:"ssid"`
-	Password []byte `json:"password"`
-	Security string `json:"security"`
+	SSID	string		`json:"ssid"`
+	Password	[]byte		`json:"password"`
+	Security	string		`json:"security"`
 }
 
 type SharedRecoveryCode struct {
 	EntryMetadata
-	Service string `json:"service"`
-	Codes   []byte `json:"codes"`
+	Service	string		`json:"service"`
+	Codes	[]byte		`json:"codes"`
 }
 
 type SharedBankingItem struct {
 	EntryMetadata
-	Label   string `json:"label"`
-	Type    string `json:"type"`
-	Details []byte `json:"details"`
-	CVV     []byte `json:"cvv,omitempty"`
-	Expiry  string `json:"expiry,omitempty"`
+	Label	string		`json:"label"`
+	Type	string		`json:"type"`
+	Details	[]byte		`json:"details"`
+	CVV	[]byte		`json:"cvv,omitempty"`
+	Expiry	string		`json:"expiry,omitempty"`
 }
 
 type SharedDocumentEntry struct {
 	EntryMetadata
-	Name     string `json:"name"`
-	FileName string `json:"file_name"`
-	Content  []byte `json:"content"`
-	Password []byte `json:"password"`
+	Name	string		`json:"name"`
+	FileName	string		`json:"file_name"`
+	Content	[]byte		`json:"content"`
+	Password	[]byte		`json:"password"`
 }
 
 type SharedGovID struct {
 	EntryMetadata
-	Type     string `json:"type"`
-	IDNumber string `json:"id_number"`
-	Name     string `json:"name"`
-	Expiry   string `json:"expiry"`
+	Type	string		`json:"type"`
+	IDNumber	string		`json:"id_number"`
+	Name	string		`json:"name"`
+	Expiry	string		`json:"expiry"`
 }
 
 type SharedMedicalRecord struct {
 	EntryMetadata
-	Label         string `json:"label"`
-	InsuranceID   string `json:"insurance_id"`
-	Prescriptions []byte `json:"prescriptions"`
-	Allergies     []byte `json:"allergies"`
+	Label	string		`json:"label"`
+	InsuranceID	string		`json:"insurance_id"`
+	Prescriptions	[]byte		`json:"prescriptions"`
+	Allergies	[]byte		`json:"allergies"`
 }
 
 type SharedTravelDoc struct {
 	EntryMetadata
-	Label          string `json:"label"`
-	TicketNumber   string `json:"ticket_number"`
-	BookingCode    []byte `json:"booking_code"`
-	LoyaltyProgram string `json:"loyalty_program"`
+	Label	string		`json:"label"`
+	TicketNumber	string		`json:"ticket_number"`
+	BookingCode	[]byte		`json:"booking_code"`
+	LoyaltyProgram	string		`json:"loyalty_program"`
 }
 
 type SharedContact struct {
 	EntryMetadata
-	Name      string `json:"name"`
-	Phone     string `json:"phone"`
-	Email     string `json:"email"`
-	Address   string `json:"address"`
-	Emergency bool   `json:"emergency"`
+	Name	string		`json:"name"`
+	Phone	string		`json:"phone"`
+	Email	string		`json:"email"`
+	Address	string		`json:"address"`
+	Emergency	bool		`json:"emergency"`
 }
 
 type SharedCloudCredential struct {
 	EntryMetadata
-	Label      string `json:"label"`
-	AccessKey  string `json:"access_key"`
-	SecretKey  []byte `json:"secret_key"`
-	Region     string `json:"region"`
-	AccountID  string `json:"account_id"`
-	Role       string `json:"role"`
-	Expiration string `json:"expiration"`
+	Label	string		`json:"label"`
+	AccessKey	string		`json:"access_key"`
+	SecretKey	[]byte		`json:"secret_key"`
+	Region	string		`json:"region"`
+	AccountID	string		`json:"account_id"`
+	Role	string		`json:"role"`
+	Expiration	string		`json:"expiration"`
 }
 
 type SharedK8s struct {
 	EntryMetadata
-	Name         string `json:"name"`
-	ClusterURL   string `json:"cluster_url"`
-	K8sNamespace string `json:"k8s_namespace"`
-	Expiration   string `json:"expiration"`
+	Name	string		`json:"name"`
+	ClusterURL	string		`json:"cluster_url"`
+	K8sNamespace	string		`json:"k8s_namespace"`
+	Expiration	string		`json:"expiration"`
 }
 
 type SharedDockerRegistry struct {
 	EntryMetadata
-	Name        string `json:"name"`
-	RegistryURL string `json:"registry_url"`
-	Username    string `json:"username"`
-	Token       []byte `json:"token"`
+	Name	string		`json:"name"`
+	RegistryURL	string		`json:"registry_url"`
+	Username	string		`json:"username"`
+	Token	[]byte		`json:"token"`
 }
 
 type SharedSSHConfig struct {
 	EntryMetadata
-	Alias       string `json:"alias"`
-	Host        string `json:"host"`
-	User        string `json:"user"`
-	Port        string `json:"port"`
-	KeyPath     string `json:"key_path"`
-	PrivateKey  []byte `json:"private_key"`
-	Fingerprint string `json:"fingerprint"`
+	Alias	string		`json:"alias"`
+	Host	string		`json:"host"`
+	User	string		`json:"user"`
+	Port	string		`json:"port"`
+	KeyPath	string		`json:"key_path"`
+	PrivateKey	[]byte		`json:"private_key"`
+	Fingerprint	string		`json:"fingerprint"`
 }
 
 type SharedCICD struct {
 	EntryMetadata
-	Name    string `json:"name"`
-	Webhook []byte `json:"webhook"`
-	EnvVars []byte `json:"env_vars"`
+	Name	string		`json:"name"`
+	Webhook	[]byte		`json:"webhook"`
+	EnvVars	[]byte		`json:"env_vars"`
 }
 
 type SharedLicenseKey struct {
 	EntryMetadata
-	ProductName    string `json:"product_name"`
-	SerialKey      []byte `json:"serial_key"`
-	ActivationInfo string `json:"activation_info"`
-	Expiration     string `json:"expiration"`
+	ProductName	string		`json:"product_name"`
+	SerialKey	[]byte		`json:"serial_key"`
+	ActivationInfo	string		`json:"activation_info"`
+	Expiration	string		`json:"expiration"`
 }
 
 type SharedLegalContract struct {
 	EntryMetadata
-	Name            string `json:"name"`
-	Summary         []byte `json:"summary"`
-	PartiesInvolved string `json:"parties_involved"`
-	SignedDate      string `json:"signed_date"`
+	Name	string		`json:"name"`
+	Summary	[]byte		`json:"summary"`
+	PartiesInvolved	string		`json:"parties_involved"`
+	SignedDate	string		`json:"signed_date"`
 }
 
 type SharedEntryStore struct {
-	Passwords        []SharedPassword        `json:"passwords"`
-	TOTPs            []SharedTOTP            `json:"totps"`
-	APIKeys          []SharedAPIKey          `json:"api_keys"`
-	Tokens           []SharedToken           `json:"tokens"`
-	Notes            []SharedNote            `json:"notes"`
-	SSHKeys          []SharedSSHKey          `json:"ssh_keys"`
-	Certificates     []SharedCertificate     `json:"certificates"`
-	WiFi             []SharedWiFi            `json:"wifi"`
-	RecoveryCodes    []SharedRecoveryCode    `json:"recovery_codes"`
-	BankingItems     []SharedBankingItem     `json:"banking_items"`
-	Documents        []SharedDocumentEntry   `json:"documents"`
-	GovIDs           []SharedGovID           `json:"gov_ids"`
-	MedicalRecords   []SharedMedicalRecord   `json:"medical_records"`
-	TravelDocs       []SharedTravelDoc       `json:"travel_docs"`
-	Contacts         []SharedContact         `json:"contacts"`
-	CloudCredentials []SharedCloudCredential `json:"cloud_credentials"`
-	K8sSecrets       []SharedK8s             `json:"k8s_secrets"`
-	DockerRegistries []SharedDockerRegistry  `json:"docker_registries"`
-	SSHConfigs       []SharedSSHConfig       `json:"ssh_configs"`
-	CICDSecrets      []SharedCICD            `json:"cicd_secrets"`
-	LicenseKeys      []SharedLicenseKey      `json:"license_keys"`
-	LegalContracts   []SharedLegalContract   `json:"legal_contracts"`
+	Passwords	[]SharedPassword		`json:"passwords"`
+	TOTPs	[]SharedTOTP		`json:"totps"`
+	APIKeys	[]SharedAPIKey		`json:"api_keys"`
+	Tokens	[]SharedToken		`json:"tokens"`
+	Notes	[]SharedNote		`json:"notes"`
+	SSHKeys	[]SharedSSHKey		`json:"ssh_keys"`
+	Certificates	[]SharedCertificate		`json:"certificates"`
+	WiFi	[]SharedWiFi		`json:"wifi"`
+	RecoveryCodes	[]SharedRecoveryCode		`json:"recovery_codes"`
+	BankingItems	[]SharedBankingItem		`json:"banking_items"`
+	Documents	[]SharedDocumentEntry		`json:"documents"`
+	GovIDs	[]SharedGovID		`json:"gov_ids"`
+	MedicalRecords	[]SharedMedicalRecord		`json:"medical_records"`
+	TravelDocs	[]SharedTravelDoc		`json:"travel_docs"`
+	Contacts	[]SharedContact		`json:"contacts"`
+	CloudCredentials	[]SharedCloudCredential		`json:"cloud_credentials"`
+	K8sSecrets	[]SharedK8s		`json:"k8s_secrets"`
+	DockerRegistries	[]SharedDockerRegistry		`json:"docker_registries"`
+	SSHConfigs	[]SharedSSHConfig		`json:"ssh_configs"`
+	CICDSecrets	[]SharedCICD		`json:"cicd_secrets"`
+	LicenseKeys	[]SharedLicenseKey		`json:"license_keys"`
+	LegalContracts	[]SharedLegalContract		`json:"legal_contracts"`
 }
 
 type TeamVault struct {
-	OrganizationID   string            `json:"organization_id"`
-	Departments      []Department      `json:"departments"`
-	Users            []TeamUser        `json:"users"`
-	SharedEntries    SharedEntryStore  `json:"shared_entries"`
-	Salt             []byte            `json:"salt"`
-	AuditTrail       []TeamAuditEntry  `json:"audit_trail"`
-	PendingApprovals []ApprovalRequest `json:"pending_approvals"`
+	OrganizationID	string		`json:"organization_id"`
+	Departments	[]Department		`json:"departments"`
+	Users	[]TeamUser		`json:"users"`
+	SharedEntries	SharedEntryStore		`json:"shared_entries"`
+	Salt	[]byte		`json:"salt"`
+	AuditTrail	[]TeamAuditEntry		`json:"audit_trail"`
+	PendingApprovals	[]ApprovalRequest		`json:"pending_approvals"`
 }
 
 func (tv *TeamVault) AddAuditEntry(user, action, details string) {
 	entry := TeamAuditEntry{
-		Timestamp: time.Now(),
-		User:      user,
-		Action:    action,
-		Details:   details,
+		Timestamp:	time.Now(),
+		User:	user,
+		Action:	action,
+		Details:	details,
 	}
 	if len(tv.AuditTrail) > 0 {
 		lastEntry := tv.AuditTrail[len(tv.AuditTrail)-1]
@@ -360,9 +360,9 @@ func (tv *TeamVault) AddAuditEntry(user, action, details string) {
 }
 
 type SearchResult struct {
-	Type       string
-	Identifier string
-	Data       interface{}
+	Type	string
+	Identifier	string
+	Data	interface{}
 }
 
 func (tv *TeamVault) SearchAll(query string, deptID string, isAdmin bool) []SearchResult {
