@@ -34,8 +34,7 @@ func RunBruteTest(vaultPath string, timeoutMins int) {
 		return
 	}
 
-	// Extract salt and stored validator
-	offset := len(VaultHeader) + 1 // Version byte
+	offset := len(VaultHeader) + 1
 	if offset+2 > len(data) {
 		color.Red("Corrupted vault header")
 		return
@@ -76,7 +75,6 @@ func RunBruteTest(vaultPath string, timeoutMins int) {
 
 	passChan := make(chan string, 100)
 
-	// Stats worker
 	go func() {
 		start := time.Now()
 		for {
@@ -92,7 +90,6 @@ func RunBruteTest(vaultPath string, timeoutMins int) {
 		}
 	}()
 
-	// Workers
 	for i := 0; i < runtime.NumCPU(); i++ {
 		wg.Add(1)
 		go func() {
@@ -121,9 +118,8 @@ func RunBruteTest(vaultPath string, timeoutMins int) {
 		}()
 	}
 
-	// Password Generator
 	go func() {
-		// 1. Dictionary Attack
+
 		for _, p := range commonPasswords {
 			select {
 			case <-ctx.Done():
@@ -133,7 +129,6 @@ func RunBruteTest(vaultPath string, timeoutMins int) {
 			}
 		}
 
-		// 2. Simple Brute Force (Iterative)
 		chars := "abcdefghijklmnopqrstuvwxyz0123456789"
 		for length := 1; length <= 8; length++ {
 			generatePasswords("", chars, length, passChan, ctx)
