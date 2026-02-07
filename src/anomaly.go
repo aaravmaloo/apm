@@ -10,9 +10,9 @@ import (
 )
 
 type AccessLog struct {
-	Timestamp  int64
-	DeviceHash string
-	Action     string
+	Timestamp	int64
+	DeviceHash	string
+	Action	string
 }
 
 func GetDeviceHash() string {
