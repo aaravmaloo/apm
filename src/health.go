@@ -13,12 +13,13 @@ func CalculateHealth(vault *Vault) (int, []string) {
 		prof = ProfileStandard
 	}
 
-	if prof.Name == "hardened" || prof.Name == "paranoid" {
+	switch prof.Name {
+	case "hardened", "paranoid":
 		report = append(report, fmt.Sprintf("Encryption profile: %s (+20)", prof.Name))
-	} else if prof.Name == "legacy" {
+	case "legacy":
 		score -= 20
 		report = append(report, "Legacy profile used (-20)")
-	} else {
+	default:
 		report = append(report, "Standard encryption used (OK)")
 	}
 
