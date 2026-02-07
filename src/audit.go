@@ -9,11 +9,11 @@ import (
 )
 
 type AuditEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	Action    string    `json:"action"`
-	Details   string    `json:"details"`
-	User      string    `json:"user"`
-	Hostname  string    `json:"hostname"`
+	Timestamp	time.Time		`json:"timestamp"`
+	Action	string		`json:"action"`
+	Details	string		`json:"details"`
+	User	string		`json:"user"`
+	Hostname	string		`json:"hostname"`
 }
 
 func getAuditFile() string {
@@ -25,9 +25,9 @@ func getAuditFile() string {
 
 func LogAction(action, details string) {
 	entry := AuditEntry{
-		Timestamp: time.Now(),
-		Action:    action,
-		Details:   details,
+		Timestamp:	time.Now(),
+		Action:	action,
+		Details:	details,
 	}
 
 	if u, err := os.UserHomeDir(); err == nil {
