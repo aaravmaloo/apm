@@ -21,59 +21,63 @@ const (
 )
 
 type CryptoProfile struct {
-	Name        string
-	KDF         string
-	Time        uint32
-	Memory      uint32
-	Parallelism uint8
-	SaltLen     int
-	NonceLen    int
+	Name	string
+	KDF	string
+	Time	uint32
+	Memory	uint32
+	Parallelism	uint8
+	SaltLen	int
+	NonceLen	int
 }
 
 var (
-	ProfileStandard = CryptoProfile{
-		Name:        "standard",
-		KDF:         "argon2id",
-		Time:        3,
-		Memory:      64 * 1024,
-		Parallelism: 2,
-		SaltLen:     16,
-		NonceLen:    12,
+	ProfileStandard	= CryptoProfile{
+		Name:	"standard",
+		KDF:	"argon2id",
+		Time:	3,
+		Memory:	64 * 1024,
+		Parallelism:	2,
+		SaltLen:	16,
+		NonceLen:	12,
 	}
-	ProfileHardened = CryptoProfile{
-		Name:        "hardened",
-		KDF:         "argon2id",
-		Time:        5,
-		Memory:      256 * 1024,
-		Parallelism: 4,
-		SaltLen:     32,
-		NonceLen:    12,
+	ProfileHardened	= CryptoProfile{
+		Name:	"hardened",
+		KDF:	"argon2id",
+		Time:	5,
+		Memory:	256 * 1024,
+		Parallelism:	4,
+		SaltLen:	32,
+		NonceLen:	12,
 	}
-	ProfileParanoid = CryptoProfile{
-		Name:        "paranoid",
-		KDF:         "argon2id",
-		Time:        6,
-		Memory:      512 * 1024,
-		Parallelism: 4,
-		SaltLen:     32,
-		NonceLen:    24,
+	ProfileParanoid	= CryptoProfile{
+		Name:	"paranoid",
+		KDF:	"argon2id",
+		Time:	6,
+		Memory:	512 * 1024,
+		Parallelism:	4,
+		SaltLen:	32,
+		NonceLen:	24,
 	}
-	ProfileLegacy = CryptoProfile{
-		Name:        "legacy",
-		KDF:         "pbkdf2",
-		Time:        600000,
-		Memory:      0,
-		Parallelism: 1,
-		SaltLen:     16,
-		NonceLen:    12,
+	ProfileLegacy	= CryptoProfile{
+		Name:	"legacy",
+		KDF:	"pbkdf2",
+		Time:	600000,
+		Memory:	0,
+		Parallelism:	1,
+		SaltLen:	16,
+		NonceLen:	12,
 	}
 )
 
 var Profiles = map[string]CryptoProfile{
-	"standard": ProfileStandard,
-	"hardened": ProfileHardened,
-	"paranoid": ProfileParanoid,
-	"legacy":   ProfileLegacy,
+	"standard":	ProfileStandard,
+	"hardened":	ProfileHardened,
+	"paranoid":	ProfileParanoid,
+	"legacy":	ProfileLegacy,
+}
+
+func AddCustomProfile(p CryptoProfile) {
+	Profiles[p.Name] = p
 }
 
 func GetProfile(name string) CryptoProfile {
@@ -84,18 +88,18 @@ func GetProfile(name string) CryptoProfile {
 }
 
 type Keys struct {
-	EncryptionKey []byte
-	AuthKey       []byte
-	Validator     []byte
+	EncryptionKey	[]byte
+	AuthKey	[]byte
+	Validator	[]byte
 }
 
 func DeriveKeys(password string, salt []byte, time, memory uint32, parallelism uint8) *Keys {
 	keyMaterial := argon2.IDKey([]byte(password), salt, time, memory, parallelism, 96)
 
 	keys := &Keys{
-		EncryptionKey: make([]byte, 32),
-		AuthKey:       make([]byte, 32),
-		Validator:     make([]byte, 32),
+		EncryptionKey:	make([]byte, 32),
+		AuthKey:	make([]byte, 32),
+		Validator:	make([]byte, 32),
 	}
 
 	copy(keys.EncryptionKey, keyMaterial[0:32])
