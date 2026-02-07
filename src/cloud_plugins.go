@@ -24,9 +24,9 @@ func (cm *GoogleDriveManager) EnsurePluginsFolder() (string, error) {
 	}
 
 	dir := &drive.File{
-		Name:     "plugins",
-		Parents:  []string{DriveFolderID},
-		MimeType: "application/vnd.google-apps.folder",
+		Name:	"plugins",
+		Parents:	[]string{DriveFolderID},
+		MimeType:	"application/vnd.google-apps.folder",
 	}
 	res, err := cm.Service.Files.Create(dir).Fields("id").Do()
 	if err != nil {
@@ -65,8 +65,8 @@ func (cm *GoogleDriveManager) UploadPlugin(name string, pluginPath string) error
 	} else {
 
 		file := &drive.File{
-			Name:    name + ".zip",
-			Parents: []string{pluginsFolderID},
+			Name:	name + ".zip",
+			Parents:	[]string{pluginsFolderID},
 		}
 		_, err = cm.Service.Files.Create(file).Media(f).Do()
 	}
@@ -131,7 +131,6 @@ func (cm *GoogleDriveManager) DownloadPlugin(name string, destDir string) error 
 	}
 	out.Close()
 
-	//nolint:gosec // io.Copy inside verified zip extraction
 	return unzip(tmpZip, destDir)
 }
 
@@ -177,7 +176,6 @@ func zipFolder(source, target string) error {
 			return nil
 		}
 
-		//nolint:gosec // Path walked from source
 		file, err := os.Open(path)
 		if err != nil {
 			return err
@@ -189,7 +187,7 @@ func zipFolder(source, target string) error {
 }
 
 func unzip(src, dest string) error {
-	//nolint:gosec // Safe zip reader
+
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -199,7 +197,6 @@ func unzip(src, dest string) error {
 	for _, f := range r.File {
 		fpath := filepath.Join(dest, f.Name)
 
-		// Check for Zip Slip
 		if !strings.HasPrefix(fpath, filepath.Clean(dest)+string(os.PathSeparator)) {
 			return fmt.Errorf("illegal file path: %s", fpath)
 		}
