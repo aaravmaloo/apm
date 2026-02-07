@@ -40,8 +40,8 @@ func GenerateRetrievalKey() (string, error) {
 }
 
 type GoogleDriveManager struct {
-	Service *drive.Service
-	Mode    string // "apm_public" or "self_hosted"
+	Service	*drive.Service
+	Mode	string	// "apm_public" or "self_hosted"
 }
 
 func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (*GoogleDriveManager, error) {
@@ -93,9 +93,9 @@ func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (s
 	}
 
 	driveFile := &drive.File{
-		Name:        randomName,
-		Description: HashKey(customKey),
-		Parents:     []string{parent},
+		Name:	randomName,
+		Description:	HashKey(customKey),
+		Parents:	[]string{parent},
 	}
 
 	res, err := cm.Service.Files.Create(driveFile).Media(f).Do()
@@ -107,8 +107,8 @@ func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (s
 
 	if cm.Mode == "apm_public" {
 		permission := &drive.Permission{
-			Type: "anyone",
-			Role: "reader",
+			Type:	"anyone",
+			Role:	"reader",
 		}
 		_, err = cm.Service.Permissions.Create(fileID, permission).Do()
 		if err != nil {
@@ -171,7 +171,6 @@ func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
 		}
 	}
 
-	// Legacy fallback: vault_filename.bin
 	queryLegacy := fmt.Sprintf("name = 'vault_%s.bin' and '%s' in parents and trashed = false", key, parent)
 	listLegacy, err := cm.Service.Files.List().Q(queryLegacy).Fields("files(id, name)").Do()
 	if err == nil && len(listLegacy.Files) > 0 {
@@ -248,7 +247,6 @@ func PerformDriveAuth(credsJSON []byte) ([]byte, error) {
 		return nil, fmt.Errorf("unable to parse client secret: %v", err)
 	}
 
-	// Use localhost with a specific port for automatic retrieval
 	config.RedirectURL = "http://localhost:8080"
 
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
@@ -295,14 +293,13 @@ func PerformDriveAuth(credsJSON []byte) ([]byte, error) {
 	var authCode string
 	select {
 	case authCode = <-codeChan:
-		// Got it
+
 	case err := <-errChan:
 		return nil, err
 	case <-time.After(5 * time.Minute):
 		return nil, fmt.Errorf("authentication timed out")
 	}
 
-	// Shutdown server
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	server.Shutdown(ctx)
@@ -355,10 +352,10 @@ func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte
 }
 
 type GitHubManager struct {
-	Client *github.Client
-	Token  string
-	Repo   string
-	Ctx    context.Context
+	Client	*github.Client
+	Token	string
+	Repo	string
+	Ctx	context.Context
 }
 
 func NewGitHubManager(ctx context.Context, token string) (*GitHubManager, error) {
@@ -369,9 +366,9 @@ func NewGitHubManager(ctx context.Context, token string) (*GitHubManager, error)
 	client := github.NewClient(tc)
 
 	return &GitHubManager{
-		Client: client,
-		Token:  token,
-		Ctx:    ctx,
+		Client:	client,
+		Token:	token,
+		Ctx:	ctx,
 	}, nil
 }
 
@@ -391,13 +388,12 @@ func (gm *GitHubManager) UploadVault(vaultPath string, customKey string) (string
 	}
 	owner, repo := repoParts[0], repoParts[1]
 
-	// Check if repo exists, if not create it
 	_, _, err = gm.Client.Repositories.Get(gm.Ctx, owner, repo)
 	if err != nil {
 		newRepo := &github.Repository{
-			Name:        github.String(repo),
-			Private:     github.Bool(true), // Ensure it is private
-			Description: github.String("APM Secure Vault Storage"),
+			Name:	github.String(repo),
+			Private:	github.Bool(true),
+			Description:	github.String("APM Secure Vault Storage"),
 		}
 		_, _, err = gm.Client.Repositories.Create(gm.Ctx, "", newRepo)
 		if err != nil {
@@ -405,7 +401,6 @@ func (gm *GitHubManager) UploadVault(vaultPath string, customKey string) (string
 		}
 	}
 
-	// Try to get the file to get its SHA if it exists
 	fileContent, _, _, err := gm.Client.Repositories.GetContents(gm.Ctx, owner, repo, "vault.dat", nil)
 	var sha *string
 	if err == nil && fileContent != nil {
@@ -413,9 +408,9 @@ func (gm *GitHubManager) UploadVault(vaultPath string, customKey string) (string
 	}
 
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.String("update vault"),
-		Content: content,
-		SHA:     sha,
+		Message:	github.String("update vault"),
+		Content:	content,
+		SHA:	sha,
 	}
 
 	_, _, err = gm.Client.Repositories.UpdateFile(gm.Ctx, owner, repo, "vault.dat", opts)
@@ -466,7 +461,7 @@ func (gm *GitHubManager) DeleteVault(fileID string) error {
 }
 
 func (gm *GitHubManager) ResolveKeyToID(key string) (string, error) {
-	// For GitHub, the "key" is expected to be the owner/repo string
+
 	return key, nil
 }
 
