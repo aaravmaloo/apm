@@ -13,17 +13,17 @@ import (
 )
 
 const (
-	saltSize   = 32
-	keySize    = 32
-	nonceSize  = 12
-	iterations = 3
-	memory     = 64 * 1024
-	threads    = 4
+	saltSize	= 32
+	keySize	= 32
+	nonceSize	= 12
+	iterations	= 3
+	memory	= 64 * 1024
+	threads	= 4
 )
 
 type DerivedKeys struct {
-	EncryptionKey []byte
-	AuthKey       []byte
+	EncryptionKey	[]byte
+	AuthKey	[]byte
 }
 
 func GenerateSalt() ([]byte, error) {
@@ -45,8 +45,8 @@ func DeriveKeys(password string, salt []byte, costMultiplier int) DerivedKeys {
 	derivedKey := argon2.IDKey([]byte(password), salt, iter, mem, uint8(threads), 64)
 
 	return DerivedKeys{
-		EncryptionKey: derivedKey[:32],
-		AuthKey:       derivedKey[32:64],
+		EncryptionKey:	derivedKey[:32],
+		AuthKey:	derivedKey[32:64],
 	}
 }
 
