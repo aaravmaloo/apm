@@ -11,14 +11,14 @@ import (
 )
 
 type TeamSession struct {
-	UserID       string          `json:"user_id"`
-	Username     string          `json:"username"`
-	Role         Role            `json:"role"`
-	ActiveDeptID string          `json:"active_dept_id"`
-	DeptKey      []byte          `json:"dept_key"`
-	OrgID        string          `json:"org_id"`
-	Expiry       time.Time       `json:"expiry"`
-	Permissions  map[string]bool `json:"permissions"`
+	UserID	string		`json:"user_id"`
+	Username	string		`json:"username"`
+	Role	Role		`json:"role"`
+	ActiveDeptID	string		`json:"active_dept_id"`
+	DeptKey	[]byte		`json:"dept_key"`
+	OrgID	string		`json:"org_id"`
+	Expiry	time.Time		`json:"expiry"`
+	Permissions	map[string]bool		`json:"permissions"`
 }
 
 var SessionFile string
@@ -30,14 +30,14 @@ func init() {
 
 func CreateSession(user TeamUser, deptKey []byte, orgID string) error {
 	session := TeamSession{
-		UserID:       user.ID,
-		Username:     user.Username,
-		Role:         user.Role,
-		ActiveDeptID: user.ActiveDepartmentID,
-		DeptKey:      deptKey,
-		OrgID:        orgID,
-		Expiry:       time.Now().Add(15 * time.Minute),
-		Permissions:  user.Permissions,
+		UserID:	user.ID,
+		Username:	user.Username,
+		Role:	user.Role,
+		ActiveDeptID:	user.ActiveDepartmentID,
+		DeptKey:	deptKey,
+		OrgID:	orgID,
+		Expiry:	time.Now().Add(15 * time.Minute),
+		Permissions:	user.Permissions,
 	}
 
 	data, err := json.Marshal(session)
