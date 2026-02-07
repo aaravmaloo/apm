@@ -26,13 +26,13 @@ type MCPAuthConfig struct {
 }
 
 type MCPToken struct {
-	Name	string		`json:"name"`
-	Token	string		`json:"token"`
-	Permissions	[]string		`json:"permissions"`
-	CreatedAt	time.Time		`json:"created_at"`
-	ExpiresAt	time.Time		`json:"expires_at,omitempty"`
-	LastUsedAt	time.Time		`json:"last_used_at,omitempty"`
-	UsageCount	int		`json:"usage_count"`
+	Name        string    `json:"name"`
+	Token       string    `json:"token"`
+	Permissions []string  `json:"permissions"`
+	CreatedAt   time.Time `json:"created_at"`
+	ExpiresAt   time.Time `json:"expires_at,omitempty"`
+	LastUsedAt  time.Time `json:"last_used_at,omitempty"`
+	UsageCount  int       `json:"usage_count"`
 }
 
 func getMCPConfigFile() string {
@@ -87,11 +87,11 @@ func GenerateMCPToken(name string, permissions []string, expiryMinutes int) (str
 	}
 
 	config.Tokens[token] = MCPToken{
-		Name:	name,
-		Token:	token,
-		Permissions:	permissions,
-		CreatedAt:	time.Now(),
-		ExpiresAt:	expiresAt,
+		Name:        name,
+		Token:       token,
+		Permissions: permissions,
+		CreatedAt:   time.Now(),
+		ExpiresAt:   expiresAt,
 	}
 
 	if err := SaveMCPConfig(config); err != nil {
@@ -169,14 +169,14 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	SaveMCPConfig(config)
 
 	s := mcp.NewServer(&mcp.Implementation{
-		Name:	"APM-Server",
-		Version:	"1.3.0",
+		Name:    "APM-Server",
+		Version: "1.3.0",
 	}, nil)
 
 	s.AddTool(&mcp.Tool{
-		Name:	"check_installation",
-		Description:	"Check if apm is installed and initialized on the system",
-		InputSchema:	map[string]any{"type": "object", "properties": map[string]any{}},
+		Name:        "check_installation",
+		Description: "Check if apm is installed and initialized on the system",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		_, err := exec.LookPath("apm")
 		installed := err == nil
@@ -195,10 +195,10 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"install_apm",
-		Description:	"Install and initialize APM (requires LLM help/interaction)",
+		Name:        "install_apm",
+		Description: "Install and initialize APM (requires LLM help/interaction)",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
 				"master_password": map[string]any{"type": "string"},
 			},
@@ -211,9 +211,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"list_vault",
-		Description:	"List all entries in the vault by category",
-		InputSchema:	map[string]any{"type": "object"},
+		Name:        "list_vault",
+		Description: "List all entries in the vault by category",
+		InputSchema: map[string]any{"type": "object"},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "read") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
@@ -259,32 +259,36 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		addSection("Cloud Credentials", vault.CloudCredentialsItems, "Label")
 		addSection("K8s Secrets", vault.K8sSecrets, "Name")
 		addSection("Docker Registries", vault.DockerRegistries, "Name")
-		addSection("SSH Configs", vault.SSHConfigs, "Name")
+		addSection("SSH Configs", vault.SSHConfigs, "Alias")
 		addSection("CI/CD Secrets", vault.CICDSecrets, "Name")
-		addSection("Licenses", vault.SoftwareLicenses, "Name")
+		addSection("Licenses", vault.SoftwareLicenses, "ProductName")
 		addSection("Contracts", vault.LegalContracts, "Name")
+		addSection("Tokens", vault.Tokens, "Name")
+		addSection("Audio Files", vault.AudioFiles, "Name")
+		addSection("Video Files", vault.VideoFiles, "Name")
+		addSection("Photo Files", vault.PhotoFiles, "Name")
 
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: sb.String()}}}, nil
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"get_entry",
-		Description:	"Get the full details (including secrets) for any vault entry by name. You can optionally specify a category to narrow down the search.",
+		Name:        "get_entry",
+		Description: "Get the full details (including secrets) for any vault entry by name. You can optionally specify a category to narrow down the search.",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"name":	map[string]any{"type": "string"},
-				"category":	map[string]any{"type": "string", "description": "Optional category hint (e.g., 'password', 'totp', 'banking', 'recovery_code', etc.)"},
+				"name":     map[string]any{"type": "string"},
+				"category": map[string]any{"type": "string", "description": "Optional category hint (e.g., 'password', 'totp', 'banking', 'recovery_code', etc.)"},
 			},
-			"required":	[]string{"name"},
+			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "secrets") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Name	string		`json:"name"`
-			Category	string		`json:"category"`
+			Name     string `json:"name"`
+			Category string `json:"category"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -330,10 +334,14 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			searchIn(vault.CloudCredentialsItems, "Cloud", "Label") ||
 			searchIn(vault.K8sSecrets, "K8s Secret", "Name") ||
 			searchIn(vault.DockerRegistries, "Docker", "Name") ||
-			searchIn(vault.SSHConfigs, "SSH Config", "Name") ||
+			searchIn(vault.SSHConfigs, "SSH Config", "Alias") ||
 			searchIn(vault.CICDSecrets, "CI/CD", "Name") ||
-			searchIn(vault.SoftwareLicenses, "License", "Name") ||
-			searchIn(vault.LegalContracts, "Contract", "Name")
+			searchIn(vault.SoftwareLicenses, "License", "ProductName") ||
+			searchIn(vault.LegalContracts, "Contract", "Name") ||
+			searchIn(vault.Tokens, "Token", "Name") ||
+			searchIn(vault.AudioFiles, "Audio", "Name") ||
+			searchIn(vault.VideoFiles, "Video", "Name") ||
+			searchIn(vault.PhotoFiles, "Photo", "Name")
 
 		if !found {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found"}}}, nil
@@ -351,14 +359,14 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"search_vault",
-		Description:	"Search for a keyword across all vault entries and categories",
+		Name:        "search_vault",
+		Description: "Search for a keyword across all vault entries and categories",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
 				"query": map[string]any{"type": "string"},
 			},
-			"required":	[]string{"query"},
+			"required": []string{"query"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "read") {
@@ -401,6 +409,10 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		searchSlice(vault.TravelDocs, "Travel")
 		searchSlice(vault.Documents, "Document")
 		searchSlice(vault.Contacts, "Contact")
+		searchSlice(vault.Tokens, "Token")
+		searchSlice(vault.AudioFiles, "Audio")
+		searchSlice(vault.VideoFiles, "Video")
+		searchSlice(vault.PhotoFiles, "Photo")
 
 		if len(results) == 0 {
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "No matches found"}}}, nil
@@ -409,23 +421,23 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"decrypt_entry",
-		Description:	"Decrypt an entry using a provided reference key (from get_entry)",
+		Name:        "decrypt_entry",
+		Description: "Decrypt an entry using a provided reference key (from get_entry)",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"path":	map[string]any{"type": "string"},
-				"reference":	map[string]any{"type": "string"},
+				"path":      map[string]any{"type": "string"},
+				"reference": map[string]any{"type": "string"},
 			},
-			"required":	[]string{"path", "reference"},
+			"required": []string{"path", "reference"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "secrets") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Path	string		`json:"path"`
-			Reference	string		`json:"reference"`
+			Path      string `json:"path"`
+			Reference string `json:"reference"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -450,14 +462,14 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"get_totp",
-		Description:	"Get the current TOTP code for a vault entry",
+		Name:        "get_totp",
+		Description: "Get the current TOTP code for a vault entry",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
 				"name": map[string]any{"type": "string"},
 			},
-			"required":	[]string{"name"},
+			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "secrets") {
@@ -484,33 +496,137 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"add_entry",
-		Description:	"Add a new entry to the vault",
+		Name:        "add_entry",
+		Description: "Add a new entry to the vault",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"type":	map[string]any{"type": "string", "enum": []string{"password", "totp", "note"}},
-				"name":	map[string]any{"type": "string"},
-				"username":	map[string]any{"type": "string"},
-				"password":	map[string]any{"type": "string"},
-				"secret":	map[string]any{"type": "string"},
-				"content":	map[string]any{"type": "string"},
-				"space":	map[string]any{"type": "string"},
+				"type": map[string]any{"type": "string", "enum": []string{
+					"password", "totp", "token", "note", "api_key", "ssh_key", "wifi", "recovery_code", "certificate", "banking",
+					"document", "gov_id", "medical", "travel", "contact", "cloud", "k8s_secret", "docker", "ssh_config", "cicd",
+					"license", "contract", "audio", "video", "photo",
+				}},
+				"name":          map[string]any{"type": "string"},
+				"username":      map[string]any{"type": "string"},
+				"password":      map[string]any{"type": "string"},
+				"secret":        map[string]any{"type": "string"},
+				"content":       map[string]any{"type": "string"},
+				"space":         map[string]any{"type": "string"},
+				"service":       map[string]any{"type": "string"},
+				"key":           map[string]any{"type": "string"},
+				"token_val":     map[string]any{"type": "string"},
+				"token_type":    map[string]any{"type": "string"},
+				"ssid":          map[string]any{"type": "string"},
+				"security":      map[string]any{"type": "string"},
+				"router_ip":     map[string]any{"type": "string"},
+				"codes":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"issuer":        map[string]any{"type": "string"},
+				"expiry":        map[string]any{"type": "string", "description": "YYYY-MM-DD or standard string"},
+				"label":         map[string]any{"type": "string"},
+				"bank_type":     map[string]any{"type": "string"},
+				"details":       map[string]any{"type": "string"},
+				"cvv":           map[string]any{"type": "string"},
+				"id_number":     map[string]any{"type": "string"},
+				"id_type":       map[string]any{"type": "string"},
+				"full_name":     map[string]any{"type": "string"},
+				"insurance_id":  map[string]any{"type": "string"},
+				"prescriptions": map[string]any{"type": "string"},
+				"allergies":     map[string]any{"type": "string"},
+				"ticket_number": map[string]any{"type": "string"},
+				"booking_code":  map[string]any{"type": "string"},
+				"loyalty":       map[string]any{"type": "string"},
+				"phone":         map[string]any{"type": "string"},
+				"email":         map[string]any{"type": "string"},
+				"address":       map[string]any{"type": "string"},
+				"emergency":     map[string]any{"type": "boolean"},
+				"access_key":    map[string]any{"type": "string"},
+				"secret_key":    map[string]any{"type": "string"},
+				"region":        map[string]any{"type": "string"},
+				"account_id":    map[string]any{"type": "string"},
+				"role":          map[string]any{"type": "string"},
+				"cluster_url":   map[string]any{"type": "string"},
+				"namespace":     map[string]any{"type": "string"},
+				"registry_url":  map[string]any{"type": "string"},
+				"alias":         map[string]any{"type": "string"},
+				"host":          map[string]any{"type": "string"},
+				"port":          map[string]any{"type": "string"},
+				"key_path":      map[string]any{"type": "string"},
+				"fingerprint":   map[string]any{"type": "string"},
+				"webhook":       map[string]any{"type": "string"},
+				"env_vars":      map[string]any{"type": "string"},
+				"product_name":  map[string]any{"type": "string"},
+				"serial_key":    map[string]any{"type": "string"},
+				"activation":    map[string]any{"type": "string"},
+				"summary":       map[string]any{"type": "string"},
+				"parties":       map[string]any{"type": "string"},
+				"signed_date":   map[string]any{"type": "string"},
+				"file_name":     map[string]any{"type": "string"},
+				"tags":          map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 			},
-			"required":	[]string{"type", "name"},
+			"required": []string{"type", "name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "write") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Type	string		`json:"type"`
-			Name	string		`json:"name"`
-			Username	string		`json:"username"`
-			Password	string		`json:"password"`
-			Secret	string		`json:"secret"`
-			Content	string		`json:"content"`
-			Space	string		`json:"space"`
+			Type          string   `json:"type"`
+			Name          string   `json:"name"`
+			Username      string   `json:"username"`
+			Password      string   `json:"password"`
+			Secret        string   `json:"secret"`
+			Content       string   `json:"content"`
+			Space         string   `json:"space"`
+			Service       string   `json:"service"`
+			Key           string   `json:"key"`
+			TokenVal      string   `json:"token_val"`
+			TokenType     string   `json:"token_type"`
+			SSID          string   `json:"ssid"`
+			Security      string   `json:"security"`
+			RouterIP      string   `json:"router_ip"`
+			Codes         []string `json:"codes"`
+			Issuer        string   `json:"issuer"`
+			Expiry        string   `json:"expiry"`
+			Label         string   `json:"label"`
+			BankType      string   `json:"bank_type"`
+			Details       string   `json:"details"`
+			CVV           string   `json:"cvv"`
+			IDNumber      string   `json:"id_number"`
+			IDType        string   `json:"id_type"`
+			FullName      string   `json:"full_name"`
+			InsuranceID   string   `json:"insurance_id"`
+			Prescriptions string   `json:"prescriptions"`
+			Allergies     string   `json:"allergies"`
+			TicketNumber  string   `json:"ticket_number"`
+			BookingCode   string   `json:"booking_code"`
+			Loyalty       string   `json:"loyalty"`
+			Phone         string   `json:"phone"`
+			Email         string   `json:"email"`
+			Address       string   `json:"address"`
+			Emergency     bool     `json:"emergency"`
+			AccessKey     string   `json:"access_key"`
+			SecretKey     string   `json:"secret_key"`
+			Region        string   `json:"region"`
+			AccountID     string   `json:"account_id"`
+			Role          string   `json:"role"`
+			ClusterURL    string   `json:"cluster_url"`
+			Namespace     string   `json:"namespace"`
+			RegistryURL   string   `json:"registry_url"`
+			Alias         string   `json:"alias"`
+			Host          string   `json:"host"`
+			Port          string   `json:"port"`
+			KeyPath       string   `json:"key_path"`
+			Fingerprint   string   `json:"fingerprint"`
+			Webhook       string   `json:"webhook"`
+			EnvVars       string   `json:"env_vars"`
+			ProductName   string   `json:"product_name"`
+			SerialKey     string   `json:"serial_key"`
+			Activation    string   `json:"activation"`
+			Summary       string   `json:"summary"`
+			Parties       string   `json:"parties"`
+			SignedDate    string   `json:"signed_date"`
+			FileName      string   `json:"file_name"`
+			Tags          []string `json:"tags"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -519,14 +635,75 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Vault Error: %v", err)}}}, nil
 		}
 
+		if args.Space == "default" {
+			args.Space = ""
+		}
+		vault.CurrentSpace = args.Space
+
+		var opErr error
 		switch args.Type {
 		case "password":
-			vault.Entries = append(vault.Entries, Entry{Account: args.Name, Username: args.Username, Password: args.Password, Space: args.Space})
-
+			opErr = vault.AddEntry(args.Name, args.Username, args.Password)
 		case "totp":
-			vault.TOTPEntries = append(vault.TOTPEntries, TOTPEntry{Account: args.Name, Secret: args.Secret, Space: args.Space})
+			opErr = vault.AddTOTPEntry(args.Name, args.Secret)
 		case "note":
-			vault.SecureNotes = append(vault.SecureNotes, SecureNoteEntry{Name: args.Name, Content: args.Content, Space: args.Space})
+			opErr = vault.AddSecureNote(args.Name, args.Content)
+		case "token":
+			opErr = vault.AddToken(args.Name, args.TokenVal, args.TokenType)
+		case "api_key":
+			opErr = vault.AddAPIKey(args.Name, args.Service, args.Key)
+		case "ssh_key":
+			opErr = vault.AddSSHKey(args.Name, args.Content)
+		case "wifi":
+			opErr = vault.AddWiFi(args.SSID, args.Password, args.Security)
+			if opErr == nil && args.RouterIP != "" {
+				for i, w := range vault.WiFiCredentials {
+					if w.SSID == args.SSID {
+						vault.WiFiCredentials[i].RouterIP = args.RouterIP
+					}
+				}
+			}
+		case "recovery_code":
+			opErr = vault.AddRecoveryCode(args.Service, args.Codes)
+		case "certificate":
+			exp, _ := time.Parse("2006-01-02", args.Expiry)
+			opErr = vault.AddCertificate(args.Label, args.Content, args.Key, args.Issuer, exp)
+		case "banking":
+			opErr = vault.AddBankingItem(args.Label, args.BankType, args.Details, args.CVV, args.Expiry)
+		case "gov_id":
+			opErr = vault.AddGovID(GovIDEntry{Type: args.IDType, IDNumber: args.IDNumber, Name: args.FullName, Expiry: args.Expiry})
+		case "medical":
+			opErr = vault.AddMedicalRecord(MedicalRecordEntry{Label: args.Label, InsuranceID: args.InsuranceID, Prescriptions: args.Prescriptions, Allergies: args.Allergies})
+		case "travel":
+			opErr = vault.AddTravelDoc(TravelEntry{Label: args.Label, TicketNumber: args.TicketNumber, BookingCode: args.BookingCode, LoyaltyProgram: args.Loyalty})
+		case "contact":
+			opErr = vault.AddContact(ContactEntry{Name: args.Name, Phone: args.Phone, Email: args.Email, Address: args.Address, Emergency: args.Emergency})
+		case "cloud":
+			opErr = vault.AddCloudCredential(CloudCredentialEntry{Label: args.Label, AccessKey: args.AccessKey, SecretKey: args.SecretKey, Region: args.Region, AccountID: args.AccountID, Role: args.Role, Expiration: args.Expiry})
+		case "k8s_secret":
+			opErr = vault.AddK8sSecret(K8sSecretEntry{Name: args.Name, ClusterURL: args.ClusterURL, K8sNamespace: args.Namespace, Expiration: args.Expiry})
+		case "docker":
+			opErr = vault.AddDockerRegistry(DockerRegistryEntry{Name: args.Name, RegistryURL: args.RegistryURL, Username: args.Username, Token: args.TokenVal})
+		case "ssh_config":
+			opErr = vault.AddSSHConfig(SSHConfigEntry{Alias: args.Alias, Host: args.Host, User: args.Username, Port: args.Port, KeyPath: args.KeyPath, PrivateKey: args.Content, Fingerprint: args.Fingerprint})
+		case "cicd":
+			opErr = vault.AddCICDSecret(CICDSecretEntry{Name: args.Name, Webhook: args.Webhook, EnvVars: args.EnvVars})
+		case "license":
+			opErr = vault.AddSoftwareLicense(SoftwareLicenseEntry{ProductName: args.ProductName, SerialKey: args.SerialKey, ActivationInfo: args.Activation, Expiration: args.Expiry})
+		case "contract":
+			opErr = vault.AddLegalContract(LegalContractEntry{Name: args.Name, Summary: args.Summary, PartiesInvolved: args.Parties, SignedDate: args.SignedDate})
+		case "document":
+			opErr = vault.AddDocument(args.Name, args.FileName, []byte(args.Content), args.Password, args.Tags, args.Expiry)
+		case "audio":
+			opErr = vault.AddAudio(args.Name, args.FileName, []byte(args.Content))
+		case "video":
+			opErr = vault.AddVideo(args.Name, args.FileName, []byte(args.Content))
+		case "photo":
+			opErr = vault.AddPhoto(args.Name, args.FileName, []byte(args.Content))
+		}
+
+		if opErr != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Operation failed: %v", opErr)}}}, nil
 		}
 
 		if err := saveVault(vault, masterPwd, vaultPath); err != nil {
@@ -537,12 +714,12 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"delete_entry",
-		Description:	"Remove an entry from the vault",
+		Name:        "delete_entry",
+		Description: "Remove an entry from the vault",
 		InputSchema: map[string]any{
-			"type":	"object",
-			"properties":	map[string]any{"name": map[string]any{"type": "string"}},
-			"required":	[]string{"name"},
+			"type":       "object",
+			"properties": map[string]any{"name": map[string]any{"type": "string"}},
+			"required":   []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "write") {
@@ -567,33 +744,37 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"edit_entry",
-		Description:	"Edit an existing entry in the vault",
+		Name:        "edit_entry",
+		Description: "Edit an existing entry in the vault",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"type":	map[string]any{"type": "string", "enum": []string{"password", "totp", "note"}},
-				"name":	map[string]any{"type": "string"},
-				"username":	map[string]any{"type": "string"},
-				"password":	map[string]any{"type": "string"},
-				"secret":	map[string]any{"type": "string"},
-				"content":	map[string]any{"type": "string"},
-				"space":	map[string]any{"type": "string"},
+				"type": map[string]any{"type": "string", "enum": []string{
+					"password", "totp", "token", "note", "api_key", "ssh_key", "wifi", "recovery_code", "certificate", "banking",
+					"document", "gov_id", "medical", "travel", "contact", "cloud", "k8s_secret", "docker", "ssh_config", "cicd",
+					"license", "contract", "audio", "video", "photo",
+				}},
+				"name":     map[string]any{"type": "string"},
+				"username": map[string]any{"type": "string"},
+				"password": map[string]any{"type": "string"},
+				"secret":   map[string]any{"type": "string"},
+				"content":  map[string]any{"type": "string"},
+				"space":    map[string]any{"type": "string"},
 			},
-			"required":	[]string{"type", "name"},
+			"required": []string{"type", "name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "write") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Type	string		`json:"type"`
-			Name	string		`json:"name"`
-			Username	string		`json:"username"`
-			Password	string		`json:"password"`
-			Secret	string		`json:"secret"`
-			Content	string		`json:"content"`
-			Space	string		`json:"space"`
+			Type     string `json:"type"`
+			Name     string `json:"name"`
+			Username string `json:"username"`
+			Password string `json:"password"`
+			Secret   string `json:"secret"`
+			Content  string `json:"content"`
+			Space    string `json:"space"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -602,19 +783,21 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Vault Error"}}}, nil
 		}
 
+		if args.Space == "default" {
+			args.Space = ""
+		}
+		vault.CurrentSpace = args.Space
+
 		updated := false
 		switch args.Type {
 		case "password":
 			for i, e := range vault.Entries {
-				if e.Account == args.Name {
+				if e.Account == args.Name && e.Space == vault.CurrentSpace {
 					if args.Username != "" {
 						vault.Entries[i].Username = args.Username
 					}
 					if args.Password != "" {
 						vault.Entries[i].Password = args.Password
-					}
-					if args.Space != "" {
-						vault.Entries[i].Space = args.Space
 					}
 					updated = true
 					break
@@ -622,12 +805,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			}
 		case "totp":
 			for i, e := range vault.TOTPEntries {
-				if e.Account == args.Name {
+				if e.Account == args.Name && e.Space == vault.CurrentSpace {
 					if args.Secret != "" {
 						vault.TOTPEntries[i].Secret = args.Secret
-					}
-					if args.Space != "" {
-						vault.TOTPEntries[i].Space = args.Space
 					}
 					updated = true
 					break
@@ -635,12 +815,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			}
 		case "note":
 			for i, e := range vault.SecureNotes {
-				if e.Name == args.Name {
+				if e.Name == args.Name && e.Space == vault.CurrentSpace {
 					if args.Content != "" {
 						vault.SecureNotes[i].Content = args.Content
-					}
-					if args.Space != "" {
-						vault.SecureNotes[i].Space = args.Space
 					}
 					updated = true
 					break
@@ -649,7 +826,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		}
 
 		if !updated {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found"}}}, nil
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found or editing not fully implemented for this type via MCP yet"}}}, nil
 		}
 
 		saveVault(vault, masterPwd, vaultPath)
@@ -658,23 +835,23 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"manage_profiles",
-		Description:	"List or configure encryption profiles",
+		Name:        "manage_profiles",
+		Description: "List or configure encryption profiles",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"action":	map[string]any{"type": "string", "enum": []string{"list", "set"}},
-				"profile":	map[string]any{"type": "string"},
+				"action":  map[string]any{"type": "string", "enum": []string{"list", "set"}},
+				"profile": map[string]any{"type": "string"},
 			},
-			"required":	[]string{"action"},
+			"required": []string{"action"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "admin") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Action	string		`json:"action"`
-			Profile	string		`json:"profile"`
+			Action  string `json:"action"`
+			Profile string `json:"profile"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -708,23 +885,23 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"manage_spaces",
-		Description:	"List, create or switch spaces",
+		Name:        "manage_spaces",
+		Description: "List, create or switch spaces",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"action":	map[string]any{"type": "string", "enum": []string{"list", "add", "switch"}},
-				"name":	map[string]any{"type": "string"},
+				"action": map[string]any{"type": "string", "enum": []string{"list", "add", "switch"}},
+				"name":   map[string]any{"type": "string"},
 			},
-			"required":	[]string{"action"},
+			"required": []string{"action"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "write") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Action	string		`json:"action"`
-			Name	string		`json:"name"`
+			Action string `json:"action"`
+			Name   string `json:"name"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -754,10 +931,14 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 					break
 				}
 			}
-			if !found && args.Name != "" {
+			if !found && args.Name != "" && args.Name != "default" {
 				return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Space not found"}}}, nil
 			}
-			vault.CurrentSpace = args.Name
+			if args.Name == "default" {
+				vault.CurrentSpace = ""
+			} else {
+				vault.CurrentSpace = args.Name
+			}
 			saveVault(vault, masterPwd, vaultPath)
 			LogAction("MCP_SPACE_SWITCHED", fmt.Sprintf("Switched to space %s", args.Name))
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Switched to %s", args.Name)}}}, nil
@@ -767,25 +948,25 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"cloud_config",
-		Description:	"Configure cloud sync credentials",
+		Name:        "cloud_config",
+		Description: "Configure cloud sync credentials",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
-				"provider":	map[string]any{"type": "string", "enum": []string{"gdrive", "github"}},
-				"token":	map[string]any{"type": "string"},
-				"repo":	map[string]any{"type": "string"},
+				"provider": map[string]any{"type": "string", "enum": []string{"gdrive", "github"}},
+				"token":    map[string]any{"type": "string"},
+				"repo":     map[string]any{"type": "string"},
 			},
-			"required":	[]string{"provider", "token"},
+			"required": []string{"provider", "token"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "admin") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
-			Provider	string		`json:"provider"`
-			Token	string		`json:"token"`
-			Repo	string		`json:"repo"`
+			Provider string `json:"provider"`
+			Token    string `json:"token"`
+			Repo     string `json:"repo"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
@@ -809,10 +990,10 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"get_history",
-		Description:	"View vault item history (audit logs for specific items)",
+		Name:        "get_history",
+		Description: "View vault item history (audit logs for specific items)",
 		InputSchema: map[string]any{
-			"type":	"object",
+			"type": "object",
 			"properties": map[string]any{
 				"limit": map[string]any{"type": "integer"},
 			},
@@ -849,9 +1030,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"generate_password",
-		Description:	"Generate a secure random password",
-		InputSchema:	map[string]any{"type": "object", "properties": map[string]any{"length": map[string]any{"type": "integer"}}},
+		Name:        "generate_password",
+		Description: "Generate a secure random password",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"length": map[string]any{"type": "integer"}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var args struct {
 			Length int `json:"length"`
@@ -872,9 +1053,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	}
 
 	s.AddTool(&mcp.Tool{
-		Name:	"list_plugins",
-		Description:	"List installed plugins",
-		InputSchema:	map[string]any{"type": "object"},
+		Name:        "list_plugins",
+		Description: "List installed plugins",
+		InputSchema: map[string]any{"type": "object"},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "read") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
@@ -888,9 +1069,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"install_plugin",
-		Description:	"Install a plugin from Marketplace",
-		InputSchema:	map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}},
+		Name:        "install_plugin",
+		Description: "Install a plugin from Marketplace",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "write") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
@@ -920,9 +1101,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"cloud_sync",
-		Description:	"Trigger cloud sync",
-		InputSchema:	map[string]any{"type": "object", "properties": map[string]any{"provider": map[string]any{"type": "string", "enum": []string{"gdrive", "github"}}}, "required": []string{"provider"}},
+		Name:        "cloud_sync",
+		Description: "Trigger cloud sync",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"provider": map[string]any{"type": "string", "enum": []string{"gdrive", "github"}}}, "required": []string{"provider"}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "write") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
@@ -966,9 +1147,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	})
 
 	s.AddTool(&mcp.Tool{
-		Name:	"get_audit_logs",
-		Description:	"Retrieve recent audit logs",
-		InputSchema:	map[string]any{"type": "object", "properties": map[string]any{"limit": map[string]any{"type": "integer"}}},
+		Name:        "get_audit_logs",
+		Description: "Retrieve recent audit logs",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"limit": map[string]any{"type": "integer"}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if !hasPermission(mcpToken.Permissions, "admin") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
