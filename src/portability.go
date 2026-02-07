@@ -11,26 +11,26 @@ import (
 )
 
 type ExportData struct {
-	Entries           []Entry             `json:"entries"`
-	TOTPEntries       []TOTPEntry         `json:"totp_entries"`
-	Tokens            []TokenEntry        `json:"tokens"`
-	SecureNotes       []SecureNoteEntry   `json:"secure_notes"`
-	APIKeys           []APIKeyEntry       `json:"api_keys"`
-	SSHKeys           []SSHKeyEntry       `json:"ssh_keys"`
-	WiFiCredentials   []WiFiEntry         `json:"wifi_credentials"`
-	RecoveryCodeItems []RecoveryCodeEntry `json:"recovery_codes"`
+	Entries	[]Entry		`json:"entries"`
+	TOTPEntries	[]TOTPEntry		`json:"totp_entries"`
+	Tokens	[]TokenEntry		`json:"tokens"`
+	SecureNotes	[]SecureNoteEntry		`json:"secure_notes"`
+	APIKeys	[]APIKeyEntry		`json:"api_keys"`
+	SSHKeys	[]SSHKeyEntry		`json:"ssh_keys"`
+	WiFiCredentials	[]WiFiEntry		`json:"wifi_credentials"`
+	RecoveryCodeItems	[]RecoveryCodeEntry		`json:"recovery_codes"`
 }
 
 func ExportToJSON(vault *Vault, filename string, encryptPass string) error {
 	data := ExportData{
-		Entries:           vault.Entries,
-		TOTPEntries:       vault.TOTPEntries,
-		Tokens:            vault.Tokens,
-		SecureNotes:       vault.SecureNotes,
-		APIKeys:           vault.APIKeys,
-		SSHKeys:           vault.SSHKeys,
-		WiFiCredentials:   vault.WiFiCredentials,
-		RecoveryCodeItems: vault.RecoveryCodeItems,
+		Entries:	vault.Entries,
+		TOTPEntries:	vault.TOTPEntries,
+		Tokens:	vault.Tokens,
+		SecureNotes:	vault.SecureNotes,
+		APIKeys:	vault.APIKeys,
+		SSHKeys:	vault.SSHKeys,
+		WiFiCredentials:	vault.WiFiCredentials,
+		RecoveryCodeItems:	vault.RecoveryCodeItems,
 	}
 	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
