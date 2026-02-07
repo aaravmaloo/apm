@@ -10,27 +10,27 @@ import (
 )
 
 type PasswordPolicy struct {
-	MinLength      int  `yaml:"min_length"`
-	RequireUpper   bool `yaml:"require_uppercase"`
-	RequireNumbers bool `yaml:"require_numbers"`
-	RequireSymbols bool `yaml:"require_symbols"`
+	MinLength	int		`yaml:"min_length"`
+	RequireUpper	bool		`yaml:"require_uppercase"`
+	RequireNumbers	bool		`yaml:"require_numbers"`
+	RequireSymbols	bool		`yaml:"require_symbols"`
 }
 
 type RotationPolicy struct {
-	RotateEveryDays  int `yaml:"rotate_every_days"`
-	NotifyBeforeDays int `yaml:"notify_before_days"`
+	RotateEveryDays	int		`yaml:"rotate_every_days"`
+	NotifyBeforeDays	int		`yaml:"notify_before_days"`
 }
 
 type Classification struct {
-	MaxAccessLevel string `yaml:"max_access_level"`
-	MFARequired    bool   `yaml:"mfa_required"`
+	MaxAccessLevel	string		`yaml:"max_access_level"`
+	MFARequired	bool		`yaml:"mfa_required"`
 }
 
 type Policy struct {
-	Name           string                    `yaml:"name"`
-	PasswordPolicy PasswordPolicy            `yaml:"password_policy"`
-	RotationPolicy RotationPolicy            `yaml:"rotation_policy"`
-	Classification map[string]Classification `yaml:"classification"`
+	Name	string		`yaml:"name"`
+	PasswordPolicy	PasswordPolicy		`yaml:"password_policy"`
+	RotationPolicy	RotationPolicy		`yaml:"rotation_policy"`
+	Classification	map[string]Classification		`yaml:"classification"`
 }
 
 func (p *PasswordPolicy) Validate(password string) error {
