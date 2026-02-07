@@ -29,9 +29,10 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 	version := data[offset]
 	offset++
 
-	if version == 1 {
+	switch version {
+	case 1:
 		return ProfileStandard, 1, nil
-	} else if version == 2 {
+	case 2:
 		if offset >= len(data) {
 			return CryptoProfile{}, 0, errors.New("short header")
 		}
@@ -42,7 +43,7 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 		}
 		name := string(data[offset : offset+nameLen])
 		return GetProfile(name), 2, nil
-	} else if version == 3 || version == 4 {
+	case 3, 4:
 		if offset+2 > len(data) {
 			return CryptoProfile{}, 0, errors.New("short header")
 		}
@@ -51,284 +52,289 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 		if offset+pLen > len(data) {
 			return CryptoProfile{}, 0, errors.New("short header")
 		}
+		pBytes := data[offset : offset+pLen]
 		var p CryptoProfile
-		if err := json.Unmarshal(data[offset:offset+pLen], &p); err != nil {
+		if err := json.Unmarshal(pBytes, &p); err != nil {
 			return CryptoProfile{}, 0, err
 		}
-		return p, 3, nil
+		return p, int(version), nil
+	default:
+		return CryptoProfile{}, 0, fmt.Errorf("unsupported version: %d", version)
 	}
-	return CryptoProfile{}, 0, fmt.Errorf("unknown version %d", version)
 }
 
 type Entry struct {
-	Account  string `json:"account"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Space    string `json:"space,omitempty"`
+	Account	string		`json:"account"`
+	Username	string		`json:"username"`
+	Password	string		`json:"password"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type TOTPEntry struct {
-	Account string `json:"account"`
-	Secret  string `json:"secret"`
-	Space   string `json:"space,omitempty"`
+	Account	string		`json:"account"`
+	Secret	string		`json:"secret"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type TokenEntry struct {
-	Name  string `json:"name"`
-	Token string `json:"token"`
-	Type  string `json:"type"`
-	Space string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	Token	string		`json:"token"`
+	Type	string		`json:"type"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type SecureNoteEntry struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-	Space   string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	Content	string		`json:"content"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type APIKeyEntry struct {
-	Name    string `json:"name"`
-	Service string `json:"service"`
-	Key     string `json:"key"`
-	Space   string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	Service	string		`json:"service"`
+	Key	string		`json:"key"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type SSHKeyEntry struct {
-	Name       string `json:"name"`
-	PrivateKey string `json:"private_key"`
-	Space      string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	PrivateKey	string		`json:"private_key"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type WiFiEntry struct {
-	SSID         string `json:"ssid"`
-	Password     string `json:"password"`
-	SecurityType string `json:"security_type"`
-	RouterIP     string `json:"router_ip"`
-	Space        string `json:"space,omitempty"`
+	SSID	string		`json:"ssid"`
+	Password	string		`json:"password"`
+	SecurityType	string		`json:"security_type"`
+	RouterIP	string		`json:"router_ip"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type GovIDEntry struct {
-	Type     string `json:"type"`
-	IDNumber string `json:"id_number"`
-	Name     string `json:"name"`
-	Expiry   string `json:"expiry"`
-	Space    string `json:"space,omitempty"`
+	Type	string		`json:"type"`
+	IDNumber	string		`json:"id_number"`
+	Name	string		`json:"name"`
+	Expiry	string		`json:"expiry"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type MedicalRecordEntry struct {
-	Label         string `json:"label"`
-	InsuranceID   string `json:"insurance_id"`
-	Prescriptions string `json:"prescriptions"`
-	Allergies     string `json:"allergies"`
-	Space         string `json:"space,omitempty"`
+	Label	string		`json:"label"`
+	InsuranceID	string		`json:"insurance_id"`
+	Prescriptions	string		`json:"prescriptions"`
+	Allergies	string		`json:"allergies"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type TravelEntry struct {
-	Label          string `json:"label"`
-	TicketNumber   string `json:"ticket_number"`
-	BookingCode    string `json:"booking_code"`
-	LoyaltyProgram string `json:"loyalty_program"`
-	Space          string `json:"Space,omitempty"`
+	Label	string		`json:"label"`
+	TicketNumber	string		`json:"ticket_number"`
+	BookingCode	string		`json:"booking_code"`
+	LoyaltyProgram	string		`json:"loyalty_program"`
+	Space	string		`json:"Space,omitempty"`
 }
 
 type ContactEntry struct {
-	Name      string `json:"name"`
-	Phone     string `json:"phone"`
-	Email     string `json:"email"`
-	Address   string `json:"address"`
-	Emergency bool   `json:"emergency"`
-	Space     string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	Phone	string		`json:"phone"`
+	Email	string		`json:"email"`
+	Address	string		`json:"address"`
+	Emergency	bool		`json:"emergency"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type CloudCredentialEntry struct {
-	Label      string `json:"label"`
-	AccessKey  string `json:"access_key"`
-	SecretKey  string `json:"secret_key"`
-	Region     string `json:"region"`
-	AccountID  string `json:"account_id"`
-	Role       string `json:"role"`
-	Expiration string `json:"expiration"`
-	Space      string `json:"space,omitempty"`
+	Label	string		`json:"label"`
+	AccessKey	string		`json:"access_key"`
+	SecretKey	string		`json:"secret_key"`
+	Region	string		`json:"region"`
+	AccountID	string		`json:"account_id"`
+	Role	string		`json:"role"`
+	Expiration	string		`json:"expiration"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type K8sSecretEntry struct {
-	Name         string `json:"name"`
-	ClusterURL   string `json:"cluster_url"`
-	K8sNamespace string `json:"namespace"`
-	Expiration   string `json:"expiration"`
-	Space        string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	ClusterURL	string		`json:"cluster_url"`
+	K8sNamespace	string		`json:"namespace"`
+	Expiration	string		`json:"expiration"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type DockerRegistryEntry struct {
-	Name        string `json:"name"`
-	RegistryURL string `json:"registry_url"`
-	Username    string `json:"username"`
-	Token       string `json:"token"`
-	Space       string `json:"Space,omitempty"`
+	Name	string		`json:"name"`
+	RegistryURL	string		`json:"registry_url"`
+	Username	string		`json:"username"`
+	Token	string		`json:"token"`
+	Space	string		`json:"Space,omitempty"`
 }
 
 type SSHConfigEntry struct {
-	Alias       string `json:"alias"`
-	Host        string `json:"host"`
-	User        string `json:"user"`
-	Port        string `json:"port"`
-	KeyPath     string `json:"key_path"`
-	PrivateKey  string `json:"private_key"`
-	Fingerprint string `json:"fingerprint"`
-	Space       string `json:"Space,omitempty"`
+	Alias	string		`json:"alias"`
+	Host	string		`json:"host"`
+	User	string		`json:"user"`
+	Port	string		`json:"port"`
+	KeyPath	string		`json:"key_path"`
+	PrivateKey	string		`json:"private_key"`
+	Fingerprint	string		`json:"fingerprint"`
+	Space	string		`json:"Space,omitempty"`
 }
 
 type CICDSecretEntry struct {
-	Name    string `json:"name"`
-	Webhook string `json:"webhook"`
-	EnvVars string `json:"env_vars"`
-	Space   string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	Webhook	string		`json:"webhook"`
+	EnvVars	string		`json:"env_vars"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type SoftwareLicenseEntry struct {
-	ProductName    string `json:"product_name"`
-	SerialKey      string `json:"serial_key"`
-	ActivationInfo string `json:"activation_info"`
-	Expiration     string `json:"expiration"`
-	Space          string `json:"Space,omitempty"`
+	ProductName	string		`json:"product_name"`
+	SerialKey	string		`json:"serial_key"`
+	ActivationInfo	string		`json:"activation_info"`
+	Expiration	string		`json:"expiration"`
+	Space	string		`json:"Space,omitempty"`
 }
 
 type LegalContractEntry struct {
-	Name            string `json:"name"`
-	Summary         string `json:"summary"`
-	PartiesInvolved string `json:"parties_involved"`
-	SignedDate      string `json:"signed_date"`
-	Space           string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	Summary	string		`json:"summary"`
+	PartiesInvolved	string		`json:"parties_involved"`
+	SignedDate	string		`json:"signed_date"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type RecoveryCodeEntry struct {
-	Service string   `json:"service"`
-	Codes   []string `json:"codes"`
-	Space   string   `json:"space,omitempty"`
+	Service	string		`json:"service"`
+	Codes	[]string		`json:"codes"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type HistoryEntry struct {
-	Timestamp  time.Time `json:"timestamp"`
-	Action     string    `json:"action"`
-	Category   string    `json:"category"`
-	Identifier string    `json:"identifier"`
-	Hash       string    `json:"hash,omitempty"`
-	Signature  string    `json:"signature,omitempty"`
+	Timestamp	time.Time		`json:"timestamp"`
+	Action	string		`json:"action"`
+	Category	string		`json:"category"`
+	Identifier	string		`json:"identifier"`
+	Hash	string		`json:"hash,omitempty"`
+	Signature	string		`json:"signature,omitempty"`
 }
 
 type CertificateEntry struct {
-	Label      string    `json:"label"`
-	CertData   string    `json:"cert_data"`
-	PrivateKey string    `json:"private_key"`
-	Issuer     string    `json:"issuer"`
-	Expiry     time.Time `json:"expiry"`
-	Space      string    `json:"space,omitempty"`
+	Label	string		`json:"label"`
+	CertData	string		`json:"cert_data"`
+	PrivateKey	string		`json:"private_key"`
+	Issuer	string		`json:"issuer"`
+	Expiry	time.Time		`json:"expiry"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type BankingEntry struct {
-	Label    string `json:"label"`
-	Type     string `json:"type"`
-	Details  string `json:"details"`
-	CVV      string `json:"cvv,omitempty"`
-	Expiry   string `json:"expiry,omitempty"`
-	Redacted bool   `json:"redacted,omitempty"`
-	Space    string `json:"space,omitempty"`
+	Label	string		`json:"label"`
+	Type	string		`json:"type"`
+	Details	string		`json:"details"`
+	CVV	string		`json:"cvv,omitempty"`
+	Expiry	string		`json:"expiry,omitempty"`
+	Redacted	bool		`json:"redacted,omitempty"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type DocumentEntry struct {
-	Name     string   `json:"name"`
-	FileName string   `json:"file_name"`
-	Content  []byte   `json:"content"`
-	Password string   `json:"password"`
-	Tags     []string `json:"tags,omitempty"`
-	Expiry   string   `json:"expiry,omitempty"`
-	Space    string   `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	FileName	string		`json:"file_name"`
+	Content	[]byte		`json:"content"`
+	Password	string		`json:"password"`
+	Tags	[]string		`json:"tags,omitempty"`
+	Expiry	string		`json:"expiry,omitempty"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type RecoveryData struct {
-	EmailHash     []byte `json:"email_hash,omitempty"`
-	KeyHash       []byte `json:"key_hash,omitempty"`
-	DEKSlot       []byte `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
-	Salt          []byte `json:"salt,omitempty"`     // Stable salt for recovery key
-	ObfuscatedKey []byte `json:"obfuscated_key,omitempty"`
+	EmailHash	[]byte		`json:"email_hash,omitempty"`
+	KeyHash	[]byte		`json:"key_hash,omitempty"`
+	DEKSlot	[]byte		`json:"dek_slot,omitempty"`	// DEK encrypted with Recovery Key
+	Salt	[]byte		`json:"salt,omitempty"`	// Stable salt for recovery key
+	ObfuscatedKey	[]byte		`json:"obfuscated_key,omitempty"`
 }
 
 type AudioEntry struct {
-	Name     string `json:"name"`
-	FileName string `json:"file_name"`
-	Content  []byte `json:"content"`
-	Space    string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	FileName	string		`json:"file_name"`
+	Content	[]byte		`json:"content"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type VideoEntry struct {
-	Name     string `json:"name"`
-	FileName string `json:"file_name"`
-	Content  []byte `json:"content"`
-	Space    string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	FileName	string		`json:"file_name"`
+	Content	[]byte		`json:"content"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type PhotoEntry struct {
-	Name     string `json:"name"`
-	FileName string `json:"file_name"`
-	Content  []byte `json:"content"`
-	Space    string `json:"space,omitempty"`
+	Name	string		`json:"name"`
+	FileName	string		`json:"file_name"`
+	Content	[]byte		`json:"content"`
+	Space	string		`json:"space,omitempty"`
 }
 
 type Vault struct {
-	Salt                    []byte                 `json:"salt"`
-	Entries                 []Entry                `json:"entries"`
-	TOTPEntries             []TOTPEntry            `json:"totp_entries"`
-	Tokens                  []TokenEntry           `json:"tokens"`
-	SecureNotes             []SecureNoteEntry      `json:"secure_notes"`
-	APIKeys                 []APIKeyEntry          `json:"api_keys"`
-	SSHKeys                 []SSHKeyEntry          `json:"ssh_keys"`
-	WiFiCredentials         []WiFiEntry            `json:"wifi_credentials"`
-	RecoveryCodeItems       []RecoveryCodeEntry    `json:"recovery_codes"`
-	Certificates            []CertificateEntry     `json:"certificates"`
-	BankingItems            []BankingEntry         `json:"banking_items"`
-	Documents               []DocumentEntry        `json:"documents"`
-	AudioFiles              []AudioEntry           `json:"audio_files"`
-	VideoFiles              []VideoEntry           `json:"video_files"`
-	PhotoFiles              []PhotoEntry           `json:"photo_files"`
-	GovIDs                  []GovIDEntry           `json:"gov_ids"`
-	MedicalRecords          []MedicalRecordEntry   `json:"medical_records"`
-	TravelDocs              []TravelEntry          `json:"travel_docs"`
-	Contacts                []ContactEntry         `json:"contacts"`
-	CloudCredentialsItems   []CloudCredentialEntry `json:"cloud_credentials_items"`
-	K8sSecrets              []K8sSecretEntry       `json:"k8s_secrets"`
-	DockerRegistries        []DockerRegistryEntry  `json:"docker_registries"`
-	SSHConfigs              []SSHConfigEntry       `json:"ssh_configs"`
-	CICDSecrets             []CICDSecretEntry      `json:"cicd_secrets"`
-	SoftwareLicenses        []SoftwareLicenseEntry `json:"software_licenses"`
-	LegalContracts          []LegalContractEntry   `json:"legal_contracts"`
-	History                 []HistoryEntry         `json:"history"`
-	RetrievalKey            string                 `json:"retrieval_key,omitempty"`
-	CloudFileID             string                 `json:"cloud_file_id,omitempty"`
-	CloudCredentials        []byte                 `json:"cloud_credentials,omitempty"`
-	CloudToken              []byte                 `json:"cloud_token,omitempty"`
-	FailedAttempts          uint8                  `json:"failed_attempts,omitempty"`
-	EmergencyMode           bool                   `json:"emergency_mode,omitempty"`
-	Profile                 string                 `json:"profile,omitempty"`
-	AlertEmail              string                 `json:"alert_email,omitempty"`
-	AlertsEnabled           bool                   `json:"alerts_enabled,omitempty"`
-	AnomalyDetectionEnabled bool                   `json:"anomaly_detection_enabled,omitempty"`
-	LastCloudProvider       string                 `json:"last_cloud_provider,omitempty"`
-	DriveSyncMode           string                 `json:"drive_sync_mode,omitempty"` // "apm_public" or "self_hosted"
-	GitHubToken             string                 `json:"github_token,omitempty"`
-	GitHubRepo              string                 `json:"github_repo,omitempty"`
-	CurrentSpace            string                 `json:"current_space,omitempty"`
-	Spaces                  []string               `json:"spaces"`
-	ActivePolicy            Policy                 `json:"active_policy,omitempty"`
-	NeedsRepair             bool                   `json:"-"` // Internal flag for silent self-healing
+	Salt	[]byte		`json:"salt"`
+	Entries	[]Entry		`json:"entries"`
+	TOTPEntries	[]TOTPEntry		`json:"totp_entries"`
+	Tokens	[]TokenEntry		`json:"tokens"`
+	SecureNotes	[]SecureNoteEntry		`json:"secure_notes"`
+	APIKeys	[]APIKeyEntry		`json:"api_keys"`
+	SSHKeys	[]SSHKeyEntry		`json:"ssh_keys"`
+	WiFiCredentials	[]WiFiEntry		`json:"wifi_credentials"`
+	RecoveryCodeItems	[]RecoveryCodeEntry		`json:"recovery_codes"`
+	Certificates	[]CertificateEntry		`json:"certificates"`
+	BankingItems	[]BankingEntry		`json:"banking_items"`
+	Documents	[]DocumentEntry		`json:"documents"`
+	AudioFiles	[]AudioEntry		`json:"audio_files"`
+	VideoFiles	[]VideoEntry		`json:"video_files"`
+	PhotoFiles	[]PhotoEntry		`json:"photo_files"`
+	GovIDs	[]GovIDEntry		`json:"gov_ids"`
+	MedicalRecords	[]MedicalRecordEntry		`json:"medical_records"`
+	TravelDocs	[]TravelEntry		`json:"travel_docs"`
+	Contacts	[]ContactEntry		`json:"contacts"`
+	CloudCredentialsItems	[]CloudCredentialEntry		`json:"cloud_credentials_items"`
+	K8sSecrets	[]K8sSecretEntry		`json:"k8s_secrets"`
+	DockerRegistries	[]DockerRegistryEntry		`json:"docker_registries"`
+	SSHConfigs	[]SSHConfigEntry		`json:"ssh_configs"`
+	CICDSecrets	[]CICDSecretEntry		`json:"cicd_secrets"`
+	SoftwareLicenses	[]SoftwareLicenseEntry		`json:"software_licenses"`
+	LegalContracts	[]LegalContractEntry		`json:"legal_contracts"`
+	History	[]HistoryEntry		`json:"history"`
+	RetrievalKey	string		`json:"retrieval_key,omitempty"`
+	CloudFileID	string		`json:"cloud_file_id,omitempty"`
+	CloudCredentials	[]byte		`json:"cloud_credentials,omitempty"`
+	CloudToken	[]byte		`json:"cloud_token,omitempty"`
+	FailedAttempts	uint8		`json:"failed_attempts,omitempty"`
+	EmergencyMode	bool		`json:"emergency_mode,omitempty"`
+	DecoyMode	bool		`json:"decoy_mode,omitempty"`
+	DecoySessionCount	int		`json:"decoy_session_count,omitempty"`
+	Profile	string		`json:"profile,omitempty"`
 
-	CurrentProfileParams *CryptoProfile `json:"-"`
-	RecoveryEmail        string         `json:"recovery_email,omitempty"`
-	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
-	DEK                  []byte         `json:"dek,omitempty"`
-	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
-	RecoverySalt         []byte         `json:"recovery_salt,omitempty"`
-	RawRecoveryKey       string         `json:"-"`
-	ObfuscatedKey        []byte         `json:"-"`
+	AlertEmail	string		`json:"alert_email,omitempty"`
+	AlertsEnabled	bool		`json:"alerts_enabled,omitempty"`
+	AnomalyDetectionEnabled	bool		`json:"anomaly_detection_enabled,omitempty"`
+	LastCloudProvider	string		`json:"last_cloud_provider,omitempty"`
+	DriveSyncMode	string		`json:"drive_sync_mode,omitempty"`	// "apm_public" or "self_hosted"
+	GitHubToken	string		`json:"github_token,omitempty"`
+	GitHubRepo	string		`json:"github_repo,omitempty"`
+	CurrentSpace	string		`json:"current_space,omitempty"`
+	Spaces	[]string		`json:"spaces"`
+	ActivePolicy	Policy		`json:"active_policy,omitempty"`
+	NeedsRepair	bool		`json:"-"`	// Internal flag for silent self-healing
+
+	CurrentProfileParams	*CryptoProfile		`json:"-"`
+	RecoveryEmail	string		`json:"recovery_email,omitempty"`
+	RecoveryHash	[]byte		`json:"recovery_hash,omitempty"`
+	DEK	[]byte		`json:"dek,omitempty"`
+	RecoverySlot	[]byte		`json:"recovery_slot,omitempty"`
+	RecoverySalt	[]byte		`json:"recovery_salt,omitempty"`
+	RawRecoveryKey	string		`json:"-"`
+	ObfuscatedKey	[]byte		`json:"-"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -359,7 +365,6 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	defer Wipe(keys.AuthKey)
 	defer Wipe(keys.Validator)
 
-	// In V4, we ensure a DEK exists. If not, generate one.
 	if len(vault.DEK) == 0 {
 		vault.DEK = make([]byte, 32)
 		if _, err := io.ReadFull(rand.Reader, vault.DEK); err != nil {
@@ -372,7 +377,6 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	// Encrypt jsonData with DEK
 	dekBlock, err := aes.NewCipher(vault.DEK)
 	if err != nil {
 		return nil, err
@@ -391,7 +395,6 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, []byte(VaultHeader)...)
 	payload = append(payload, byte(CurrentVersion))
 
-	// Profile Params
 	encProfile, err := json.Marshal(profile)
 	if err != nil {
 		return nil, err
@@ -432,7 +435,6 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, keys.Validator...)
 	payload = append(payload, nonce...)
 
-	// Master Slot: Encrypt DEK with MasterPassword-derived key
 	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
 		return nil, err
@@ -472,17 +474,12 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 
 	var profile CryptoProfile
 
-	if version == 1 {
-		time := uint32(3)
-		mem := uint32(128 * 1024)
-		if costMultiplier > 1 {
-			time *= uint32(costMultiplier)
-			mem *= uint32(costMultiplier)
-		}
+	switch version {
+	case 1:
 		profile = CryptoProfile{
-			Name: "legacy_v1", KDF: "argon2id", Time: time, Memory: mem, Parallelism: 4, SaltLen: 16, NonceLen: 12,
+			Name:	"legacy_v1", KDF: "argon2id", Time: 3, Memory: 128 * 1024, Parallelism: 4, SaltLen: 16, NonceLen: 12,
 		}
-	} else if version == 2 {
+	case 2:
 		if offset >= len(data) {
 			return nil, errors.New("corrupted header")
 		}
@@ -494,7 +491,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		profileName := string(data[offset : offset+nameLen])
 		offset += nameLen
 		profile = GetProfile(profileName)
-	} else if version == 3 || version == 4 {
+	case 3, 4:
 		if offset+2 > len(data) {
 			return nil, errors.New("corrupted header (params len)")
 		}
@@ -518,8 +515,13 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 			rLen := int(data[offset])<<8 | int(data[offset+1])
 			offset += 2 + rLen
 		}
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported vault version: %d", version)
+	}
+
+	if costMultiplier > 1 {
+		profile.Time *= uint32(costMultiplier)
+		profile.Memory *= uint32(costMultiplier)
 	}
 
 	if offset+profile.SaltLen > len(data) {
@@ -558,8 +560,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	var needsRepair bool
 	var dek []byte
 	if version == 4 {
-		// Decrypt Master Slot
-		masterSlotLen := 32 + 16 // DEK(32) + GCM tag(16)
+
+		masterSlotLen := 32 + 16
 		if offset+masterSlotLen <= len(data)-32 {
 			masterSlot := data[offset : offset+masterSlotLen]
 			block, _ := aes.NewCipher(keys.EncryptionKey)
@@ -570,7 +572,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 			if err == nil {
 				offset += masterSlotLen
 			} else {
-				// Fuzzy search for master slot (brute-force limited range)
+
 				found := false
 				searchStart := offset - 128
 				if searchStart < len(VaultHeader)+1 {
@@ -590,14 +592,13 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 					}
 				}
 				if !found {
-					// Deep Fallback: Try using raw EncryptionKey as DEK
-					// Some "V4" vaults created during early dev used direct encryption.
+
 					dek = keys.EncryptionKey
-					// Not setting NeedsRepair yet, will set in CT discovery
+
 				}
 			}
 		} else {
-			// Deep Fallback if data is too short for a master slot
+
 			dek = keys.EncryptionKey
 		}
 	} else {
@@ -607,8 +608,6 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		}
 	}
 
-	// Fuzzy ciphertext discovery
-	// Trial decryption of the tail-end of the file.
 	dekBlock, err := aes.NewCipher(dek)
 	if err != nil {
 		return nil, err
@@ -620,7 +619,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 
 	var plaintext []byte
 	foundCT := false
-	// Start searching from current offset, but go back and forward significantly.
+
 	ctSearchStart := offset - 256
 	if ctSearchStart < len(VaultHeader)+1 {
 		ctSearchStart = len(VaultHeader) + 1
@@ -651,8 +650,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	}
 
 	vault.NeedsRepair = needsRepair
-	// If dek was raw key or offset was weird, mark for repair
-	// If dek was raw key or offset was weird, mark for repair
+
 	if bytes.Equal(dek, keys.EncryptionKey) && version == 4 {
 		vault.NeedsRepair = true
 	}
@@ -672,8 +670,6 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		return nil, errors.New("direct DEK decryption only supported for V4")
 	}
 
-	// Skip Profile
-	// Parse Profile to know field lengths
 	pLen := int(data[offset])<<8 | int(data[offset+1])
 	offset += 2
 	pBytes := data[offset : offset+pLen]
@@ -683,19 +679,16 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		return nil, fmt.Errorf("corrupted profile in DEK decryption: %v", err)
 	}
 
-	// Skip RecoveryData
 	if offset+2 > len(data) {
 		return nil, errors.New("corrupted header")
 	}
 	rLen := int(data[offset])<<8 | int(data[offset+1])
 	offset += 2 + rLen
 
-	// Skip Salt
 	offset += profile.SaltLen
-	// Skip Validator
+
 	offset += 32
 
-	// Read Nonce
 	if offset+profile.NonceLen > len(data) {
 		return nil, errors.New("corrupted header (nonce)")
 	}
@@ -723,7 +716,7 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		if err == nil {
 			found = true
 			if i != offset {
-				// Different offset
+
 			}
 			offset = i
 			break
@@ -739,7 +732,7 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		return nil, err
 	}
 
-	if offset != searchStart+128 { // standard offset for V4
+	if offset != searchStart+128 {
 		vault.NeedsRepair = true
 	}
 
@@ -765,7 +758,6 @@ func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 		return RecoveryData{}, errors.New("vault version does not support recovery")
 	}
 
-	// Try standard parsing first
 	if offset+2 <= len(data) {
 		pLen := int(data[offset])<<8 | int(data[offset+1])
 		rOffset := offset + 2 + pLen
@@ -781,28 +773,26 @@ func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 		}
 	}
 
-	// Fuzzy Search: Look for the JSON markers
-	// RecoveryData usually starts with {"email_hash"
 	searchRange := 1024
 	if searchRange > len(data) {
 		searchRange = len(data)
 	}
 
 	for i := len(VaultHeader); i < searchRange; i++ {
-		// Minimum JSON size for RecoveryData is roughly 100 bytes
+
 		if i+50 > len(data) {
 			break
 		}
-		// Look for opening brace
+
 		if data[i] == '{' {
-			// Try unmarshaling various lengths
+
 			for l := 50; l < 1000; l++ {
 				if i+l > len(data) {
 					break
 				}
 				var rec RecoveryData
 				if err := json.Unmarshal(data[i:i+l], &rec); err == nil {
-					// Validate it looks like our recovery data
+
 					if len(rec.EmailHash) > 0 && (len(rec.KeyHash) > 0 || len(rec.ObfuscatedKey) > 0) {
 						return rec, nil
 					}
@@ -839,7 +829,6 @@ func GenerateRecoveryKey() string {
 		return string(res)
 	}
 
-	// LNLN-LNLN-LLLL-NNNN
 	part1 := string([]byte{gen(chars, 1)[0], gen(nums, 1)[0], gen(chars, 1)[0], gen(nums, 1)[0]})
 	part2 := string([]byte{gen(chars, 1)[0], gen(nums, 1)[0], gen(chars, 1)[0], gen(nums, 1)[0]})
 	part3 := gen(chars, 4)
@@ -849,7 +838,7 @@ func GenerateRecoveryKey() string {
 }
 
 func DeriveRecoveryKey(key string, salt []byte) []byte {
-	// Simple KDF for recovery key to secret
+
 	hash := sha256.New()
 	hash.Write([]byte(key))
 	hash.Write(salt)
@@ -861,20 +850,18 @@ func (v *Vault) SetRecoveryKey(key string, salt []byte) {
 	v.RecoverySalt = salt
 	rk := DeriveRecoveryKey(key, salt)
 
-	// Create KeyHash for verification
 	h := sha256.Sum256(rk)
 	v.RecoveryHash = h[:]
 
-	// Encrypt DEK with RK to create RecoverySlot
 	block, _ := aes.NewCipher(rk)
 	gcm, _ := cipher.NewGCM(block)
 	nonce := make([]byte, gcm.NonceSize())
-	// Use zero nonce for deterministic recovery slot
+
 	v.RecoverySlot = gcm.Seal(nil, nonce, v.DEK, nil)
 }
 
 func XORRecoveryKey(key string) []byte {
-	// Simple XOR obfuscation with a fixed key
+
 	xorKey := []byte("APM_RECOVERY_OBFUSCATION_SALT_2026")
 	data := []byte(key)
 	res := make([]byte, len(data))
@@ -894,19 +881,15 @@ func DeObfuscateRecoveryKey(obf []byte) string {
 }
 
 func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
-	// Normalize basic input
+
 	key = strings.TrimSpace(key)
 	key = strings.ToUpper(key)
 
-	// Create candidates: as-is (with dashes), and without dashes
 	candidates := []string{key}
 	if strings.Contains(key, "-") {
 		candidates = append(candidates, strings.ReplaceAll(key, "-", ""))
 	} else {
-		// If user entered without dashes, maybe add them?
-		// Actually, just checking raw (no dashes) is better as a fallback
-		// if the original was somehow set without them.
-		// But mostly we expect SetRecoveryKey to have added dashes.
+
 	}
 
 	rec, err := GetVaultRecoveryInfo(data)
@@ -917,35 +900,30 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 		return nil, errors.New("no recovery setup found in vault")
 	}
 
-	// Read profile to know salt length
 	profile, _, err := GetVaultParams(data)
 	if err != nil {
 		return nil, err
 	}
 
-	// Find salt and validator
-	// We use fuzzy search because headers might be shifted
 	offset := len(VaultHeader) + 1
-	// Skip Profile
+
 	if offset+2 > len(data) {
 		return nil, errors.New("corrupted header")
 	}
 	pLen := int(data[offset])<<8 | int(data[offset+1])
 	offset += 2 + pLen
-	// Skip RecoveryData
+
 	if offset+2 > len(data) {
 		return nil, errors.New("corrupted header")
 	}
 	rLen := int(data[offset])<<8 | int(data[offset+1])
 	offset += 2 + rLen
 
-	// Search for valid salt/hash combination
 	found := false
 	var rk []byte
 
-	// Try all candidates
 	for _, candidate := range candidates {
-		// Priority 1: Use specific salt from RecoveryData (Robust way)
+
 		if len(rec.Salt) > 0 {
 			trialRk := DeriveRecoveryKey(candidate, rec.Salt)
 			h := sha256.Sum256(trialRk)
@@ -959,7 +937,6 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 			break
 		}
 
-		// Priority 2: Fallback to fuzzy search in header (Legacy/Shifted way)
 		searchStart := offset - 128
 		if searchStart < 0 {
 			searchStart = 0
@@ -988,7 +965,6 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 		return nil, errors.New("invalid recovery key")
 	}
 
-	// Decrypt DEK
 	block, err := aes.NewCipher(rk)
 	if err != nil {
 		return nil, err
@@ -1094,21 +1070,16 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 
 func (v *Vault) logHistory(action, category, identifier string) {
 	entry := HistoryEntry{
-		Timestamp:  time.Now(),
-		Action:     action,
-		Category:   category,
-		Identifier: identifier,
+		Timestamp:	time.Now(),
+		Action:	action,
+		Category:	category,
+		Identifier:	identifier,
 	}
 
-	// Calculate Hash: SHA256(Timestamp + Action + Category + Identifier)
-	// Using generic formatting for timestamp to ensure consistency
 	data := fmt.Sprintf("%d:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier)
 	hash := sha256.Sum256([]byte(data))
 	entry.Hash = hex.EncodeToString(hash[:])
 
-	// Calculate Signature: HMAC-SHA256(Hash, VaultSalt)
-	// We use the Vault's Salt as the key for simplicity in this implementation.
-	// ideally we would derive a specific Audit Key, but Salt is persistent enough.
 	mac := hmac.New(sha256.New, v.Salt)
 	mac.Write([]byte(entry.Hash))
 	entry.Signature = hex.EncodeToString(mac.Sum(nil))
@@ -1759,10 +1730,10 @@ func (v *Vault) DeleteLegalContract(name string) bool {
 }
 
 type SearchResult struct {
-	Type       string
-	Identifier string
-	Data       interface{}
-	Space      string
+	Type	string
+	Identifier	string
+	Data	interface{}
+	Space	string
 }
 
 func (v *Vault) SearchAll(query string) []SearchResult {
@@ -1907,4 +1878,43 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 		}
 	}
 	return results
+}
+
+func GetDecoyVault() *Vault {
+	v := &Vault{
+		Salt:	make([]byte, 16),
+		Spaces:	[]string{"default", "work", "personal"},
+	}
+	rand.Read(v.Salt)
+
+	for i := 0; i < 15; i++ {
+		acc, _ := GenerateRandomWords()
+		user, _ := GenerateRandomWords()
+		pass, _ := GenerateRandomHex(16)
+		v.Entries = append(v.Entries, Entry{
+			Account:	acc,
+			Username:	strings.ToLower(user),
+			Password:	pass,
+			Space:	"default",
+		})
+	}
+
+	for i := 0; i < 5; i++ {
+		acc, _ := GenerateRandomWords()
+		sec, _ := GenerateRandomHex(20)
+		v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{
+			Account:	acc,
+			Secret:	sec,
+		})
+	}
+
+	for i := 0; i < 5; i++ {
+		name, _ := GenerateRandomWords()
+		v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{
+			Name:	name,
+			Content:	"This is a decoy note containing sensitive-looking information for testing purposes.",
+		})
+	}
+
+	return v
 }
