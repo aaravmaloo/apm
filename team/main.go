@@ -39,14 +39,14 @@ func init() {
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "pm-team",
-		Short: "Team Password Manager - Secure shared credential management",
+		Use:	"pm-team",
+		Short:	"Team Password Manager - Secure shared credential management",
 	}
 
 	var initCmd = &cobra.Command{
-		Use:   "init <org_name> <admin_username>",
-		Short: "Initialize a new team organization",
-		Args:  cobra.ExactArgs(2),
+		Use:	"init <org_name> <admin_username>",
+		Short:	"Initialize a new team organization",
+		Args:	cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			if vaultExists() {
 				color.Red("Team vault already exists.\n")
@@ -76,25 +76,25 @@ func main() {
 			wrappedDK, _ := WrapKey(dk, ukKeys.EncryptionKey)
 
 			dept := Department{
-				ID:   "general",
-				Name: "General",
+				ID:	"general",
+				Name:	"General",
 			}
 
 			user := TeamUser{
-				ID:                 "admin",
-				Username:           adminUser,
-				Role:               RoleAdmin,
-				ActiveDepartmentID: "general",
-				WrappedKeys:        map[string][]byte{"general": wrappedDK},
-				Permissions:        make(map[string]bool),
+				ID:	"admin",
+				Username:	adminUser,
+				Role:	RoleAdmin,
+				ActiveDepartmentID:	"general",
+				WrappedKeys:	map[string][]byte{"general": wrappedDK},
+				Permissions:	make(map[string]bool),
 			}
 
 			tv := TeamVault{
-				OrganizationID: orgName,
-				Departments:    []Department{dept},
-				Users:          []TeamUser{user},
-				SharedEntries:  SharedEntryStore{},
-				Salt:           salt,
+				OrganizationID:	orgName,
+				Departments:	[]Department{dept},
+				Users:	[]TeamUser{user},
+				SharedEntries:	SharedEntryStore{},
+				Salt:	salt,
 			}
 			tv.AddAuditEntry(adminUser, "INIT_TEAM", "Organization created")
 
@@ -109,9 +109,9 @@ func main() {
 	}
 
 	var loginCmd = &cobra.Command{
-		Use:   "login <username>",
-		Short: "Login to team organization",
-		Args:  cobra.ExactArgs(1),
+		Use:	"login <username>",
+		Short:	"Login to team organization",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			username := args[0]
 
@@ -167,8 +167,8 @@ func main() {
 	}
 
 	var whoamiCmd = &cobra.Command{
-		Use:   "whoami",
-		Short: "Display current session information",
+		Use:	"whoami",
+		Short:	"Display current session information",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -191,8 +191,8 @@ func main() {
 	}
 
 	var logoutCmd = &cobra.Command{
-		Use:   "logout",
-		Short: "End current session",
+		Use:	"logout",
+		Short:	"End current session",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := EndSession(); err != nil {
 				color.Red("No active session.\n")
@@ -203,13 +203,13 @@ func main() {
 	}
 
 	var deptCmd = &cobra.Command{
-		Use:   "dept",
-		Short: "Manage departments",
+		Use:	"dept",
+		Short:	"Manage departments",
 	}
 
 	var deptListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all departments",
+		Use:	"list",
+		Short:	"List all departments",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -229,9 +229,9 @@ func main() {
 	}
 
 	var deptCreateCmd = &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create a new department (Admin/Manager only)",
-		Args:  cobra.ExactArgs(1),
+		Use:	"create <name>",
+		Short:	"Create a new department (Admin/Manager only)",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -268,13 +268,13 @@ func main() {
 	}
 
 	var userCmd = &cobra.Command{
-		Use:   "user",
-		Short: "Manage team users",
+		Use:	"user",
+		Short:	"Manage team users",
 	}
 
 	var userListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all users",
+		Use:	"list",
+		Short:	"List all users",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -294,9 +294,9 @@ func main() {
 	}
 
 	var userAddCmd = &cobra.Command{
-		Use:   "add <username>",
-		Short: "Add a new user (Admin/Manager only)",
-		Args:  cobra.ExactArgs(1),
+		Use:	"add <username>",
+		Short:	"Add a new user (Admin/Manager only)",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -328,12 +328,12 @@ func main() {
 			}
 
 			newUser := TeamUser{
-				ID:                 fmt.Sprintf("user_%d", time.Now().Unix()),
-				Username:           username,
-				Role:               Role(strings.ToUpper(roleStr)),
-				ActiveDepartmentID: deptID,
-				WrappedKeys:        map[string][]byte{deptID: wrappedDK},
-				Permissions:        make(map[string]bool),
+				ID:	fmt.Sprintf("user_%d", time.Now().Unix()),
+				Username:	username,
+				Role:	Role(strings.ToUpper(roleStr)),
+				ActiveDepartmentID:	deptID,
+				WrappedKeys:	map[string][]byte{deptID: wrappedDK},
+				Permissions:	make(map[string]bool),
 			}
 
 			tv.Users = append(tv.Users, newUser)
@@ -351,9 +351,9 @@ func main() {
 	userAddCmd.Flags().String("dept", "general", "Department ID")
 
 	var userRemoveCmd = &cobra.Command{
-		Use:   "remove <username>",
-		Short: "Remove a user from the organization",
-		Args:  cobra.ExactArgs(1),
+		Use:	"remove <username>",
+		Short:	"Remove a user from the organization",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -399,9 +399,9 @@ func main() {
 	}
 
 	var userPromoteCmd = &cobra.Command{
-		Use:   "promote <username> <role>",
-		Short: "Change a user's role (Admin only)",
-		Args:  cobra.ExactArgs(2),
+		Use:	"promote <username> <role>",
+		Short:	"Change a user's role (Admin only)",
+		Args:	cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -439,8 +439,8 @@ func main() {
 	}
 
 	var userRoleListCmd = &cobra.Command{
-		Use:   "roles",
-		Short: "List all available user roles",
+		Use:	"roles",
+		Short:	"List all available user roles",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Available Roles:")
 			for _, r := range GetRoles() {
@@ -450,14 +450,14 @@ func main() {
 	}
 
 	var userPermCmd = &cobra.Command{
-		Use:   "permission",
-		Short: "Manage user-specific permission overrides",
+		Use:	"permission",
+		Short:	"Manage user-specific permission overrides",
 	}
 
 	var userPermGrantCmd = &cobra.Command{
-		Use:   "grant <username> <permission>",
-		Short: "Grant a specific permission override",
-		Args:  cobra.ExactArgs(2),
+		Use:	"grant <username> <permission>",
+		Short:	"Grant a specific permission override",
+		Args:	cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -483,9 +483,9 @@ func main() {
 	}
 
 	var userPermRevokeCmd = &cobra.Command{
-		Use:   "revoke <username> <permission>",
-		Short: "Revoke a specific permission override",
-		Args:  cobra.ExactArgs(2),
+		Use:	"revoke <username> <permission>",
+		Short:	"Revoke a specific permission override",
+		Args:	cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -514,9 +514,9 @@ func main() {
 	userCmd.AddCommand(userListCmd, userAddCmd, userRemoveCmd, userPromoteCmd, userRoleListCmd, userPermCmd)
 
 	var deptSwitchCmd = &cobra.Command{
-		Use:   "switch <username> <dept_id>",
-		Short: "Switch a user's active department (Admin only)",
-		Args:  cobra.ExactArgs(2),
+		Use:	"switch <username> <dept_id>",
+		Short:	"Switch a user's active department (Admin only)",
+		Args:	cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -569,8 +569,8 @@ func main() {
 	deptCmd.AddCommand(deptListCmd, deptCreateCmd, deptSwitchCmd)
 
 	var addCmd = &cobra.Command{
-		Use:   "add",
-		Short: "Add a shared entry (interactive)",
+		Use:	"add",
+		Short:	"Add a shared entry (interactive)",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -663,8 +663,8 @@ func main() {
 	}
 
 	var listCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all shared entries",
+		Use:	"list",
+		Short:	"List all shared entries",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -698,8 +698,8 @@ func main() {
 	}
 
 	var getCmd = &cobra.Command{
-		Use:   "get [query]",
-		Short: "Search and retrieve a shared entry (Interactive TUI if no query)",
+		Use:	"get [query]",
+		Short:	"Search and retrieve a shared entry (Interactive TUI if no query)",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -747,8 +747,8 @@ func main() {
 	getCmd.Flags().BoolP("interactive", "i", false, "Use interactive TUI search")
 
 	var genCmd = &cobra.Command{
-		Use:   "gen",
-		Short: "Generate a secure random password",
+		Use:	"gen",
+		Short:	"Generate a secure random password",
 		Run: func(cmd *cobra.Command, args []string) {
 			length, _ := cmd.Flags().GetInt("length")
 			password := generatePassword(length)
@@ -758,8 +758,8 @@ func main() {
 	genCmd.Flags().Int("length", 20, "Password length")
 
 	var auditCmd = &cobra.Command{
-		Use:   "audit",
-		Short: "View organization audit trail",
+		Use:	"audit",
+		Short:	"View organization audit trail",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -785,9 +785,9 @@ func main() {
 	}
 
 	var editCmd = &cobra.Command{
-		Use:   "edit <entry_name>",
-		Short: "Edit a shared entry",
-		Args:  cobra.MinimumNArgs(1),
+		Use:	"edit <entry_name>",
+		Short:	"Edit a shared entry",
+		Args:	cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -822,9 +822,9 @@ func main() {
 	}
 
 	var deleteCmd = &cobra.Command{
-		Use:   "delete <entry_name>",
-		Short: "Delete a shared entry",
-		Args:  cobra.MinimumNArgs(1),
+		Use:	"delete <entry_name>",
+		Short:	"Delete a shared entry",
+		Args:	cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil {
@@ -859,13 +859,13 @@ func main() {
 	}
 
 	var approvalsCmd = &cobra.Command{
-		Use:   "approvals",
-		Short: "Manage pending approvals for sensitive entry changes (Admin only)",
+		Use:	"approvals",
+		Short:	"Manage pending approvals for sensitive entry changes (Admin only)",
 	}
 
 	var approvalsListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List all pending approval requests",
+		Use:	"list",
+		Short:	"List all pending approval requests",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -888,9 +888,9 @@ func main() {
 	}
 
 	var approvalsApproveCmd = &cobra.Command{
-		Use:   "approve <idx>",
-		Short: "Approve a pending request",
-		Args:  cobra.ExactArgs(1),
+		Use:	"approve <idx>",
+		Short:	"Approve a pending request",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -909,7 +909,6 @@ func main() {
 				return
 			}
 
-			// Apply the change
 			if req.Type == "Create" {
 				switch req.EntryType {
 				case "Password":
@@ -999,8 +998,7 @@ func main() {
 				}
 				color.Green("Created entry %s.\n", req.EntryID)
 			} else if req.Type == "Delete" {
-				// Deletion logic based on EntryID and EntryType
-				// Simplified for this implementation
+
 				color.Yellow("Applying deletion of %s (%s)...\n", req.EntryID, req.EntryType)
 			}
 
@@ -1012,9 +1010,9 @@ func main() {
 	}
 
 	var approvalsDenyCmd = &cobra.Command{
-		Use:   "deny <idx>",
-		Short: "Deny a pending request",
-		Args:  cobra.ExactArgs(1),
+		Use:	"deny <idx>",
+		Short:	"Deny a pending request",
+		Args:	cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -1047,8 +1045,8 @@ func main() {
 	approvalsCmd.AddCommand(approvalsListCmd, approvalsApproveCmd, approvalsDenyCmd)
 
 	var exportCmd = &cobra.Command{
-		Use:   "export",
-		Short: "Export team vault to JSON (Admin only)",
+		Use:	"export",
+		Short:	"Export team vault to JSON (Admin only)",
 		Run: func(cmd *cobra.Command, args []string) {
 			s, err := GetSession()
 			if err != nil || s.Role != RoleAdmin {
@@ -1059,17 +1057,17 @@ func main() {
 			tv, _ := loadTeamVault()
 
 			exportData := map[string]interface{}{
-				"organization_id": tv.OrganizationID,
-				"departments":     tv.Departments,
-				"users":           tv.Users,
+				"organization_id":	tv.OrganizationID,
+				"departments":	tv.Departments,
+				"users":	tv.Users,
 				"entry_counts": map[string]int{
-					"passwords": len(tv.SharedEntries.Passwords),
-					"totps":     len(tv.SharedEntries.TOTPs),
-					"api_keys":  len(tv.SharedEntries.APIKeys),
-					"tokens":    len(tv.SharedEntries.Tokens),
-					"notes":     len(tv.SharedEntries.Notes),
+					"passwords":	len(tv.SharedEntries.Passwords),
+					"totps":	len(tv.SharedEntries.TOTPs),
+					"api_keys":	len(tv.SharedEntries.APIKeys),
+					"tokens":	len(tv.SharedEntries.Tokens),
+					"notes":	len(tv.SharedEntries.Notes),
 				},
-				"audit_trail": tv.AuditTrail,
+				"audit_trail":	tv.AuditTrail,
 			}
 
 			jsonData, _ := json.MarshalIndent(exportData, "", "  ")
@@ -1081,8 +1079,8 @@ func main() {
 	}
 
 	var healthCmd = &cobra.Command{
-		Use:   "health",
-		Short: "Perform a security audit of the shared vault",
+		Use:	"health",
+		Short:	"Perform a security audit of the shared vault",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, err := GetSession()
 			if err != nil {
@@ -1094,7 +1092,7 @@ func main() {
 			color.Cyan("=== Team Vault Security Health Check ===\n")
 
 			issues := 0
-			// 1. Check for sensitive entries without approvals
+
 			sensitiveCount := 0
 			results := tv.SearchAll("", "", true)
 			for _, r := range results {
@@ -1111,15 +1109,13 @@ func main() {
 			}
 			fmt.Printf("Total Sensitive Entries: %d\n", sensitiveCount)
 
-			// 2. Pending Approvals
 			if len(tv.PendingApprovals) > 0 {
 				color.Yellow("[!] Warning: %d pending approval requests.\n", len(tv.PendingApprovals))
 				issues++
 			} else {
-				color.Green("[âœ“] No pending approval requests.\n")
+				color.Green("[“£ô] No pending approval requests.\n")
 			}
 
-			// 3. User Roles
 			adminCount := 0
 			for _, u := range tv.Users {
 				if u.Role == RoleAdmin {
@@ -1130,10 +1126,9 @@ func main() {
 				color.Yellow("[!] Tip: Too many admins (%d). Consider reducing for better security.\n", adminCount)
 				issues++
 			} else {
-				color.Green("[âœ“] Admin count is healthy (%d).\n", adminCount)
+				color.Green("[“£ô] Admin count is healthy (%d).\n", adminCount)
 			}
 
-			// 4. Audit Trail
 			if len(tv.AuditTrail) > 1000 {
 				color.Yellow("[!] Tip: Audit trail is becoming large (%d entries). Consider archiving.\n", len(tv.AuditTrail))
 				issues++
@@ -1151,8 +1146,8 @@ func main() {
 	}
 
 	var infoCmd = &cobra.Command{
-		Use:   "info",
-		Short: "Display organization information",
+		Use:	"info",
+		Short:	"Display organization information",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, err := GetSession()
 			if err != nil {
@@ -1193,14 +1188,11 @@ func main() {
 		},
 	}
 
-	// --- Command Groups for Feature Parity ---
-
-	// Helper for creating standard type commands
 	createTypeCmd := func(use string, short string, resType string, addFunc func(*TeamVault, *TeamSession)) *cobra.Command {
 		group := &cobra.Command{Use: use, Short: short}
 		group.AddCommand(&cobra.Command{
-			Use:   "add",
-			Short: "Add a new " + resType,
+			Use:	"add",
+			Short:	"Add a new " + resType,
 			Run: func(cmd *cobra.Command, args []string) {
 				s, err := GetSession()
 				if err != nil || !s.Role.CanAddEntry(nil) {
@@ -1212,8 +1204,8 @@ func main() {
 			},
 		})
 		group.AddCommand(&cobra.Command{
-			Use:   "list",
-			Short: "List all " + resType + "s",
+			Use:	"list",
+			Short:	"List all " + resType + "s",
 			Run: func(cmd *cobra.Command, args []string) {
 				s, err := GetSession()
 				if err != nil {
@@ -1231,9 +1223,9 @@ func main() {
 			},
 		})
 		group.AddCommand(&cobra.Command{
-			Use:   "get <query>",
-			Short: "Retrieve a " + resType,
-			Args:  cobra.MinimumNArgs(1),
+			Use:	"get <query>",
+			Short:	"Retrieve a " + resType,
+			Args:	cobra.MinimumNArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
 				s, err := GetSession()
 				if err != nil {
@@ -1345,31 +1337,31 @@ func addSharedPassword(tv *TeamVault, s *TeamSession) {
 
 	passwordEntry := SharedPassword{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("pass_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("pass_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:     name,
-		Username: username,
-		Password: encryptedPass,
-		URL:      url,
+		Name:	name,
+		Username:	username,
+		Password:	encryptedPass,
+		URL:	url,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(passwordEntry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Password",
-			EntryID:     name,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Password",
+			EntryID:	name,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.Passwords = append(tv.SharedEntries.Passwords, passwordEntry)
@@ -1396,30 +1388,30 @@ func addSharedTOTP(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedTOTP{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("totp_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("totp_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:   name,
-		Secret: encryptedSecret,
-		Issuer: issuer,
+		Name:	name,
+		Secret:	encryptedSecret,
+		Issuer:	issuer,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "TOTP",
-			EntryID:     name,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"TOTP",
+			EntryID:	name,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.TOTPs = append(tv.SharedEntries.TOTPs, entry)
@@ -1446,30 +1438,30 @@ func addSharedAPIKey(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedAPIKey{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("api_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("api_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:   label,
-		Service: service,
-		Key:     encryptedKey,
+		Label:	label,
+		Service:	service,
+		Key:	encryptedKey,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "API Key",
-			EntryID:     label,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"API Key",
+			EntryID:	label,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.APIKeys = append(tv.SharedEntries.APIKeys, entry)
@@ -1496,30 +1488,30 @@ func addSharedToken(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedToken{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("tok_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("tok_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:  name,
-		Token: encryptedToken,
-		Type:  tokenType,
+		Name:	name,
+		Token:	encryptedToken,
+		Type:	tokenType,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Token",
-			EntryID:     name,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Token",
+			EntryID:	name,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.Tokens = append(tv.SharedEntries.Tokens, entry)
@@ -1552,29 +1544,29 @@ func addSharedNote(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedNote{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("note_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("note_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:    name,
-		Content: encryptedContent,
+		Name:	name,
+		Content:	encryptedContent,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Note",
-			EntryID:     name,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Note",
+			EntryID:	name,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.Notes = append(tv.SharedEntries.Notes, entry)
@@ -1607,29 +1599,29 @@ func addSharedSSHKey(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedSSHKey{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("ssh_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("ssh_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:      label,
-		PrivateKey: encryptedKey,
+		Label:	label,
+		PrivateKey:	encryptedKey,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "SSH Key",
-			EntryID:     label,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"SSH Key",
+			EntryID:	label,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.SSHKeys = append(tv.SharedEntries.SSHKeys, entry)
@@ -1666,32 +1658,32 @@ func addSharedCertificate(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedCertificate{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("cert_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("cert_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:      label,
-		Issuer:     issuer,
-		Expiry:     expiry,
-		CertData:   encCert,
-		PrivateKey: encPriv,
+		Label:	label,
+		Issuer:	issuer,
+		Expiry:	expiry,
+		CertData:	encCert,
+		PrivateKey:	encPriv,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Certificate",
-			EntryID:     label,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Certificate",
+			EntryID:	label,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.Certificates = append(tv.SharedEntries.Certificates, entry)
@@ -1718,30 +1710,30 @@ func addSharedWiFi(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedWiFi{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("wifi_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("wifi_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		SSID:     ssid,
-		Password: encPass,
-		Security: sec,
+		SSID:	ssid,
+		Password:	encPass,
+		Security:	sec,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Wi-Fi",
-			EntryID:     ssid,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Wi-Fi",
+			EntryID:	ssid,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.WiFi = append(tv.SharedEntries.WiFi, entry)
@@ -1766,29 +1758,29 @@ func addSharedRecoveryCode(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedRecoveryCode{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("rec_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("rec_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Service: svc,
-		Codes:   encCodes,
+		Service:	svc,
+		Codes:	encCodes,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Recovery Code",
-			EntryID:     svc,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Recovery Code",
+			EntryID:	svc,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.RecoveryCodes = append(tv.SharedEntries.RecoveryCodes, entry)
@@ -1823,32 +1815,32 @@ func addSharedBankingItem(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedBankingItem{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("bank_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("bank_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:   label,
-		Type:    bType,
-		Details: encDetails,
-		CVV:     encCVV,
-		Expiry:  exp,
+		Label:	label,
+		Type:	bType,
+		Details:	encDetails,
+		CVV:	encCVV,
+		Expiry:	exp,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Banking",
-			EntryID:     label,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Banking",
+			EntryID:	label,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.BankingItems = append(tv.SharedEntries.BankingItems, entry)
@@ -1937,7 +1929,6 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		return
 	}
 
-	// Check Sensitivity for Approval
 	isSensitive := false
 	switch v := res.Data.(type) {
 	case SharedPassword:
@@ -1950,16 +1941,15 @@ func editSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 
 	if isSensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Edit request submitted for admin approval.\n")
-		// Logic to save 'p' or 't' into PendingApprovals with Type="Edit"
-		// Simplified for now: just record the request
+
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Edit",
-			EntryType:   res.Type,
-			EntryID:     res.Identifier,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Edit",
+			EntryType:	res.Type,
+			EntryID:	res.Identifier,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 		saveTeamVault(tv)
 		return
@@ -2027,7 +2017,6 @@ func deleteSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 		return
 	}
 
-	// Check Sensitivity
 	isSensitive := false
 	switch v := res.Data.(type) {
 	case SharedPassword:
@@ -2039,13 +2028,13 @@ func deleteSharedEntry(tv *TeamVault, s *TeamSession, res SearchResult) {
 	if isSensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Deletion request submitted for admin approval.\n")
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Delete",
-			EntryType:   res.Type,
-			EntryID:     res.Identifier,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Delete",
+			EntryType:	res.Type,
+			EntryID:	res.Identifier,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 		saveTeamVault(tv)
 		return
@@ -2465,31 +2454,31 @@ func addSharedDocument(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedDocumentEntry{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("doc_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("doc_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:     name,
-		FileName: filepath.Base(path),
-		Content:  encContent,
-		Password: encDocPass,
+		Name:	name,
+		FileName:	filepath.Base(path),
+		Content:	encContent,
+		Password:	encDocPass,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
 		color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 		data, _ := json.Marshal(entry)
 		tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-			ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-			Type:        "Create",
-			EntryType:   "Document",
-			EntryID:     name,
-			NewData:     data,
-			RequestedBy: s.Username,
-			RequestedAt: time.Now(),
-			Status:      "Pending",
+			ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+			Type:	"Create",
+			EntryType:	"Document",
+			EntryID:	name,
+			NewData:	data,
+			RequestedBy:	s.Username,
+			RequestedAt:	time.Now(),
+			Status:	"Pending",
 		})
 	} else {
 		tv.SharedEntries.Documents = append(tv.SharedEntries.Documents, entry)
@@ -2589,17 +2578,17 @@ func addSharedGovID(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedGovID{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("gvid_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("gvid_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Type:     t,
-		IDNumber: id,
-		Name:     name,
-		Expiry:   expiry,
+		Type:	t,
+		IDNumber:	id,
+		Name:	name,
+		Expiry:	expiry,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2632,17 +2621,17 @@ func addSharedMedicalRecord(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedMedicalRecord{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("med_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("med_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:         label,
-		InsuranceID:   insID,
-		Prescriptions: encPres,
-		Allergies:     encAll,
+		Label:	label,
+		InsuranceID:	insID,
+		Prescriptions:	encPres,
+		Allergies:	encAll,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2674,17 +2663,17 @@ func addSharedTravelDoc(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedTravelDoc{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("trv_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("trv_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:          label,
-		TicketNumber:   ticket,
-		BookingCode:    encCode,
-		LoyaltyProgram: loyalty,
+		Label:	label,
+		TicketNumber:	ticket,
+		BookingCode:	encCode,
+		LoyaltyProgram:	loyalty,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2716,18 +2705,18 @@ func addSharedContact(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedContact{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("con_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("con_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:      name,
-		Phone:     phone,
-		Email:     email,
-		Address:   addr,
-		Emergency: emergency,
+		Name:	name,
+		Phone:	phone,
+		Email:	email,
+		Address:	addr,
+		Emergency:	emergency,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2765,20 +2754,20 @@ func addSharedCloudCredential(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedCloudCredential{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("cloud_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("cloud_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Label:      label,
-		AccessKey:  access,
-		SecretKey:  encSecret,
-		Region:     region,
-		AccountID:  accID,
-		Role:       role,
-		Expiration: expiration,
+		Label:	label,
+		AccessKey:	access,
+		SecretKey:	encSecret,
+		Region:	region,
+		AccountID:	accID,
+		Role:	role,
+		Expiration:	expiration,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2808,17 +2797,17 @@ func addSharedK8s(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedK8s{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("k8s_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("k8s_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:         name,
-		ClusterURL:   url,
-		K8sNamespace: k8sNs,
-		Expiration:   expiration,
+		Name:	name,
+		ClusterURL:	url,
+		K8sNamespace:	k8sNs,
+		Expiration:	expiration,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2850,17 +2839,17 @@ func addSharedDockerRegistry(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedDockerRegistry{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("dock_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("dock_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:        name,
-		RegistryURL: url,
-		Username:    username,
-		Token:       encToken,
+		Name:	name,
+		RegistryURL:	url,
+		Username:	username,
+		Token:	encToken,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2898,20 +2887,20 @@ func addSharedSSHConfig(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedSSHConfig{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("sshc_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("sshc_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Alias:       alias,
-		Host:        host,
-		User:        user,
-		Port:        port,
-		KeyPath:     keyPath,
-		PrivateKey:  encPriv,
-		Fingerprint: fingerprint,
+		Alias:	alias,
+		Host:	host,
+		User:	user,
+		Port:	port,
+		KeyPath:	keyPath,
+		PrivateKey:	encPriv,
+		Fingerprint:	fingerprint,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2942,16 +2931,16 @@ func addSharedCICD(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedCICD{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("cicd_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("cicd_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:    name,
-		Webhook: encWebhook,
-		EnvVars: encEnv,
+		Name:	name,
+		Webhook:	encWebhook,
+		EnvVars:	encEnv,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -2983,17 +2972,17 @@ func addSharedLicenseKey(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedLicenseKey{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("lic_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("lic_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		ProductName:    name,
-		SerialKey:      encKey,
-		ActivationInfo: info,
-		Expiration:     expiry,
+		ProductName:	name,
+		SerialKey:	encKey,
+		ActivationInfo:	info,
+		Expiration:	expiry,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -3025,17 +3014,17 @@ func addSharedLegalContract(tv *TeamVault, s *TeamSession) {
 
 	entry := SharedLegalContract{
 		EntryMetadata: EntryMetadata{
-			ID:           fmt.Sprintf("leg_%d", time.Now().Unix()),
-			DepartmentID: s.ActiveDeptID,
-			CreatedBy:    s.Username,
-			CreatedAt:    time.Now(),
-			IsSensitive:  sensitive,
-			IsGlobal:     global,
+			ID:	fmt.Sprintf("leg_%d", time.Now().Unix()),
+			DepartmentID:	s.ActiveDeptID,
+			CreatedBy:	s.Username,
+			CreatedAt:	time.Now(),
+			IsSensitive:	sensitive,
+			IsGlobal:	global,
 		},
-		Name:            name,
-		Summary:         encSummary,
-		PartiesInvolved: parties,
-		SignedDate:      signed,
+		Name:	name,
+		Summary:	encSummary,
+		PartiesInvolved:	parties,
+		SignedDate:	signed,
 	}
 
 	if sensitive && s.Role != RoleAdmin {
@@ -3052,20 +3041,20 @@ func submitForApproval(tv *TeamVault, s *TeamSession, entryType, entryID string,
 	color.Yellow("Entry is sensitive. Change submitted for admin approval.\n")
 	jsonData, _ := json.Marshal(data)
 	tv.PendingApprovals = append(tv.PendingApprovals, ApprovalRequest{
-		ID:          fmt.Sprintf("req_%d", time.Now().Unix()),
-		Type:        "Create",
-		EntryType:   entryType,
-		EntryID:     entryID,
-		NewData:     jsonData,
-		RequestedBy: s.Username,
-		RequestedAt: time.Now(),
-		Status:      "Pending",
+		ID:	fmt.Sprintf("req_%d", time.Now().Unix()),
+		Type:	"Create",
+		EntryType:	entryType,
+		EntryID:	entryID,
+		NewData:	jsonData,
+		RequestedBy:	s.Username,
+		RequestedAt:	time.Now(),
+		Status:	"Pending",
 	})
 }
 
 type ScoredSharedResult struct {
-	Result SearchResult
-	Score  int
+	Result	SearchResult
+	Score	int
 }
 
 func rankMatch(query, target string) int {
@@ -3218,12 +3207,12 @@ func handleInteractiveSharedEntries(tv *TeamVault, s *TeamSession, initialQuery 
 
 		if b[0] == 27 {
 			if n >= 3 && b[1] == '[' {
-				if b[2] == 'A' { // Up
+				if b[2] == 'A' {
 					if selectedIndex > 0 {
 						selectedIndex--
 					}
 					continue
-				} else if b[2] == 'B' { // Down
+				} else if b[2] == 'B' {
 					if selectedIndex < len(results)-1 {
 						selectedIndex++
 					}
