@@ -11,11 +11,11 @@ import (
 )
 
 type Session struct {
-	MasterPassword    string        `json:"master_password"`
-	ReadOnly          bool          `json:"readonly"`
-	Expiry            time.Time     `json:"expiry"`
-	LastUsed          time.Time     `json:"last_used"`
-	InactivityTimeout time.Duration `json:"inactivity_timeout"`
+	MasterPassword	string		`json:"master_password"`
+	ReadOnly	bool		`json:"readonly"`
+	Expiry	time.Time		`json:"expiry"`
+	LastUsed	time.Time		`json:"last_used"`
+	InactivityTimeout	time.Duration		`json:"inactivity_timeout"`
 }
 
 func getSessionFile() string {
@@ -23,7 +23,7 @@ func getSessionFile() string {
 	if sessionID == "" {
 		return filepath.Join(os.TempDir(), "pm_session_global.json")
 	}
-	// Sanitize sessionID to avoid path traversal or invalid filenames
+
 	sanitizedID := ""
 	for _, char := range sessionID {
 		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') {
@@ -38,11 +38,11 @@ func getSessionFile() string {
 
 func CreateSession(password string, duration time.Duration, readonly bool, inactivity time.Duration) error {
 	session := Session{
-		MasterPassword:    password,
-		ReadOnly:          readonly,
-		Expiry:            time.Now().Add(duration),
-		LastUsed:          time.Now(),
-		InactivityTimeout: inactivity,
+		MasterPassword:	password,
+		ReadOnly:	readonly,
+		Expiry:	time.Now().Add(duration),
+		LastUsed:	time.Now(),
+		InactivityTimeout:	inactivity,
 	}
 
 	data, err := json.Marshal(session)
@@ -68,7 +68,7 @@ func CreateSession(password string, duration time.Duration, readonly bool, inact
 func cleanupCmd(duration time.Duration, sessionFile string) {
 	seconds := int(duration.Seconds())
 	var cmd *exec.Cmd
-	//nolint:gosec // Command arguments are integer duration and sanitized file path
+
 	if filepath.Separator == '\\' {
 		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
 	} else {
@@ -87,7 +87,6 @@ func GetSession() (*Session, error) {
 		return nil, errors.New("no active session")
 	}
 
-	//nolint:gosec // sessionFile is constructed from safe TempDir and alphanumeric ID
 	data, err := os.ReadFile(sessionFile)
 	if err != nil {
 		return nil, err
@@ -109,7 +108,6 @@ func GetSession() (*Session, error) {
 		return nil, errors.New("session locked due to inactivity")
 	}
 
-	// Update last used time
 	session.LastUsed = now
 	updatedData, _ := json.Marshal(session)
 	_ = os.WriteFile(sessionFile, updatedData, 0600)
