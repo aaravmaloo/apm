@@ -1,76 +1,56 @@
-# APM Model Context Protocol (MCP) Documentation
+# APM MCP Server Integration Guide
 
-APM provides a native MCP server implementation, allowing AI agents (like Claude, Cursor, or Windsurf) to securely interact with your encrypted vault.
+APM includes a high-performance, secure MCP (Model Context Protocol) server that allows AI assistants to interact with your encrypted vault in a safe, controlled manner.
 
-## 1. Overview
+## Architecture
 
-The APM MCP server acts as a bridge between your local encrypted vault and external AI tools. It follows the Model Context Protocol standard to expose vault capabilities as "tools" that agents can execute.
+The MCP server acts as a bridge between your local APM vault and an AI client. It implements the Model Context Protocol, exposing specific "tools" that the AI can call.
 
-## 2. Security Architecture
+| Component           | Description                                                                         |
+| :------------------ | :---------------------------------------------------------------------------------- |
+| **CLI Wrapper**     | The `pm mcp serve` command starts the MCP server using the same binary as the CLI.  |
+| **Token Auth**      | Access is controlled via HMAC-signed JWT-like tokens generated with `pm mcp token`. |
+| **Session Control** | The server requires an active, unlocked vault session (`APM_SESSION_ID`).           |
+| **Tool Registry**   | Defines the available operations (Search, Get, Add, TOTP) and their schemas.        |
 
-The MCP server is designed with a "Security-First" approach:
-- **Zero-Knowledge**: The MCP server never stores your master password.
-- **Session-Based**: Access is only possible when an active session exists (unlocked via `pm unlock`).
-- **Token Authorization**: Every connection requires a unique access token with granular permissions.
-- **Granular Permissions**: You can restrict tokens to specific actions (e.g., `read` only, no `secrets`).
+## Available Tools
 
-## 3. Setup and Configuration
+The following tools are exposed via the MCP server:
 
-### 3.1 Generating an Access Token
+| Tool Name      | Description                                  | Required Permissions |
+| :------------- | :------------------------------------------- | :------------------- |
+| `list_vault`   | Lists all entries by category (titles only). | `read`               |
+| `search_vault` | Performs fuzzy search across metadata.       | `read`               |
+| `get_entry`    | Retrieves full details including secrets.    | `secrets`            |
+| `get_totp`     | Generates a 2FA code for a specific entry.   | `totp`               |
+| `add_entry`    | Securely adds a new entry to the vault.      | `write`              |
 
-Run the following command to start the interactive setup:
+## Setup Instructions
 
+### 1. Generate Access Token
+Run the following command to create a token for your AI assistant:
 ```bash
 pm mcp token
 ```
 
-You will be prompted for:
-1. **Token Name**: A friendly name (e.g., "Cursor").
-2. **Permissions**: Select from `read`, `write`, `delete`, `secrets`, or `all`.
-3. **Expiry**: Time in minutes until the token expires (0 for no expiry).
+### 2. Client Configuration
+Configure your AI client (Claude, Cursor, etc.) use the token.
 
-### 3.2 Client Configuration
+#### Claude Desktop (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "apm": {
+      "command": "C:\\path\\to\\pm.exe",
+      "args": ["mcp", "serve", "--token", "POXXXXXX..."]
+    }
+  }
+}
+```
 
-#### Claude Desktop
-Add the following to your `mcp.json`:
+## Security Best Practices
 
-| Key       | Value                                       |
-| :-------- | :------------------------------------------ |
-| `command` | `C:\path\to\pm.exe`                         |
-| `args`    | `["mcp", "serve", "--token", "YOUR_TOKEN"]` |
-
-#### Cursor / Windsurf
-Add a new MCP server with the following settings:
-
-| Setting | Value                             |
-| :------ | :-------------------------------- |
-| Type    | `command`                         |
-| Command | `pm mcp serve --token YOUR_TOKEN` |
-
-## 4. Available Tools
-
-The following tools are exposed to AI agents via MCP:
-
-| Tool Name      | Permissions | Description                                    |
-| :------------- | :---------- | :--------------------------------------------- |
-| `list_vault`   | `read`      | Lists all entries in the vault by category.    |
-| `search_vault` | `read`      | Search for keywords across all entries.        |
-| `get_entry`    | `read`      | Retrieve details for a specific entry.         |
-| `get_totp`     | `secrets`   | Generate the current TOTP code for an account. |
-| `add_entry`    | `write`     | Create a new entry in the vault.               |
-| `edit_entry`   | `write`     | Modify an existing entry.                      |
-| `delete_entry` | `delete`    | Remove an entry from the vault.                |
-
-## 5. Troubleshooting
-
-### "No active session" Error
-The MCP server requires your vault to be unlocked.
-**Solution**: Run `pm unlock` in your terminal and ensure the session hasn't timed out.
-
-### Permission Denied
-The token used does not have the required permissions for the tool being called.
-**Solution**: Revoke the token with `pm mcp revoke [name]` and generate a new one with the correct permissions.
-
-### Token Expired
-The token has reached its predefined expiration time.
-**Solution**: Generate a new token using `pm mcp token`.
+> [!IMPORTANT]
+> - **Session Locking**: Always `pm lock` when not using the AI assistant to wipe the session key.
+> - **Granular Tokens**: Use separate tokens for different AI clients with minimal required scopes.
+> - **Audit Logs**: Monitor `pm audit` to see which actions the AI has performed.
