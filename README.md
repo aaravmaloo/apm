@@ -45,30 +45,39 @@ The master password is never stored. Keys are derived using **Argon2id**, the wi
 ### 1.2 Authenticated Encryption: AES-256-GCM
 Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Counter Mode)**.
 - **Authenticated Encryption**: GCM ensures data hasn't been modified.
-- **Encrypt-then-MAC**: Extra protection with an HMAC-SHA256 signature over the entire vault file.
+- **Double-Layer Integrity**: Extra protection with an HMAC-SHA256 signature over the entire vault file, derived from the master password.
+- **Vault V4 Format**: Includes an unencrypted (but signed) metadata header for identity verification and recovery coordination.
 - **Nonce Integrity**: Every save operation generates a unique nonce to prevent replay attacks and pattern analysis.
 
-### 1.3 Threat Model Summary
-| Vector | Status | Mitigation |
-|--------|--------|------------|
-| Offline Brute-Force | Protected | Argon2id high-cost derivation. |
-| Vault Tampering | Protected | HMAC-SHA256 integrity signature. |
-| Credential Theft | Protected | Cloud tokens are encrypted inside the vault. |
-| Session Hijacking| Protected | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts. |
-| Weak Passwords | Controlled | Enforceable password policies via YAML Policy Engine. |
-| Compromised Host | Not Protected | Outside the security boundary (Keyloggers/Malware). |
+### 1.3 Secure Recovery & Identity Verification
+APM features a robust recovery engine designed for zero-knowledge environments.
+- **Secure Tokens**: 32-byte cryptographically secure hex tokens for identity verification.
+- **Hashed Validation**: Tokens are stored only in hashed form (SHA-256) with strict 15-minute expirations.
+- **Recovery Key Obfuscation**: XOR-obfuscation for recovery keys stored in the vault, preventing simple memory dumps from exposing them.
+- **DEK Unlocking**: Successful identity verification and recovery key entry unlocks the Data Encryption Key (DEK), allowing master password resets without data loss.
+
+### 1.4 Threat Model Summary
+| Vector              | Status        | Mitigation                                                        |
+| ------------------- | ------------- | ----------------------------------------------------------------- |
+| Offline Brute-Force | Protected     | Argon2id high-cost derivation.                                    |
+| Vault Tampering     | Protected     | HMAC-SHA256 integrity signature across all metadata.              |
+| Credential Theft    | Protected     | Cloud tokens are encrypted inside the vault.                      |
+| Identity Spoofing   | Protected     | Multi-factor recovery (Email -> Secure Token -> Recovery Key).    |
+| Session Hijacking   | Protected     | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts. |
+| Weak Passwords      | Controlled    | Enforceable password policies via YAML Policy Engine.             |
+| Compromised Host    | Not Protected | Outside the security boundary (Keyloggers/Malware).               |
 
 ## 2. Core Technical Specifications
 
 ### 2.1 Performance Profiles
 Users can select from pre-defined encryption profiles via `pm profile set` to balance security and latency.
 
-| Profile | Memory | Time | Parallelism | Nonce Size |
-|---------|--------|------|-------------|------------|
-| Standard | 64 MB | 3 | 2 | 12 bytes |
-| Hardened | 256 MB | 5 | 4 | 12 bytes |
-| Paranoid | 512 MB | 6 | 4 | 24 bytes |
-| Legacy | 0 (PBKDF2) | 600k | 1 | 12 bytes |
+| Profile  | Memory     | Time | Parallelism | Nonce Size |
+| -------- | ---------- | ---- | ----------- | ---------- |
+| Standard | 64 MB      | 3    | 2           | 12 bytes   |
+| Hardened | 256 MB     | 5    | 4           | 12 bytes   |
+| Paranoid | 512 MB     | 6    | 4           | 24 bytes   |
+| Legacy   | 0 (PBKDF2) | 600k | 1           | 12 bytes   |
 
 ---
 
@@ -78,30 +87,30 @@ Users can select from pre-defined encryption profiles via `pm profile set` to ba
 
 The personal edition focuses on local-first security and privacy with native multi-cloud synchronization.
 
-| Command | Category | Description |
-|:---|:---|:---|
-| `init` | Lifecycle | Initializes a new zero-knowledge encrypted vault. |
-| `add` | Mutation | Interactive menu to store any of the 22 supported secret types. |
-| `get [q]` | Retrieval | Fuzzy search and display entry details. Use `--show-pass` for secrets. |
-| `edit [n]` | Mutation | Interactive modification of existing entry metadata. |
-| `del [n]` | Mutation | Permanent deletion of an entry from the vault. |
-| `gen` | Utility | High-entropy password generator. |
-| `totp show`| Security | Real-time generation of 2FA codes with live countdowns. |
-| `unlock` | Session | Starts a session-scoped unlock instance with inactivity timeout. |
-| `lock` | Session | Immediately terminates and wipes the active session. |
-| `auth` | Account | Consistently manage `email`, `reset`, `change`, and `recover`. |
-| `cloud` | Sync | Google Drive & GitHub integration for cross-device syncing. |
-| `space` | Org | Manage isolated compartments (e.g., Work, Personal, DevOps). |
-| `mcp` | Agentic | Connect AI agents to your vault via Model Context Protocol. |
-| `health` | Audit | Dashboard with security scoring and vulnerability reporting. |
-| `audit` | History | Tamper-evident log of every vault interaction. |
-| `import` | IO | Ingest data from external files (JSON, CSV, KDBX). |
-| `export` | IO | Securely dump vault data to encrypted or plaintext formats. |
-| `policy` | Compliance | Load and enforce YAML-based password requirement policies. |
-| `plugins` | Extension | Extend APM via the declarative plugin SDK. |
-| `info` | System | Display version, install path, and environment details. |
-| `cinfo` | Crypto | Inspection of current vault cryptographic parameters. |
-| `update` | System | Automated self-update engine to fetch the latest builds. |
+| Command     | Category   | Description                                                            |
+| :---------- | :--------- | :--------------------------------------------------------------------- |
+| `init`      | Lifecycle  | Initializes a new zero-knowledge encrypted vault.                      |
+| `add`       | Mutation   | Interactive menu to store any of the 22 supported secret types.        |
+| `get [q]`   | Retrieval  | Fuzzy search and display entry details. Use `--show-pass` for secrets. |
+| `edit [n]`  | Mutation   | Interactive modification of existing entry metadata.                   |
+| `del [n]`   | Mutation   | Permanent deletion of an entry from the vault.                         |
+| `gen`       | Utility    | High-entropy password generator.                                       |
+| `totp show` | Security   | Real-time generation of 2FA codes with live countdowns.                |
+| `unlock`    | Session    | Starts a session-scoped unlock instance with inactivity timeout.       |
+| `lock`      | Session    | Immediately terminates and wipes the active session.                   |
+| `auth`      | Account    | Consistently manage `email`, `reset`, `change`, and `recover`.         |
+| `cloud`     | Sync       | Google Drive & GitHub integration for cross-device syncing.            |
+| `space`     | Org        | Manage isolated compartments (e.g., Work, Personal, DevOps).           |
+| `mcp`       | Agentic    | Connect AI agents to your vault via Model Context Protocol.            |
+| `health`    | Audit      | Dashboard with security scoring and vulnerability reporting.           |
+| `audit`     | History    | Tamper-evident log of every vault interaction.                         |
+| `import`    | IO         | Ingest data from external files (JSON, CSV, KDBX).                     |
+| `export`    | IO         | Securely dump vault data to encrypted or plaintext formats.            |
+| `policy`    | Compliance | Load and enforce YAML-based password requirement policies.             |
+| `plugins`   | Extension  | Extend APM via the declarative plugin SDK.                             |
+| `info`      | System     | Display version, install path, and environment details.                |
+| `cinfo`     | Crypto     | Inspection of current vault cryptographic parameters.                  |
+| `update`    | System     | Automated self-update engine to fetch the latest builds.               |
 
 ---
 
@@ -158,12 +167,12 @@ Add the following manual configuration:
 
 Designed for organizations, the Team Edition facilitates secure credential sharing via a multi-layered RBAC model.
 
-| Command | Usage | Result |
-|---------|-------|--------|
-| `init` | `pm-team init "Corp"` | Sets up organization root environment. |
-| `dept` | `pm-team dept create Engineering`| Creates a new isolated encryption domain. |
-| `user` | `pm-team user add alice` | Onboards a new member with specific roles. |
-| `approvals` | `pm-team approvals list` | Manage pending sensitive entry requests. |
+| Command     | Usage                             | Result                                     |
+| ----------- | --------------------------------- | ------------------------------------------ |
+| `init`      | `pm-team init "Corp"`             | Sets up organization root environment.     |
+| `dept`      | `pm-team dept create Engineering` | Creates a new isolated encryption domain.  |
+| `user`      | `pm-team user add alice`          | Onboards a new member with specific roles. |
+| `approvals` | `pm-team approvals list`          | Manage pending sensitive entry requests.   |
 
 ---
 
