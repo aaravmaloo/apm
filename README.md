@@ -199,7 +199,8 @@ APM supports 22 distinct data structures:
 
 APM features a declarative, JSON-driven plugin architecture.
 - **Hook Execution**: Plugins can intercept standard events (e.g., `pre:add`) or register commands.
-- **Capabilities**: Explicitly defined permissions: `vault.read`, `vault.write`, `system.write`, `network.outbound`, `cloud.sync`.
+- **Capabilities**: Over 150 granular permissions including vault access (`vault.item.*`), network protocols (`network.ssh`, `network.http`), system integration (`system.exec`, `system.env`), and UI control (`ui.prompt`, `ui.window`).
+- **Wildcards**: Supports hierarchical permission matching (e.g., `vault.*` grants all vault-related access).
 
 ---
 
