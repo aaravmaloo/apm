@@ -81,12 +81,51 @@ You can use variables stored via `assignTo` in any argument using the `{{name}}`
 ## Permissions
 
 Permissions must be explicitly requested in the `permissions` array of the manifest.
-- `vault.read`: Access to `v:get`, `v:list`.
-- `vault.write`: Access to `v:add`, `v:del`, `v:backup`.
-- `system.write`: Access to `s:clip`.
-- `network.outbound`: Access to `net:get`, `net:post`.
-- `crypto.use`: Access to `crypto:hash`.
-- `cloud.sync`: Access to `c:sync`.
+Support for wildcard matching is available (e.g., `vault.*` grants all vault permissions).
+
+### Vault Operations
+- `vault.read`, `vault.write`, `vault.delete`
+- `vault.import`, `vault.export`, `vault.backup`, `vault.restore`
+- `vault.history`, `vault.lock`, `vault.unlock`, `vault.sync`
+
+### Item Operations
+- `vault.item.create`, `vault.item.read`, `vault.item.update`, `vault.item.delete`
+- `vault.item.move`, `vault.item.copy`, `vault.item.share`
+- `vault.item.field.*` (Granular field access: password, username, url, notes, totp, tags, metadata)
+
+### Network Access
+- `network.outbound`, `network.inbound`
+- Protocol specific: `network.http`, `network.https`, `network.ssh`, `network.ftp`, `network.ws`, etc.
+- `network.proxy`, `network.dns`
+
+### System Integration
+- `system.read`, `system.write`, `system.exec`
+- `system.clipboard.read`, `system.clipboard.write`
+- `system.env.read`, `system.env.write`
+- `system.process.read`, `system.process.write`, `system.process.kill`
+- `system.notification`, `system.audio.*`, `system.camera`
+
+### Cryptography
+- `crypto.hash`, `crypto.random`
+- `crypto.encrypt`, `crypto.decrypt`
+- `crypto.sign`, `crypto.verify`
+- `crypto.key.*` (generate, store, load, delete)
+
+### Plugin Management
+- `plugin.list`, `plugin.install`, `plugin.uninstall`, `plugin.update`
+- `plugin.config.read`, `plugin.config.write`
+
+### UI & Interaction
+- `ui.prompt`, `ui.alert`, `ui.confirm`, `ui.toast`
+- `ui.window.*`, `ui.menu.*`, `ui.theme.set`
+
+### User & Session
+- `user.read`, `user.write`, `user.auth`
+- `user.session.read`, `user.session.write`
+
+### Audit & Logging
+- `audit.read`, `audit.write`
+- `audit.log.read`, `audit.log.write`
 
 ## Implementation Details
 
