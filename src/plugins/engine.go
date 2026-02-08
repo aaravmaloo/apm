@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -244,6 +245,35 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		fmt.Println("Vault lock signal received.")
 		return nil
 
+	case "v:export":
+		if !hasPermission(permissions, "vault.export") {
+			return fmt.Errorf("permission denied: vault.export")
+		}
+		format := se.getArg(step.Args, 0)
+		path := se.getArg(step.Args, 1)
+		// Dummy implementation for export
+		fmt.Printf("Exporting vault to %s in %s format...\n", path, format)
+		return nil
+
+	case "s:exec":
+		if !hasPermission(permissions, "system.exec") {
+			return fmt.Errorf("permission denied: system.exec")
+		}
+		cmdName := se.getArg(step.Args, 0)
+		cmdArgsStr := se.getArg(step.Args, 1)
+		assignTo := se.getArg(step.Args, 2)
+
+		cmdArgs := strings.Fields(cmdArgsStr)
+		cmd := exec.Command(cmdName, cmdArgs...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("exec failed: %w: %s", err, string(out))
+		}
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = string(out)
+		}
+		return nil
+
 	default:
 		return fmt.Errorf("unknown op: %s", step.Op)
 	}
@@ -251,8 +281,17 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 
 func hasPermission(perms []string, required string) bool {
 	for _, p := range perms {
+		if p == "*" {
+			return true
+		}
 		if p == required {
 			return true
+		}
+		if strings.HasSuffix(p, ".*") {
+			prefix := strings.TrimSuffix(p, ".*")
+			if strings.HasPrefix(required, prefix+".") {
+				return true
+			}
 		}
 	}
 	return false
