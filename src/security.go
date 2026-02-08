@@ -46,14 +46,30 @@ func ConfigureAlerts(vault *Vault, enabled bool, email string, masterPassword st
 	return os.WriteFile(vaultPath, data, 0600)
 }
 
-func SendAlert(vault *Vault, eventType, details string) {
+const (
+	LevelCritical = 1
+	LevelSettings = 2
+	LevelAll      = 3
+)
+
+func SendAlert(vault *Vault, requiredLevel int, eventType, details string) {
 	if !vault.AlertsEnabled || vault.AlertEmail == "" {
+		return
+	}
+
+	// Default to level 1 for safety if not set
+	vLevel := vault.SecurityLevel
+	if vLevel < 1 {
+		vLevel = 1
+	}
+
+	if vLevel < requiredLevel {
 		return
 	}
 
 	maskedEmail := maskEmail(vault.AlertEmail)
 
-	msg := fmt.Sprintf("[%s] ALERT (%s): %s - Sent to %s\n", time.Now().Format(time.RFC3339), eventType, details, maskedEmail)
+	msg := fmt.Sprintf("[%s] ALERT (Level %d - %s): %s - Sent to %s\n", time.Now().Format(time.RFC3339), requiredLevel, eventType, details, maskedEmail)
 
 	f, err := os.OpenFile("email.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err == nil {
