@@ -64,277 +64,281 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 }
 
 type Entry struct {
-	Account	string		`json:"account"`
-	Username	string		`json:"username"`
-	Password	string		`json:"password"`
-	Space	string		`json:"space,omitempty"`
+	Account  string `json:"account"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Space    string `json:"space,omitempty"`
 }
 
 type TOTPEntry struct {
-	Account	string		`json:"account"`
-	Secret	string		`json:"secret"`
-	Space	string		`json:"space,omitempty"`
+	Account string `json:"account"`
+	Secret  string `json:"secret"`
+	Space   string `json:"space,omitempty"`
 }
 
 type TokenEntry struct {
-	Name	string		`json:"name"`
-	Token	string		`json:"token"`
-	Type	string		`json:"type"`
-	Space	string		`json:"space,omitempty"`
+	Name  string `json:"name"`
+	Token string `json:"token"`
+	Type  string `json:"type"`
+	Space string `json:"space,omitempty"`
 }
 
 type SecureNoteEntry struct {
-	Name	string		`json:"name"`
-	Content	string		`json:"content"`
-	Space	string		`json:"space,omitempty"`
+	Name    string `json:"name"`
+	Content string `json:"content"`
+	Space   string `json:"space,omitempty"`
 }
 
 type APIKeyEntry struct {
-	Name	string		`json:"name"`
-	Service	string		`json:"service"`
-	Key	string		`json:"key"`
-	Space	string		`json:"space,omitempty"`
+	Name    string `json:"name"`
+	Service string `json:"service"`
+	Key     string `json:"key"`
+	Space   string `json:"space,omitempty"`
 }
 
 type SSHKeyEntry struct {
-	Name	string		`json:"name"`
-	PrivateKey	string		`json:"private_key"`
-	Space	string		`json:"space,omitempty"`
+	Name       string `json:"name"`
+	PrivateKey string `json:"private_key"`
+	Space      string `json:"space,omitempty"`
 }
 
 type WiFiEntry struct {
-	SSID	string		`json:"ssid"`
-	Password	string		`json:"password"`
-	SecurityType	string		`json:"security_type"`
-	RouterIP	string		`json:"router_ip"`
-	Space	string		`json:"space,omitempty"`
+	SSID         string `json:"ssid"`
+	Password     string `json:"password"`
+	SecurityType string `json:"security_type"`
+	RouterIP     string `json:"router_ip"`
+	Space        string `json:"space,omitempty"`
 }
 
 type GovIDEntry struct {
-	Type	string		`json:"type"`
-	IDNumber	string		`json:"id_number"`
-	Name	string		`json:"name"`
-	Expiry	string		`json:"expiry"`
-	Space	string		`json:"space,omitempty"`
+	Type     string `json:"type"`
+	IDNumber string `json:"id_number"`
+	Name     string `json:"name"`
+	Expiry   string `json:"expiry"`
+	Space    string `json:"space,omitempty"`
 }
 
 type MedicalRecordEntry struct {
-	Label	string		`json:"label"`
-	InsuranceID	string		`json:"insurance_id"`
-	Prescriptions	string		`json:"prescriptions"`
-	Allergies	string		`json:"allergies"`
-	Space	string		`json:"space,omitempty"`
+	Label         string `json:"label"`
+	InsuranceID   string `json:"insurance_id"`
+	Prescriptions string `json:"prescriptions"`
+	Allergies     string `json:"allergies"`
+	Space         string `json:"space,omitempty"`
 }
 
 type TravelEntry struct {
-	Label	string		`json:"label"`
-	TicketNumber	string		`json:"ticket_number"`
-	BookingCode	string		`json:"booking_code"`
-	LoyaltyProgram	string		`json:"loyalty_program"`
-	Space	string		`json:"Space,omitempty"`
+	Label          string `json:"label"`
+	TicketNumber   string `json:"ticket_number"`
+	BookingCode    string `json:"booking_code"`
+	LoyaltyProgram string `json:"loyalty_program"`
+	Space          string `json:"Space,omitempty"`
 }
 
 type ContactEntry struct {
-	Name	string		`json:"name"`
-	Phone	string		`json:"phone"`
-	Email	string		`json:"email"`
-	Address	string		`json:"address"`
-	Emergency	bool		`json:"emergency"`
-	Space	string		`json:"space,omitempty"`
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	Email     string `json:"email"`
+	Address   string `json:"address"`
+	Emergency bool   `json:"emergency"`
+	Space     string `json:"space,omitempty"`
 }
 
 type CloudCredentialEntry struct {
-	Label	string		`json:"label"`
-	AccessKey	string		`json:"access_key"`
-	SecretKey	string		`json:"secret_key"`
-	Region	string		`json:"region"`
-	AccountID	string		`json:"account_id"`
-	Role	string		`json:"role"`
-	Expiration	string		`json:"expiration"`
-	Space	string		`json:"space,omitempty"`
+	Label      string `json:"label"`
+	AccessKey  string `json:"access_key"`
+	SecretKey  string `json:"secret_key"`
+	Region     string `json:"region"`
+	AccountID  string `json:"account_id"`
+	Role       string `json:"role"`
+	Expiration string `json:"expiration"`
+	Space      string `json:"space,omitempty"`
 }
 
 type K8sSecretEntry struct {
-	Name	string		`json:"name"`
-	ClusterURL	string		`json:"cluster_url"`
-	K8sNamespace	string		`json:"namespace"`
-	Expiration	string		`json:"expiration"`
-	Space	string		`json:"space,omitempty"`
+	Name         string `json:"name"`
+	ClusterURL   string `json:"cluster_url"`
+	K8sNamespace string `json:"namespace"`
+	Expiration   string `json:"expiration"`
+	Space        string `json:"space,omitempty"`
 }
 
 type DockerRegistryEntry struct {
-	Name	string		`json:"name"`
-	RegistryURL	string		`json:"registry_url"`
-	Username	string		`json:"username"`
-	Token	string		`json:"token"`
-	Space	string		`json:"Space,omitempty"`
+	Name        string `json:"name"`
+	RegistryURL string `json:"registry_url"`
+	Username    string `json:"username"`
+	Token       string `json:"token"`
+	Space       string `json:"Space,omitempty"`
 }
 
 type SSHConfigEntry struct {
-	Alias	string		`json:"alias"`
-	Host	string		`json:"host"`
-	User	string		`json:"user"`
-	Port	string		`json:"port"`
-	KeyPath	string		`json:"key_path"`
-	PrivateKey	string		`json:"private_key"`
-	Fingerprint	string		`json:"fingerprint"`
-	Space	string		`json:"Space,omitempty"`
+	Alias       string `json:"alias"`
+	Host        string `json:"host"`
+	User        string `json:"user"`
+	Port        string `json:"port"`
+	KeyPath     string `json:"key_path"`
+	PrivateKey  string `json:"private_key"`
+	Fingerprint string `json:"fingerprint"`
+	Space       string `json:"Space,omitempty"`
 }
 
 type CICDSecretEntry struct {
-	Name	string		`json:"name"`
-	Webhook	string		`json:"webhook"`
-	EnvVars	string		`json:"env_vars"`
-	Space	string		`json:"space,omitempty"`
+	Name    string `json:"name"`
+	Webhook string `json:"webhook"`
+	EnvVars string `json:"env_vars"`
+	Space   string `json:"space,omitempty"`
 }
 
 type SoftwareLicenseEntry struct {
-	ProductName	string		`json:"product_name"`
-	SerialKey	string		`json:"serial_key"`
-	ActivationInfo	string		`json:"activation_info"`
-	Expiration	string		`json:"expiration"`
-	Space	string		`json:"Space,omitempty"`
+	ProductName    string `json:"product_name"`
+	SerialKey      string `json:"serial_key"`
+	ActivationInfo string `json:"activation_info"`
+	Expiration     string `json:"expiration"`
+	Space          string `json:"Space,omitempty"`
 }
 
 type LegalContractEntry struct {
-	Name	string		`json:"name"`
-	Summary	string		`json:"summary"`
-	PartiesInvolved	string		`json:"parties_involved"`
-	SignedDate	string		`json:"signed_date"`
-	Space	string		`json:"space,omitempty"`
+	Name            string `json:"name"`
+	Summary         string `json:"summary"`
+	PartiesInvolved string `json:"parties_involved"`
+	SignedDate      string `json:"signed_date"`
+	Space           string `json:"space,omitempty"`
 }
 
 type RecoveryCodeEntry struct {
-	Service	string		`json:"service"`
-	Codes	[]string		`json:"codes"`
-	Space	string		`json:"space,omitempty"`
+	Service string   `json:"service"`
+	Codes   []string `json:"codes"`
+	Space   string   `json:"space,omitempty"`
 }
 
 type HistoryEntry struct {
-	Timestamp	time.Time		`json:"timestamp"`
-	Action	string		`json:"action"`
-	Category	string		`json:"category"`
-	Identifier	string		`json:"identifier"`
-	Hash	string		`json:"hash,omitempty"`
-	Signature	string		`json:"signature,omitempty"`
+	Timestamp  time.Time `json:"timestamp"`
+	Action     string    `json:"action"`
+	Category   string    `json:"category"`
+	Identifier string    `json:"identifier"`
+	Hash       string    `json:"hash,omitempty"`
+	Signature  string    `json:"signature,omitempty"`
 }
 
 type CertificateEntry struct {
-	Label	string		`json:"label"`
-	CertData	string		`json:"cert_data"`
-	PrivateKey	string		`json:"private_key"`
-	Issuer	string		`json:"issuer"`
-	Expiry	time.Time		`json:"expiry"`
-	Space	string		`json:"space,omitempty"`
+	Label      string    `json:"label"`
+	CertData   string    `json:"cert_data"`
+	PrivateKey string    `json:"private_key"`
+	Issuer     string    `json:"issuer"`
+	Expiry     time.Time `json:"expiry"`
+	Space      string    `json:"space,omitempty"`
 }
 
 type BankingEntry struct {
-	Label	string		`json:"label"`
-	Type	string		`json:"type"`
-	Details	string		`json:"details"`
-	CVV	string		`json:"cvv,omitempty"`
-	Expiry	string		`json:"expiry,omitempty"`
-	Redacted	bool		`json:"redacted,omitempty"`
-	Space	string		`json:"space,omitempty"`
+	Label    string `json:"label"`
+	Type     string `json:"type"`
+	Details  string `json:"details"`
+	CVV      string `json:"cvv,omitempty"`
+	Expiry   string `json:"expiry,omitempty"`
+	Redacted bool   `json:"redacted,omitempty"`
+	Space    string `json:"space,omitempty"`
 }
 
 type DocumentEntry struct {
-	Name	string		`json:"name"`
-	FileName	string		`json:"file_name"`
-	Content	[]byte		`json:"content"`
-	Password	string		`json:"password"`
-	Tags	[]string		`json:"tags,omitempty"`
-	Expiry	string		`json:"expiry,omitempty"`
-	Space	string		`json:"space,omitempty"`
+	Name     string   `json:"name"`
+	FileName string   `json:"file_name"`
+	Content  []byte   `json:"content"`
+	Password string   `json:"password"`
+	Tags     []string `json:"tags,omitempty"`
+	Expiry   string   `json:"expiry,omitempty"`
+	Space    string   `json:"space,omitempty"`
 }
 
 type RecoveryData struct {
-	EmailHash	[]byte		`json:"email_hash,omitempty"`
-	KeyHash	[]byte		`json:"key_hash,omitempty"`
-	DEKSlot	[]byte		`json:"dek_slot,omitempty"`	// DEK encrypted with Recovery Key
-	Salt	[]byte		`json:"salt,omitempty"`	// Stable salt for recovery key
-	ObfuscatedKey	[]byte		`json:"obfuscated_key,omitempty"`
+	EmailHash           []byte    `json:"email_hash,omitempty"`
+	KeyHash             []byte    `json:"key_hash,omitempty"`
+	DEKSlot             []byte    `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
+	Salt                []byte    `json:"salt,omitempty"`     // Stable salt for recovery key
+	ObfuscatedKey       []byte    `json:"obfuscated_key,omitempty"`
+	RecoveryTokenHash   []byte    `json:"recovery_token_hash,omitempty"`
+	RecoveryTokenExpiry time.Time `json:"recovery_token_expiry,omitempty"`
 }
 
 type AudioEntry struct {
-	Name	string		`json:"name"`
-	FileName	string		`json:"file_name"`
-	Content	[]byte		`json:"content"`
-	Space	string		`json:"space,omitempty"`
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Space    string `json:"space,omitempty"`
 }
 
 type VideoEntry struct {
-	Name	string		`json:"name"`
-	FileName	string		`json:"file_name"`
-	Content	[]byte		`json:"content"`
-	Space	string		`json:"space,omitempty"`
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Space    string `json:"space,omitempty"`
 }
 
 type PhotoEntry struct {
-	Name	string		`json:"name"`
-	FileName	string		`json:"file_name"`
-	Content	[]byte		`json:"content"`
-	Space	string		`json:"space,omitempty"`
+	Name     string `json:"name"`
+	FileName string `json:"file_name"`
+	Content  []byte `json:"content"`
+	Space    string `json:"space,omitempty"`
 }
 
 type Vault struct {
-	Salt	[]byte		`json:"salt"`
-	Entries	[]Entry		`json:"entries"`
-	TOTPEntries	[]TOTPEntry		`json:"totp_entries"`
-	Tokens	[]TokenEntry		`json:"tokens"`
-	SecureNotes	[]SecureNoteEntry		`json:"secure_notes"`
-	APIKeys	[]APIKeyEntry		`json:"api_keys"`
-	SSHKeys	[]SSHKeyEntry		`json:"ssh_keys"`
-	WiFiCredentials	[]WiFiEntry		`json:"wifi_credentials"`
-	RecoveryCodeItems	[]RecoveryCodeEntry		`json:"recovery_codes"`
-	Certificates	[]CertificateEntry		`json:"certificates"`
-	BankingItems	[]BankingEntry		`json:"banking_items"`
-	Documents	[]DocumentEntry		`json:"documents"`
-	AudioFiles	[]AudioEntry		`json:"audio_files"`
-	VideoFiles	[]VideoEntry		`json:"video_files"`
-	PhotoFiles	[]PhotoEntry		`json:"photo_files"`
-	GovIDs	[]GovIDEntry		`json:"gov_ids"`
-	MedicalRecords	[]MedicalRecordEntry		`json:"medical_records"`
-	TravelDocs	[]TravelEntry		`json:"travel_docs"`
-	Contacts	[]ContactEntry		`json:"contacts"`
-	CloudCredentialsItems	[]CloudCredentialEntry		`json:"cloud_credentials_items"`
-	K8sSecrets	[]K8sSecretEntry		`json:"k8s_secrets"`
-	DockerRegistries	[]DockerRegistryEntry		`json:"docker_registries"`
-	SSHConfigs	[]SSHConfigEntry		`json:"ssh_configs"`
-	CICDSecrets	[]CICDSecretEntry		`json:"cicd_secrets"`
-	SoftwareLicenses	[]SoftwareLicenseEntry		`json:"software_licenses"`
-	LegalContracts	[]LegalContractEntry		`json:"legal_contracts"`
-	History	[]HistoryEntry		`json:"history"`
-	RetrievalKey	string		`json:"retrieval_key,omitempty"`
-	CloudFileID	string		`json:"cloud_file_id,omitempty"`
-	CloudCredentials	[]byte		`json:"cloud_credentials,omitempty"`
-	CloudToken	[]byte		`json:"cloud_token,omitempty"`
-	FailedAttempts	uint8		`json:"failed_attempts,omitempty"`
-	EmergencyMode	bool		`json:"emergency_mode,omitempty"`
-	DecoyMode	bool		`json:"decoy_mode,omitempty"`
-	DecoySessionCount	int		`json:"decoy_session_count,omitempty"`
-	Profile	string		`json:"profile,omitempty"`
+	Salt                  []byte                 `json:"salt"`
+	Entries               []Entry                `json:"entries"`
+	TOTPEntries           []TOTPEntry            `json:"totp_entries"`
+	Tokens                []TokenEntry           `json:"tokens"`
+	SecureNotes           []SecureNoteEntry      `json:"secure_notes"`
+	APIKeys               []APIKeyEntry          `json:"api_keys"`
+	SSHKeys               []SSHKeyEntry          `json:"ssh_keys"`
+	WiFiCredentials       []WiFiEntry            `json:"wifi_credentials"`
+	RecoveryCodeItems     []RecoveryCodeEntry    `json:"recovery_codes"`
+	Certificates          []CertificateEntry     `json:"certificates"`
+	BankingItems          []BankingEntry         `json:"banking_items"`
+	Documents             []DocumentEntry        `json:"documents"`
+	AudioFiles            []AudioEntry           `json:"audio_files"`
+	VideoFiles            []VideoEntry           `json:"video_files"`
+	PhotoFiles            []PhotoEntry           `json:"photo_files"`
+	GovIDs                []GovIDEntry           `json:"gov_ids"`
+	MedicalRecords        []MedicalRecordEntry   `json:"medical_records"`
+	TravelDocs            []TravelEntry          `json:"travel_docs"`
+	Contacts              []ContactEntry         `json:"contacts"`
+	CloudCredentialsItems []CloudCredentialEntry `json:"cloud_credentials_items"`
+	K8sSecrets            []K8sSecretEntry       `json:"k8s_secrets"`
+	DockerRegistries      []DockerRegistryEntry  `json:"docker_registries"`
+	SSHConfigs            []SSHConfigEntry       `json:"ssh_configs"`
+	CICDSecrets           []CICDSecretEntry      `json:"cicd_secrets"`
+	SoftwareLicenses      []SoftwareLicenseEntry `json:"software_licenses"`
+	LegalContracts        []LegalContractEntry   `json:"legal_contracts"`
+	History               []HistoryEntry         `json:"history"`
+	RetrievalKey          string                 `json:"retrieval_key,omitempty"`
+	CloudFileID           string                 `json:"cloud_file_id,omitempty"`
+	CloudCredentials      []byte                 `json:"cloud_credentials,omitempty"`
+	CloudToken            []byte                 `json:"cloud_token,omitempty"`
+	FailedAttempts        uint8                  `json:"failed_attempts,omitempty"`
+	EmergencyMode         bool                   `json:"emergency_mode,omitempty"`
+	DecoyMode             bool                   `json:"decoy_mode,omitempty"`
+	DecoySessionCount     int                    `json:"decoy_session_count,omitempty"`
+	Profile               string                 `json:"profile,omitempty"`
 
-	AlertEmail	string		`json:"alert_email,omitempty"`
-	AlertsEnabled	bool		`json:"alerts_enabled,omitempty"`
-	AnomalyDetectionEnabled	bool		`json:"anomaly_detection_enabled,omitempty"`
-	LastCloudProvider	string		`json:"last_cloud_provider,omitempty"`
-	DriveSyncMode	string		`json:"drive_sync_mode,omitempty"`	// "apm_public" or "self_hosted"
-	GitHubToken	string		`json:"github_token,omitempty"`
-	GitHubRepo	string		`json:"github_repo,omitempty"`
-	CurrentSpace	string		`json:"current_space,omitempty"`
-	Spaces	[]string		`json:"spaces"`
-	ActivePolicy	Policy		`json:"active_policy,omitempty"`
-	NeedsRepair	bool		`json:"-"`	// Internal flag for silent self-healing
+	AlertEmail              string   `json:"alert_email,omitempty"`
+	AlertsEnabled           bool     `json:"alerts_enabled,omitempty"`
+	AnomalyDetectionEnabled bool     `json:"anomaly_detection_enabled,omitempty"`
+	LastCloudProvider       string   `json:"last_cloud_provider,omitempty"`
+	DriveSyncMode           string   `json:"drive_sync_mode,omitempty"` // "apm_public" or "self_hosted"
+	GitHubToken             string   `json:"github_token,omitempty"`
+	GitHubRepo              string   `json:"github_repo,omitempty"`
+	CurrentSpace            string   `json:"current_space,omitempty"`
+	Spaces                  []string `json:"spaces"`
+	ActivePolicy            Policy   `json:"active_policy,omitempty"`
+	NeedsRepair             bool     `json:"-"` // Internal flag for silent self-healing
 
-	CurrentProfileParams	*CryptoProfile		`json:"-"`
-	RecoveryEmail	string		`json:"recovery_email,omitempty"`
-	RecoveryHash	[]byte		`json:"recovery_hash,omitempty"`
-	DEK	[]byte		`json:"dek,omitempty"`
-	RecoverySlot	[]byte		`json:"recovery_slot,omitempty"`
-	RecoverySalt	[]byte		`json:"recovery_salt,omitempty"`
-	RawRecoveryKey	string		`json:"-"`
-	ObfuscatedKey	[]byte		`json:"-"`
+	CurrentProfileParams *CryptoProfile `json:"-"`
+	RecoveryEmail        string         `json:"recovery_email,omitempty"`
+	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
+	DEK                  []byte         `json:"dek,omitempty"`
+	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
+	RecoverySalt         []byte         `json:"recovery_salt,omitempty"`
+	RawRecoveryKey       string         `json:"-"`
+	ObfuscatedKey        []byte         `json:"-"`
+	RecoveryTokenHash    []byte         `json:"recovery_token_hash,omitempty"`
+	RecoveryTokenExpiry  time.Time      `json:"recovery_token_expiry,omitempty"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -424,6 +428,11 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		rec.ObfuscatedKey = vault.ObfuscatedKey
 	}
 
+	if len(vault.RecoveryTokenHash) > 0 {
+		rec.RecoveryTokenHash = vault.RecoveryTokenHash
+		rec.RecoveryTokenExpiry = vault.RecoveryTokenExpiry
+	}
+
 	encRec, _ := json.Marshal(rec)
 	recLenBytes := make([]byte, 2)
 	recLenBytes[0] = byte(len(encRec) >> 8)
@@ -477,7 +486,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	switch version {
 	case 1:
 		profile = CryptoProfile{
-			Name:	"legacy_v1", KDF: "argon2id", Time: 3, Memory: 128 * 1024, Parallelism: 4, SaltLen: 16, NonceLen: 12,
+			Name: "legacy_v1", KDF: "argon2id", Time: 3, Memory: 128 * 1024, Parallelism: 4, SaltLen: 16, NonceLen: 12,
 		}
 	case 2:
 		if offset >= len(data) {
@@ -739,6 +748,8 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	if version == 4 {
 		rec, _ := GetVaultRecoveryInfo(data)
 		vault.ObfuscatedKey = rec.ObfuscatedKey
+		vault.RecoveryTokenHash = rec.RecoveryTokenHash
+		vault.RecoveryTokenExpiry = rec.RecoveryTokenExpiry
 	}
 	return &vault, nil
 }
@@ -814,6 +825,26 @@ func (v *Vault) ClearRecoveryInfo() {
 	v.RecoverySlot = nil
 	v.RawRecoveryKey = ""
 	v.ObfuscatedKey = nil
+	v.RecoveryTokenHash = nil
+	v.RecoveryTokenExpiry = time.Time{}
+}
+
+func (v *Vault) SetRecoveryToken(token string, duration time.Duration) {
+	h := sha256.Sum256([]byte(token))
+	v.RecoveryTokenHash = h[:]
+	v.RecoveryTokenExpiry = time.Now().Add(duration)
+	v.NeedsRepair = true
+}
+
+func (v *Vault) VerifyRecoveryToken(token string) bool {
+	if len(v.RecoveryTokenHash) == 0 {
+		return false
+	}
+	if time.Now().After(v.RecoveryTokenExpiry) {
+		return false
+	}
+	h := sha256.Sum256([]byte(token))
+	return hmac.Equal(h[:], v.RecoveryTokenHash)
 }
 
 func GenerateRecoveryKey() string {
@@ -1070,10 +1101,10 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 
 func (v *Vault) logHistory(action, category, identifier string) {
 	entry := HistoryEntry{
-		Timestamp:	time.Now(),
-		Action:	action,
-		Category:	category,
-		Identifier:	identifier,
+		Timestamp:  time.Now(),
+		Action:     action,
+		Category:   category,
+		Identifier: identifier,
 	}
 
 	data := fmt.Sprintf("%d:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier)
@@ -1730,10 +1761,10 @@ func (v *Vault) DeleteLegalContract(name string) bool {
 }
 
 type SearchResult struct {
-	Type	string
-	Identifier	string
-	Data	interface{}
-	Space	string
+	Type       string
+	Identifier string
+	Data       interface{}
+	Space      string
 }
 
 func (v *Vault) SearchAll(query string) []SearchResult {
@@ -1882,8 +1913,8 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 
 func GetDecoyVault() *Vault {
 	v := &Vault{
-		Salt:	make([]byte, 16),
-		Spaces:	[]string{"default", "work", "personal"},
+		Salt:   make([]byte, 16),
+		Spaces: []string{"default", "work", "personal"},
 	}
 	rand.Read(v.Salt)
 
@@ -1892,10 +1923,10 @@ func GetDecoyVault() *Vault {
 		user, _ := GenerateRandomWords()
 		pass, _ := GenerateRandomHex(16)
 		v.Entries = append(v.Entries, Entry{
-			Account:	acc,
-			Username:	strings.ToLower(user),
-			Password:	pass,
-			Space:	"default",
+			Account:  acc,
+			Username: strings.ToLower(user),
+			Password: pass,
+			Space:    "default",
 		})
 	}
 
@@ -1903,16 +1934,16 @@ func GetDecoyVault() *Vault {
 		acc, _ := GenerateRandomWords()
 		sec, _ := GenerateRandomHex(20)
 		v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{
-			Account:	acc,
-			Secret:	sec,
+			Account: acc,
+			Secret:  sec,
 		})
 	}
 
 	for i := 0; i < 5; i++ {
 		name, _ := GenerateRandomWords()
 		v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{
-			Name:	name,
-			Content:	"This is a decoy note containing sensitive-looking information for testing purposes.",
+			Name:    name,
+			Content: "This is a decoy note containing sensitive-looking information for testing purposes.",
 		})
 	}
 
