@@ -4,3 +4,6 @@ wiki/*
 team/pm-team.exe
 team/team_vault.dat
 CHANGES.md
+
+.gemini/
+gha-creds-*.json
