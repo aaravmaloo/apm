@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"net/http"
 	"os"
 	"os/exec"
@@ -3787,14 +3786,10 @@ var authRecoverCmd = &cobra.Command{
 		}
 		realKey := src.DeObfuscateRecoveryKey(info.ObfuscatedKey)
 
-		otpChars := "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-		otp := make([]byte, 8)
-		for i := 0; i < 8; i++ {
-			n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(otpChars))))
-			otp[i] = otpChars[n.Int64()]
-		}
-		otpStr := string(otp)
+		token, _ := src.GenerateRandomHex(64)
+		tokenHash := sha256.Sum256([]byte(token))
 		startTime := time.Now()
+		expiryDuration := 15 * time.Minute
 
 		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
 		port := 587
@@ -3804,26 +3799,41 @@ var authRecoverCmd = &cobra.Command{
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
-		m.SetHeader("Subject", "APM Vault Recovery Key Retrieval")
-		m.SetBody("text/plain", fmt.Sprintf("A recovery attempt was initiated. Your temporary Recovery OTP is: %s\n\nThis OTP is valid for 10 minutes and should be entered into the CLI to unlock your vault.", otpStr))
+		m.SetHeader("Subject", "SECURITY: APM Vault Recovery Token")
+
+		body := fmt.Sprintf(`
+[SECURITY ALERT]
+A recovery attempt has been initiated for your APM Vault.
+
+Your Secure Recovery Token is:
+%s
+
+This token is valid for 15 minutes.
+For security reasons, this token is single-use and will be invalidated immediately after use.
+
+If you did not initiate this recovery request, please ignore this email and consider updating your security settings.
+`, token)
+		m.SetBody("text/plain", body)
 
 		dialer := gomail.NewDialer(host, port, user, passEmail)
 		_ = dialer.DialAndSend(m)
 
-		color.HiCyan("A security notification has been sent to your email with a temporary OTP.")
+		color.HiCyan("A security notification has been sent to your email with a recovery token.")
 
 		var dek []byte
 		for {
-			if time.Since(startTime) > 10*time.Minute {
-				color.Red("Recovery attempt timed out. Please initiate a new recovery request.")
+			if time.Since(startTime) > expiryDuration {
+				color.Red("Recovery token has expired. Please initiate a new recovery request.")
 				return
 			}
 
-			fmt.Printf("enter recovery OTP (valid for %d more seconds): ", int(600-time.Since(startTime).Seconds()))
-			enteredOTP := strings.TrimSpace(readInput())
+			fmt.Printf("enter recovery token (valid for %v longer): ", expiryDuration-time.Since(startTime).Truncate(time.Second))
+			enteredToken := strings.TrimSpace(readInput())
 
-			if strings.ToUpper(enteredOTP) == otpStr {
-				color.HiGreen("OTP Verified. Authorizing cryptographic unlock...")
+			h := sha256.Sum256([]byte(enteredToken))
+			if hmac.Equal(h[:], tokenHash[:]) {
+				color.HiGreen("Token Verified. Authorizing cryptographic unlock...")
+				tokenHash = [32]byte{} // Invalidate in memory
 				var err error
 				dek, err = src.CheckRecoveryKey(data, realKey)
 				if err != nil {
@@ -3832,7 +3842,7 @@ var authRecoverCmd = &cobra.Command{
 				}
 				break
 			} else {
-				color.Red("Invalid OTP. Please check your email and try again.")
+				color.Red("Invalid token. Please check your email and try again.")
 			}
 		}
 
@@ -3900,8 +3910,22 @@ var authEmailCmd = &cobra.Command{
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
-		m.SetHeader("Subject", "APM Vault Recovery Key Setup")
-		body := fmt.Sprintf("Your APM Vault Recovery Key: %s\n\nKeep this email safe. You will need this key if you lose your master password.", key)
+		m.SetHeader("Subject", "SECURITY: APM Vault Recovery Setup")
+		body := fmt.Sprintf(`
+[SECURITY ALERT]
+Recovery access has been configured for your APM Vault.
+
+Your APM Vault Recovery Key is:
+%s
+
+IMPORTANT SECURITY INSTRUCTIONS:
+1. Store this key in a physically secure location (e.g., a safe or locked drawer).
+2. Do not share this key with anyone. 
+3. This key, combined with your recovery token, allows resetting your Master Password.
+4. If you did not initiate this setup, please contact security immediately.
+
+Note: This is a zero-knowledge system. We cannot recover your vault without this key.
+`, key)
 		m.SetBody("text/plain", body)
 
 		dialer := gomail.NewDialer(host, port, user, passEmail)
