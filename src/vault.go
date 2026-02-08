@@ -256,6 +256,9 @@ type RecoveryData struct {
 	ObfuscatedKey       []byte    `json:"obfuscated_key,omitempty"`
 	RecoveryTokenHash   []byte    `json:"recovery_token_hash,omitempty"`
 	RecoveryTokenExpiry time.Time `json:"recovery_token_expiry,omitempty"`
+	AlertsEnabled       bool      `json:"alerts_enabled,omitempty"`
+	SecurityLevel       int       `json:"security_level,omitempty"`
+	AlertEmail          string    `json:"alert_email,omitempty"`
 }
 
 type AudioEntry struct {
@@ -281,6 +284,7 @@ type PhotoEntry struct {
 
 type Vault struct {
 	Salt                  []byte                 `json:"salt"`
+	SecurityLevel         int                    `json:"security_level"` // 1-3
 	Entries               []Entry                `json:"entries"`
 	TOTPEntries           []TOTPEntry            `json:"totp_entries"`
 	Tokens                []TokenEntry           `json:"tokens"`
@@ -433,6 +437,10 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		rec.RecoveryTokenExpiry = vault.RecoveryTokenExpiry
 	}
 
+	rec.AlertsEnabled = vault.AlertsEnabled
+	rec.SecurityLevel = vault.SecurityLevel
+	rec.AlertEmail = vault.AlertEmail
+
 	encRec, _ := json.Marshal(rec)
 	recLenBytes := make([]byte, 2)
 	recLenBytes[0] = byte(len(encRec) >> 8)
@@ -522,7 +530,16 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 				return nil, errors.New("corrupted header (recovery len)")
 			}
 			rLen := int(data[offset])<<8 | int(data[offset+1])
-			offset += 2 + rLen
+			offset += 2
+			if offset+rLen <= len(data) {
+				var rec RecoveryData
+				if err := json.Unmarshal(data[offset:offset+rLen], &rec); err == nil {
+					// Pre-populate some fields from header if needed
+					// These might be overwritten by encrypted payload later,
+					// but it's good for consistency and potentially pre-unlock checks
+				}
+			}
+			offset += rLen
 		}
 	default:
 		return nil, fmt.Errorf("unsupported vault version: %d", version)
@@ -667,6 +684,12 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		vault.NeedsRepair = true
 	}
 	vault.CurrentProfileParams = &profile
+	if version == 4 {
+		rec, _ := GetVaultRecoveryInfo(data)
+		vault.AlertsEnabled = rec.AlertsEnabled
+		vault.SecurityLevel = rec.SecurityLevel
+		vault.AlertEmail = rec.AlertEmail
+	}
 	return &vault, nil
 }
 
@@ -750,6 +773,8 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		vault.ObfuscatedKey = rec.ObfuscatedKey
 		vault.RecoveryTokenHash = rec.RecoveryTokenHash
 		vault.RecoveryTokenExpiry = rec.RecoveryTokenExpiry
+		vault.AlertsEnabled = rec.AlertsEnabled
+		vault.SecurityLevel = rec.SecurityLevel
 	}
 	return &vault, nil
 }
