@@ -854,8 +854,10 @@ func main() {
 			}
 			if err := src.SaveVault(vaultPath, data); err != nil {
 				color.Red("Error saving vault: %v\n", err)
+			} else {
+				src.SendAlert(vault, src.LevelAll, "ENTRY ADDED", "New entry added to vault.")
+				color.Green("Entry saved.\n")
 			}
-			color.Green("Entry saved.\n")
 		},
 	}
 
@@ -1276,6 +1278,7 @@ func main() {
 
 			color.Green("Successfully exported vault data to %s.\n", output)
 			src.LogAction("DATA_EXPORTED", fmt.Sprintf("File: %s, Type: %s", output, ext))
+			src.SendAlert(vault, src.LevelAll, "DATA EXPORT", fmt.Sprintf("Vault data exported to %s", output))
 		},
 	}
 	exportCmd.Flags().StringP("output", "o", "", "Output filename")
@@ -2384,7 +2387,7 @@ func main() {
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
 	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd)
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
@@ -2740,7 +2743,7 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			src.ClearFailures()
 
 			if vault.AlertsEnabled && vault.AnomalyDetectionEnabled && len(alerts) > 0 {
-				src.SendAlert(vault, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
+				src.SendAlert(vault, src.LevelCritical, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
 			}
 
 			updatedData, _ := src.EncryptVault(vault, pass)
@@ -2755,6 +2758,16 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		src.LogAccess("FAIL")
 		src.TrackFailure()
+
+		// Attempt to get recovery info to find alert email if vault is locked
+		if rec, err := src.GetVaultRecoveryInfo(data); err == nil && rec.AlertsEnabled && rec.AlertEmail != "" {
+			tempVault := &src.Vault{
+				AlertEmail:    rec.AlertEmail,
+				AlertsEnabled: rec.AlertsEnabled,
+				SecurityLevel: rec.SecurityLevel,
+			}
+			src.SendAlert(tempVault, src.LevelCritical, "BREACH ATTEMPT", fmt.Sprintf("Failed unlock attempt %d/3 detected from %s.", i+1, runtime.GOOS))
+		}
 
 		fmt.Printf("Error: %v\n", err)
 	}
@@ -3047,6 +3060,7 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 					if err := src.SaveVault(vaultPath, data); err != nil {
 						color.Red("Error saving vault: %v", err)
 					} else {
+						src.SendAlert(v, src.LevelAll, "ENTRY DELETED", fmt.Sprintf("Deleted entry: %s (%s)", res.Identifier, res.Type))
 						color.Green("Deleted.")
 					}
 				} else {
@@ -3355,8 +3369,12 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 
 	if updated {
 		data, _ := src.EncryptVault(v, mp)
-		src.SaveVault(vaultPath, data)
-		color.Green("Updated.")
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v", err)
+		} else {
+			src.SendAlert(v, src.LevelAll, "ENTRY MODIFIED", fmt.Sprintf("Modified entry: %s (%s)", res.Identifier, res.Type))
+			color.Green("Updated.")
+		}
 	}
 }
 
@@ -3846,6 +3864,8 @@ If you did not initiate this recovery request, please ignore this email and cons
 			}
 		}
 
+		src.ClearFailures()
+
 		color.HiGreen("Cryptographic verification successful! DEK unlocked.")
 
 		fmt.Print("enter new master passwod: ")
@@ -3866,6 +3886,9 @@ If you did not initiate this recovery request, please ignore this email and cons
 			return
 		}
 
+		vault.FailedAttempts = 0
+		vault.EmergencyMode = false
+
 		newData, err := src.EncryptVault(vault, newPass)
 		if err != nil {
 			color.Red("Error re-encrypting vault: %v\n", err)
@@ -3875,6 +3898,7 @@ If you did not initiate this recovery request, please ignore this email and cons
 		if err := src.SaveVault(vaultPath, newData); err != nil {
 			color.Red("Error saving vault: %v\n", err)
 		} else {
+			src.SendAlert(vault, src.LevelCritical, "RECOVERY SUCCESS", "Vault has been successfully recovered and master password reset.")
 			color.Green("Vault recovered and Master Password updated successfully!\n")
 		}
 	},
@@ -3910,37 +3934,119 @@ var authEmailCmd = &cobra.Command{
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
-		m.SetHeader("Subject", "SECURITY: APM Vault Recovery Setup")
-		body := fmt.Sprintf(`
+		m.SetHeader("Subject", "SECURITY ALERT: APM Vault Recovery Configured")
+		body := `
 [SECURITY ALERT]
 Recovery access has been configured for your APM Vault.
 
-Your APM Vault Recovery Key is:
-%s
+IMPORTANT: For your security, the Recovery Key was NOT sent in this email. 
+It was displayed only once in your terminal during setup.
 
-IMPORTANT SECURITY INSTRUCTIONS:
-1. Store this key in a physically secure location (e.g., a safe or locked drawer).
-2. Do not share this key with anyone. 
-3. This key, combined with your recovery token, allows resetting your Master Password.
-4. If you did not initiate this setup, please contact security immediately.
+If you did not initiate this setup, your vault may be compromised. 
+Please contact your security administrator or change your Master Password immediately.
 
-Note: This is a zero-knowledge system. We cannot recover your vault without this key.
-`, key)
+Note: This is a zero-knowledge system. We cannot recover your vault without your physical recovery key.
+`
 		m.SetBody("text/plain", body)
 
 		dialer := gomail.NewDialer(host, port, user, passEmail)
 		err = dialer.DialAndSend(m)
 		if err != nil {
-			color.Red("Error sending email: %v", err)
+			color.Red("Error sending alert email: %v", err)
 			return
 		}
 
 		color.HiGreen("Recovery registered successfully!")
-		color.HiCyan("Registration email sent to %s", email)
+		color.HiCyan("Registration alert sent to %s", email)
+		color.HiYellow("\nYOUR RECOVERY KEY (STAY SECURE):")
+		color.HiMagenta("  %s", key)
+		color.White("\nIMPORTANT: Store this key in a physically secure location.")
+		color.White("It will NEVER be shown again and is NOT stored in plain text.")
 
 		data, _ := src.EncryptVault(vault, pass)
 		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v", err)
+		}
+	},
+}
+
+var authAlertsCmd = &cobra.Command{
+	Use:   "alerts",
+	Short: "Toggle security alerts",
+	Long:  "Enable or disable global security alerts for vault changes.",
+	Run: func(cmd *cobra.Command, args []string) {
+		enable, _ := cmd.Flags().GetBool("enable")
+		disable, _ := cmd.Flags().GetBool("disable")
+
+		pass, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+
+		if enable {
+			vault.AlertsEnabled = true
+			color.Green("Security alerts enabled.")
+		} else if disable {
+			vault.AlertsEnabled = false
+			color.Yellow("Security alerts disabled.")
+		} else {
+			status := "disabled"
+			if vault.AlertsEnabled {
+				status = "enabled"
+			}
+			color.Cyan("Security alerts are currently %s.", status)
+			return
+		}
+
+		data, err := src.EncryptVault(vault, pass)
+		if err == nil {
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v", err)
+			} else {
+				status := "OFF"
+				if vault.AlertsEnabled {
+					status = "ON"
+				}
+				src.SendAlert(vault, src.LevelSettings, "ALERT SETTINGS", fmt.Sprintf("Global security alerts turned %s.", status))
+			}
+		}
+	},
+}
+
+var authLevelCmd = &cobra.Command{
+	Use:   "level [1-3]",
+	Short: "Set security paranoia level",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+
+		if len(args) == 0 {
+			color.Cyan("Current security level: %d", vault.SecurityLevel)
+			color.White("1: Standard, 2: Enhanced, 3: Paranoid")
+			return
+		}
+
+		level, err := strconv.Atoi(args[0])
+		if err != nil || level < 1 || level > 3 {
+			color.Red("Invalid level. Please choose 1, 2, or 3.")
+			return
+		}
+
+		vault.SecurityLevel = level
+		color.HiGreen("Security level updated to %d.", level)
+
+		data, err := src.EncryptVault(vault, pass)
+		if err == nil {
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v", err)
+			} else {
+				src.SendAlert(vault, src.LevelSettings, "SECURITY LEVEL", fmt.Sprintf("Security paranoia level updated to %d.", vault.SecurityLevel))
+			}
 		}
 	},
 }
@@ -3960,6 +4066,7 @@ var authResetCmd = &cobra.Command{
 		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v\n", err)
 		} else {
+			src.SendAlert(vault, src.LevelSettings, "RECOVERY RESET", "Recovery email and associated metadata have been cleared.")
 			color.Green("Recovery email and records removed successfully.\n")
 		}
 	},
@@ -3996,6 +4103,7 @@ var authChangeCmd = &cobra.Command{
 		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v\n", err)
 		} else {
+			src.SendAlert(vault, src.LevelSettings, "PASSWORD CHANGE", "Master password has been successfully rotated.")
 			color.Green("Master password changed successfully.\n")
 		}
 	},
@@ -4147,4 +4255,6 @@ func init() {
 	mcpCmd.AddCommand(mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
 	mcpTokenCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
+	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
+	authAlertsCmd.Flags().Bool("disable", false, "Disable security alerts")
 }
