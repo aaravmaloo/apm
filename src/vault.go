@@ -802,7 +802,7 @@ func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 			jsonStart := rOffset + 2
 			if jsonStart+rLen <= len(data) {
 				var rec RecoveryData
-				if err := json.Unmarshal(data[jsonStart:jsonStart+rLen], &rec); err == nil && len(rec.EmailHash) > 0 {
+				if err := json.Unmarshal(data[jsonStart:jsonStart+rLen], &rec); err == nil && (len(rec.EmailHash) > 0 || rec.AlertsEnabled) {
 					return rec, nil
 				}
 			}
@@ -829,7 +829,7 @@ func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 				var rec RecoveryData
 				if err := json.Unmarshal(data[i:i+l], &rec); err == nil {
 
-					if len(rec.EmailHash) > 0 && (len(rec.KeyHash) > 0 || len(rec.ObfuscatedKey) > 0) {
+					if (len(rec.EmailHash) > 0 || rec.AlertsEnabled) && (len(rec.KeyHash) > 0 || len(rec.ObfuscatedKey) > 0 || rec.AlertsEnabled) {
 						return rec, nil
 					}
 				}
