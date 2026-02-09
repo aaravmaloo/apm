@@ -96,9 +96,10 @@ func TestMCPVaultIntegration(t *testing.T) {
 	idCounter := 0
 	callTool := func(tool string, args map[string]interface{}) map[string]interface{} {
 		idCounter++
+		reqID := idCounter
 		req := map[string]interface{}{
 			"jsonrpc": "2.0",
-			"id":      idCounter,
+			"id":      reqID,
 			"method":  "tools/call",
 			"params": map[string]interface{}{
 				"name":      tool,
@@ -111,20 +112,18 @@ func TestMCPVaultIntegration(t *testing.T) {
 		wIn.Write([]byte("\n"))
 
 		dec := json.NewDecoder(rOut)
-		var resp map[string]interface{}
-		if err := dec.Decode(&resp); err != nil {
-			t.Fatalf("Failed to decode response from server: %v", err)
-		}
-
-		select {
-		case err := <-serverErrCh:
-			if err != nil {
-				t.Fatalf("Server crashed: %v", err)
+		for {
+			var resp map[string]interface{}
+			if err := dec.Decode(&resp); err != nil {
+				t.Fatalf("Failed to decode response from server: %v", err)
 			}
-		default:
-		}
 
-		return resp
+			if respID, ok := resp["id"]; ok {
+				if int(respID.(float64)) == reqID {
+					return resp
+				}
+			}
+		}
 	}
 
 	// Initialize
