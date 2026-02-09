@@ -2442,6 +2442,7 @@ func main() {
 	rootCmd.AddCommand(mcpCmd)
 	rootCmd.AddCommand(bruteCmd)
 
+	rootCmd.PersistentFlags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	rootCmd.Execute()
 }
 
@@ -4253,7 +4254,6 @@ var mcpServeCmd = &cobra.Command{
 
 func init() {
 	mcpCmd.AddCommand(mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
-	mcpTokenCmd.Flags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
 	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
 	authAlertsCmd.Flags().Bool("disable", false, "Disable security alerts")
