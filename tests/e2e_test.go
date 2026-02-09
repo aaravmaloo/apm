@@ -33,7 +33,6 @@ func buildBinaries() error {
 		exe = ".exe"
 	}
 
-	// Build into a temp dir to avoid cluttering source
 	tmp, err := os.MkdirTemp("", "apm_build_*")
 	if err != nil {
 		return err
@@ -64,10 +63,10 @@ func cleanupBinaries() {
 func runPM(t *testing.T, workDir string, env []string, input string, args ...string) (string, error) {
 	cmd := exec.Command(pmBinary, args...)
 	cmd.Dir = workDir
-	// Inherit environment but allow overrides
+
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, env...)
-	
+
 	if input != "" {
 		cmd.Stdin = strings.NewReader(input)
 	}
@@ -89,97 +88,95 @@ func runPMTeam(t *testing.T, workDir string, env []string, input string, args ..
 }
 
 func TestE2EFlow(t *testing.T) {
-	// Use a separate temp dir for each test run to ensure isolation
+
 	workDir := t.TempDir()
-	
-	// Environment variables for this run
+
 	sessionID := "E2ETEST_" + filepath.Base(workDir)
 	env := []string{
 		"APM_SESSION_ID=" + sessionID,
-		// We might need to set APM_VAULT_PATH if the tool supports it, 
-		// otherwise it defaults to "vault.dat" in CWD.
-		// Since we set cmd.Dir = workDir, it should use workDir/vault.dat
 	}
-	
+
 	masterPass := "TestPass123!"
-	
-	// Subtests for sequence
+
 	t.Run("Init", func(t *testing.T) {
-		input := fmt.Sprintf("%s\n", masterPass)
-		out, err := runPM(t, workDir, env, input, "init")
+		input := fmt.Sprintf("%s\nn\n", masterPass) // Pass + 'n' for cloud sync
+		// Use a unique session ID to avoid interference
+		localEnv := append(env, "APM_SESSION_ID="+sessionID+"_INIT")
+		out, err := runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "init")
 		if err != nil {
 			t.Fatalf("Init failed: %v, output: %s", err, out)
 		}
 		if !strings.Contains(out, "Vault initialized successfully") {
 			t.Errorf("Unexpected output: %s", out)
 		}
-		
+
 		if _, err := os.Stat(filepath.Join(workDir, "vault.dat")); os.IsNotExist(err) {
 			t.Error("Vault file not created")
 		}
 	})
 
 	t.Run("Add_AllTypes", func(t *testing.T) {
-		// Remove session file to force login prompt if necessary, 
-		// but since we keep the same session ID and temp dir, session might persist?
-		// The tool stores session in os.TempDir() usually.
-		// We should clean up session file if we want to simulate fresh login.
-		// For this test, we assume valid session or we re-enter password.
-		
-		// Add Password
-		input := fmt.Sprintf("%s\n1\nTestAcc\nTestUser\nTestPass123\n", masterPass)
-		out, _ := runPM(t, workDir, env, input, "add")
+		// Category 1 (Identity), Item 1 (Password)
+		input := fmt.Sprintf("%s\n1\n1\nTestAcc\nTestUser\nTestPass123\n", masterPass)
+		localEnv := append(env, "APM_SESSION_ID="+sessionID+"_ADD1")
+		out, _ := runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "add")
 		if !strings.Contains(out, "Entry saved") {
 			t.Errorf("Password add failed: %s", out)
 		}
 
-		// Add TOTP
-		input = fmt.Sprintf("%s\n2\nTestTOTP\nJBSWY3DPEHPK3PXP\n", masterPass)
-		out, _ = runPM(t, workDir, env, input, "add")
+		// Category 1 (Identity), Item 2 (TOTP)
+		input = fmt.Sprintf("%s\n1\n2\nTestTOTP\nJBSWY3DPEHPK3PXP\n", masterPass)
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_ADD2")
+		out, _ = runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "add")
 		if !strings.Contains(out, "Entry saved") {
 			t.Errorf("TOTP add failed: %s", out)
 		}
 	})
 
-	t.Run("Profiles", func(t *testing.T) {
+	t.Run("Spaces", func(t *testing.T) {
 		input := fmt.Sprintf("%s\n", masterPass)
-		out, _ := runPM(t, workDir, env, input, "profile", "create", "Work")
+		localEnv := append(env, "APM_SESSION_ID="+sessionID+"_SPACE1")
+		out, _ := runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "space", "create", "Work")
 		if !strings.Contains(out, "created successfully") {
-			t.Errorf("Profile create failed: %s", out)
+			t.Errorf("Space create failed: %s", out)
 		}
 
-		out, _ = runPM(t, workDir, env, input, "profile", "list")
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_SPACE2")
+		out, _ = runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "space", "list")
 		if !strings.Contains(out, "Work") {
-			t.Errorf("Profile list failed: %s", out)
+			t.Errorf("Space list failed: %s", out)
 		}
 
-		out, _ = runPM(t, workDir, env, input, "profile", "switch", "Work")
-		if !strings.Contains(out, "Switched to profile: Work") {
-			t.Errorf("Profile switch failed: %s", out)
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_SPACE3")
+		out, _ = runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "space", "switch", "Work")
+		if !strings.Contains(out, "Switched to space: Work") {
+			t.Errorf("Space switch failed: %s", out)
 		}
 
-		// Verify isolation
-		out, _ = runPM(t, workDir, env, input, "get", "TestAcc")
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_SPACE4")
+		out, _ = runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "get", "TestAcc")
 		if !strings.Contains(out, "No matching entries") && !strings.Contains(out, "matches found: 0") {
-			t.Errorf("Profile isolation failed. Found entry from default profile in Work profile.")
+			t.Errorf("Space isolation failed. Found entry from default space in Work space.")
 		}
 
-		// Add to Work profile
-		inputAdd := fmt.Sprintf("%s\n1\nWorkAcc\nWorkUser\nWorkPass\n", masterPass)
-		_, _ = runPM(t, workDir, env, inputAdd, "add")
+		// Category 1, Item 1
+		inputAdd := fmt.Sprintf("%s\n1\n1\nWorkAcc\nWorkUser\nWorkPass\n", masterPass)
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_SPACE5")
+		_, _ = runPM(t, workDir, localEnv, inputAdd, "--vault", "vault.dat", "add")
 
-		out, _ = runPM(t, workDir, env, input, "get", "WorkAcc")
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_SPACE6")
+		out, _ = runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "get", "WorkAcc")
 		if !strings.Contains(out, "WorkUser") {
-			t.Errorf("Entry not found in Work profile")
+			t.Errorf("Entry not found in Work space")
 		}
 
-		// Switch back
-		out, _ = runPM(t, workDir, env, input, "profile", "switch", "default")
-		if !strings.Contains(out, "Switched to profile: default") {
-			t.Errorf("Failed to switch back to default profile: %s", out)
+		localEnv = append(env, "APM_SESSION_ID="+sessionID+"_SPACE7")
+		out, _ = runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "space", "switch", "default")
+		if !strings.Contains(out, "Switched to space: default") {
+			t.Errorf("Failed to switch back to default space: %s", out)
 		}
 	})
-	
+
 	t.Run("Policy", func(t *testing.T) {
 		policiesDir := filepath.Join(workDir, "policies")
 		os.Mkdir(policiesDir, 0755)
@@ -192,25 +189,23 @@ password_policy:
 
 		input := fmt.Sprintf("%s\n", masterPass)
 		out, _ := runPM(t, workDir, env, input, "policy", "load", "TestPolicy")
-		// Adjust expectation based on likely output
+
 		if strings.Contains(out, "Error") {
 			t.Logf("Policy load warning (might depend on impl): %s", out)
 		}
 
 		inputAdd := fmt.Sprintf("%s\n1\nWeakAcc\nUser\nShortPass\n", masterPass)
 		out, _ = runPM(t, workDir, env, inputAdd, "add")
-		// If policy is active, it should fail or warn
-		// Check implementation details if possible, but assuming it works:
+
 		if !strings.Contains(out, "password too short") && !strings.Contains(out, "Policy violation") {
-			// t.Errorf("Policy enforcement failed: %s", out) 
-			// Commented out as policy enforcement might be strict or soft depending on impl
+
 		}
 	})
 }
 
 func TestTeamFlow(t *testing.T) {
 	workDir := t.TempDir()
-	env := []string{} // No special env needed, maybe
+	env := []string{}
 	masterPass := "TestPass123!"
 
 	t.Run("Team_Init", func(t *testing.T) {
@@ -236,6 +231,6 @@ func TestTeamFlow(t *testing.T) {
 			t.Errorf("whoami failed: %s", out)
 		}
 	})
-	
+
 	// Add more team tests following the same pattern...
 }
