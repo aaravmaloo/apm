@@ -1113,7 +1113,7 @@ func main() {
 				color.Yellow("[!] Warning: %d pending approval requests.\n", len(tv.PendingApprovals))
 				issues++
 			} else {
-				color.Green("[“£ô] No pending approval requests.\n")
+				color.Green("[   ] No pending approval requests.\n")
 			}
 
 			adminCount := 0
@@ -1126,7 +1126,7 @@ func main() {
 				color.Yellow("[!] Tip: Too many admins (%d). Consider reducing for better security.\n", adminCount)
 				issues++
 			} else {
-				color.Green("[“£ô] Admin count is healthy (%d).\n", adminCount)
+				color.Green("[   ] Admin count is healthy (%d).\n", adminCount)
 			}
 
 			if len(tv.AuditTrail) > 1000 {
