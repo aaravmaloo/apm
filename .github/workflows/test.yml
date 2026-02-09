@@ -1,0 +1,32 @@
+name: APM Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.5' # Matching go.mod
+
+    - name: Build apm
+      run: go build -v -o target/pm.exe main.go
+
+    - name: Build apm-team
+      working-directory: ./team
+      run: go build -v -o ../target/pm-team.exe .
+
+    - name: Run Core Tests
+      run: go test -v ./src/...
+
+    - name: Run E2E Tests
+      run: go test -v ./tests/...
