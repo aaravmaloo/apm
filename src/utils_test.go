@@ -112,3 +112,43 @@ func TestMaskEmail(t *testing.T) {
 		}
 	}
 }
+
+func TestHMAC(t *testing.T) {
+	data := []byte("hello world")
+	key := []byte("secret-key")
+
+	sig := CalculateHMAC(data, key)
+	if len(sig) == 0 {
+		t.Fatal("HMAC signature is empty")
+	}
+
+	if !VerifyHMAC(data, sig, key) {
+		t.Error("HMAC verification failed for correct key")
+	}
+
+	if VerifyHMAC(data, sig, []byte("wrong-key")) {
+		t.Error("HMAC verification should fail for wrong key")
+	}
+}
+
+func TestWipe(t *testing.T) {
+	b := []byte{1, 2, 3, 4, 5}
+	Wipe(b)
+	for i, v := range b {
+		if v != 0 {
+			t.Errorf("Byte at index %d not wiped: %d", i, v)
+		}
+	}
+}
+
+func TestBase64Utils(t *testing.T) {
+	data := []byte("hello base64")
+	encoded := EncodeBase64(data)
+	decoded, err := DecodeBase64(encoded)
+	if err != nil {
+		t.Fatalf("DecodeBase64 failed: %v", err)
+	}
+	if string(decoded) != string(data) {
+		t.Errorf("DecodeBase64 result mismatch: got %s", string(decoded))
+	}
+}
