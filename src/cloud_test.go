@@ -43,7 +43,12 @@ func TestExtractFileID(t *testing.T) {
 		{
 			name:     "No ID found",
 			input:    "https://google.com",
-			expected: "https://google.com", // Or however the function behaves on failure, arguably it returns input or empty
+			expected: "https://google.com",
+		},
+		{
+			name:     "Complex Drive Link",
+			input:    "https://drive.google.com/open?id=100G-gs-wQnjmGipXdKFBBNd-Qbu6PpYJ&authuser=0",
+			expected: "100G-gs-wQnjmGipXdKFBBNd-Qbu6PpYJ",
 		},
 	}
 
@@ -54,5 +59,38 @@ func TestExtractFileID(t *testing.T) {
 				t.Errorf("ExtractFileID(%q) = %v, want %v", tt.input, got, tt.expected)
 			}
 		})
+	}
+}
+
+func TestHashKey(t *testing.T) {
+	key := "test-key"
+	hashed := HashKey(key)
+	if len(hashed) != 64 { // SHA256 hex is 64 chars
+		t.Errorf("Expected hash length 64, got %d", len(hashed))
+	}
+
+	hashed2 := HashKey(key)
+	if hashed != hashed2 {
+		t.Error("Hash output not deterministic")
+	}
+
+	different := HashKey("different-key")
+	if hashed == different {
+		t.Error("Hashing different keys produced same output")
+	}
+}
+
+func TestGenerateRetrievalKey(t *testing.T) {
+	key, err := GenerateRetrievalKey()
+	if err != nil {
+		t.Fatalf("GenerateRetrievalKey failed: %v", err)
+	}
+	if key == "" {
+		t.Error("Generated key is empty")
+	}
+
+	// Default GenerateRandomWords returns 2 words concatenated
+	if len(key) < 6 { // Arbitrary minimum for 2 words
+		t.Errorf("Generated key too short: %s", key)
 	}
 }
