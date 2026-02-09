@@ -242,16 +242,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			}
 		}
 
-		if len(vault.Entries) > 0 {
-			fmt.Fprintf(os.Stderr, "DEBUG: Manual loop found entries: %d\n", len(vault.Entries))
-			sb.WriteString(fmt.Sprintf("\n[Passwords]\n"))
-			for _, e := range vault.Entries {
-				sb.WriteString("- " + e.Account + "\n")
-			}
-		} else {
-			fmt.Fprintf(os.Stderr, "DEBUG: Manual loop found NO entries. Len: %d\n", len(vault.Entries))
-		}
-		// addSection("Passwords", vault.Entries, "Account")
+		addSection("Passwords", vault.Entries, "Account")
 		addSection("TOTP", vault.TOTPEntries, "Account")
 		addSection("Secure Notes", vault.SecureNotes, "Name")
 		addSection("API Keys", vault.APIKeys, "Name")
@@ -1186,7 +1177,6 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 }
 
 func saveVault(vault *Vault, masterPwd string, path string) error {
-	fmt.Fprintf(os.Stderr, "DEBUG: saveVault called. Path: %s. Entries: %d\n", path, len(vault.Entries))
 	data, err := EncryptVault(vault, masterPwd)
 	if err != nil {
 		return err
@@ -1274,6 +1264,5 @@ func unlockVaultForMCP(vaultPath string) (*Vault, string, error) {
 		return nil, "", err
 	}
 
-	fmt.Fprintf(os.Stderr, "DEBUG: unlockVaultForMCP. Path: %s. Decrypted Entries: %d\n", vaultPath, len(vault.Entries))
 	return vault, session.MasterPassword, nil
 }
