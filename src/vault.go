@@ -328,6 +328,9 @@ type Vault struct {
 	DriveSyncMode           string   `json:"drive_sync_mode,omitempty"` // "apm_public" or "self_hosted"
 	GitHubToken             string   `json:"github_token,omitempty"`
 	GitHubRepo              string   `json:"github_repo,omitempty"`
+	DropboxToken            []byte   `json:"dropbox_token,omitempty"`
+	DropboxSyncMode         string   `json:"dropbox_sync_mode,omitempty"`
+	DropboxFileID           string   `json:"dropbox_file_id,omitempty"`
 	CurrentSpace            string   `json:"current_space,omitempty"`
 	Spaces                  []string `json:"spaces"`
 	ActivePolicy            Policy   `json:"active_policy,omitempty"`
