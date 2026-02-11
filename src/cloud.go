@@ -43,7 +43,7 @@ func GenerateRetrievalKey() (string, error) {
 
 type GoogleDriveManager struct {
 	Service *drive.Service
-	Mode    string // "apm_public" or "self_hosted"
+	Mode    string
 }
 
 func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (*GoogleDriveManager, error) {
@@ -335,7 +335,7 @@ func GetDefaultToken() []byte {
 }
 
 func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (CloudProvider, error) {
-	fmt.Printf("DEBUG: GetCloudProvider called with providerName='%s' mode='%s'\n", providerName, mode)
+
 	switch strings.ToLower(providerName) {
 	case "gdrive", "google":
 		if len(credsJSON) == 0 {
