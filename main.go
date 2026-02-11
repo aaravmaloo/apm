@@ -26,6 +26,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
+	oauth "golang.org/x/oauth2"
 	"golang.org/x/term"
 	"gopkg.in/gomail.v2"
 
@@ -1300,13 +1301,16 @@ func main() {
 				return
 			}
 
-			if vault.CloudFileID != "" || vault.GitHubToken != "" {
+			if vault.CloudFileID != "" || vault.GitHubToken != "" || vault.DropboxToken != nil {
 				color.Red("Cloud sync is already initialized.")
 				if vault.CloudFileID != "" {
 					color.Yellow("- Google Drive: Active (Mode: %s)", vault.DriveSyncMode)
 				}
 				if vault.GitHubToken != "" {
 					color.Yellow("- GitHub: Active")
+				}
+				if vault.DropboxToken != nil {
+					color.Yellow("- Dropbox: Active (Mode: %s)", vault.DropboxSyncMode)
 				}
 				fmt.Println("\nTo re-initialize, first remove the current configuration:")
 				fmt.Println("  pm cloud reset")
@@ -1320,15 +1324,18 @@ func main() {
 				fmt.Println("Choose Cloud Provider:")
 				fmt.Println("1. Google Drive")
 				fmt.Println("2. GitHub")
-				fmt.Println("3. Both")
-				fmt.Print("Selection (1/2/3): ")
+				fmt.Println("3. Dropbox")
+				fmt.Println("4. All")
+				fmt.Print("Selection (1/2/3/4): ")
 				choice := readInput()
 				if choice == "1" {
 					provider = "gdrive"
 				} else if choice == "2" {
 					provider = "github"
 				} else if choice == "3" {
-					provider = "both"
+					provider = "dropbox"
+				} else if choice == "4" {
+					provider = "all"
 				} else {
 					color.Red("Invalid selection.")
 					return
@@ -1341,12 +1348,12 @@ func main() {
 				errSetup = setupGitHub(vault)
 			case "gdrive":
 				errSetup = setupGDrive(vault, masterPassword)
-			case "both":
-				if err := setupGDrive(vault, masterPassword); err != nil {
-					errSetup = err
-				} else {
-					errSetup = setupGitHub(vault)
-				}
+			case "dropbox":
+				errSetup = setupDropbox(vault, masterPassword)
+			case "all":
+				setupGDrive(vault, masterPassword)
+				setupGitHub(vault)
+				setupDropbox(vault, masterPassword)
 			}
 
 			if errSetup != nil {
@@ -1380,6 +1387,9 @@ func main() {
 				if vault.GitHubToken != "" {
 					syncTo = append(syncTo, "github")
 				}
+				if vault.DropboxToken != nil {
+					syncTo = append(syncTo, "dropbox")
+				}
 			}
 
 			if len(syncTo) == 0 {
@@ -1397,6 +1407,8 @@ func main() {
 				targetID := vault.CloudFileID
 				if provider == "github" {
 					targetID = vault.GitHubRepo
+				} else if provider == "dropbox" {
+					targetID = vault.DropboxFileID
 				}
 
 				err = cm.SyncVault(vaultPath, targetID)
@@ -1726,12 +1738,12 @@ func main() {
 				return
 			}
 
-			if vault.RetrievalKey == "" && vault.GitHubToken == "" {
-				color.Yellow("Cloud sync is not initialized (no key found).")
+			if vault.RetrievalKey == "" && vault.GitHubToken == "" && vault.DropboxToken == nil {
+				color.Yellow("Cloud sync is not initialized (no setup found).")
 				return
 			}
 
-			fmt.Printf("This will clear the local Retrieval Key: %s and GitHub Token if set.\n", vault.RetrievalKey)
+			fmt.Printf("This will clear all local cloud metadata (Retrieval Key, Tokens, etc).\n")
 			fmt.Print("Are you sure? (y/n): ")
 			if strings.ToLower(readInput()) != "y" {
 				return
@@ -1745,6 +1757,9 @@ func main() {
 			vault.CloudToken = nil
 			vault.GitHubToken = ""
 			vault.GitHubRepo = ""
+			vault.DropboxToken = nil
+			vault.DropboxSyncMode = ""
+			vault.DropboxFileID = ""
 
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
@@ -3689,7 +3704,93 @@ func displayEntry(res src.SearchResult, showPass bool) {
 	fmt.Println("---")
 }
 
+func setupDropbox(v *src.Vault, mp string) error {
+	color.Yellow("\nSetting up Dropbox...")
+
+	fmt.Println("Choose Sync Mode:")
+	fmt.Println("1. APM_PUBLIC (Fast, no signup, shared storage)")
+	fmt.Println("2. Self-Hosted (Secure, uses your own Dropbox, requires login)")
+	fmt.Print("Selection (1/2): ")
+	modeSelection := readInput()
+
+	var token []byte
+	var mode string
+	var err error
+
+	if modeSelection == "2" {
+		mode = "self_hosted"
+		color.Cyan("Self-hosted setup requires a Dropbox App Key and Secret.")
+		fmt.Print("Enter App Key: ")
+		appKey := readInput()
+		fmt.Print("Enter App Secret: ")
+		appSecret := readInput()
+
+		config := oauth.Config{
+			ClientID:     appKey,
+			ClientSecret: appSecret,
+			Endpoint: oauth.Endpoint{
+				AuthURL:  "https://www.dropbox.com/oauth2/authorize",
+				TokenURL: "https://api.dropboxapi.com/oauth2/token",
+			},
+			RedirectURL: "http://localhost:8080",
+		}
+
+		token, err = src.PerformDropboxAuth(config)
+		if err != nil {
+			color.Red("Authentication failed: %v", err)
+			return err
+		}
+	} else {
+		mode = "apm_public"
+		token = src.GetDefaultDropboxToken()
+	}
+
+	v.DropboxSyncMode = mode
+	v.DropboxToken = token
+
+	fmt.Print("Enter Custom Retrieval Key (leave blank to generate randomly): ")
+	customKey := readInput()
+
+	var key string
+	if customKey != "" {
+		key = customKey
+	} else {
+		key, err = src.GenerateRetrievalKey()
+		if err != nil {
+			color.Red("Key generation failed: %v", err)
+			return err
+		}
+	}
+
+	fmt.Println("DEBUG: setupDropbox calling getCloudManagerEx with 'dropbox'")
+	cm, err := getCloudManagerEx(context.Background(), v, mp, "dropbox")
+	if err != nil {
+		color.Red("Dropbox error: %v", err)
+		return err
+	}
+
+	fileID, err := cm.UploadVault(vaultPath, key)
+	if err != nil {
+		color.Red("Upload failed: %v", err)
+		return err
+	}
+
+	v.RetrievalKey = key
+	v.DropboxFileID = fileID
+	v.LastCloudProvider = "dropbox"
+
+	color.Green("Dropbox sync setup successful.")
+	color.HiCyan("Retrieval Key: %s", key)
+	if mode == "self_hosted" {
+		color.Cyan("Mode: Self-Hosted (Owner: You)")
+	} else {
+		color.Cyan("Mode: APM_PUBLIC")
+	}
+	return nil
+}
+
 func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword string, provider string) (src.CloudProvider, error) {
+	fmt.Printf("DEBUG: getCloudManagerEx called with provider='%s'\n", provider)
 	if provider == "github" {
 		if vault == nil || vault.GitHubToken == "" {
 			return nil, fmt.Errorf("github sync not initialized. run 'pm cloud init github' first")
@@ -3702,7 +3803,15 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 		return gm, nil
 	}
 
+	if provider == "dropbox" {
+		if vault == nil || vault.DropboxToken == nil {
+			return nil, fmt.Errorf("dropbox sync not initialized. run 'pm cloud init dropbox' first")
+		}
+		return src.GetCloudProvider("dropbox", ctx, nil, vault.DropboxToken, vault.DropboxSyncMode)
+	}
+
 	if provider != "gdrive" {
+		fmt.Printf("DEBUG: getCloudManagerEx falling through for provider='%s'\n", provider)
 		return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
 	}
 
