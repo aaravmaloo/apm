@@ -2631,10 +2631,14 @@ func readInput() string {
 	return strings.TrimSpace(input)
 }
 
+var k_m = []byte("AaravMalooAPMSecureCloudSync2025!")
+
 func d(b []byte) string {
 	res := make([]byte, len(b))
 	for i, v := range b {
-		res[i] = v ^ 0xAA
+		val := byte(v - 13)
+		val = (val >> 3) | (val << 5)
+		res[i] = val ^ byte(i) ^ k_m[i%len(k_m)]
 	}
 	return string(res)
 }
@@ -3980,10 +3984,10 @@ var authRecoverCmd = &cobra.Command{
 		startTime := time.Now()
 		expiryDuration := 15 * time.Minute
 
-		host := d([]byte{0xd9, 0xc7, 0xde, 0xda, 0x84, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
+		host := d([]byte{158, 117, 45, 157, 239, 134, 93, 93, 125, 93, 56, 206, 126, 166})
 		port := 587
-		user := d([]byte{0xcb, 0xcb, 0xd8, 0xcb, 0xdc, 0xc7, 0xcb, 0xc6, 0xc5, 0xc5, 0x9a, 0x9c, 0xea, 0xcd, 0xc7, 0xcb, 0xc3, 0xc6, 0x84, 0xc9, 0xc5, 0xc7})
-		passEmail := d([]byte{0xc3, 0xd8, 0xd3, 0xd8, 0x8a, 0xc5, 0xc7, 0xc6, 0xdc, 0x8a, 0xc2, 0xde, 0xdb, 0xcc, 0x8a, 0xda, 0xd8, 0xc2, 0xdb})
+		user := d([]byte{14, 21, 29, 37, 45, 54, 61, 69, 77, 85, 232, 120, 21, 214, 61, 117, 109, 133, 215, 166, 197, 197})
+		passEmail := d([]byte{78, 157, 85, 141, 159, 70, 93, 69, 149, 63, 38, 134, 142, 206, 103, 237, 197, 101, 61})
 
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
