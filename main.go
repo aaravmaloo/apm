@@ -2835,6 +2835,7 @@ func rankMatch(query, target string) int {
 func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string, readonly bool) {
 	query := initialQuery
 	selectedIndex := 0
+	selectedItems := make(map[string]src.SearchResult)
 
 	if !term.IsTerminal(int(os.Stdin.Fd())) {
 		results := performSearch(v, query)
@@ -2896,10 +2897,15 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		displayLimit := 20
 		for i := 0; i < len(results) && i < displayLimit; i++ {
 			r := results[i]
-			line := fmt.Sprintf("[%d] %-30s (%s)", i+1, r.Identifier, r.Type)
+			key := fmt.Sprintf("%s:%s", r.Type, r.Identifier)
+			prefix := "  "
+			if _, exists := selectedItems[key]; exists {
+				prefix = "* "
+			}
+			line := fmt.Sprintf("%s[%d] %-30s (%s)", prefix, i+1, r.Identifier, r.Type)
 			if i == selectedIndex {
 				if focusMode == 1 {
-					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V\x1b[0m\n", line)
+					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V/SPACE\x1b[0m\n", line)
 				} else {
 					fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
 				}
@@ -2916,7 +2922,8 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		if focusMode == 0 {
 			fmt.Println("\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
 		} else {
-			fmt.Println("\x1b[1;37mΓåæ/Γåô\x1b[0m: Navigate | \x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
+			fmt.Println("\x1b[1;37mΓåæ/Γåô\x1b[0m: Navigate | \x1b[1;37mSpace\x1b[0m: Select | \x1b[1;37ma\x1b[0m: All | \x1b[1;37mc\x1b[0m: Clear")
+			fmt.Println("\x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
 		}
 
 		b := make([]byte, 3)
@@ -2976,26 +2983,80 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 				focusMode = 1
 			} else if len(results) > 0 {
 				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
+				oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 			}
 			continue
 		}
 
 		if focusMode == 1 {
-			if b[0] == 'e' {
+			if b[0] == ' ' {
 				if len(results) > 0 {
+					r := results[selectedIndex]
+					key := fmt.Sprintf("%s:%s", r.Type, r.Identifier)
+					if _, exists := selectedItems[key]; exists {
+						delete(selectedItems, key)
+					} else {
+						selectedItems[key] = r
+					}
+				}
+				continue
+			}
+			if b[0] == 'a' {
+				for _, r := range results {
+					key := fmt.Sprintf("%s:%s", r.Type, r.Identifier)
+					selectedItems[key] = r
+				}
+				continue
+			}
+			if b[0] == 'c' {
+				selectedItems = make(map[string]src.SearchResult)
+				continue
+			}
+			if b[0] == 'e' {
+				if len(selectedItems) > 0 {
+					_ = term.Restore(int(os.Stdin.Fd()), oldState)
+					for key, res := range selectedItems {
+						fmt.Print("\033[H\033[2J")
+						editEntryInVault(v, masterPassword, res)
+						delete(selectedItems, key)
+						fmt.Print("\nPress Enter to continue...")
+						readInput()
+					}
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+				} else if len(results) > 0 {
 					handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
 			}
 			if b[0] == 'd' {
-				if len(results) > 0 {
+				if len(selectedItems) > 0 {
+					_ = term.Restore(int(os.Stdin.Fd()), oldState)
+					fmt.Print("\033[H\033[2J")
+					fmt.Printf("Are you sure you want to delete %d selected items? (y/n): ", len(selectedItems))
+					if strings.ToLower(readInput()) == "y" {
+						for key, res := range selectedItems {
+							if deleteEntryByResult(v, res) {
+								delete(selectedItems, key)
+							}
+						}
+						data, _ := src.EncryptVault(v, masterPassword)
+						src.SaveVault(vaultPath, data)
+						color.Green("Bulk deletion complete.")
+						fmt.Print("\nPress Enter to continue...")
+						readInput()
+					}
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+				} else if len(results) > 0 {
 					handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
 			}
 			if b[0] == 'v' {
 				if len(results) > 0 {
 					handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
 			}
