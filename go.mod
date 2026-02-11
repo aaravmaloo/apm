@@ -4,6 +4,7 @@ go 1.25
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
 	github.com/google/go-github/v60 v60.0.0
 	github.com/modelcontextprotocol/go-sdk v1.2.0
 	github.com/spf13/cobra v1.10.2
