@@ -21,6 +21,83 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+func FindMCPConfigFiles() []string {
+	var files []string
+	home, _ := os.UserHomeDir()
+
+	paths := []string{
+		filepath.Join(os.Getenv("APPDATA"), "Claude", "mcp_config.json"),
+		filepath.Join(os.Getenv("APPDATA"), "Cursor", "mcp.json"),
+		filepath.Join(os.Getenv("APPDATA"), "Code", "User", "mcp.json"),
+		filepath.Join(os.Getenv("APPDATA"), "Cursor", "User", "globalStorage", "saoudrizwan.claude-dev", "settings", "cline_mcp_settings.json"),
+		filepath.Join(os.Getenv("APPDATA"), "Code", "User", "globalStorage", "saoudrizwan.claude-dev", "settings", "cline_mcp_settings.json"),
+		filepath.Join(home, "Library", "Application Support", "Claude", "mcp_config.json"),
+		filepath.Join(home, "Library", "Application Support", "Cursor", "User", "globalStorage", "saoudrizwan.claude-dev", "settings", "cline_mcp_settings.json"),
+		filepath.Join(home, ".config", "Claude", "mcp_config.json"),
+	}
+
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			files = append(files, p)
+		}
+	}
+	return files
+}
+
+func UpdateMCPConfigWithToken(filePath, token string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return err
+	}
+
+	mcpServers, ok := config["mcpServers"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid mcp config format")
+	}
+
+	apmServer, ok := mcpServers["apm"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("apm server not found in config")
+	}
+
+	args, ok := apmServer["args"].([]interface{})
+	if !ok {
+		args = []interface{}{}
+	}
+
+	newArgs := []interface{}{}
+	foundToken := false
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--token" && i+1 < len(args) {
+			newArgs = append(newArgs, "--token", token)
+			i++
+			foundToken = true
+		} else {
+			newArgs = append(newArgs, args[i])
+		}
+	}
+
+	if !foundToken {
+		newArgs = append(newArgs, "--token", token)
+	}
+
+	apmServer["args"] = newArgs
+	mcpServers["apm"] = apmServer
+	config["mcpServers"] = mcpServers
+
+	newData, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filePath, newData, 0600)
+}
+
 type MCPAuthConfig struct {
 	Tokens map[string]MCPToken `json:"tokens"`
 }
