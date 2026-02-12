@@ -4289,10 +4289,40 @@ var mcpCmd = &cobra.Command{
 	Short: "Configure or start the APM MCP server",
 }
 
+var mcpConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "Show configuration for auto-token MCP setup",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmdStr := fmt.Sprintf("if (! (Get-Command pm -ErrorAction SilentlyContinue)) { iwr -useb https://get.apm.dev/install.ps1 | iex }; pm mcp serve")
+
+		mcpConfig := map[string]interface{}{
+			"command": "powershell",
+			"args":    []string{"-ExecutionPolicy", "Bypass", "-Command", cmdStr},
+			"env":     map[string]string{},
+		}
+
+		fullConfig := map[string]interface{}{
+			"mcpServers": map[string]interface{}{
+				"apm": mcpConfig,
+			},
+		}
+
+		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
+		color.HiYellow("Copy this to your MCP settings (e.g., Claude Desktop or Cursor config):")
+		fmt.Println(string(configJSON))
+	},
+}
+
 var mcpTokenCmd = &cobra.Command{
 	Use:   "token",
 	Short: "Interactive setup for MCP access tokens",
 	Run: func(cmd *cobra.Command, args []string) {
+		auto, _ := cmd.Flags().GetBool("auto")
+		if !auto && len(args) == 0 {
+			mcpConfigCmd.Run(cmd, args)
+			return
+		}
+
 		color.HiCyan("APM MCP Server Setup")
 
 		var name string
@@ -4332,30 +4362,42 @@ var mcpTokenCmd = &cobra.Command{
 			return
 		}
 
-		exe, _ := os.Executable()
-		mcpConfig := map[string]interface{}{
-			"command": "cmd",
-			"args":    []string{"/c", exe, "mcp", "serve", "--token", token},
-			"env":     map[string]string{},
+		if auto {
+			files := src.FindMCPConfigFiles()
+			updatedAny := false
+			for _, f := range files {
+				if err := src.UpdateMCPConfigWithToken(f, token); err == nil {
+					color.Green("Automatically updated config: %s", f)
+					updatedAny = true
+				}
+			}
+			if !updatedAny {
+				color.Yellow("Could not automatically find an IDE config to update.")
+			}
 		}
-
-		if runtime.GOOS != "windows" {
-			mcpConfig["command"] = exe
-			mcpConfig["args"] = []string{"mcp", "serve", "--token", token}
-		}
-
-		fullConfig := map[string]interface{}{
-			"mcpServers": map[string]interface{}{
-				"apm": mcpConfig,
-			},
-		}
-
-		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
 
 		color.HiGreen("\nMCP Token generated successfully!")
 		color.HiCyan("Token: %s", token)
-		color.HiYellow("\nAdd the following configuration to your MCP settings (e.g., mcp.json or Claude Desktop config):")
-		fmt.Println(string(configJSON))
+		if !auto {
+			exe, _ := os.Executable()
+			mcpConfig := map[string]interface{}{
+				"command": "cmd",
+				"args":    []string{"/c", exe, "mcp", "serve", "--token", token},
+				"env":     map[string]string{},
+			}
+			if runtime.GOOS != "windows" {
+				mcpConfig["command"] = exe
+				mcpConfig["args"] = []string{"mcp", "serve", "--token", token}
+			}
+			fullConfig := map[string]interface{}{
+				"mcpServers": map[string]interface{}{
+					"apm": mcpConfig,
+				},
+			}
+			configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
+			color.HiYellow("\nAdd the following configuration to your MCP settings:")
+			fmt.Println(string(configJSON))
+		}
 		color.HiCyan("\nNote: The MCP server requires an active APM session. Run 'pm unlock' to start a session before using the agent.")
 	},
 }
@@ -4416,8 +4458,23 @@ var mcpServeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		token, _ := cmd.Flags().GetString("token")
 		if token == "" {
-			fmt.Println("Error: --token flag is required for serve mode")
-			os.Exit(1)
+			config, _ := src.LoadMCPConfig()
+			if len(config.Tokens) == 0 {
+				color.Yellow("No MCP token found. Triggering automated setup...")
+				exe, _ := os.Executable()
+				if runtime.GOOS == "windows" {
+					setupCmd := exec.Command("cmd", "/c", "start", "powershell", "-NoExit", "-Command", fmt.Sprintf("& '%s' mcp token --auto", exe))
+					setupCmd.Run()
+				} else {
+					color.Red("Auto-setup currently only supported on Windows.")
+				}
+				color.Cyan("Please complete the setup in the new window and then restart your agent.")
+				os.Exit(0)
+			}
+			for t := range config.Tokens {
+				token = t
+				break
+			}
 		}
 		if err := src.StartMCPServer(token, vaultPath, nil, pluginMgr); err != nil {
 			fmt.Fprintf(os.Stderr, "MCP Server Error: %v\n", err)
@@ -4427,8 +4484,9 @@ var mcpServeCmd = &cobra.Command{
 }
 
 func init() {
-	mcpCmd.AddCommand(mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
+	mcpCmd.AddCommand(mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd, mcpConfigCmd)
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
+	mcpTokenCmd.Flags().Bool("auto", false, "Automatically configure IDEs")
 	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
 	authAlertsCmd.Flags().Bool("disable", false, "Disable security alerts")
 }
