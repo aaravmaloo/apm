@@ -3,15 +3,18 @@ package apm
 import (
 	"fmt"
 	"os"
+	"sort"
 	"time"
 )
 
 func ChangeProfile(vault *Vault, newProfileName string, masterPassword string, vaultPath string) error {
-	if _, ok := Profiles[newProfileName]; !ok {
+	profile, ok := Profiles[newProfileName]
+	if !ok {
 		return fmt.Errorf("unknown profile: %s", newProfileName)
 	}
 
 	vault.Profile = newProfileName
+	vault.CurrentProfileParams = &profile
 
 	data, err := EncryptVault(vault, masterPassword)
 	if err != nil {
@@ -30,6 +33,7 @@ func GetAvailableProfiles() []string {
 	for k := range Profiles {
 		names = append(names, k)
 	}
+	sort.Strings(names)
 	return names
 }
 
