@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 	"bufio"
@@ -199,7 +199,12 @@ func main() {
 				break
 			}
 
-			vault := &src.Vault{}
+			selectedProfile := chooseProfileForInit()
+			profileParams := src.GetProfile(selectedProfile)
+			vault := &src.Vault{
+				Profile:              selectedProfile,
+				CurrentProfileParams: &profileParams,
+			}
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
 				fmt.Printf("Error encrypting vault: %v\n", err)
@@ -211,7 +216,7 @@ func main() {
 				return
 			}
 
-			color.Green("Vault initialized successfully.\n")
+			color.Green("Vault initialized successfully with '%s' profile.\n", selectedProfile)
 
 			fmt.Print("Would you like to set up cloud sync now? (y/n) [n]: ")
 			if strings.ToLower(readInput()) == "y" {
@@ -269,7 +274,12 @@ func main() {
 				break
 			}
 
-			vault := &src.Vault{}
+			selectedProfile := chooseProfileForInit()
+			profileParams := src.GetProfile(selectedProfile)
+			vault := &src.Vault{
+				Profile:              selectedProfile,
+				CurrentProfileParams: &profileParams,
+			}
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
 				fmt.Printf("Error encrypting vault: %v\n", err)
@@ -281,7 +291,7 @@ func main() {
 				return
 			}
 
-			color.Green("Vault initialized successfully.\n")
+			color.Green("Vault initialized successfully with '%s' profile.\n", selectedProfile)
 
 			color.Cyan("\n--- Setting up Cloud Sync (All) ---")
 
@@ -2129,13 +2139,97 @@ func main() {
 
 	var profileCmd = &cobra.Command{
 		Use:   "profile",
-		Short: "Manage encryption profiles",
+		Short: "View and tune encryption profiles",
 	}
 
 	var profileSetCmd = &cobra.Command{
 		Use:   "set <name>",
-		Short: "Switch to a different profile",
+		Short: "Switch to a built-in profile",
 		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			target := strings.ToLower(strings.TrimSpace(args[0]))
+			masterPassword, vault, readonly, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			if readonly {
+				color.Red("Vault is READ-ONLY.")
+				return
+			}
+			err = src.ChangeProfile(vault, target, masterPassword, vaultPath)
+			if err != nil {
+				color.Red("Error: %v", err)
+				color.Cyan("Available profiles: %s", strings.Join(src.GetAvailableProfiles(), ", "))
+				src.LogAction("PROFILE_CHANGE_FAILED", fmt.Sprintf("Profile: %s, Error: %v", target, err))
+			} else {
+				color.Green("Profile switched to %s.", target)
+				src.LogAction("PROFILE_CHANGED", fmt.Sprintf("Profile: %s", target))
+			}
+		},
+	}
+
+	var profileListCmd = &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List profiles and their parameters",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			current := strings.TrimSpace(vault.Profile)
+			if current == "" {
+				current = "standard"
+			}
+
+			fmt.Println("Available profiles")
+			fmt.Println("==================")
+			for _, name := range src.GetAvailableProfiles() {
+				p := src.GetProfile(name)
+				currentMark := " "
+				if strings.EqualFold(name, current) {
+					currentMark = "*"
+				}
+				fmt.Printf("%s %s  | KDF: %s, Time: %d, Memory: %d MB, Threads: %d, Salt: %d, Nonce: %d\n",
+					currentMark, name, p.KDF, p.Time, p.Memory/1024, p.Parallelism, p.SaltLen, p.NonceLen)
+			}
+
+			if vault.CurrentProfileParams != nil && !isBuiltinProfileName(current) {
+				p := *vault.CurrentProfileParams
+				fmt.Printf("* %s (custom active) | KDF: %s, Time: %d, Memory: %d MB, Threads: %d, Salt: %d, Nonce: %d\n",
+					p.Name, p.KDF, p.Time, p.Memory/1024, p.Parallelism, p.SaltLen, p.NonceLen)
+			}
+		},
+	}
+
+	var profileCurrentCmd = &cobra.Command{
+		Use:     "current",
+		Aliases: []string{"status"},
+		Short:   "Show the active profile",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+
+			p := activeProfileForVault(vault)
+			fmt.Println("Current profile")
+			fmt.Println("===============")
+			fmt.Printf("Name:        %s\n", p.Name)
+			fmt.Printf("KDF:         %s\n", p.KDF)
+			fmt.Printf("Memory:      %d MB\n", p.Memory/1024)
+			fmt.Printf("Time:        %d\n", p.Time)
+			fmt.Printf("Parallelism: %d\n", p.Parallelism)
+			fmt.Printf("SaltLen:     %d\n", p.SaltLen)
+			fmt.Printf("NonceLen:    %d\n", p.NonceLen)
+		},
+	}
+
+	var profileEditCmd = &cobra.Command{
+		Use:   "edit [name]",
+		Short: "Interactively tune and apply a custom profile",
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
@@ -2145,14 +2239,60 @@ func main() {
 				color.Red("Vault is READ-ONLY.")
 				return
 			}
-			err = src.ChangeProfile(vault, args[0], masterPassword, vaultPath)
-			if err != nil {
-				color.Red("Error: %v", err)
-				src.LogAction("PROFILE_CHANGE_FAILED", fmt.Sprintf("Profile: %s, Error: %v", args[0], err))
-			} else {
-				color.Green("Profile switched to %s.", args[0])
-				src.LogAction("PROFILE_CHANGED", fmt.Sprintf("Profile: %s", args[0]))
+
+			base := activeProfileForVault(vault)
+			suggestedName := base.Name
+			if suggestedName == "" || isBuiltinProfileName(suggestedName) {
+				suggestedName = "custom"
 			}
+			if len(args) == 1 && strings.TrimSpace(args[0]) != "" {
+				suggestedName = strings.TrimSpace(args[0])
+			}
+
+			fmt.Println("Edit profile values (press Enter to keep defaults)")
+			fmt.Printf("Profile name [%s]: ", suggestedName)
+			chosenName := strings.TrimSpace(readInput())
+			if chosenName == "" {
+				chosenName = suggestedName
+			}
+
+			memMB := readUint32WithDefault("Memory (MB)", base.Memory/1024)
+			t := readUint32WithDefault("Time (iterations)", base.Time)
+			par := readUint8WithDefault("Parallelism (threads)", base.Parallelism)
+			saltLen := readIntWithDefault("Salt length (bytes)", base.SaltLen)
+			nonceLen := readIntWithDefault("Nonce length (bytes)", base.NonceLen)
+
+			if memMB == 0 || t == 0 || par == 0 || saltLen <= 0 || nonceLen <= 0 {
+				color.Red("Invalid values provided. Memory/time/parallelism must be > 0 and lengths must be positive.")
+				return
+			}
+
+			customProfile := src.CryptoProfile{
+				Name:        chosenName,
+				KDF:         "argon2id",
+				Memory:      memMB * 1024,
+				Time:        t,
+				Parallelism: par,
+				SaltLen:     saltLen,
+				NonceLen:    nonceLen,
+			}
+
+			vault.CurrentProfileParams = &customProfile
+			vault.Profile = chosenName
+			src.AddCustomProfile(customProfile)
+
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				color.Red("Encryption failed: %v", err)
+				return
+			}
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Error saving vault: %v\n", err)
+				return
+			}
+
+			color.Green("Custom profile '%s' applied.", chosenName)
+			src.LogAction("PROFILE_EDITED", fmt.Sprintf("Profile: %s, Mem=%dMB, Time=%d, Threads=%d", chosenName, memMB, t, par))
 		},
 	}
 
@@ -2242,6 +2382,7 @@ func main() {
 
 			vault.CurrentProfileParams = &customProfile
 			vault.Profile = args[0]
+			src.AddCustomProfile(customProfile)
 
 			data, err := src.EncryptVault(vault, masterPassword)
 			if err != nil {
@@ -2255,7 +2396,8 @@ func main() {
 			src.LogAction("PROFILE_CREATED", fmt.Sprintf("Profile: %s, Params: Mem=%d, Time=%d, Par=%d", args[0], mem, t, p))
 		},
 	}
-	profileCmd.AddCommand(profileSetCmd, profileCreateCmd)
+
+	profileCmd.AddCommand(profileListCmd, profileCurrentCmd, profileSetCmd, profileEditCmd, profileCreateCmd)
 
 	var spaceCmd = &cobra.Command{
 		Use:   "space",
@@ -2624,6 +2766,113 @@ func doSelfUpdate(url string) error {
 	}
 
 	return nil
+}
+
+func chooseProfileForInit() string {
+	info := src.DetectSystemProfileInfo()
+	recommended, reason := src.RecommendProfileForSystem(info)
+
+	fmt.Println("\nProfile recommendation based on system info:")
+	fmt.Printf("OS: %s/%s, CPU cores: %d", info.OS, info.Arch, info.CPUCores)
+	if info.MemoryDetected {
+		fmt.Printf(", RAM: %d MB", info.TotalMemoryMB)
+	}
+	fmt.Println()
+	fmt.Printf("Recommended profile: %s (%s)\n", recommended, reason)
+	fmt.Printf("Use '%s'? (Y/n): ", recommended)
+
+	answer := strings.ToLower(strings.TrimSpace(readInput()))
+	if answer == "" || answer == "y" || answer == "yes" {
+		return recommended
+	}
+
+	fmt.Printf("Choose profile [%s] (%s): ", recommended, strings.Join(src.GetAvailableProfiles(), ", "))
+	choice := strings.ToLower(strings.TrimSpace(readInput()))
+	if choice == "" {
+		return recommended
+	}
+	if _, ok := src.Profiles[choice]; !ok {
+		color.Yellow("Unknown profile '%s'. Using '%s'.", choice, recommended)
+		return recommended
+	}
+	return choice
+}
+
+func activeProfileForVault(vault *src.Vault) src.CryptoProfile {
+	if vault.CurrentProfileParams != nil {
+		p := *vault.CurrentProfileParams
+		if p.Name == "" {
+			if vault.Profile != "" {
+				p.Name = vault.Profile
+			} else {
+				p.Name = "standard"
+			}
+		}
+		if p.KDF == "" {
+			p.KDF = "argon2id"
+		}
+		return p
+	}
+
+	name := strings.TrimSpace(vault.Profile)
+	if name == "" {
+		name = "standard"
+	}
+	p := src.GetProfile(name)
+	if p.Name == "" {
+		p.Name = name
+	}
+	if p.KDF == "" {
+		p.KDF = "argon2id"
+	}
+	return p
+}
+
+func isBuiltinProfileName(name string) bool {
+	_, ok := src.Profiles[strings.ToLower(strings.TrimSpace(name))]
+	return ok
+}
+
+func readUint32WithDefault(label string, defaultVal uint32) uint32 {
+	fmt.Printf("%s [%d]: ", label, defaultVal)
+	raw := strings.TrimSpace(readInput())
+	if raw == "" {
+		return defaultVal
+	}
+	var parsed uint32
+	if _, err := fmt.Sscanf(raw, "%d", &parsed); err != nil {
+		color.Yellow("Invalid value '%s'. Keeping %d.", raw, defaultVal)
+		return defaultVal
+	}
+	return parsed
+}
+
+func readUint8WithDefault(label string, defaultVal uint8) uint8 {
+	fmt.Printf("%s [%d]: ", label, defaultVal)
+	raw := strings.TrimSpace(readInput())
+	if raw == "" {
+		return defaultVal
+	}
+	var parsed uint8
+	if _, err := fmt.Sscanf(raw, "%d", &parsed); err != nil {
+		color.Yellow("Invalid value '%s'. Keeping %d.", raw, defaultVal)
+		return defaultVal
+	}
+	return parsed
+}
+
+func readIntWithDefault(label string, defaultVal int) int {
+	fmt.Printf("%s [%d]: ", label, defaultVal)
+	raw := strings.TrimSpace(readInput())
+	if raw == "" {
+		return defaultVal
+	}
+	var parsed int
+	if _, err := fmt.Sscanf(raw, "%d", &parsed); err != nil {
+		color.Yellow("Invalid value '%s'. Keeping %d.", raw, defaultVal)
+		return defaultVal
+	}
+	return parsed
 }
 
 func readInput() string {
