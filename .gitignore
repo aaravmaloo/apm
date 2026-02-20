@@ -8,3 +8,4 @@ CHANGES.md
 scripts/*
 
 gha-creds-*.json
+site/
