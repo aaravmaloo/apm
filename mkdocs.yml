@@ -1,0 +1,104 @@
+site_name: APM Documentation
+site_description: Documentation for APM — a professional-grade, zero-knowledge CLI password manager.
+site_author: Aarav Maloo
+site_url: https://aaravmaloo.github.io/apm/
+
+repo_name: aaravmaloo/apm
+repo_url: https://github.com/aaravmaloo/apm
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - First steps: getting-started/first-steps.md
+    - Features: getting-started/features.md
+    - Getting help: getting-started/help.md
+  - Guides:
+    - guides/index.md
+    - Managing your vault: guides/vault-management.md
+    - Cloud synchronization: guides/cloud-sync.md
+    - Generating TOTP codes: guides/totp.md
+    - Managing sessions: guides/sessions.md
+    - Using plugins: guides/plugins.md
+    - MCP integration: guides/mcp-integration.md
+    - Team edition: guides/team-edition.md
+    - Importing and exporting: guides/import-export.md
+  - Concepts:
+    - concepts/index.md
+    - Encryption: concepts/encryption.md
+    - Vault format: concepts/vault-format.md
+    - Secret types: concepts/secret-types.md
+    - Security profiles: concepts/security-profiles.md
+    - Policy engine: concepts/policy-engine.md
+    - Sessions: concepts/sessions.md
+    - Cloud synchronization: concepts/cloud-sync.md
+    - Plugins: concepts/plugins.md
+    - MCP server: concepts/mcp.md
+    - Recovery: concepts/recovery.md
+  - Reference:
+    - reference/index.md
+    - CLI: reference/cli.md
+    - Storage: reference/storage.md
+    - Environment variables: reference/environment-variables.md
+    - Plugin API: reference/plugin-api.md
+    - MCP tools: reference/mcp-tools.md
+    - Policies: reference/policies.md
+  - Team:
+    - team/index.md
+    - RBAC and roles: team/rbac.md
+    - Departments: team/departments.md
+    - Approval workflows: team/approvals.md
