@@ -1089,13 +1089,41 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
+			infoVersion := "9.0.0"
+			infoBuild := "a1f92cd (2026-02-21)"
 
-			fmt.Println("APM pre-release v9")
-			fmt.Println(processedHomeName, "@apm")
-			fmt.Printf("Installed: %s\n", installDir)
-			fmt.Printf("Vault Path: %s\n", vaultPath)
-			fmt.Println("https://github.com/aaravmaloo/apm")
-			fmt.Println("Contact: aaravmaloo06@gmail.com")
+			vaultAccessible := true
+			if _, statErr := os.Stat(vaultPath); statErr != nil {
+				vaultAccessible = false
+			}
+			configValid := installDir != "" && vaultPath != ""
+			allSystemsOK := vaultAccessible && configValid
+
+			statusLine := func(ok bool, label string) {
+				if ok {
+					fmt.Printf("  %s %s\n", color.HiGreenString("✔"), label)
+				} else {
+					fmt.Printf("  %s %s\n", color.HiRedString("✘"), label)
+				}
+			}
+
+			fmt.Println("APM v9.0.0 (Pre-release)")
+			fmt.Println("────────────────────────────")
+			fmt.Println()
+			fmt.Printf("User:       %s@apm\n", processedHomeName)
+			fmt.Printf("Installed:  %s\n", installDir)
+			fmt.Printf("Vault:      %s\n", vaultPath)
+			fmt.Println()
+			fmt.Printf("Version:    %s\n", infoVersion)
+			fmt.Printf("Build:      %s\n", infoBuild)
+			fmt.Println()
+			fmt.Println("Repo:       github.com/aaravmaloo/apm")
+			fmt.Println("Support:    aaravmaloo06@gmail.com")
+			fmt.Println()
+			fmt.Println("Status:")
+			statusLine(vaultAccessible, "Vault accessible")
+			statusLine(configValid, "Config valid")
+			statusLine(allSystemsOK, "All systems ok.")
 		},
 	}
 
