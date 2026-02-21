@@ -12,8 +12,7 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
 [![Version](https://img.shields.io/badge/apm-v9.2-purple.svg)](#)
 [![Commits](https://img.shields.io/github/commit-activity/m/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
 [![Last Commit](https://img.shields.io/github/last-commit/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
-[![Issues](https://img.shields.io/github/issues/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/issues)
-[![PRs](https://img.shields.io/github/issues-pr/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/pulls)
+[![Current Preview](https://img.shields.io/badge/apm-canary-yellow.svg)](https://github.com/aaravmaloo/apm/releases/latest)
 
 ---
 
@@ -41,7 +40,9 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
   - [9.2 Build Requirements](#92-build-requirements)
 - [10. Contact \& Support](#10-contact--support)
 - [11. Development \& Contributing](#11-development--contributing)
-- [12. AI Usage](#12-ai-usage)
+- [12. Cloud Synchronization Matrix](#12-cloud-synchronization-matrix)
+  - [12.1 Cloud Initialization](#121-cloud-initialization)
+- [13. AI Usage](#13-ai-usage)
 
 ---
 
