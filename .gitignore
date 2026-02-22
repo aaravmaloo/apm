@@ -6,6 +6,8 @@ team/team_vault.dat
 CHANGES.md
 
 scripts/*
+dev/bin/
+dev/pm.exe
 
 gha-creds-*.json
 site/
