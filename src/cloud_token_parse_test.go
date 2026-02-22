@@ -6,8 +6,6 @@ import (
 )
 
 func TestParseOAuthTokenOrRaw(t *testing.T) {
-	t.Parallel()
-
 	cases := []struct {
 		name    string
 		in      []byte
@@ -57,8 +55,6 @@ func TestParseOAuthTokenOrRaw(t *testing.T) {
 }
 
 func TestGetCloudProviderTokenHandling(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	provider, err := GetCloudProvider("github", ctx, nil, []byte(`{"access_token":"gho_demo"}`), "")
