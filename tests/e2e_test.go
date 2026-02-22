@@ -98,15 +98,15 @@ func TestE2EFlow(t *testing.T) {
 
 	masterPass := "TestPass123!"
 
-	t.Run("Init", func(t *testing.T) {
-		input := fmt.Sprintf("%s\nn\n", masterPass) // Pass + 'n' for cloud sync
+	t.Run("Setup", func(t *testing.T) {
+		input := fmt.Sprintf("%s\n", masterPass)
 		// Use a unique session ID to avoid interference
 		localEnv := append(env, "APM_SESSION_ID="+sessionID+"_INIT")
-		out, err := runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "init")
+		out, err := runPM(t, workDir, localEnv, input, "--vault", "vault.dat", "setup", "--non-interactive")
 		if err != nil {
-			t.Fatalf("Init failed: %v, output: %s", err, out)
+			t.Fatalf("Setup failed: %v, output: %s", err, out)
 		}
-		if !strings.Contains(out, "Vault initialized successfully") {
+		if !strings.Contains(out, "Setup completed successfully") {
 			t.Errorf("Unexpected output: %s", out)
 		}
 
