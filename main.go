@@ -141,8 +141,16 @@ func main() {
 
 	setupGitHub := func(v *src.Vault) error {
 		color.Yellow("\nSetting up GitHub...")
-		fmt.Println("To create a Personal Access Token, go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic) and create a token with 'repo' scope.")
-		fmt.Print("Enter GitHub Personal Access Token: ")
+		fmt.Println("Choose authentication type:")
+		fmt.Println("1. Personal Access Token (classic/fine-grained)")
+		fmt.Println("2. OAuth2 Access Token")
+		fmt.Print("Selection (1/2) [1]: ")
+		authChoice := strings.TrimSpace(readInput())
+		tokenLabel := "GitHub token"
+		if authChoice == "2" {
+			tokenLabel = "GitHub OAuth2 access token"
+		}
+		fmt.Printf("Enter %s: ", tokenLabel)
 		pat, err := readPassword()
 		if err != nil {
 			color.Red("Error reading token: %v", err)
@@ -171,146 +179,6 @@ func main() {
 		color.Green("GitHub sync setup successful.")
 		return nil
 	}
-
-	var initCmd = &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a new vault",
-		Run: func(cmd *cobra.Command, args []string) {
-			if src.VaultExists(vaultPath) {
-				color.Red("Vault already exists.\n")
-				return
-			}
-
-			var masterPassword string
-			for {
-				fmt.Print("Create Master Password: ")
-				var err error
-				masterPassword, err = readPassword()
-				if err != nil {
-					color.Red("\nError reading password: %v\n", err)
-					return
-				}
-				fmt.Println()
-
-				if err := src.ValidateMasterPassword(masterPassword); err != nil {
-					color.Red("Invalid password: %v\n", err)
-					continue
-				}
-				break
-			}
-
-			selectedProfile := chooseProfileForInit()
-			profileParams := src.GetProfile(selectedProfile)
-			vault := &src.Vault{
-				Profile:              selectedProfile,
-				CurrentProfileParams: &profileParams,
-			}
-			data, err := src.EncryptVault(vault, masterPassword)
-			if err != nil {
-				fmt.Printf("Error encrypting vault: %v\n", err)
-				return
-			}
-
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				color.Red("Error saving vault: %v\n", err)
-				return
-			}
-
-			color.Green("Vault initialized successfully with '%s' profile.\n", selectedProfile)
-
-			fmt.Print("Would you like to set up cloud sync now? (y/n) [n]: ")
-			if strings.ToLower(readInput()) == "y" {
-				fmt.Println("\nChoose Cloud Provider:")
-				fmt.Println("1. Google Drive")
-				fmt.Println("2. GitHub")
-				fmt.Println("3. Both")
-				fmt.Print("Selection (1/2/3): ")
-				choice := readInput()
-				switch choice {
-				case "1":
-					setupGDrive(vault, masterPassword)
-				case "2":
-					setupGitHub(vault)
-				case "3":
-					setupGDrive(vault, masterPassword)
-					setupGitHub(vault)
-				default:
-					color.Red("Invalid selection.")
-				}
-				data, _ := src.EncryptVault(vault, masterPassword)
-				if err := src.SaveVault(vaultPath, data); err != nil {
-					color.Red("Error saving vault: %v\n", err)
-				}
-			}
-
-			fmt.Println("\nif this program even helps you, please consider donating to the developer.")
-			fmt.Println("for donations contact: aaravmaloo06@gmail.com")
-		},
-	}
-
-	var initAllCmd = &cobra.Command{
-		Use:   "all",
-		Short: "Initialize a new vault and setup both Google Drive and GitHub sync",
-		Run: func(cmd *cobra.Command, args []string) {
-			if src.VaultExists(vaultPath) {
-				color.Red("Vault already exists.\n")
-				return
-			}
-			var masterPassword string
-			for {
-				fmt.Print("Create Master Password: ")
-				var err error
-				masterPassword, err = readPassword()
-				if err != nil {
-					color.Red("\nError reading password: %v\n", err)
-					return
-				}
-				fmt.Println()
-
-				if err := src.ValidateMasterPassword(masterPassword); err != nil {
-					color.Red("Invalid password: %v\n", err)
-					continue
-				}
-				break
-			}
-
-			selectedProfile := chooseProfileForInit()
-			profileParams := src.GetProfile(selectedProfile)
-			vault := &src.Vault{
-				Profile:              selectedProfile,
-				CurrentProfileParams: &profileParams,
-			}
-			data, err := src.EncryptVault(vault, masterPassword)
-			if err != nil {
-				fmt.Printf("Error encrypting vault: %v\n", err)
-				return
-			}
-
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				color.Red("Error saving vault: %v\n", err)
-				return
-			}
-
-			color.Green("Vault initialized successfully with '%s' profile.\n", selectedProfile)
-
-			color.Cyan("\n--- Setting up Cloud Sync (All) ---")
-
-			masterPassword, vault, _, err = src_unlockVault()
-			if err != nil {
-				return
-			}
-
-			setupGDrive(vault, masterPassword)
-			setupGitHub(vault)
-
-			data, _ = src.EncryptVault(vault, masterPassword)
-			if err := src.SaveVault(vaultPath, data); err != nil {
-				color.Red("Error saving vault: %v\n", err)
-			}
-			color.Green("\nInitial sync complete.")
-		},
-	}
-	initCmd.AddCommand(initAllCmd)
 
 	var addCmd = &cobra.Command{
 		Use:   "add",
@@ -1326,11 +1194,11 @@ func main() {
 
 	var cloudCmd = &cobra.Command{
 		Use:   "cloud",
-		Short: "Sync and retrieve vaults from cloud (Google Drive & GitHub)",
+		Short: "Sync and retrieve vaults from cloud (Google Drive, GitHub, Dropbox)",
 	}
 
 	var cloudInitCmd = &cobra.Command{
-		Use:   "init [gdrive|github]",
+		Use:   "init [gdrive|github|dropbox|all]",
 		Short: "Setup cloud sync and generate/set retrieval key",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
@@ -1392,6 +1260,9 @@ func main() {
 				setupGDrive(vault, masterPassword)
 				setupGitHub(vault)
 				setupDropbox(vault, masterPassword)
+			default:
+				color.Red("Unsupported cloud provider '%s'. Use gdrive, github, dropbox, or all.", provider)
+				return
 			}
 
 			if errSetup != nil {
@@ -1406,7 +1277,7 @@ func main() {
 	}
 
 	var cloudSyncCmd = &cobra.Command{
-		Use:   "sync [gdrive|github]",
+		Use:   "sync [gdrive|github|dropbox]",
 		Short: "Sync local vault to cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, _, err := src_unlockVault()
@@ -1558,154 +1429,176 @@ func main() {
 	cloudAutoSyncCmd.Flags().Bool("true", false, "Enable auto-sync")
 
 	var cloudGetCmd = &cobra.Command{
-		Use:   "get [gdrive|github] [retrieval_key|repo]",
+		Use:   "get [gdrive|github|dropbox] [retrieval_key|repo]",
 		Short: "Download vault from cloud",
 		Run: func(cmd *cobra.Command, args []string) {
 			provider := "gdrive"
 			var key string
+			authMode, _ := cmd.Flags().GetString("auth-mode")
+			tokenFlag, _ := cmd.Flags().GetString("token")
+			oauth2TokenFlag, _ := cmd.Flags().GetString("oauth2-token")
+			tokenInput := strings.TrimSpace(tokenFlag)
+			if tokenInput == "" {
+				tokenInput = strings.TrimSpace(oauth2TokenFlag)
+			}
 
 			if len(args) == 0 {
-				fmt.Print("Enter Provider (gdrive|github) [gdrive]: ")
-				pInput := readInput()
+				fmt.Print("Enter Provider (gdrive|github|dropbox) [gdrive]: ")
+				pInput := strings.TrimSpace(readInput())
 				if pInput != "" {
 					provider = strings.ToLower(pInput)
 				}
-				if provider == "github" {
-					fmt.Print("Enter GitHub Personal Access Token: ")
-					pat, _ := readPassword()
-					fmt.Println()
-					fmt.Print("Enter GitHub Repo (owner/repo): ")
-					key = readInput()
-
-					gm, err := src.NewGitHubManager(context.Background(), pat)
-					if err != nil {
-						color.Red("Cloud Error: %v", err)
-						return
-					}
-					data, err := gm.DownloadVault(key)
-					if err != nil {
-						color.Red("Download failed: %v", err)
-						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
-						return
-					}
-					handleDownloadedVault(data, pat, key)
-					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
-					return
-				} else {
-					fmt.Print("Enter Retrieval Key: ")
-					key, _ = readPassword()
-					fmt.Println()
-				}
-			} else if len(args) == 1 {
-				provider = strings.ToLower(args[0])
-				if provider == "github" {
-					fmt.Print("Enter GitHub Personal Access Token: ")
-					pat, _ := readPassword()
-					fmt.Println()
-					fmt.Print("Enter GitHub Repo (owner/repo): ")
-					key = readInput()
-
-					gm, err := src.NewGitHubManager(context.Background(), pat)
-					if err != nil {
-						color.Red("Cloud Error: %v", err)
-						return
-					}
-					data, err := gm.DownloadVault(key)
-					if err != nil {
-						color.Red("Download failed: %v", err)
-						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
-						return
-					}
-					handleDownloadedVault(data, pat, key)
-					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
-					return
-				} else {
-					fmt.Print("Enter Retrieval Key: ")
-					key, _ = readPassword()
-					fmt.Println()
-				}
 			} else {
 				provider = strings.ToLower(args[0])
-				key = args[1]
-				if provider == "github" {
-					fmt.Print("Enter GitHub Personal Access Token: ")
-					pat, _ := readPassword()
-					fmt.Println()
+			}
 
-					gm, err := src.NewGitHubManager(context.Background(), pat)
-					if err != nil {
-						color.Red("Cloud Error: %v", err)
-						return
-					}
-					data, err := gm.DownloadVault(key)
-					if err != nil {
-						color.Red("Download failed: %v", err)
-						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
-						return
-					}
-					handleDownloadedVault(data, pat, key)
-					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
+			switch provider {
+			case "github":
+				if len(args) > 1 {
+					key = strings.TrimSpace(args[1])
+				} else {
+					fmt.Print("Enter GitHub Repo (owner/repo): ")
+					key = strings.TrimSpace(readInput())
+				}
+				if key == "" {
+					color.Red("Missing GitHub repo. Use owner/repo.")
 					return
 				}
+
+				if tokenInput == "" {
+					if authMode == "" {
+						fmt.Println("Choose authentication type:")
+						fmt.Println("1. Personal Access Token")
+						fmt.Println("2. OAuth2 Access Token")
+						fmt.Print("Selection (1/2) [1]: ")
+						choice := strings.TrimSpace(readInput())
+						if choice == "2" {
+							authMode = "oauth2"
+						} else {
+							authMode = "pat"
+						}
+					}
+					if authMode == "oauth2" {
+						fmt.Print("Enter GitHub OAuth2 access token: ")
+					} else {
+						fmt.Print("Enter GitHub Personal Access Token: ")
+					}
+					var err error
+					tokenInput, err = readPassword()
+					if err != nil {
+						color.Red("Error reading token: %v", err)
+						return
+					}
+					fmt.Println()
+				}
+
+				gm, err := src.NewGitHubManager(context.Background(), tokenInput)
+				if err != nil {
+					color.Red("Cloud Error: %v", err)
+					return
+				}
+				data, err := gm.DownloadVault(key)
+				if err != nil {
+					color.Red("Download failed: %v", err)
+					src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
+					return
+				}
+				handleDownloadedVault(data, tokenInput, key)
+				src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
+				return
+			case "gdrive", "dropbox":
+				if len(args) > 1 {
+					key = strings.TrimSpace(args[1])
+				}
+				if key == "" {
+					fmt.Print("Enter Retrieval Key: ")
+					var err error
+					key, err = readPassword()
+					if err != nil {
+						color.Red("Error reading retrieval key: %v", err)
+						return
+					}
+					fmt.Println()
+				}
+				if key == "" {
+					color.Red("Retrieval key is required.")
+					return
+				}
+			default:
+				color.Red("Unsupported provider: %s", provider)
+				return
 			}
 
 			fileID := ""
 			syncMode := "apm_public"
+			var cp src.CloudProvider
+			var err error
 
 			if provider == "gdrive" {
-				fmt.Println("Choose Sync Mode for Retrieval:")
-				fmt.Println("1. APM_PUBLIC (Current default)")
-				fmt.Println("2. Self-Hosted (Login to your account)")
-				fmt.Print("Selection (1/2): ")
-				modeSelection := readInput()
-				if modeSelection == "2" {
-					syncMode = "self_hosted"
-
-					token, err := src.PerformDriveAuth(src.GetDefaultCreds())
-					if err != nil {
-						color.Red("Authentication failed: %v", err)
-						return
+				if authMode == "" {
+					fmt.Println("Choose Sync Mode for Retrieval:")
+					fmt.Println("1. APM_PUBLIC")
+					fmt.Println("2. OAuth2 Self-Hosted")
+					fmt.Print("Selection (1/2) [1]: ")
+					modeSelection := strings.TrimSpace(readInput())
+					if modeSelection == "2" {
+						authMode = "oauth2"
 					}
-					cp, err := src.GetCloudProvider("gdrive", context.Background(), src.GetDefaultCreds(), token, "self_hosted")
-					if err != nil {
-						color.Red("Cloud Error: %v", err)
-						return
-					}
-					fileID, err = cp.ResolveKeyToID(key)
-					if err != nil {
-						color.Red("Key resolution failed: %v", err)
-						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: gdrive, Key: %s, Error: %v", key, err))
-						return
-					}
-					data, err := cp.DownloadVault(fileID)
-					if err != nil {
-						color.Red("Download failed: %v", err)
-						src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: gdrive, Key: %s, Error: %v", key, err))
-						return
-					}
-					handleDownloadedVault(data, "", "")
-					src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: gdrive, Key: %s", key))
-					return
 				}
+				if authMode == "oauth2" {
+					syncMode = "self_hosted"
+					token, authErr := src.PerformDriveAuth(src.GetDefaultCreds())
+					if authErr != nil {
+						color.Red("Google OAuth2 authentication failed: %v", authErr)
+						return
+					}
+					cp, err = src.GetCloudProvider("gdrive", context.Background(), src.GetDefaultCreds(), token, syncMode)
+				} else {
+					cp, err = src.GetCloudProvider("gdrive", context.Background(), nil, nil, syncMode)
+				}
+			} else {
+				if tokenInput != "" {
+					syncMode = "self_hosted"
+				} else if authMode == "" {
+					fmt.Println("Choose Sync Mode for Retrieval:")
+					fmt.Println("1. APM_PUBLIC")
+					fmt.Println("2. OAuth2 Self-Hosted (Access Token)")
+					fmt.Print("Selection (1/2) [1]: ")
+					modeSelection := strings.TrimSpace(readInput())
+					if modeSelection == "2" {
+						authMode = "oauth2"
+					}
+				}
+
+				if authMode == "oauth2" && tokenInput == "" {
+					fmt.Print("Enter Dropbox OAuth2 access token (or token JSON): ")
+					var tokenErr error
+					tokenInput, tokenErr = readPassword()
+					if tokenErr != nil {
+						color.Red("Error reading Dropbox token: %v", tokenErr)
+						return
+					}
+					fmt.Println()
+					syncMode = "self_hosted"
+				}
+				cp, err = src.GetCloudProvider("dropbox", context.Background(), nil, []byte(tokenInput), syncMode)
 			}
 
-			cp, err := src.GetCloudProvider(provider, context.Background(), nil, nil, syncMode)
 			if err != nil {
-				color.Red("Cloud Error: %v\n", err)
+				color.Red("Cloud Error: %v", err)
 				return
 			}
 
 			fileID, err = cp.ResolveKeyToID(key)
 			if err != nil {
-				color.Red("Key resolution failed: %v\n", err)
+				color.Red("Key resolution failed: %v", err)
 				src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: %s, Key: %s, Error: %v", provider, key, err))
 				return
 			}
 
 			data, err := cp.DownloadVault(fileID)
 			if err != nil {
-				color.Red("Download failed: %v\n", err)
-				color.Yellow("Note: For APM_PUBLIC, only uploader needs credentials.json. Ensure retrieval key is correct.")
+				color.Red("Download failed: %v", err)
 				src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: %s, Key: %s, Error: %v", provider, key, err))
 				return
 			}
@@ -1714,6 +1607,9 @@ func main() {
 			src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: %s, Key: %s", provider, key))
 		},
 	}
+	cloudGetCmd.Flags().String("auth-mode", "", "Auth mode for cloud get: pat|oauth2")
+	cloudGetCmd.Flags().String("token", "", "Token for provider authentication")
+	cloudGetCmd.Flags().String("oauth2-token", "", "OAuth2 access token (alias of --token)")
 
 	var cloudDeleteCmd = &cobra.Command{
 		Use:   "delete [gdrive]",
@@ -1982,86 +1878,304 @@ func main() {
 
 	var setupCmd = &cobra.Command{
 		Use:   "setup",
-		Short: "Interactive setup wizard for apm",
+		Short: "Complete APM setup wizard (vault, profile, spaces, plugins, cloud)",
 		Run: func(cmd *cobra.Command, args []string) {
-			color.HiCyan("Welcome to the APM Setup Wizard!\n")
-			fmt.Println("This wizard will guide you through the initial configuration of APM.")
+			nonInteractive, _ := cmd.Flags().GetBool("non-interactive")
+
+			totalSteps := 7
+			step := 1
+			color.HiCyan("APM Setup")
+			fmt.Println("Unified setup flow: project configuration, vault initialization, profiles, spaces, plugins, and cloud sync.")
 			fmt.Println()
+
+			color.Yellow("[%d/%d] Environment and project checks", step, totalSteps)
+			step++
+			info := src.DetectSystemProfileInfo()
+			fmt.Printf("System: %s/%s, CPU cores: %d", info.OS, info.Arch, info.CPUCores)
+			if info.MemoryDetected {
+				fmt.Printf(", RAM: %d MB", info.TotalMemoryMB)
+			}
+			fmt.Println()
+
+			vaultDir := filepath.Dir(vaultPath)
+			if err := os.MkdirAll(vaultDir, 0700); err != nil {
+				color.Red("Setup failed while creating vault directory '%s': %v", vaultDir, err)
+				return
+			}
+			policyDir := filepath.Join(vaultDir, "policies")
+			if err := os.MkdirAll(policyDir, 0750); err != nil {
+				color.Red("Setup failed while creating policies directory '%s': %v", policyDir, err)
+				return
+			}
+			if err := os.MkdirAll(pluginMgr.PluginsDir, 0750); err != nil {
+				color.Red("Setup failed while creating plugins directory '%s': %v", pluginMgr.PluginsDir, err)
+				return
+			}
+			color.Green("Project directories ready:")
+			fmt.Printf("- Vault: %s\n", vaultPath)
+			fmt.Printf("- Policies: %s\n", policyDir)
+			fmt.Printf("- Plugins: %s\n", pluginMgr.PluginsDir)
+			fmt.Println()
+
+			color.Yellow("[%d/%d] Vault initialization and unlock", step, totalSteps)
+			step++
+
+			var masterPassword string
+			var vault *src.Vault
+			var readonly bool
+			var err error
 
 			if !src.VaultExists(vaultPath) {
-				color.Yellow("Step 1: Vault Initialization")
-				fmt.Print("No vault found. Would you like to create one now? (y/n): ")
-				if strings.ToLower(readInput()) == "y" {
-					initCmd.Run(cmd, nil)
-					src.LogAction("SETUP_VAULT_INIT", "Vault initialized via setup wizard")
-				} else {
-					fmt.Println("Skipping vault initialization.")
+				color.Cyan("No vault detected. Creating a new vault.")
+				for {
+					fmt.Print("Create Master Password: ")
+					masterPassword, err = readPassword()
+					if err != nil {
+						color.Red("Error reading password: %v", err)
+						return
+					}
+					fmt.Println()
+					if err := src.ValidateMasterPassword(masterPassword); err != nil {
+						color.Red("Invalid password: %v", err)
+						continue
+					}
+					break
 				}
+
+				recommended, reason := src.RecommendProfileForSystem(info)
+				selectedProfile := recommended
+				fmt.Printf("System recommended profile: %s (%s)\n", recommended, reason)
+				if !nonInteractive {
+					fmt.Printf("Use '%s'? (Y/n): ", recommended)
+					answer := strings.ToLower(strings.TrimSpace(readInput()))
+					if answer == "n" || answer == "no" {
+						fmt.Printf("Choose profile [%s] (%s): ", recommended, strings.Join(src.GetAvailableProfiles(), ", "))
+						choice := strings.ToLower(strings.TrimSpace(readInput()))
+						if _, ok := src.Profiles[choice]; ok {
+							selectedProfile = choice
+						} else if choice != "" {
+							color.Yellow("Unknown profile '%s'. Using '%s'.", choice, recommended)
+						}
+					}
+				}
+				color.Green("Assigned profile: %s", selectedProfile)
+
+				profileParams := src.GetProfile(selectedProfile)
+				vault = &src.Vault{
+					Profile:              selectedProfile,
+					CurrentProfileParams: &profileParams,
+					Spaces:               []string{"default"},
+				}
+				data, err := src.EncryptVault(vault, masterPassword)
+				if err != nil {
+					color.Red("Error encrypting new vault: %v", err)
+					return
+				}
+				if err := src.SaveVault(vaultPath, data); err != nil {
+					color.Red("Error saving new vault: %v", err)
+					return
+				}
+				color.Green("Vault created at %s.", vaultPath)
 			} else {
-				color.Green("Vault already exists. Skipping initialization.")
+				masterPassword, vault, readonly, err = src_unlockVault()
+				if err != nil {
+					color.Red("Failed to unlock existing vault: %v", err)
+					return
+				}
+				if readonly {
+					color.Red("Vault is currently read-only. Disable read-only mode before running setup.")
+					return
+				}
+				color.Green("Existing vault unlocked.")
 			}
 			fmt.Println()
 
-			color.Yellow("Step 2: Cloud Sync Configuration")
-			fmt.Print("Would you like to configure cloud synchronization? (y/n) [n]: ")
-			if strings.ToLower(readInput()) == "y" {
-				masterPassword, vault, _, err := src_unlockVault()
-				if err != nil {
-					color.Red("Unlock failed: %v", err)
+			color.Yellow("[%d/%d] Security profile tuning", step, totalSteps)
+			step++
+			currentProfile := strings.TrimSpace(vault.Profile)
+			if currentProfile == "" {
+				currentProfile = "standard"
+			}
+			recommended, reason := src.RecommendProfileForSystem(info)
+			fmt.Printf("Current profile: %s\n", currentProfile)
+			fmt.Printf("Recommended for this system: %s (%s)\n", recommended, reason)
+			if !nonInteractive {
+				fmt.Print("Would you like to switch profile now? (y/n) [n]: ")
+				if strings.ToLower(strings.TrimSpace(readInput())) == "y" {
+					fmt.Printf("Choose profile [%s] (%s): ", recommended, strings.Join(src.GetAvailableProfiles(), ", "))
+					target := strings.ToLower(strings.TrimSpace(readInput()))
+					if target == "" {
+						target = recommended
+					}
+					if err := src.ChangeProfile(vault, target, masterPassword, vaultPath); err != nil {
+						color.Red("Profile change failed: %v", err)
+					} else {
+						vault.Profile = target
+						color.Green("Profile switched to %s.", target)
+					}
+				}
+			}
+			fmt.Println()
+
+			color.Yellow("[%d/%d] Spaces configuration", step, totalSteps)
+			step++
+			if len(vault.Spaces) == 0 {
+				vault.Spaces = []string{"default"}
+			}
+			fmt.Printf("Current spaces: %s\n", strings.Join(vault.Spaces, ", "))
+			if !nonInteractive {
+				fmt.Print("Add spaces now? Enter comma-separated names (or leave blank): ")
+				rawSpaces := strings.TrimSpace(readInput())
+				if rawSpaces != "" {
+					for _, part := range strings.Split(rawSpaces, ",") {
+						name := strings.TrimSpace(part)
+						if name == "" || strings.EqualFold(name, "default") {
+							continue
+						}
+						exists := false
+						for _, s := range vault.Spaces {
+							if strings.EqualFold(s, name) {
+								exists = true
+								break
+							}
+						}
+						if !exists {
+							vault.Spaces = append(vault.Spaces, name)
+						}
+					}
+				}
+				fmt.Printf("Set active space (%s) [default]: ", strings.Join(vault.Spaces, ", "))
+				targetSpace := strings.TrimSpace(readInput())
+				if targetSpace == "" || strings.EqualFold(targetSpace, "default") {
+					vault.CurrentSpace = ""
 				} else {
-					fmt.Println("\nChoose Cloud Provider:")
-					fmt.Println("1. Google Drive")
-					fmt.Println("2. GitHub")
-					fmt.Println("3. Both")
-					fmt.Print("Selection (1/2/3): ")
-					choice := readInput()
-					switch choice {
-					case "1":
-						setupGDrive(vault, masterPassword)
-						src.LogAction("SETUP_CLOUD_INIT", "Google Drive configured via setup wizard")
-					case "2":
-						setupGitHub(vault)
-						src.LogAction("SETUP_CLOUD_INIT", "GitHub configured via setup wizard")
-					case "3":
-						setupGDrive(vault, masterPassword)
-						setupGitHub(vault)
-						src.LogAction("SETUP_CLOUD_INIT", "Google Drive and GitHub configured via setup wizard")
-					default:
-						color.Red("Invalid selection.")
+					found := false
+					for _, s := range vault.Spaces {
+						if strings.EqualFold(s, targetSpace) {
+							vault.CurrentSpace = s
+							found = true
+							break
+						}
+					}
+					if !found {
+						color.Yellow("Space '%s' was not found. Keeping default.", targetSpace)
+						vault.CurrentSpace = ""
+					}
+				}
+			}
+			fmt.Println()
+
+			color.Yellow("[%d/%d] Plugins setup", step, totalSteps)
+			step++
+			if !nonInteractive {
+				fmt.Print("Install plugins during setup? (y/n) [n]: ")
+				if strings.ToLower(strings.TrimSpace(readInput())) == "y" {
+					fmt.Print("Install from marketplace by name (comma-separated, optional): ")
+					pluginNames := strings.TrimSpace(readInput())
+					if pluginNames != "" {
+						cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
+						if err != nil {
+							color.Red("Could not connect to plugin marketplace: %v", err)
+						} else {
+							for _, name := range strings.Split(pluginNames, ",") {
+								trimmed := strings.TrimSpace(name)
+								if trimmed == "" {
+									continue
+								}
+								targetDir := filepath.Join(pluginMgr.PluginsDir, trimmed)
+								if err := cm.DownloadPlugin(trimmed, targetDir); err != nil {
+									color.Red("Plugin '%s' install failed: %v", trimmed, err)
+								} else {
+									color.Green("Plugin '%s' installed.", trimmed)
+								}
+							}
+						}
 					}
 
-					data, _ := src.EncryptVault(vault, masterPassword)
-					src.SaveVault(vaultPath, data)
+					fmt.Print("Install local plugin path (optional, leave blank to skip): ")
+					localPath := strings.TrimSpace(readInput())
+					if localPath != "" {
+						if _, err := os.Stat(filepath.Join(localPath, "plugin.json")); err != nil {
+							color.Red("Local plugin path invalid: %v", err)
+						} else {
+							def, err := plugins.LoadPluginDef(filepath.Join(localPath, "plugin.json"))
+							if err != nil {
+								color.Red("Invalid local plugin manifest: %v", err)
+							} else if err := pluginMgr.InstallPlugin(def.Name, localPath); err != nil {
+								color.Red("Local plugin install failed: %v", err)
+							} else {
+								color.Green("Local plugin '%s' installed.", def.Name)
+							}
+						}
+					}
 				}
 			}
 			fmt.Println()
 
-			color.Yellow("Step 3: Custom Spaces")
-			fmt.Print("Would you like to create your first custom space? (y/n): ")
-			if strings.ToLower(readInput()) == "y" {
-				fmt.Print("Space Name (e.g. Work, Personal): ")
-				pName := readInput()
-				if pName != "" {
-					color.Green("Space '%s' added to configuration plan. (Run 'pm space create %s' after setup)", pName, pName)
-					src.LogAction("SETUP_SPACE_CREATE_PLANNED", fmt.Sprintf("Space: %s", pName))
+			color.Yellow("[%d/%d] Cloud sync setup", step, totalSteps)
+			step++
+			if !nonInteractive {
+				fmt.Print("Configure cloud sync now? (y/n) [n]: ")
+				if strings.ToLower(strings.TrimSpace(readInput())) == "y" {
+					fmt.Println("Choose Cloud Provider:")
+					fmt.Println("1. Google Drive")
+					fmt.Println("2. GitHub")
+					fmt.Println("3. Dropbox")
+					fmt.Println("4. All")
+					fmt.Print("Selection (1/2/3/4): ")
+					choice := strings.TrimSpace(readInput())
+					switch choice {
+					case "1":
+						if err := setupGDrive(vault, masterPassword); err != nil {
+							color.Red("Google Drive setup failed: %v", err)
+						}
+					case "2":
+						if err := setupGitHub(vault); err != nil {
+							color.Red("GitHub setup failed: %v", err)
+						}
+					case "3":
+						if err := setupDropbox(vault, masterPassword); err != nil {
+							color.Red("Dropbox setup failed: %v", err)
+						}
+					case "4":
+						if err := setupGDrive(vault, masterPassword); err != nil {
+							color.Red("Google Drive setup failed: %v", err)
+						}
+						if err := setupGitHub(vault); err != nil {
+							color.Red("GitHub setup failed: %v", err)
+						}
+						if err := setupDropbox(vault, masterPassword); err != nil {
+							color.Red("Dropbox setup failed: %v", err)
+						}
+					default:
+						color.Yellow("Skipped cloud setup.")
+					}
 				}
 			}
 			fmt.Println()
 
-			color.Yellow("Step 4: Session Security")
-			fmt.Println("APM supports shell-scoped sessions. To enable this, add the following to your shell profile:")
-			if runtime.GOOS == "windows" {
-				fmt.Println("  [Environment]::SetEnvironmentVariable(\"APM_SESSION_ID\", [System.Guid]::NewGuid().ToString(), \"Process\")")
-			} else {
-				fmt.Println("  export APM_SESSION_ID=$(cat /proc/sys/kernel/random/uuid)")
+			color.Yellow("[%d/%d] Finalize and save configuration", step, totalSteps)
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				color.Red("Final save failed during encryption: %v", err)
+				return
 			}
-			fmt.Println()
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Final save failed: %v", err)
+				return
+			}
 
-			color.HiGreen("Setup completed successfully!")
-			fmt.Println("Run 'pm' to see all available commands.")
-			src.LogAction("SETUP_COMPLETED", "Setup wizard completed")
+			color.HiGreen("Setup completed successfully.")
+			fmt.Printf("Assigned profile: %s\n", vault.Profile)
+			activeSpace := vault.CurrentSpace
+			if activeSpace == "" {
+				activeSpace = "default"
+			}
+			fmt.Printf("Active space: %s\n", activeSpace)
+			src.LogAction("SETUP_COMPLETED", "Unified setup workflow completed")
 		},
 	}
+	setupCmd.Flags().Bool("non-interactive", false, "Run setup with defaults and skip optional prompts")
 	var policyCmd = &cobra.Command{
 		Use:   "policy",
 		Short: "Manage vault policies",
@@ -2571,7 +2685,7 @@ func main() {
 
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(initCmd, addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
 	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
@@ -2959,7 +3073,7 @@ func copyToClipboard(text string) {
 
 func src_unlockVault() (string, *src.Vault, bool, error) {
 	if !src.VaultExists(vaultPath) {
-		return "", nil, false, fmt.Errorf("Vault not found. Run 'pm init'.")
+		return "", nil, false, fmt.Errorf("Vault not found. Run 'pm setup'.")
 	}
 
 	localFailures := src.GetFailureCount()
@@ -4043,7 +4157,6 @@ func setupDropbox(v *src.Vault, mp string) error {
 		}
 	}
 
-	fmt.Println("DEBUG: setupDropbox calling getCloudManagerEx with 'dropbox'")
 	cm, err := getCloudManagerEx(context.Background(), v, mp, "dropbox")
 	if err != nil {
 		color.Red("Dropbox error: %v", err)
@@ -4071,7 +4184,6 @@ func setupDropbox(v *src.Vault, mp string) error {
 }
 
 func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword string, provider string) (src.CloudProvider, error) {
-	fmt.Printf("DEBUG: getCloudManagerEx called with provider='%s'\n", provider)
 	if provider == "github" {
 		if vault == nil || vault.GitHubToken == "" {
 			return nil, fmt.Errorf("github sync not initialized. run 'pm cloud init github' first")
@@ -4092,7 +4204,6 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 	}
 
 	if provider != "gdrive" {
-		fmt.Printf("DEBUG: getCloudManagerEx falling through for provider='%s'\n", provider)
 		return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
 	}
 
