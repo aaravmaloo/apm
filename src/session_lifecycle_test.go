@@ -11,8 +11,6 @@ func uniqueSessionID(prefix string) string {
 }
 
 func TestSessionLifecycle(t *testing.T) {
-	t.Parallel()
-
 	t.Setenv("APM_SESSION_ID", uniqueSessionID("lifecycle"))
 	_ = KillSession()
 	defer KillSession()
@@ -42,8 +40,6 @@ func TestSessionLifecycle(t *testing.T) {
 }
 
 func TestSessionExpiry(t *testing.T) {
-	t.Parallel()
-
 	t.Setenv("APM_SESSION_ID", uniqueSessionID("expiry"))
 	_ = KillSession()
 	defer KillSession()
@@ -64,8 +60,6 @@ func TestSessionExpiry(t *testing.T) {
 }
 
 func TestSessionInactivityLock(t *testing.T) {
-	t.Parallel()
-
 	t.Setenv("APM_SESSION_ID", uniqueSessionID("inactivity"))
 	_ = KillSession()
 	defer KillSession()
