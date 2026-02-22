@@ -11,3 +11,5 @@ dev/pm.exe
 
 gha-creds-*.json
 site/
+/dev
+/tests
