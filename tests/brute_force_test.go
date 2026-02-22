@@ -16,13 +16,13 @@ func TestBruteForceResistance(t *testing.T) {
 	defer cancel()
 
 	tempDir := t.TempDir()
-	
+
 	exe := ""
 	if runtime.GOOS == "windows" {
 		exe = ".exe"
 	}
 	pmBinary := filepath.Join(tempDir, "pm_brute"+exe)
-	
+
 	// Build the binary
 	cmd := exec.CommandContext(ctx, "go", "build", "-o", pmBinary, "../main.go")
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -32,22 +32,19 @@ func TestBruteForceResistance(t *testing.T) {
 	weakPass := "password123"
 	vaultFile := filepath.Join(tempDir, "brute_vault.dat")
 
-	// Init vault with weak password
-	initCmd := exec.CommandContext(ctx, pmBinary, "init")
+	// Initialize vault with weak password via setup
+	initCmd := exec.CommandContext(ctx, pmBinary, "setup", "--non-interactive")
 	initCmd.Env = append(os.Environ(), "APM_VAULT_PATH="+vaultFile)
 	initCmd.Dir = tempDir
-	
+
 	stdin, _ := initCmd.StdinPipe()
 	go func() {
 		defer stdin.Close()
 		fmt.Fprintln(stdin, weakPass) // Password
-		fmt.Fprintln(stdin, "n")      // Confirm? (depending on init prompt)
-		// Usually init asks for password once? or confirm?
-		// Based on previous test: password \n n \n (maybe for recovery code or similar?)
 	}()
-	
+
 	if out, err := initCmd.CombinedOutput(); err != nil {
-		t.Fatalf("Init failed: %s", out)
+		t.Fatalf("Setup failed: %s", out)
 	}
 
 	wordlist := []string{"123456", "admin", "password", "password123", "secret"}
@@ -59,7 +56,7 @@ func TestBruteForceResistance(t *testing.T) {
 		checkCmd := exec.CommandContext(ctx, pmBinary, "get", "anything")
 		checkCmd.Env = append(os.Environ(), "APM_VAULT_PATH="+vaultFile)
 		checkCmd.Dir = tempDir
-		
+
 		chkStdin, _ := checkCmd.StdinPipe()
 		go func() {
 			defer chkStdin.Close()
@@ -68,13 +65,13 @@ func TestBruteForceResistance(t *testing.T) {
 
 		// CombinedOutput will return error if exit code != 0 (which happens on wrong password usually)
 		out, err := checkCmd.CombinedOutput()
-		
+
 		// Logic: If err == nil, it means the command succeeded, so password was correct.
 		// However, "get anything" might fail if "anything" doesn't exist, even with correct password.
 		// We need to distinguish "wrong password" from "entry not found".
 		// Usually tools return specific exit code or output for auth failure.
 		// Assuming exit code 0 means auth success but maybe entry lookup failure.
-		
+
 		// If auth fails, it usually returns non-zero.
 		if err == nil || (err != nil && !containsAuthError(string(out))) {
 			// If we got past auth (even if entry not found), we consider it a 'success' in guessing password
