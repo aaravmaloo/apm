@@ -265,7 +265,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		} else if !installed {
 			status = "APM binary not found in PATH, but vault exists."
 		} else if !vaultExists {
-			status = "APM binary found, but vault is not initialized. Run 'pm init'."
+			status = "APM binary found, but vault is not initialized. Run 'pm setup'."
 		}
 
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: status}}}, nil
@@ -284,7 +284,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		if VaultExists(vaultPath) {
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Vault already exists. No installation needed."}}}, nil
 		}
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "To install APM: 1. Ensure go is installed. 2. Clone repo. 3. Run 'go build -o apm.exe'. 4. Run 'pm init'. I can guide you through each step if you'd like."}}}, nil
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "To install APM: 1. Ensure go is installed. 2. Clone repo. 3. Run 'go build -o apm.exe'. 4. Run 'pm setup'. I can guide you through each step if you'd like."}}}, nil
 	})
 
 	s.AddTool(&mcp.Tool{
