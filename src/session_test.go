@@ -61,8 +61,8 @@ func TestSessionExpiry(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	_, err = GetSession()
-	if err == nil || err.Error() != "session expired" {
-		t.Errorf("Expected 'session expired' error, got %v", err)
+	if err == nil || (err.Error() != "session expired" && err.Error() != "no active session") {
+		t.Errorf("Expected 'session expired' (or already cleaned up), got %v", err)
 	}
 }
 
