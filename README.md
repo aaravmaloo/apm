@@ -38,11 +38,14 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
 - [9. Installation and Deployment](#9-installation-and-deployment)
   - [9.1 Build from Source](#91-build-from-source)
   - [9.2 Build Requirements](#92-build-requirements)
+  - [9.3 Pre-built Binaries](#93-pre-built-binaries)
+  - [9.4 Installation of Previews and Betas](#94-installation-of-previews-and-betas)
 - [10. Contact \& Support](#10-contact--support)
 - [11. Development \& Contributing](#11-development--contributing)
 - [12. Cloud Synchronization Matrix](#12-cloud-synchronization-matrix)
   - [12.1 Cloud Initialization](#121-cloud-initialization)
 - [13. AI Usage](#13-ai-usage)
+- [14. Version System For Contributors](#14-version-system-for-contributors)
 
 ---
 
@@ -227,6 +230,13 @@ go build -o pm.exe main.go
 - Go 1.21+
 - Windows, macOS, or Linux
 
+### 9.3 Pre-built Binaries
+Pre-built binaries for Windows, macOS, and Linux for stable releases are available for download from the [Releases page](https://github.com/aaravmaloo/apm/releases).
+
+### 9.4 Installation of Previews and Betas
+Pre-built binaries for Windows, macOS, and Linux for previews, betas, and canarys will be available for download from the [Builds page](https://github.com/aaravmaloo/apm/tree/master/build).
+Note that these builds may break your vault, or may not be stable. These builds are solely for developers and testers to report any bugs present and resolve them. Do not use these builds for production use. Use them at your own risk.
+
 ---
 
 ## 10. Contact & Support
@@ -271,3 +281,13 @@ I acknowledge that AI is a great tool for productivity and I am not against it; 
 Releases also may take around two to three weeks when minor changes are made and when bugs are to be fixed. 
 
 Copyright (c) 2025-2026 Aarav Maloo. Licensed under the MIT License.
+
+## 14. Version System For Contributors
+(from pre-dev to release stages) (with examples)
+the stages correspond to the ultimate release.
+Suppose releasing a v8 of an app.
+All releases except stable release are released in builds/ folder.
+Canary --> can-8 
+Beta --> beta-8 
+Pre-release --> pre-8 
+Release --> v8
