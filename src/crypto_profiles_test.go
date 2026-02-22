@@ -7,8 +7,6 @@ import (
 )
 
 func TestValidateMasterPassword(t *testing.T) {
-	t.Parallel()
-
 	cases := []struct {
 		name    string
 		pass    string
@@ -37,8 +35,6 @@ func TestValidateMasterPassword(t *testing.T) {
 }
 
 func TestDeriveKeysDeterministicAndDistinct(t *testing.T) {
-	t.Parallel()
-
 	salt := []byte("0123456789abcdef")
 
 	k1 := DeriveKeys("Password1!", salt, 1, 8*1024, 1)
@@ -65,8 +61,6 @@ func TestDeriveKeysDeterministicAndDistinct(t *testing.T) {
 }
 
 func TestHMACVerify(t *testing.T) {
-	t.Parallel()
-
 	data := []byte("payload")
 	key := []byte("secret-key")
 
@@ -82,8 +76,6 @@ func TestHMACVerify(t *testing.T) {
 }
 
 func TestRecommendProfileForSystem(t *testing.T) {
-	t.Parallel()
-
 	cases := []struct {
 		name string
 		info SystemProfileInfo
