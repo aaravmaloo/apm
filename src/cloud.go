@@ -352,15 +352,36 @@ func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte
 		if len(tokenJSON) == 0 {
 			return nil, fmt.Errorf("github personal access token missing")
 		}
-		return NewGitHubManager(ctx, string(tokenJSON))
+		token, err := parseOAuthTokenOrRaw(tokenJSON)
+		if err != nil {
+			return nil, fmt.Errorf("github token parse failed: %v", err)
+		}
+		return NewGitHubManager(ctx, token)
 	case "dropbox":
 		if len(tokenJSON) == 0 {
 			tokenJSON = GetDefaultDropboxToken()
 		}
-		return NewDropboxManager(ctx, string(tokenJSON))
+		token, err := parseOAuthTokenOrRaw(tokenJSON)
+		if err != nil {
+			return nil, fmt.Errorf("dropbox token parse failed: %v", err)
+		}
+		return NewDropboxManager(ctx, token)
 	default:
 		return nil, fmt.Errorf("unsupported cloud provider: %s", providerName)
 	}
+}
+
+func parseOAuthTokenOrRaw(raw []byte) (string, error) {
+	token := strings.TrimSpace(string(raw))
+	if token == "" {
+		return "", fmt.Errorf("empty token")
+	}
+
+	var tok oauth2.Token
+	if err := json.Unmarshal(raw, &tok); err == nil && strings.TrimSpace(tok.AccessToken) != "" {
+		return strings.TrimSpace(tok.AccessToken), nil
+	}
+	return token, nil
 }
 
 type DropboxManager struct {
