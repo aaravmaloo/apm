@@ -7,8 +7,6 @@ import (
 )
 
 func TestVaultEncryptDecryptRoundTrip(t *testing.T) {
-	t.Parallel()
-
 	masterPassword := "ValidPass123!"
 	v := &Vault{
 		Profile: "standard",
@@ -58,8 +56,6 @@ func TestVaultEncryptDecryptRoundTrip(t *testing.T) {
 }
 
 func TestVaultDecryptWrongPasswordFails(t *testing.T) {
-	t.Parallel()
-
 	v := &Vault{Profile: "standard"}
 	data, err := EncryptVault(v, "ValidPass123!")
 	if err != nil {
@@ -72,8 +68,6 @@ func TestVaultDecryptWrongPasswordFails(t *testing.T) {
 }
 
 func TestStorageSaveLoadExists(t *testing.T) {
-	t.Parallel()
-
 	tempDir := t.TempDir()
 	vaultPath := filepath.Join(tempDir, "vault.dat")
 	payload := []byte("vault-bytes")
@@ -98,8 +92,6 @@ func TestStorageSaveLoadExists(t *testing.T) {
 }
 
 func TestVaultSpaceIsolation(t *testing.T) {
-	t.Parallel()
-
 	v := &Vault{
 		Profile: "standard",
 		Spaces:  []string{"default", "work"},
