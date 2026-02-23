@@ -14,12 +14,128 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+var mcpToolPermissions = []string{
+	"check_installation",
+	"install_apm",
+	"list_vault",
+	"get_entry",
+	"search_vault",
+	"decrypt_entry",
+	"get_totp",
+	"add_entry",
+	"delete_entry",
+	"edit_entry",
+	"manage_profiles",
+	"manage_spaces",
+	"cloud_config",
+	"get_history",
+	"generate_password",
+	"list_plugins",
+	"install_plugin",
+	"cloud_sync",
+	"get_audit_logs",
+}
+
+var legacyMCPScopePermissions = map[string][]string{
+	"read": {
+		"list_vault",
+		"search_vault",
+		"list_plugins",
+	},
+	"secrets": {
+		"get_entry",
+		"decrypt_entry",
+		"get_totp",
+	},
+	"write": {
+		"add_entry",
+		"delete_entry",
+		"edit_entry",
+		"manage_spaces",
+		"install_plugin",
+		"cloud_sync",
+	},
+	"admin": {
+		"manage_profiles",
+		"cloud_config",
+		"get_history",
+		"get_audit_logs",
+	},
+}
+
+func MCPToolPermissions() []string {
+	out := make([]string, len(mcpToolPermissions))
+	copy(out, mcpToolPermissions)
+	return out
+}
+
+func BuildMCPServerConfigWithToken(token string) map[string]interface{} {
+	exe, _ := os.Executable()
+	if exe == "" {
+		exe = "pm"
+	}
+
+	if runtime.GOOS == "windows" {
+		return map[string]interface{}{
+			"command": "cmd",
+			"args":    []interface{}{"/c", exe, "mcp", "serve", "--token", token},
+			"env":     map[string]string{},
+		}
+	}
+
+	return map[string]interface{}{
+		"command": exe,
+		"args":    []interface{}{"mcp", "serve", "--token", token},
+		"env":     map[string]string{},
+	}
+}
+
+func WriteMCPSetupBootstrapScript() (string, error) {
+	exe, _ := os.Executable()
+	exe = strings.ReplaceAll(exe, "'", "''")
+
+	configFile := getMCPConfigFile()
+	configFile = strings.ReplaceAll(configFile, "'", "''")
+
+	script := fmt.Sprintf(`$ErrorActionPreference = 'Stop'
+$pmExe = '%s'
+if (-not $pmExe -or -not (Test-Path $pmExe)) {
+  $pm = Get-Command pm -ErrorAction SilentlyContinue
+  if (-not $pm) {
+    iwr -useb https://get.apm.dev/install.ps1 | iex
+    $pm = Get-Command pm -ErrorAction SilentlyContinue
+  }
+  if (-not $pm) {
+    throw 'pm binary not found after install attempt.'
+  }
+  $pmExe = $pm.Source
+}
+
+Start-Process powershell -ArgumentList @('-NoExit', '-Command', "& '$pmExe' mcp token --auto")
+Write-Output 'APM MCP token setup launched in a new PowerShell window.'
+Write-Output 'Complete setup there. Once done, restart your MCP client.'
+Write-Output ('Token state file: %s')
+`, exe, configFile)
+
+	configDir := filepath.Dir(getMCPConfigFile())
+	if err := os.MkdirAll(configDir, 0700); err != nil {
+		return "", err
+	}
+
+	scriptPath := filepath.Join(configDir, "mcp_setup_bootstrap.ps1")
+	if err := os.WriteFile(scriptPath, []byte(script), 0600); err != nil {
+		return "", err
+	}
+	return scriptPath, nil
+}
 
 func FindMCPConfigFiles() []string {
 	var files []string
@@ -51,43 +167,18 @@ func UpdateMCPConfigWithToken(filePath, token string) error {
 	}
 
 	var config map[string]interface{}
-	if err := json.Unmarshal(data, &config); err != nil {
+	if len(strings.TrimSpace(string(data))) == 0 {
+		config = make(map[string]interface{})
+	} else if err := json.Unmarshal(data, &config); err != nil {
 		return err
 	}
 
 	mcpServers, ok := config["mcpServers"].(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("invalid mcp config format")
+		mcpServers = make(map[string]interface{})
 	}
 
-	apmServer, ok := mcpServers["apm"].(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("apm server not found in config")
-	}
-
-	args, ok := apmServer["args"].([]interface{})
-	if !ok {
-		args = []interface{}{}
-	}
-
-	newArgs := []interface{}{}
-	foundToken := false
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--token" && i+1 < len(args) {
-			newArgs = append(newArgs, "--token", token)
-			i++
-			foundToken = true
-		} else {
-			newArgs = append(newArgs, args[i])
-		}
-	}
-
-	if !foundToken {
-		newArgs = append(newArgs, "--token", token)
-	}
-
-	apmServer["args"] = newArgs
-	mcpServers["apm"] = apmServer
+	mcpServers["apm"] = BuildMCPServerConfigWithToken(token)
 	config["mcpServers"] = mcpServers
 
 	newData, err := json.MarshalIndent(config, "", "  ")
@@ -255,6 +346,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "Check if apm is installed and initialized on the system",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if !hasPermission(mcpToken.Permissions, "check_installation") {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		}
 		_, err := exec.LookPath("apm")
 		installed := err == nil
 		vaultExists := VaultExists(vaultPath)
@@ -281,6 +375,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if !hasPermission(mcpToken.Permissions, "install_apm") {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		}
 		if VaultExists(vaultPath) {
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Vault already exists. No installation needed."}}}, nil
 		}
@@ -292,7 +389,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "List all entries in the vault by category",
 		InputSchema: map[string]any{"type": "object"},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "read") {
+		if !hasPermission(mcpToken.Permissions, "list_vault") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		vault, _, err := unlockVaultForMCP(vaultPath)
@@ -360,7 +457,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "secrets") {
+		if !hasPermission(mcpToken.Permissions, "get_entry") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -446,7 +543,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"query"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "read") {
+		if !hasPermission(mcpToken.Permissions, "search_vault") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -509,7 +606,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"path", "reference"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "secrets") {
+		if !hasPermission(mcpToken.Permissions, "decrypt_entry") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -549,7 +646,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "secrets") {
+		if !hasPermission(mcpToken.Permissions, "get_totp") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -643,7 +740,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"type", "name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "write") {
+		if !hasPermission(mcpToken.Permissions, "add_entry") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -800,7 +897,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required":   []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "write") {
+		if !hasPermission(mcpToken.Permissions, "delete_entry") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -842,7 +939,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"type", "name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "write") {
+		if !hasPermission(mcpToken.Permissions, "edit_entry") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -924,7 +1021,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"action"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "admin") {
+		if !hasPermission(mcpToken.Permissions, "manage_profiles") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -974,7 +1071,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"action"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "write") {
+		if !hasPermission(mcpToken.Permissions, "manage_spaces") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -1038,7 +1135,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			"required": []string{"provider", "token"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "admin") {
+		if !hasPermission(mcpToken.Permissions, "cloud_config") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -1077,7 +1174,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "admin") {
+		if !hasPermission(mcpToken.Permissions, "get_history") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -1112,6 +1209,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "Generate a secure random password",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"length": map[string]any{"type": "integer"}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if !hasPermission(mcpToken.Permissions, "generate_password") {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		}
 		var args struct {
 			Length int `json:"length"`
 		}
@@ -1135,7 +1235,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "List installed plugins",
 		InputSchema: map[string]any{"type": "object"},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "read") {
+		if !hasPermission(mcpToken.Permissions, "list_plugins") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		if pm != nil {
@@ -1151,7 +1251,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "Install a plugin from Marketplace",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "write") {
+		if !hasPermission(mcpToken.Permissions, "install_plugin") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -1183,7 +1283,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "Trigger cloud sync",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"provider": map[string]any{"type": "string", "enum": []string{"gdrive", "github"}}}, "required": []string{"provider"}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "write") {
+		if !hasPermission(mcpToken.Permissions, "cloud_sync") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -1229,7 +1329,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		Description: "Retrieve recent audit logs",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"limit": map[string]any{"type": "integer"}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "admin") {
+		if !hasPermission(mcpToken.Permissions, "get_audit_logs") {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
 		}
 		var args struct {
@@ -1311,11 +1411,26 @@ func writeToTemp(data []byte) (string, error) {
 }
 
 func hasPermission(scopes []string, required string) bool {
+	if required == "" {
+		return false
+	}
+
+	required = strings.TrimSpace(required)
 	for _, s := range scopes {
-		if s == required || s == "all" {
+		scope := strings.TrimSpace(s)
+		if scope == required || scope == "all" {
 			return true
 		}
 	}
+
+	for _, s := range scopes {
+		for _, allowed := range legacyMCPScopePermissions[strings.TrimSpace(s)] {
+			if allowed == required {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 
