@@ -98,45 +98,6 @@ func BuildMCPServerConfigWithToken(token string) map[string]interface{} {
 	}
 }
 
-func WriteMCPSetupBootstrapScript() (string, error) {
-	exe, _ := os.Executable()
-	exe = strings.ReplaceAll(exe, "'", "''")
-
-	configFile := getMCPConfigFile()
-	configFile = strings.ReplaceAll(configFile, "'", "''")
-
-	script := fmt.Sprintf(`$ErrorActionPreference = 'Stop'
-$pmExe = '%s'
-if (-not $pmExe -or -not (Test-Path $pmExe)) {
-  $pm = Get-Command pm -ErrorAction SilentlyContinue
-  if (-not $pm) {
-    iwr -useb https://get.apm.dev/install.ps1 | iex
-    $pm = Get-Command pm -ErrorAction SilentlyContinue
-  }
-  if (-not $pm) {
-    throw 'pm binary not found after install attempt.'
-  }
-  $pmExe = $pm.Source
-}
-
-Start-Process powershell -ArgumentList @('-NoExit', '-Command', "& '$pmExe' mcp token --auto")
-Write-Output 'APM MCP token setup launched in a new PowerShell window.'
-Write-Output 'Complete setup there. Once done, restart your MCP client.'
-Write-Output ('Token state file: %s')
-`, exe, configFile)
-
-	configDir := filepath.Dir(getMCPConfigFile())
-	if err := os.MkdirAll(configDir, 0700); err != nil {
-		return "", err
-	}
-
-	scriptPath := filepath.Join(configDir, "mcp_setup_bootstrap.ps1")
-	if err := os.WriteFile(scriptPath, []byte(script), 0600); err != nil {
-		return "", err
-	}
-	return scriptPath, nil
-}
-
 func FindMCPConfigFiles() []string {
 	var files []string
 	home, _ := os.UserHomeDir()
