@@ -13,3 +13,4 @@ gha-creds-*.json
 site/
 /dev
 /tests
+/build
