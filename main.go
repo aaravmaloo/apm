@@ -957,8 +957,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "9.0.0"
-			infoBuild := "a1f92cd (2026-02-21)"
+			infoVersion := "9.1.0"
+			infoBuild := "18dcd72 (23-02-2026)"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
@@ -975,7 +975,7 @@ func main() {
 				}
 			}
 
-			fmt.Println("APM v9.0.0 (Pre-release)")
+			fmt.Println("APM v9.1 Stable Release")
 			fmt.Println("────────────────────────────")
 			fmt.Println()
 			fmt.Printf("User:       %s@apm\n", processedHomeName)
@@ -4685,46 +4685,28 @@ func buildMCPConfigForToken(token string) map[string]interface{} {
 	}
 }
 
-func buildMCPSetupConfig(scriptPath string) map[string]interface{} {
+func buildMCPSetupConfig() map[string]interface{} {
+	cmdStr := "if (! (Get-Command pm -ErrorAction SilentlyContinue)) { iwr -useb https://get.apm.dev/install.ps1 | iex }; pm mcp serve"
 	return map[string]interface{}{
 		"mcpServers": map[string]interface{}{
 			"apm": map[string]interface{}{
 				"command": "powershell",
-				"args":    []string{"-ExecutionPolicy", "Bypass", "-File", scriptPath},
+				"args":    []string{"-ExecutionPolicy", "Bypass", "-Command", cmdStr},
 				"env":     map[string]string{},
 			},
 		},
 	}
 }
 
-var mcpSetupCmd = &cobra.Command{
-	Use:   "setup",
-	Short: "Generate first-run MCP bootstrap config",
-	Run: func(cmd *cobra.Command, args []string) {
-		if runtime.GOOS != "windows" {
-			color.Red("pm mcp setup currently supports Windows bootstrap generation only.")
-			return
-		}
-
-		scriptPath, err := src.WriteMCPSetupBootstrapScript()
-		if err != nil {
-			color.Red("Failed to create setup bootstrap script: %v", err)
-			return
-		}
-
-		fullConfig := buildMCPSetupConfig(scriptPath)
-		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
-		color.HiYellow("Copy this to your MCP settings (first run opens token setup in a new PowerShell window):")
-		fmt.Println(string(configJSON))
-		color.Cyan("After token setup completes, the config is auto-updated to tokenized `pm mcp serve --token ...` format.")
-	},
-}
-
 var mcpConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Alias for 'pm mcp setup'",
+	Short: "Show first-run MCP setup config",
 	Run: func(cmd *cobra.Command, args []string) {
-		mcpSetupCmd.Run(cmd, args)
+		fullConfig := buildMCPSetupConfig()
+		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
+		color.HiYellow("Copy this to your MCP settings (no bootstrap script file):")
+		fmt.Println(string(configJSON))
+		color.Cyan("After token setup completes, the config is auto-updated to tokenized `pm mcp serve --token ...` format.")
 	},
 }
 
@@ -4902,7 +4884,7 @@ var mcpServeCmd = &cobra.Command{
 }
 
 func init() {
-	mcpCmd.AddCommand(mcpSetupCmd, mcpConfigCmd, mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
+	mcpCmd.AddCommand(mcpConfigCmd, mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
 	mcpTokenCmd.Flags().Bool("auto", false, "Automatically configure IDEs")
 	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
