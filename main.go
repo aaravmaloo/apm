@@ -4677,27 +4677,54 @@ var mcpCmd = &cobra.Command{
 	Short: "Configure or start the APM MCP server",
 }
 
+func buildMCPConfigForToken(token string) map[string]interface{} {
+	return map[string]interface{}{
+		"mcpServers": map[string]interface{}{
+			"apm": src.BuildMCPServerConfigWithToken(token),
+		},
+	}
+}
+
+func buildMCPSetupConfig(scriptPath string) map[string]interface{} {
+	return map[string]interface{}{
+		"mcpServers": map[string]interface{}{
+			"apm": map[string]interface{}{
+				"command": "powershell",
+				"args":    []string{"-ExecutionPolicy", "Bypass", "-File", scriptPath},
+				"env":     map[string]string{},
+			},
+		},
+	}
+}
+
+var mcpSetupCmd = &cobra.Command{
+	Use:   "setup",
+	Short: "Generate first-run MCP bootstrap config",
+	Run: func(cmd *cobra.Command, args []string) {
+		if runtime.GOOS != "windows" {
+			color.Red("pm mcp setup currently supports Windows bootstrap generation only.")
+			return
+		}
+
+		scriptPath, err := src.WriteMCPSetupBootstrapScript()
+		if err != nil {
+			color.Red("Failed to create setup bootstrap script: %v", err)
+			return
+		}
+
+		fullConfig := buildMCPSetupConfig(scriptPath)
+		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
+		color.HiYellow("Copy this to your MCP settings (first run opens token setup in a new PowerShell window):")
+		fmt.Println(string(configJSON))
+		color.Cyan("After token setup completes, the config is auto-updated to tokenized `pm mcp serve --token ...` format.")
+	},
+}
+
 var mcpConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Show configuration for auto-token MCP setup",
+	Short: "Alias for 'pm mcp setup'",
 	Run: func(cmd *cobra.Command, args []string) {
-		cmdStr := fmt.Sprintf("if (! (Get-Command pm -ErrorAction SilentlyContinue)) { iwr -useb https://get.apm.dev/install.ps1 | iex }; pm mcp serve")
-
-		mcpConfig := map[string]interface{}{
-			"command": "powershell",
-			"args":    []string{"-ExecutionPolicy", "Bypass", "-Command", cmdStr},
-			"env":     map[string]string{},
-		}
-
-		fullConfig := map[string]interface{}{
-			"mcpServers": map[string]interface{}{
-				"apm": mcpConfig,
-			},
-		}
-
-		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
-		color.HiYellow("Copy this to your MCP settings (e.g., Claude Desktop or Cursor config):")
-		fmt.Println(string(configJSON))
+		mcpSetupCmd.Run(cmd, args)
 	},
 }
 
@@ -4706,28 +4733,53 @@ var mcpTokenCmd = &cobra.Command{
 	Short: "Interactive setup for MCP access tokens",
 	Run: func(cmd *cobra.Command, args []string) {
 		auto, _ := cmd.Flags().GetBool("auto")
-		if !auto && len(args) == 0 {
-			mcpConfigCmd.Run(cmd, args)
-			return
-		}
 
 		color.HiCyan("APM MCP Server Setup")
 
 		var name string
-		promptName := &survey.Input{Message: "Token Name (e.g. 'Cursor', 'Windsurf'):"}
-		survey.AskOne(promptName, &name)
+		promptName := &survey.Input{Message: "Token name:"}
+		if err := survey.AskOne(promptName, &name, survey.WithValidator(survey.Required)); err != nil {
+			color.Red("Setup aborted: %v", err)
+			return
+		}
+		name = strings.TrimSpace(name)
 		if name == "" {
 			color.Red("Token name is required.")
 			return
 		}
 
+		var expiryStr string
+		promptExpiry := &survey.Input{
+			Message: "Expiry in minutes (0 for never):",
+			Default: "0",
+		}
+		err := survey.AskOne(promptExpiry, &expiryStr, survey.WithValidator(func(ans interface{}) error {
+			value, ok := ans.(string)
+			if !ok {
+				return fmt.Errorf("invalid expiry value")
+			}
+			n, convErr := strconv.Atoi(strings.TrimSpace(value))
+			if convErr != nil {
+				return fmt.Errorf("expiry must be a whole number")
+			}
+			if n < 0 {
+				return fmt.Errorf("expiry must be 0 or greater")
+			}
+			return nil
+		}))
+		if err != nil {
+			color.Red("Setup aborted: %v", err)
+			return
+		}
+
+		expiry, _ := strconv.Atoi(strings.TrimSpace(expiryStr))
+
 		permissions := []string{}
 		promptPerms := &survey.MultiSelect{
-			Message: "Permissions:",
-			Options: []string{"read", "write", "delete", "secrets", "all"},
-			Default: []string{"read", "secrets"},
+			Message: "Permissions (space to select, enter to confirm):",
+			Options: src.MCPToolPermissions(),
 		}
-		err := survey.AskOne(promptPerms, &permissions)
+		err = survey.AskOne(promptPerms, &permissions)
 		if err != nil {
 			color.Red("Setup aborted: %v", err)
 			return
@@ -4737,12 +4789,6 @@ var mcpTokenCmd = &cobra.Command{
 			color.Red("You must select at least one permission.")
 			return
 		}
-
-		var expiryStr string
-		promptExpiry := &survey.Input{Message: "Expiry in minutes (0 for no expiry):", Default: "0"}
-		survey.AskOne(promptExpiry, &expiryStr)
-		var expiry int
-		fmt.Sscanf(expiryStr, "%d", &expiry)
 
 		token, err := src.GenerateMCPToken(name, permissions, expiry)
 		if err != nil {
@@ -4766,26 +4812,10 @@ var mcpTokenCmd = &cobra.Command{
 
 		color.HiGreen("\nMCP Token generated successfully!")
 		color.HiCyan("Token: %s", token)
-		if !auto {
-			exe, _ := os.Executable()
-			mcpConfig := map[string]interface{}{
-				"command": "cmd",
-				"args":    []string{"/c", exe, "mcp", "serve", "--token", token},
-				"env":     map[string]string{},
-			}
-			if runtime.GOOS != "windows" {
-				mcpConfig["command"] = exe
-				mcpConfig["args"] = []string{"mcp", "serve", "--token", token}
-			}
-			fullConfig := map[string]interface{}{
-				"mcpServers": map[string]interface{}{
-					"apm": mcpConfig,
-				},
-			}
-			configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
-			color.HiYellow("\nAdd the following configuration to your MCP settings:")
-			fmt.Println(string(configJSON))
-		}
+		fullConfig := buildMCPConfigForToken(token)
+		configJSON, _ := json.MarshalIndent(fullConfig, "", "  ")
+		color.HiYellow("\nAdd the following configuration to your MCP settings:")
+		fmt.Println(string(configJSON))
 		color.HiCyan("\nNote: The MCP server requires an active APM session. Run 'pm unlock' to start a session before using the agent.")
 	},
 }
@@ -4872,7 +4902,7 @@ var mcpServeCmd = &cobra.Command{
 }
 
 func init() {
-	mcpCmd.AddCommand(mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd, mcpConfigCmd)
+	mcpCmd.AddCommand(mcpSetupCmd, mcpConfigCmd, mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
 	mcpServeCmd.Flags().String("token", "", "MCP access token")
 	mcpTokenCmd.Flags().Bool("auto", false, "Automatically configure IDEs")
 	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
