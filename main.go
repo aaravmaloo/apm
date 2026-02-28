@@ -3548,7 +3548,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			fmt.Println("\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
 		} else {
 			fmt.Println("\x1b[1;37mΓåæ/Γåô\x1b[0m: Navigate | \x1b[1;37mSpace\x1b[0m: Select | \x1b[1;37ma\x1b[0m: All | \x1b[1;37mc\x1b[0m: Clear")
-			fmt.Println("\x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
+			fmt.Println("\x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37mi\x1b[0m: Metadata | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
 		}
 
 		b := make([]byte, 3)
@@ -3685,6 +3685,22 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 				}
 				continue
 			}
+			if b[0] == 'i' {
+				if len(selectedItems) > 0 {
+					_ = term.Restore(int(os.Stdin.Fd()), oldState)
+					for _, res := range selectedItems {
+						fmt.Print("\033[H\033[2J")
+						displayEntryMetadata(v, res)
+						fmt.Print("\nPress Enter to continue...")
+						readInput()
+					}
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+				} else if len(results) > 0 {
+					handleAction(v, masterPassword, results[selectedIndex], 'i', readonly, oldState)
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+				}
+				continue
+			}
 		}
 
 		char := rune(b[0])
@@ -3728,6 +3744,10 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 		displayEntry(res, true)
 		fmt.Print("\nPress Enter to continue...")
 		readInput()
+	case 'i':
+		displayEntryMetadata(v, res)
+		fmt.Print("\nPress Enter to continue...")
+		readInput()
 	case 'e':
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
@@ -3758,6 +3778,215 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 	}
 	fmt.Print("\nPress Enter to continue...")
 	readInput()
+}
+
+func resultTypeToHistoryCategory(resultType string) string {
+	switch resultType {
+	case "Password":
+		return "PASSWORD"
+	case "TOTP":
+		return "TOTP"
+	case "Token":
+		return "TOKEN"
+	case "Note":
+		return "NOTE"
+	case "API Key":
+		return "APIKEY"
+	case "SSH Key":
+		return "SSHKEY"
+	case "Wi-Fi":
+		return "WIFI"
+	case "Recovery Codes":
+		return "RECOVERY"
+	case "Certificate":
+		return "CERTIFICATE"
+	case "Banking":
+		return "BANKING"
+	case "Document":
+		return "DOCUMENT"
+	case "Audio":
+		return "AUDIO"
+	case "Video":
+		return "VIDEO"
+	case "Photo":
+		return "PHOTO"
+	case "Government ID":
+		return "GOVID"
+	case "Medical Record":
+		return "MEDICAL"
+	case "Travel":
+		return "TRAVEL"
+	case "Contact":
+		return "CONTACT"
+	case "Cloud Credentials":
+		return "CLOUDCRED"
+	case "Kubernetes Secret":
+		return "K8S"
+	case "Docker Registry":
+		return "DOCKER"
+	case "SSH Config":
+		return "SSHCONFIG"
+	case "CI/CD Secret":
+		return "CICD"
+	case "Software License":
+		return "LICENSE"
+	case "Legal Contract":
+		return "CONTRACT"
+	default:
+		return strings.ToUpper(strings.ReplaceAll(resultType, " ", ""))
+	}
+}
+
+func inferCreatorFromAudit(identifier string) string {
+	logs, err := src.GetAuditLogs(500)
+	if err != nil {
+		return ""
+	}
+	target := "'" + strings.ToLower(identifier) + "'"
+	for i := len(logs) - 1; i >= 0; i-- {
+		details := strings.ToLower(logs[i].Details)
+		if strings.Contains(details, target) && strings.Contains(logs[i].Action, "MCP_ENTRY_ADDED") {
+			return "AI (MCP)"
+		}
+	}
+	return ""
+}
+
+func displayEntryMetadata(v *src.Vault, res src.SearchResult) {
+	category := resultTypeToHistoryCategory(res.Type)
+	space := res.Space
+	if space == "" {
+		space = "default"
+	}
+
+	telemetry, hasTelemetry := v.GetSecretTelemetry(category, res.Identifier, res.Space)
+
+	var createdAt time.Time
+	var lastAccessed time.Time
+	var lastUpdated time.Time
+	var createdBy string
+	var lastAccessedBy string
+	var lastUpdatedBy string
+	addCount := 0
+	viewCount := 0
+	editCount := 0
+	deleteCount := 0
+	lastAction := ""
+	lastActionAt := time.Time{}
+
+	for _, h := range v.History {
+		if h.Category != category || h.Identifier != res.Identifier {
+			continue
+		}
+		if createdAt.IsZero() || h.Timestamp.Before(createdAt) {
+			createdAt = h.Timestamp
+		}
+		if h.Timestamp.After(lastActionAt) {
+			lastActionAt = h.Timestamp
+			lastAction = h.Action
+		}
+		switch h.Action {
+		case "ADD":
+			addCount++
+			if h.Timestamp.After(lastUpdated) {
+				lastUpdated = h.Timestamp
+			}
+		case "GET", "VIEW":
+			viewCount++
+			if h.Timestamp.After(lastAccessed) {
+				lastAccessed = h.Timestamp
+			}
+		case "EDIT":
+			editCount++
+			if h.Timestamp.After(lastUpdated) {
+				lastUpdated = h.Timestamp
+			}
+		case "DEL":
+			deleteCount++
+		}
+	}
+
+	if hasTelemetry {
+		if createdAt.IsZero() || (!telemetry.CreatedAt.IsZero() && telemetry.CreatedAt.Before(createdAt)) {
+			createdAt = telemetry.CreatedAt
+		}
+		if telemetry.LastAccessed.After(lastAccessed) {
+			lastAccessed = telemetry.LastAccessed
+		}
+		if telemetry.UpdatedAt.After(lastUpdated) {
+			lastUpdated = telemetry.UpdatedAt
+		}
+		createdBy = telemetry.CreatedBy
+		lastAccessedBy = telemetry.LastAccessedBy
+		lastUpdatedBy = telemetry.UpdatedBy
+	}
+
+	if createdBy == "" {
+		createdBy = inferCreatorFromAudit(res.Identifier)
+		if createdBy == "" {
+			createdBy = "User (history inference)"
+		}
+	}
+	if lastAccessedBy == "" {
+		lastAccessedBy = "Unknown"
+	}
+	if lastUpdatedBy == "" {
+		lastUpdatedBy = "Unknown"
+	}
+
+	var trustScore *src.SecretTrustScore
+	for _, s := range v.ComputeSecretTrustScores() {
+		if s.Category == category && s.Identifier == res.Identifier && (s.Space == res.Space || (s.Space == "" && res.Space == "")) {
+			copyScore := s
+			trustScore = &copyScore
+			break
+		}
+	}
+
+	fmt.Printf("Metadata: %s (%s)\n", res.Identifier, res.Type)
+	fmt.Println("--------------------------------------------------")
+	fmt.Printf("Space:                %s\n", space)
+	fmt.Printf("Category Key:         %s\n", category)
+	if !createdAt.IsZero() {
+		fmt.Printf("Created At:           %s\n", createdAt.Format(time.RFC3339))
+	} else {
+		fmt.Println("Created At:           Unknown")
+	}
+	fmt.Printf("Created By:           %s\n", createdBy)
+	if !lastAccessed.IsZero() {
+		fmt.Printf("Last Accessed:        %s\n", lastAccessed.Format(time.RFC3339))
+	} else {
+		fmt.Println("Last Accessed:        Unknown")
+	}
+	fmt.Printf("Last Accessed By:     %s\n", lastAccessedBy)
+	if !lastUpdated.IsZero() {
+		fmt.Printf("Last Updated:         %s\n", lastUpdated.Format(time.RFC3339))
+	} else {
+		fmt.Println("Last Updated:         Unknown")
+	}
+	fmt.Printf("Last Updated By:      %s\n", lastUpdatedBy)
+	if hasTelemetry {
+		fmt.Printf("Access Count:         %d\n", telemetry.AccessCount)
+		fmt.Printf("Privilege:            %s\n", telemetry.Privilege)
+		fmt.Printf("Exposure Flag:        %v\n", telemetry.Exposed)
+		fmt.Printf("Telemetry Source:     %s\n", telemetry.Source)
+	} else {
+		fmt.Println("Access Count:         Unknown (legacy entry)")
+		fmt.Println("Privilege:            Unknown")
+		fmt.Println("Exposure Flag:        Unknown")
+	}
+	if trustScore != nil {
+		fmt.Printf("Trust Score:          %d (%s)\n", trustScore.Score, strings.ToUpper(trustScore.Risk))
+		if len(trustScore.Reasons) > 0 {
+			fmt.Printf("Trust Factors:        %s\n", strings.Join(trustScore.Reasons, "; "))
+		}
+	} else {
+		fmt.Println("Trust Score:          Not computed yet")
+	}
+	fmt.Printf("History Totals:       ADD=%d VIEW=%d EDIT=%d DEL=%d\n", addCount, viewCount, editCount, deleteCount)
+	if lastAction != "" {
+		fmt.Printf("Last History Action:  %s @ %s\n", lastAction, lastActionAt.Format(time.RFC3339))
+	}
 }
 
 func prompt(label, current string) string {
