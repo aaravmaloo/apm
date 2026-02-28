@@ -130,6 +130,8 @@ Adds a new entry to the vault.
 | `name`     | string | Yes      | Display name for the entry         |
 | `category` | string | Yes      | One of the 22 supported categories |
 | `fields`   | object | Yes      | Category-specific fields           |
+| `tx_id`    | string | No       | Transaction id returned from preview |
+| `approve`  | bool   | No       | Must be `true` to commit a pending transaction |
 
 ### Example input
 
@@ -157,3 +159,43 @@ Adds a new entry to the vault.
 ### Required permission
 
 `write`
+
+### Transaction guardrails
+
+Mutating tools (`add_entry`, `edit_entry`, `delete_entry`) run in transaction mode:
+
+1. First call without `tx_id` creates a pending transaction and returns a preview.
+2. Re-call with `tx_id` and `approve: true` to commit.
+3. Successful commits return a cryptographic receipt id.
+
+---
+
+## tx_list
+
+Lists active MCP transactions and their status.
+
+### Parameters
+
+| Parameter | Type    | Required | Description                     |
+| :-------- | :------ | :------- | :------------------------------ |
+| `limit`   | integer | No       | Max transactions to return      |
+
+### Required permission
+
+`tx_list`
+
+---
+
+## tx_abort
+
+Aborts a pending MCP transaction by id.
+
+### Parameters
+
+| Parameter | Type   | Required | Description            |
+| :-------- | :----- | :------- | :--------------------- |
+| `tx_id`   | string | Yes      | Pending transaction id |
+
+### Required permission
+
+`tx_abort`
