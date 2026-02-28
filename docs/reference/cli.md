@@ -40,6 +40,13 @@ $ pm get <query> [--show-pass]
 | `<query>`     | Fuzzy search term to match against entry names |
 | `--show-pass` | Reveal secret fields in the output             |
 
+Interactive `pm get` actions:
+- `v` / Enter: View entry details
+- `i`: Show entry metadata (created/accessed timestamps, actor/source, trust factors, history totals)
+- `e`: Edit
+- `d`: Delete
+- `space`: Multi-select mode for bulk actions
+
 ### pm edit
 
 Modify an existing entry.
