@@ -249,16 +249,19 @@ type DocumentEntry struct {
 }
 
 type RecoveryData struct {
-	EmailHash           []byte    `json:"email_hash,omitempty"`
-	KeyHash             []byte    `json:"key_hash,omitempty"`
-	DEKSlot             []byte    `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
-	Salt                []byte    `json:"salt,omitempty"`     // Stable salt for recovery key
-	ObfuscatedKey       []byte    `json:"obfuscated_key,omitempty"`
-	RecoveryTokenHash   []byte    `json:"recovery_token_hash,omitempty"`
-	RecoveryTokenExpiry time.Time `json:"recovery_token_expiry,omitempty"`
-	AlertsEnabled       bool      `json:"alerts_enabled,omitempty"`
-	SecurityLevel       int       `json:"security_level,omitempty"`
-	AlertEmail          string    `json:"alert_email,omitempty"`
+	EmailHash              []byte            `json:"email_hash,omitempty"`
+	KeyHash                []byte            `json:"key_hash,omitempty"`
+	DEKSlot                []byte            `json:"dek_slot,omitempty"` // DEK encrypted with Recovery Key
+	Salt                   []byte            `json:"salt,omitempty"`     // Stable salt for recovery key
+	ObfuscatedKey          []byte            `json:"obfuscated_key,omitempty"`
+	RecoveryTokenHash      []byte            `json:"recovery_token_hash,omitempty"`
+	RecoveryTokenExpiry    time.Time         `json:"recovery_token_expiry,omitempty"`
+	RecoveryShareThreshold int               `json:"recovery_share_threshold,omitempty"`
+	RecoveryShareCount     int               `json:"recovery_share_count,omitempty"`
+	RecoveryShareHashes    map[string][]byte `json:"recovery_share_hashes,omitempty"`
+	AlertsEnabled          bool              `json:"alerts_enabled,omitempty"`
+	SecurityLevel          int               `json:"security_level,omitempty"`
+	AlertEmail             string            `json:"alert_email,omitempty"`
 }
 
 type AudioEntry struct {
@@ -336,16 +339,20 @@ type Vault struct {
 	ActivePolicy            Policy   `json:"active_policy,omitempty"`
 	NeedsRepair             bool     `json:"-"` // Internal flag for silent self-healing
 
-	CurrentProfileParams *CryptoProfile `json:"-"`
-	RecoveryEmail        string         `json:"recovery_email,omitempty"`
-	RecoveryHash         []byte         `json:"recovery_hash,omitempty"`
-	DEK                  []byte         `json:"dek,omitempty"`
-	RecoverySlot         []byte         `json:"recovery_slot,omitempty"`
-	RecoverySalt         []byte         `json:"recovery_salt,omitempty"`
-	RawRecoveryKey       string         `json:"-"`
-	ObfuscatedKey        []byte         `json:"-"`
-	RecoveryTokenHash    []byte         `json:"recovery_token_hash,omitempty"`
-	RecoveryTokenExpiry  time.Time      `json:"recovery_token_expiry,omitempty"`
+	CurrentProfileParams   *CryptoProfile             `json:"-"`
+	RecoveryEmail          string                     `json:"recovery_email,omitempty"`
+	RecoveryHash           []byte                     `json:"recovery_hash,omitempty"`
+	DEK                    []byte                     `json:"dek,omitempty"`
+	RecoverySlot           []byte                     `json:"recovery_slot,omitempty"`
+	RecoverySalt           []byte                     `json:"recovery_salt,omitempty"`
+	RawRecoveryKey         string                     `json:"-"`
+	ObfuscatedKey          []byte                     `json:"-"`
+	RecoveryTokenHash      []byte                     `json:"recovery_token_hash,omitempty"`
+	RecoveryTokenExpiry    time.Time                  `json:"recovery_token_expiry,omitempty"`
+	RecoveryShareThreshold int                        `json:"recovery_share_threshold,omitempty"`
+	RecoveryShareCount     int                        `json:"recovery_share_count,omitempty"`
+	RecoveryShareHashes    map[string][]byte          `json:"recovery_share_hashes,omitempty"`
+	SecretTelemetry        map[string]SecretTelemetry `json:"secret_telemetry,omitempty"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -438,6 +445,11 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	if len(vault.RecoveryTokenHash) > 0 {
 		rec.RecoveryTokenHash = vault.RecoveryTokenHash
 		rec.RecoveryTokenExpiry = vault.RecoveryTokenExpiry
+	}
+	if vault.RecoveryShareThreshold > 0 && len(vault.RecoveryShareHashes) > 0 {
+		rec.RecoveryShareThreshold = vault.RecoveryShareThreshold
+		rec.RecoveryShareCount = vault.RecoveryShareCount
+		rec.RecoveryShareHashes = vault.RecoveryShareHashes
 	}
 
 	rec.AlertsEnabled = vault.AlertsEnabled
@@ -776,6 +788,9 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		vault.ObfuscatedKey = rec.ObfuscatedKey
 		vault.RecoveryTokenHash = rec.RecoveryTokenHash
 		vault.RecoveryTokenExpiry = rec.RecoveryTokenExpiry
+		vault.RecoveryShareThreshold = rec.RecoveryShareThreshold
+		vault.RecoveryShareCount = rec.RecoveryShareCount
+		vault.RecoveryShareHashes = rec.RecoveryShareHashes
 		vault.AlertsEnabled = rec.AlertsEnabled
 		vault.SecurityLevel = rec.SecurityLevel
 	}
@@ -855,6 +870,9 @@ func (v *Vault) ClearRecoveryInfo() {
 	v.ObfuscatedKey = nil
 	v.RecoveryTokenHash = nil
 	v.RecoveryTokenExpiry = time.Time{}
+	v.RecoveryShareThreshold = 0
+	v.RecoveryShareCount = 0
+	v.RecoveryShareHashes = nil
 }
 
 func (v *Vault) SetRecoveryToken(token string, duration time.Duration) {
@@ -1144,6 +1162,15 @@ func (v *Vault) logHistory(action, category, identifier string) {
 	entry.Signature = hex.EncodeToString(mac.Sum(nil))
 
 	v.History = append(v.History, entry)
+
+	switch action {
+	case "ADD", "EDIT":
+		v.TouchSecretTelemetry(category, identifier, true)
+	case "GET", "VIEW":
+		v.TouchSecretTelemetry(category, identifier, false)
+	case "DEL":
+		v.RemoveSecretTelemetry(category, identifier)
+	}
 }
 
 func (v *Vault) AddEntry(account, username, password string) error {
@@ -1165,6 +1192,7 @@ func (v *Vault) AddEntry(account, username, password string) error {
 func (v *Vault) GetEntry(account string) (Entry, bool) {
 	for _, e := range v.Entries {
 		if e.Account == account && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			v.logHistory("GET", "PASSWORD", account)
 			return e, true
 		}
 	}
@@ -1196,6 +1224,7 @@ func (v *Vault) AddTOTPEntry(account, secret string) error {
 func (v *Vault) GetTOTPEntry(account string) (TOTPEntry, bool) {
 	for _, e := range v.TOTPEntries {
 		if e.Account == account && (v.CurrentSpace == "" || e.Space == v.CurrentSpace) {
+			v.logHistory("GET", "TOTP", account)
 			return e, true
 		}
 	}
