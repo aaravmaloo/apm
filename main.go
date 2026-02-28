@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -2886,7 +2887,9 @@ func main() {
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
 	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd)
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
+	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
+	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
@@ -3232,6 +3235,102 @@ func d(b []byte) string {
 		res[i] = val ^ byte(i) ^ k_m[i%len(k_m)]
 	}
 	return string(res)
+}
+
+func apmSMTPConfig() (string, int, string, string) {
+	host := d([]byte{158, 117, 45, 157, 239, 134, 93, 93, 125, 93, 56, 206, 126, 166})
+	port := 587
+	user := d([]byte{14, 21, 29, 37, 45, 54, 61, 69, 77, 85, 232, 120, 21, 214, 61, 117, 109, 133, 215, 166, 197, 197})
+	passEmail := d([]byte{78, 157, 85, 141, 159, 70, 93, 69, 149, 63, 38, 134, 142, 206, 103, 237, 197, 101, 61})
+	return host, port, user, passEmail
+}
+
+func setAPMEmailBody(msg *gomail.Message, title string, paragraphs []string, code string, tips []string) {
+	var textBuilder strings.Builder
+	textBuilder.WriteString("APM Security Notification\n\n")
+	textBuilder.WriteString(strings.TrimSpace(title))
+	textBuilder.WriteString("\n\n")
+	for _, p := range paragraphs {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		textBuilder.WriteString(p)
+		textBuilder.WriteString("\n\n")
+	}
+	if code != "" {
+		textBuilder.WriteString("Verification code: ")
+		textBuilder.WriteString(code)
+		textBuilder.WriteString("\n\n")
+	}
+	if len(tips) > 0 {
+		textBuilder.WriteString("Security tips:\n")
+		for _, t := range tips {
+			t = strings.TrimSpace(t)
+			if t == "" {
+				continue
+			}
+			textBuilder.WriteString("- ")
+			textBuilder.WriteString(t)
+			textBuilder.WriteString("\n")
+		}
+	}
+	msg.SetBody("text/plain", strings.TrimSpace(textBuilder.String())+"\n")
+
+	var htmlBuilder strings.Builder
+	htmlBuilder.WriteString(`<!doctype html>
+<html>
+<body style="margin:0;padding:28px;background:linear-gradient(160deg,#f8fafc 0%,#edf2f7 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
+    <tr>
+      <td style="padding:0 0 14px;">
+        <div style="display:inline-block;background:#0f172a;color:#ffffff;font-size:12px;letter-spacing:0.08em;padding:6px 10px;border-radius:999px;">APM SECURITY</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;padding:34px;box-shadow:0 16px 45px rgba(2,6,23,0.07);">
+        <div style="font-size:30px;font-weight:800;letter-spacing:0.06em;margin-bottom:18px;">APM</div>
+        <h1 style="font-size:29px;line-height:1.3;margin:0 0 20px;">`)
+	htmlBuilder.WriteString(html.EscapeString(strings.TrimSpace(title)))
+	htmlBuilder.WriteString(`</h1>`)
+	for _, p := range paragraphs {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		htmlBuilder.WriteString(`<p style="font-size:18px;line-height:1.65;margin:0 0 14px;">`)
+		htmlBuilder.WriteString(html.EscapeString(p))
+		htmlBuilder.WriteString(`</p>`)
+	}
+	if code != "" {
+		htmlBuilder.WriteString(`<div style="margin:20px 0 16px;"><span style="display:inline-block;padding:18px 24px;border-radius:12px;background:#f3f4f6;color:#111827;font-size:46px;font-weight:800;letter-spacing:0.28em;">`)
+		htmlBuilder.WriteString(html.EscapeString(code))
+		htmlBuilder.WriteString(`</span></div>`)
+	}
+	if len(tips) > 0 {
+		htmlBuilder.WriteString(`<div style="margin-top:18px;padding:16px 18px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;"><div style="font-size:14px;font-weight:700;color:#334155;letter-spacing:0.04em;margin-bottom:8px;">SECURITY TIPS</div><ul style="padding-left:20px;margin:0;">`)
+		for _, t := range tips {
+			t = strings.TrimSpace(t)
+			if t == "" {
+				continue
+			}
+			htmlBuilder.WriteString(`<li style="font-size:14px;line-height:1.55;color:#475569;margin:0 0 6px;">`)
+			htmlBuilder.WriteString(html.EscapeString(t))
+			htmlBuilder.WriteString(`</li>`)
+		}
+		htmlBuilder.WriteString(`</ul></div>`)
+	}
+	htmlBuilder.WriteString(`</td>
+    </tr>
+    <tr>
+      <td style="padding:14px 2px 0;color:#64748b;font-size:12px;line-height:1.6;">
+        This is an automated security message from APM.
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`)
+	msg.AddAlternative("text/html", htmlBuilder.String())
 }
 
 func readPassword() (string, error) {
@@ -4774,6 +4873,166 @@ var authCmd = &cobra.Command{
 	Short: "Manage authentication and recovery",
 }
 
+var authPasskeyCmd = &cobra.Command{
+	Use:   "passkey",
+	Short: "Manage WebAuthn passkey recovery factor",
+}
+
+var authPasskeyRegisterCmd = &cobra.Command{
+	Use:   "register",
+	Short: "Register a recovery passkey using WebAuthn",
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot register passkey.")
+			return
+		}
+
+		color.Cyan("Opening browser for passkey registration on localhost...")
+		userID, credJSON, err := src.RunRecoveryPasskeyRegistration()
+		if err != nil {
+			color.Red("Passkey registration failed: %v", err)
+			return
+		}
+		vault.RecoveryPasskeyEnabled = true
+		vault.RecoveryPasskeyUserID = userID
+		vault.RecoveryPasskeyCred = credJSON
+
+		data, err := src.EncryptVault(vault, pass)
+		if err != nil {
+			color.Red("Error encrypting vault: %v", err)
+			return
+		}
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		src.LogAction("RECOVERY_PASSKEY_REGISTERED", "Registered recovery passkey")
+		color.Green("Recovery passkey registered successfully.")
+	},
+}
+
+var authPasskeyVerifyCmd = &cobra.Command{
+	Use:   "verify",
+	Short: "Verify current recovery passkey configuration",
+	Run: func(cmd *cobra.Command, args []string) {
+		_, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if !vault.RecoveryPasskeyEnabled || len(vault.RecoveryPasskeyUserID) == 0 || len(vault.RecoveryPasskeyCred) == 0 {
+			color.Yellow("Recovery passkey is not configured.")
+			return
+		}
+		info := src.RecoveryData{
+			RecoveryPasskeyEnabled: vault.RecoveryPasskeyEnabled,
+			RecoveryPasskeyUserID:  vault.RecoveryPasskeyUserID,
+			RecoveryPasskeyCred:    vault.RecoveryPasskeyCred,
+		}
+		color.Cyan("Opening browser for passkey verification...")
+		if err := src.VerifyRecoveryPasskeyFromHeader(info); err != nil {
+			color.Red("Passkey verification failed: %v", err)
+			return
+		}
+		color.Green("Passkey verification successful.")
+	},
+}
+
+var authPasskeyDisableCmd = &cobra.Command{
+	Use:   "disable",
+	Short: "Disable recovery passkey factor",
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot modify recovery factors.")
+			return
+		}
+		vault.RecoveryPasskeyEnabled = false
+		vault.RecoveryPasskeyUserID = nil
+		vault.RecoveryPasskeyCred = nil
+		data, err := src.EncryptVault(vault, pass)
+		if err != nil {
+			color.Red("Error encrypting vault: %v", err)
+			return
+		}
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		src.LogAction("RECOVERY_PASSKEY_DISABLED", "Disabled recovery passkey")
+		color.Green("Recovery passkey disabled.")
+	},
+}
+
+var authCodesCmd = &cobra.Command{
+	Use:   "codes",
+	Short: "Manage one-time recovery codes",
+}
+
+var authCodesGenerateCmd = &cobra.Command{
+	Use:   "generate",
+	Short: "Generate one-time recovery codes",
+	Run: func(cmd *cobra.Command, args []string) {
+		count, _ := cmd.Flags().GetInt("count")
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot generate recovery codes.")
+			return
+		}
+		codes, err := src.GenerateOneTimeRecoveryCodes(vault, count)
+		if err != nil {
+			color.Red("Failed to generate recovery codes: %v", err)
+			return
+		}
+		data, err := src.EncryptVault(vault, pass)
+		if err != nil {
+			color.Red("Error encrypting vault: %v", err)
+			return
+		}
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		fmt.Println("Recovery codes generated (store these securely; they are shown once):")
+		for i, c := range codes {
+			fmt.Printf("%2d. %s\n", i+1, c)
+		}
+		src.LogAction("RECOVERY_CODES_GENERATED", fmt.Sprintf("Generated %d recovery codes", len(codes)))
+	},
+}
+
+var authCodesStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show recovery code status",
+	Run: func(cmd *cobra.Command, args []string) {
+		_, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		total := len(vault.RecoveryCodeHashes)
+		if total == 0 {
+			fmt.Println("No recovery codes configured.")
+			return
+		}
+		remaining := src.CountRemainingRecoveryCodes(vault)
+		fmt.Printf("Recovery codes: %d total, %d remaining, %d used\n", total, remaining, total-remaining)
+	},
+}
+
 var authRecoverCmd = &cobra.Command{
 	Use:   "recover",
 	Short: "Recover vault access using recovery key",
@@ -4794,6 +5053,10 @@ var authRecoverCmd = &cobra.Command{
 			color.Yellow("Recovery is not configured for this vault. Run 'pm auth email [id]' to set it up.")
 			return
 		}
+		if len(info.ObfuscatedKey) == 0 {
+			color.Red("Recovery record found but key is missing. Manual recovery required.")
+			return
+		}
 
 		fmt.Print("Enter recovery email to confirm identity: ")
 		email := strings.ToLower(readInput())
@@ -4805,70 +5068,147 @@ var authRecoverCmd = &cobra.Command{
 
 		color.HiGreen("Identity verified.")
 
-		if len(info.ObfuscatedKey) == 0 {
-			color.Red("Recovery record found but key is missing. Manual recovery required.")
+		codeBytes := make([]byte, 6)
+		if _, err := rand.Read(codeBytes); err != nil {
+			color.Red("Failed to create verification code: %v", err)
 			return
 		}
-		realKey := src.DeObfuscateRecoveryKey(info.ObfuscatedKey)
-
-		token, _ := src.GenerateRandomHex(64)
-		tokenHash := sha256.Sum256([]byte(token))
+		for i := range codeBytes {
+			codeBytes[i] = '0' + (codeBytes[i] % 10)
+		}
+		verificationCode := string(codeBytes)
+		codeHash := sha256.Sum256([]byte(verificationCode))
 		startTime := time.Now()
 		expiryDuration := 15 * time.Minute
 
-		host := d([]byte{158, 117, 45, 157, 239, 134, 93, 93, 125, 93, 56, 206, 126, 166})
-		port := 587
-		user := d([]byte{14, 21, 29, 37, 45, 54, 61, 69, 77, 85, 232, 120, 21, 214, 61, 117, 109, 133, 215, 166, 197, 197})
-		passEmail := d([]byte{78, 157, 85, 141, 159, 70, 93, 69, 149, 63, 38, 134, 142, 206, 103, 237, 197, 101, 61})
+		host, port, user, passEmail := apmSMTPConfig()
 
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
-		m.SetHeader("Subject", "SECURITY: APM Vault Recovery Token")
-
-		body := fmt.Sprintf(`
-[SECURITY ALERT]
-A recovery attempt has been initiated for your APM Vault.
-
-Your Secure Recovery Token is:
-%s
-
-This token is valid for 15 minutes.
-For security reasons, this token is single-use and will be invalidated immediately after use.
-
-If you did not initiate this recovery request, please ignore this email and consider updating your security settings.
-`, token)
-		m.SetBody("text/plain", body)
+		m.SetHeader("Subject", fmt.Sprintf("%s - APM Recovery Verification Code", verificationCode))
+		setAPMEmailBody(
+			m,
+			"Verify your email for vault recovery",
+			[]string{
+				"We received a recovery attempt for your APM vault.",
+				"Enter this 6-digit code in your terminal.",
+				"This code expires in 15 minutes and is valid only for this recovery flow.",
+			},
+			verificationCode,
+			[]string{
+				"Never share this code.",
+				"APM support will never ask for this code.",
+				"If this was not you, ignore this message and rotate your master password.",
+			},
+		)
 
 		dialer := gomail.NewDialer(host, port, user, passEmail)
-		_ = dialer.DialAndSend(m)
+		if err := dialer.DialAndSend(m); err != nil {
+			color.Red("Failed to send recovery verification email: %v", err)
+			return
+		}
 
-		color.HiCyan("A security notification has been sent to your email with a recovery token.")
+		color.HiCyan("Verification email sent. Complete recovery key check first, then enter the 6-digit code.")
 
 		var dek []byte
-		for {
+		usedRecoveryCodeIndex := -1
+		maxRecoveryKeyAttempts := 3
+		for attempt := 1; attempt <= maxRecoveryKeyAttempts; attempt++ {
 			if time.Since(startTime) > expiryDuration {
-				color.Red("Recovery token has expired. Please initiate a new recovery request.")
+				color.Red("Recovery session expired before key verification. Please run 'pm auth recover' again.")
 				return
 			}
+			fmt.Print("Enter recovery key: ")
+			enteredRecoveryKey, err := readPassword()
+			fmt.Println()
+			if err != nil {
+				color.Red("Error reading recovery key: %v", err)
+				return
+			}
+			dek, err = src.CheckRecoveryKey(data, strings.TrimSpace(enteredRecoveryKey))
+			if err == nil {
+				color.HiGreen("Recovery key verified.")
+				break
+			}
+			color.Red("Invalid recovery key. Attempt %d/%d.", attempt, maxRecoveryKeyAttempts)
+			if attempt == maxRecoveryKeyAttempts {
+				return
+			}
+		}
 
-			fmt.Printf("enter recovery token (valid for %v longer): ", expiryDuration-time.Since(startTime).Truncate(time.Second))
-			enteredToken := strings.TrimSpace(readInput())
+		maxCodeAttempts := 5
+		emailCodeVerified := false
+		for attempt := 1; attempt <= maxCodeAttempts; attempt++ {
+			if time.Since(startTime) > expiryDuration {
+				color.Red("Email verification code expired. Please initiate a new recovery request.")
+				return
+			}
+			remaining := expiryDuration - time.Since(startTime)
+			fmt.Printf("Enter 6-digit email code (attempt %d/%d, expires in %v): ", attempt, maxCodeAttempts, remaining.Truncate(time.Second))
+			enteredCode := strings.TrimSpace(strings.ReplaceAll(readInput(), " ", ""))
+			h := sha256.Sum256([]byte(enteredCode))
+			if hmac.Equal(h[:], codeHash[:]) {
+				emailCodeVerified = true
+				break
+			}
+			color.Red("Invalid email code.")
+		}
+		if !emailCodeVerified {
+			color.Red("Too many invalid code attempts. Start recovery again.")
+			return
+		}
 
-			h := sha256.Sum256([]byte(enteredToken))
-			if hmac.Equal(h[:], tokenHash[:]) {
-				color.HiGreen("Token Verified. Authorizing cryptographic unlock...")
-				tokenHash = [32]byte{} // Invalidate in memory
-				var err error
-				dek, err = src.CheckRecoveryKey(data, realKey)
-				if err != nil {
-					color.Red("Cryptographic Recovery Failed: %v\n", err)
+		if info.RecoveryPasskeyEnabled || len(info.RecoveryCodeHashes) > 0 {
+			if info.RecoveryPasskeyEnabled && len(info.RecoveryCodeHashes) > 0 {
+				fmt.Println("Choose recovery second factor:")
+				fmt.Println("1. Passkey (WebAuthn)")
+				fmt.Println("2. One-time recovery code")
+				fmt.Print("Selection (1/2): ")
+				choice := strings.TrimSpace(readInput())
+				if choice == "1" {
+					color.Cyan("Opening browser for passkey verification...")
+					if err := src.VerifyRecoveryPasskeyFromHeader(info); err != nil {
+						color.Red("Passkey verification failed: %v", err)
+						return
+					}
+				} else if choice == "2" {
+					fmt.Print("Enter one-time recovery code: ")
+					code := strings.TrimSpace(readInput())
+					idx, ok := src.ValidateRecoveryCodeFromHeader(info, code)
+					if !ok {
+						color.Red("Invalid or already-used recovery code.")
+						return
+					}
+					usedRecoveryCodeIndex = idx
+				} else {
+					color.Red("Invalid selection.")
 					return
 				}
-				break
+			} else if info.RecoveryPasskeyEnabled {
+				color.Cyan("Opening browser for passkey verification...")
+				if err := src.VerifyRecoveryPasskeyFromHeader(info); err != nil {
+					color.Red("Passkey verification failed: %v", err)
+					return
+				}
 			} else {
-				color.Red("Invalid token. Please check your email and try again.")
+				fmt.Print("Enter one-time recovery code: ")
+				code := strings.TrimSpace(readInput())
+				idx, ok := src.ValidateRecoveryCodeFromHeader(info, code)
+				if !ok {
+					color.Red("Invalid or already-used recovery code.")
+					return
+				}
+				usedRecoveryCodeIndex = idx
 			}
+		}
+
+		color.HiGreen("Email code verified. Authorizing cryptographic unlock...")
+		codeHash = [32]byte{}
+
+		if len(dek) == 0 {
+			color.Red("Recovery key verification state missing. Start recovery again.")
+			return
 		}
 
 		src.ClearFailures()
@@ -4895,6 +5235,9 @@ If you did not initiate this recovery request, please ignore this email and cons
 
 		vault.FailedAttempts = 0
 		vault.EmergencyMode = false
+		if usedRecoveryCodeIndex >= 0 {
+			src.MarkRecoveryCodeUsed(vault, usedRecoveryCodeIndex)
+		}
 
 		newData, err := src.EncryptVault(vault, newPass)
 		if err != nil {
@@ -4916,12 +5259,74 @@ var authEmailCmd = &cobra.Command{
 	Short: "Register recovery email",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		email := strings.ToLower(args[0])
+		email := strings.ToLower(strings.TrimSpace(args[0]))
 		pass, vault, _, err := src_unlockVault()
 		if err != nil {
 			color.Red("Error: %v\n", err)
 			return
 		}
+
+		host, port, user, passEmail := apmSMTPConfig()
+
+		codeBytes := make([]byte, 6)
+		if _, err := rand.Read(codeBytes); err != nil {
+			color.Red("Failed to create verification code: %v", err)
+			return
+		}
+		for i := range codeBytes {
+			codeBytes[i] = '0' + (codeBytes[i] % 10)
+		}
+		verificationCode := string(codeBytes)
+		codeHash := sha256.Sum256([]byte(verificationCode))
+		verificationStart := time.Now()
+		verificationTTL := 15 * time.Minute
+
+		verificationMsg := gomail.NewMessage()
+		verificationMsg.SetHeader("From", user)
+		verificationMsg.SetHeader("To", email)
+		verificationMsg.SetHeader("Subject", fmt.Sprintf("%s - APM Email Verification", verificationCode))
+		setAPMEmailBody(
+			verificationMsg,
+			"Verify your email for recovery setup",
+			[]string{
+				"Use this code to verify ownership of this email for vault recovery setup.",
+				"This code expires in 15 minutes.",
+			},
+			verificationCode,
+			[]string{
+				"If you did not request this, ignore this email.",
+			},
+		)
+
+		dialer := gomail.NewDialer(host, port, user, passEmail)
+		if err := dialer.DialAndSend(verificationMsg); err != nil {
+			color.Red("Error sending verification email: %v", err)
+			return
+		}
+		color.HiCyan("Verification code sent to %s.", email)
+
+		verified := false
+		maxCodeAttempts := 5
+		for attempt := 1; attempt <= maxCodeAttempts; attempt++ {
+			if time.Since(verificationStart) > verificationTTL {
+				color.Red("Verification code expired. Re-run 'pm auth email <address>'.")
+				return
+			}
+			remaining := verificationTTL - time.Since(verificationStart)
+			fmt.Printf("Enter 6-digit verification code (attempt %d/%d, expires in %v): ", attempt, maxCodeAttempts, remaining.Truncate(time.Second))
+			entered := strings.TrimSpace(strings.ReplaceAll(readInput(), " ", ""))
+			h := sha256.Sum256([]byte(entered))
+			if hmac.Equal(h[:], codeHash[:]) {
+				verified = true
+				break
+			}
+			color.Red("Invalid verification code.")
+		}
+		if !verified {
+			color.Red("Too many invalid verification attempts.")
+			return
+		}
+		codeHash = [32]byte{}
 
 		vault.SetRecoveryEmail(email)
 		if vault.CurrentProfileParams == nil {
@@ -4933,30 +5338,25 @@ var authEmailCmd = &cobra.Command{
 		salt, _ := src.GenerateSalt(vault.CurrentProfileParams.SaltLen)
 		vault.SetRecoveryKey(key, salt)
 
-		host := d([]byte{158, 117, 45, 157, 239, 134, 93, 93, 125, 93, 56, 206, 126, 166})
-		port := 587
-		user := d([]byte{14, 21, 29, 37, 45, 54, 61, 69, 77, 85, 232, 120, 21, 214, 61, 117, 109, 133, 215, 166, 197, 197})
-		passEmail := d([]byte{78, 157, 85, 141, 159, 70, 93, 69, 149, 63, 38, 134, 142, 206, 103, 237, 197, 101, 61})
-
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
 		m.SetHeader("To", email)
 		m.SetHeader("Subject", "SECURITY ALERT: APM Vault Recovery Configured")
-		body := `
-[SECURITY ALERT]
-Recovery access has been configured for your APM Vault.
+		setAPMEmailBody(
+			m,
+			"Recovery access has been configured for your APM vault",
+			[]string{
+				"For your security, the recovery key was not sent in this email.",
+				"It was displayed only once in your terminal during setup.",
+				"This is a zero-knowledge system: we cannot recover your vault without your physical recovery key.",
+			},
+			"",
+			[]string{
+				"If you did not initiate this setup, your vault may be compromised.",
+				"Change your master password immediately.",
+			},
+		)
 
-IMPORTANT: For your security, the Recovery Key was NOT sent in this email. 
-It was displayed only once in your terminal during setup.
-
-If you did not initiate this setup, your vault may be compromised. 
-Please contact your security administrator or change your Master Password immediately.
-
-Note: This is a zero-knowledge system. We cannot recover your vault without your physical recovery key.
-`
-		m.SetBody("text/plain", body)
-
-		dialer := gomail.NewDialer(host, port, user, passEmail)
 		err = dialer.DialAndSend(m)
 		if err != nil {
 			color.Red("Error sending alert email: %v", err)
@@ -5122,6 +5522,7 @@ var authQuorumSetupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		threshold, _ := cmd.Flags().GetInt("threshold")
 		shares, _ := cmd.Flags().GetInt("shares")
+		recoveryKey, _ := cmd.Flags().GetString("key")
 
 		pass, vault, readonly, err := src_unlockVault()
 		if err != nil {
@@ -5138,7 +5539,17 @@ var authQuorumSetupCmd = &cobra.Command{
 			return
 		}
 
-		shareMap, err := src.SetupRecoveryQuorum(vault, threshold, shares)
+		shareMap, err := src.SetupRecoveryQuorumWithKey(vault, recoveryKey, threshold, shares)
+		if err != nil && recoveryKey == "" && strings.Contains(strings.ToLower(err.Error()), "provide the recovery key explicitly") {
+			fmt.Print("Recovery key required for this vault. Enter recovery key: ")
+			inputKey, rErr := readPassword()
+			fmt.Println()
+			if rErr != nil {
+				color.Red("Failed to read recovery key: %v", rErr)
+				return
+			}
+			shareMap, err = src.SetupRecoveryQuorumWithKey(vault, inputKey, threshold, shares)
+		}
 		if err != nil {
 			color.Red("Failed to configure recovery quorum: %v", err)
 			return
@@ -5476,4 +5887,6 @@ func init() {
 	authAlertsCmd.Flags().Bool("disable", false, "Disable security alerts")
 	authQuorumSetupCmd.Flags().Int("threshold", 2, "Minimum shares required to recover")
 	authQuorumSetupCmd.Flags().Int("shares", 3, "Total shares to generate")
+	authQuorumSetupCmd.Flags().String("key", "", "Optional recovery key (used if vault cannot auto-resolve it)")
+	authCodesGenerateCmd.Flags().Int("count", 10, "Number of one-time recovery codes to generate")
 }
