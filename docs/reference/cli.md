@@ -276,11 +276,17 @@ $ pm policy clear
 
 ### pm auth email
 
-Update the registered recovery email address.
+Register or update the recovery email address with inbox ownership verification.
 
 ```console
-$ pm auth email
+$ pm auth email user@example.com
 ```
+
+Flow:
+- Sends a 6-digit verification code to the target email.
+- Requires the code in-terminal before the address is stored.
+- Generates and displays a new recovery key after successful verification.
+- Sends styled HTML emails (with plaintext fallback) for verification and security alerts.
 
 ### pm auth reset
 
@@ -306,6 +312,18 @@ Initiate the recovery flow.
 $ pm auth recover
 ```
 
+Recovery sequence:
+- Confirm registered recovery email.
+- Receive a 6-digit verification code by email.
+- Verify recovery key first.
+- Enter the email code.
+- If configured, complete passkey or one-time recovery code challenge.
+- All recovery email notifications use the unified APM HTML template (plus plaintext fallback).
+
+If configured, recovery now supports additional factors:
+- WebAuthn passkey verification
+- One-time recovery codes
+
 ### pm auth quorum-setup
 
 Configure threshold recovery shares for multi-party recovery.
@@ -314,12 +332,62 @@ Configure threshold recovery shares for multi-party recovery.
 $ pm auth quorum-setup --threshold 2 --shares 3
 ```
 
+If your vault cannot auto-resolve the recovery key, provide it explicitly:
+
+```console
+$ pm auth quorum-setup --threshold 2 --shares 3 --key "R9H4-R8F6-JSPC-6749"
+```
+
 ### pm auth quorum-recover
 
 Recover using trustee shares instead of a single recovery key holder.
 
 ```console
 $ pm auth quorum-recover
+```
+
+### pm auth passkey register
+
+Register a WebAuthn passkey for recovery.
+
+```console
+$ pm auth passkey register
+```
+
+Requires:
+- A browser on the same machine
+- A platform authenticator (e.g., Windows Hello / Touch ID) or security key
+
+### pm auth passkey verify
+
+Verify the configured recovery passkey.
+
+```console
+$ pm auth passkey verify
+```
+
+### pm auth passkey disable
+
+Disable passkey recovery factor.
+
+```console
+$ pm auth passkey disable
+```
+
+### pm auth codes generate
+
+Generate one-time recovery codes.
+
+```console
+$ pm auth codes generate --count 10
+```
+
+### pm auth codes status
+
+Show remaining one-time recovery codes.
+
+```console
+$ pm auth codes status
 ```
 
 ## MCP commands
