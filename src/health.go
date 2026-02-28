@@ -46,6 +46,28 @@ func CalculateHealth(vault *Vault) (int, []string) {
 		report = append(report, fmt.Sprintf("Weak secrets: %d (-%d)", weakCount, penalty))
 	}
 
+	trustScores := vault.ComputeSecretTrustScores()
+	highRisk := 0
+	criticalRisk := 0
+	for _, ts := range trustScores {
+		if ts.Score < 55 {
+			highRisk++
+		}
+		if ts.Score < 35 {
+			criticalRisk++
+		}
+	}
+	if highRisk > 0 {
+		penalty := highRisk * 2
+		score -= penalty
+		report = append(report, fmt.Sprintf("High-risk secrets: %d (-%d)", highRisk, penalty))
+	}
+	if criticalRisk > 0 {
+		penalty := criticalRisk * 3
+		score -= penalty
+		report = append(report, fmt.Sprintf("Critical-risk secrets: %d (-%d)", criticalRisk, penalty))
+	}
+
 	if score < 0 {
 		score = 0
 	}
