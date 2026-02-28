@@ -26,6 +26,8 @@ profile to persist across sessions.
 | :--------------------- | :---------------------------------- | :--------- |
 | `APM_SECURITY_PROFILE` | Default security profile name       | `standard` |
 | `APM_POLICY_PATH`      | Path to the active YAML policy file | None       |
+| `APM_EPHEMERAL_ID`     | Ephemeral delegated session id      | None       |
+| `APM_EPHEMERAL_AGENT`  | Optional agent binding label        | None       |
 
 ## MCP variables
 
