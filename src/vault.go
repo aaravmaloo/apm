@@ -259,6 +259,11 @@ type RecoveryData struct {
 	RecoveryShareThreshold int               `json:"recovery_share_threshold,omitempty"`
 	RecoveryShareCount     int               `json:"recovery_share_count,omitempty"`
 	RecoveryShareHashes    map[string][]byte `json:"recovery_share_hashes,omitempty"`
+	RecoveryCodeHashes     [][]byte          `json:"recovery_code_hashes,omitempty"`
+	RecoveryCodeUsed       []bool            `json:"recovery_code_used,omitempty"`
+	RecoveryPasskeyEnabled bool              `json:"recovery_passkey_enabled,omitempty"`
+	RecoveryPasskeyUserID  []byte            `json:"recovery_passkey_user_id,omitempty"`
+	RecoveryPasskeyCred    []byte            `json:"recovery_passkey_cred,omitempty"`
 	AlertsEnabled          bool              `json:"alerts_enabled,omitempty"`
 	SecurityLevel          int               `json:"security_level,omitempty"`
 	AlertEmail             string            `json:"alert_email,omitempty"`
@@ -353,6 +358,11 @@ type Vault struct {
 	RecoveryShareCount     int                        `json:"recovery_share_count,omitempty"`
 	RecoveryShareHashes    map[string][]byte          `json:"recovery_share_hashes,omitempty"`
 	SecretTelemetry        map[string]SecretTelemetry `json:"secret_telemetry,omitempty"`
+	RecoveryCodeHashes     [][]byte                   `json:"recovery_code_hashes,omitempty"`
+	RecoveryCodeUsed       []bool                     `json:"recovery_code_used,omitempty"`
+	RecoveryPasskeyEnabled bool                       `json:"recovery_passkey_enabled,omitempty"`
+	RecoveryPasskeyUserID  []byte                     `json:"recovery_passkey_user_id,omitempty"`
+	RecoveryPasskeyCred    []byte                     `json:"recovery_passkey_cred,omitempty"`
 }
 
 func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
@@ -450,6 +460,15 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		rec.RecoveryShareThreshold = vault.RecoveryShareThreshold
 		rec.RecoveryShareCount = vault.RecoveryShareCount
 		rec.RecoveryShareHashes = vault.RecoveryShareHashes
+	}
+	if len(vault.RecoveryCodeHashes) > 0 {
+		rec.RecoveryCodeHashes = vault.RecoveryCodeHashes
+		rec.RecoveryCodeUsed = vault.RecoveryCodeUsed
+	}
+	if vault.RecoveryPasskeyEnabled && len(vault.RecoveryPasskeyUserID) > 0 && len(vault.RecoveryPasskeyCred) > 0 {
+		rec.RecoveryPasskeyEnabled = true
+		rec.RecoveryPasskeyUserID = vault.RecoveryPasskeyUserID
+		rec.RecoveryPasskeyCred = vault.RecoveryPasskeyCred
 	}
 
 	rec.AlertsEnabled = vault.AlertsEnabled
@@ -791,6 +810,11 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		vault.RecoveryShareThreshold = rec.RecoveryShareThreshold
 		vault.RecoveryShareCount = rec.RecoveryShareCount
 		vault.RecoveryShareHashes = rec.RecoveryShareHashes
+		vault.RecoveryCodeHashes = rec.RecoveryCodeHashes
+		vault.RecoveryCodeUsed = rec.RecoveryCodeUsed
+		vault.RecoveryPasskeyEnabled = rec.RecoveryPasskeyEnabled
+		vault.RecoveryPasskeyUserID = rec.RecoveryPasskeyUserID
+		vault.RecoveryPasskeyCred = rec.RecoveryPasskeyCred
 		vault.AlertsEnabled = rec.AlertsEnabled
 		vault.SecurityLevel = rec.SecurityLevel
 	}
@@ -873,6 +897,11 @@ func (v *Vault) ClearRecoveryInfo() {
 	v.RecoveryShareThreshold = 0
 	v.RecoveryShareCount = 0
 	v.RecoveryShareHashes = nil
+	v.RecoveryCodeHashes = nil
+	v.RecoveryCodeUsed = nil
+	v.RecoveryPasskeyEnabled = false
+	v.RecoveryPasskeyUserID = nil
+	v.RecoveryPasskeyCred = nil
 }
 
 func (v *Vault) SetRecoveryToken(token string, duration time.Duration) {
