@@ -98,6 +98,30 @@ Toggle read-only mode for the current session.
 $ pm readonly
 ```
 
+### pm session issue
+
+Issue an ephemeral, context-bound session token for delegated access.
+
+```console
+$ pm session issue --ttl 15m --scope read --agent mcp
+```
+
+### pm session list
+
+List active ephemeral sessions.
+
+```console
+$ pm session list
+```
+
+### pm session revoke
+
+Revoke an ephemeral session immediately.
+
+```console
+$ pm session revoke <id>
+```
+
 ## Cloud commands
 
 ### pm cloud init
@@ -173,6 +197,14 @@ Run a vault health audit against the active policy.
 
 ```console
 $ pm health
+```
+
+### pm trust
+
+Show per-secret trust scores and risk reasons.
+
+```console
+$ pm trust
 ```
 
 ### pm cinfo
@@ -267,6 +299,22 @@ Initiate the recovery flow.
 $ pm auth recover
 ```
 
+### pm auth quorum-setup
+
+Configure threshold recovery shares for multi-party recovery.
+
+```console
+$ pm auth quorum-setup --threshold 2 --shares 3
+```
+
+### pm auth quorum-recover
+
+Recover using trustee shares instead of a single recovery key holder.
+
+```console
+$ pm auth quorum-recover
+```
+
 ## MCP commands
 
 ### pm mcp serve
@@ -317,6 +365,14 @@ List installed plugins.
 
 ```console
 $ pm plugins list
+```
+
+### pm plugins push
+
+Push a local or installed plugin to the Google Drive marketplace.
+
+```console
+$ pm plugins push <name> [--path <local-plugin-dir>]
 ```
 
 ### pm plugins remove
