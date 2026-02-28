@@ -1,6 +1,7 @@
 package apm
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -159,6 +160,48 @@ func parseRecoveryShare(share string) (int, []byte, error) {
 }
 
 func SetupRecoveryQuorum(v *Vault, threshold, shares int) (map[int]string, error) {
+	return SetupRecoveryQuorumWithKey(v, "", threshold, shares)
+}
+
+func normalizeRecoveryCandidate(key string) string {
+	return strings.ToUpper(strings.TrimSpace(key))
+}
+
+func resolveRecoveryKeyForQuorum(v *Vault, provided string) (string, error) {
+	candidates := []string{}
+	if k := normalizeRecoveryCandidate(provided); k != "" {
+		candidates = append(candidates, k)
+	}
+	if k := normalizeRecoveryCandidate(v.RawRecoveryKey); k != "" {
+		candidates = append(candidates, k)
+	}
+	if len(v.ObfuscatedKey) > 0 {
+		if k := normalizeRecoveryCandidate(DeObfuscateRecoveryKey(v.ObfuscatedKey)); k != "" {
+			candidates = append(candidates, k)
+		}
+	}
+
+	if len(v.RecoveryHash) > 0 && len(v.RecoverySalt) > 0 {
+		for _, c := range candidates {
+			rk := DeriveRecoveryKey(c, v.RecoverySalt)
+			h := sha256.Sum256(rk)
+			if hmac.Equal(h[:], v.RecoveryHash) {
+				return c, nil
+			}
+		}
+		if normalizeRecoveryCandidate(provided) != "" {
+			return "", errors.New("provided recovery key does not match this vault")
+		}
+		return "", errors.New("recovery key is not auto-available; provide the recovery key explicitly")
+	}
+
+	if len(candidates) > 0 {
+		return candidates[0], nil
+	}
+	return "", errors.New("recovery key is not configured; run 'pm auth email <address>' first")
+}
+
+func SetupRecoveryQuorumWithKey(v *Vault, recoveryKey string, threshold, shares int) (map[int]string, error) {
 	if threshold < 2 {
 		return nil, fmt.Errorf("threshold must be at least 2")
 	}
@@ -166,11 +209,11 @@ func SetupRecoveryQuorum(v *Vault, threshold, shares int) (map[int]string, error
 		return nil, fmt.Errorf("share count must be >= threshold")
 	}
 
-	recoveryKey := strings.TrimSpace(v.RawRecoveryKey)
-	if recoveryKey == "" && len(v.ObfuscatedKey) > 0 {
-		recoveryKey = DeObfuscateRecoveryKey(v.ObfuscatedKey)
-	}
+	recoveryKey, err := resolveRecoveryKeyForQuorum(v, recoveryKey)
 	if recoveryKey == "" {
+		if err != nil {
+			return nil, err
+		}
 		return nil, fmt.Errorf("recovery key is not configured; run 'pm auth email <address>' first")
 	}
 
