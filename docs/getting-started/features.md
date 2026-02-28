@@ -24,6 +24,8 @@ Controlling access to your decrypted vault.
 
 - `pm unlock`: Start a session-scoped unlock instance with inactivity timeout.
 - `pm lock`: Immediately terminate and wipe the active session.
+- `pm session issue`: Create ephemeral, time-bound delegated access sessions.
+- `pm session revoke`: Remotely revoke an active ephemeral session.
 
 See the [sessions guide](../guides/sessions.md) to get started.
 
@@ -53,6 +55,8 @@ Managing your master password and recovery options.
 - `pm auth reset`: Reset the master password (requires current password).
 - `pm auth change`: Change the master password.
 - `pm auth recover`: Recover vault access via recovery key and identity verification.
+- `pm auth quorum-setup`: Split the recovery key into threshold trustee shares.
+- `pm auth quorum-recover`: Recover with quorum shares (e.g., 2-of-3).
 
 See the [recovery concept](../concepts/recovery.md) for details.
 
@@ -61,6 +65,7 @@ See the [recovery concept](../concepts/recovery.md) for details.
 Inspecting the security posture of your vault.
 
 - `pm health`: Dashboard with security scoring and vulnerability reporting.
+- `pm trust`: Per-secret trust score and risk reason breakdown.
 - `pm audit`: Tamper-evident log of every vault interaction.
 - `pm cinfo`: Inspect current vault cryptographic parameters.
 
@@ -92,6 +97,7 @@ Extending APM with declarative plugins.
 - `pm plugins add <name>`: Install a plugin from the marketplace.
 - `pm plugins local <path>`: Install a plugin from a local directory.
 - `pm plugins list`: List installed plugins.
+- `pm plugins push <name>`: Publish a plugin to the Google Drive marketplace.
 - `pm plugins remove <name>`: Uninstall a plugin.
 
 See the [plugins guide](../guides/plugins.md) to get started.
@@ -103,6 +109,7 @@ Connecting AI assistants to your vault.
 - `pm mcp token`: Generate an access token with granular permissions.
 - `pm mcp serve`: Start the Model Context Protocol server.
 - `pm mcp config`: Display the configuration snippet for your AI client.
+- `add_entry`, `edit_entry`, and `delete_entry` now support transaction guardrails (`tx_id`, `approve`) with receipts.
 
 See the [MCP integration guide](../guides/mcp-integration.md) to get started.
 
