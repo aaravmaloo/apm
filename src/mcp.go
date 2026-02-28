@@ -333,6 +333,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	mcpToken.UsageCount++
 	config.Tokens[token] = mcpToken
 	SaveMCPConfig(config)
+	_ = os.Setenv("APM_CONTEXT", "mcp")
+	_ = os.Setenv("APM_ACTOR", "AI")
 
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "APM-Server",
