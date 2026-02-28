@@ -831,6 +831,106 @@ func main() {
 		},
 	}
 
+	var sessionCmd = &cobra.Command{
+		Use:   "session",
+		Short: "Manage ephemeral, context-bound secret sessions",
+	}
+
+	var sessionIssueCmd = &cobra.Command{
+		Use:   "issue",
+		Short: "Issue an ephemeral session token bound to host/process/agent",
+		Run: func(cmd *cobra.Command, args []string) {
+			ttl, _ := cmd.Flags().GetDuration("ttl")
+			scope, _ := cmd.Flags().GetString("scope")
+			label, _ := cmd.Flags().GetString("label")
+			agent, _ := cmd.Flags().GetString("agent")
+			bindPID, _ := cmd.Flags().GetBool("bind-pid")
+			bindHost, _ := cmd.Flags().GetBool("bind-host")
+
+			masterPassword, _, _, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			pid := 0
+			if bindPID {
+				pid = os.Getpid()
+			}
+			eph, err := src.IssueEphemeralSession(masterPassword, label, scope, agent, ttl, bindHost, pid)
+			if err != nil {
+				color.Red("Failed to issue ephemeral session: %v", err)
+				return
+			}
+
+			fmt.Println("Ephemeral session issued.")
+			fmt.Printf("ID:         %s\n", eph.ID)
+			fmt.Printf("Scope:      %s\n", eph.Scope)
+			fmt.Printf("Expires:    %s\n", eph.ExpiresAt.Format(time.RFC3339))
+			if eph.BoundHostHash != "" {
+				fmt.Println("Host bind:  enabled")
+			}
+			if eph.BoundPID > 0 {
+				fmt.Printf("PID bind:   %d\n", eph.BoundPID)
+			}
+			if eph.BoundAgent != "" {
+				fmt.Printf("Agent bind: %s\n", eph.BoundAgent)
+			}
+			fmt.Printf("\nExport this for consumers:\n")
+			fmt.Printf("  set APM_EPHEMERAL_ID=%s\n", eph.ID)
+			if eph.BoundAgent != "" {
+				fmt.Printf("  set APM_EPHEMERAL_AGENT=%s\n", eph.BoundAgent)
+			}
+		},
+	}
+	sessionIssueCmd.Flags().Duration("ttl", 15*time.Minute, "Lifetime for the ephemeral session (e.g. 10m, 1h)")
+	sessionIssueCmd.Flags().String("scope", "read", "Session scope: read or write")
+	sessionIssueCmd.Flags().String("label", "", "Optional label for this ephemeral session")
+	sessionIssueCmd.Flags().String("agent", "", "Optional agent binding label (e.g. mcp, ci)")
+	sessionIssueCmd.Flags().Bool("bind-host", true, "Bind ephemeral session to current host")
+	sessionIssueCmd.Flags().Bool("bind-pid", false, "Bind ephemeral session to current process id")
+
+	var sessionListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List active ephemeral sessions",
+		Run: func(cmd *cobra.Command, args []string) {
+			list, err := src.ListEphemeralSessions()
+			if err != nil {
+				color.Red("Failed to load sessions: %v", err)
+				return
+			}
+			if len(list) == 0 {
+				fmt.Println("No active ephemeral sessions.")
+				return
+			}
+			fmt.Printf("%-30s %-6s %-25s %-10s %-8s\n", "ID", "SCOPE", "EXPIRES", "REVOKED", "AGENT")
+			fmt.Println(strings.Repeat("-", 85))
+			for _, s := range list {
+				fmt.Printf("%-30s %-6s %-25s %-10v %-8s\n", s.ID, s.Scope, s.ExpiresAt.Format("2006-01-02 15:04:05"), s.Revoked, s.BoundAgent)
+			}
+		},
+	}
+
+	var sessionRevokeCmd = &cobra.Command{
+		Use:   "revoke <id>",
+		Short: "Revoke an ephemeral session immediately",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ok, err := src.RevokeEphemeralSession(args[0])
+			if err != nil {
+				color.Red("Failed to revoke session: %v", err)
+				return
+			}
+			if !ok {
+				color.Yellow("Session not found: %s", args[0])
+				return
+			}
+			color.Green("Ephemeral session revoked: %s", args[0])
+		},
+	}
+
+	sessionCmd.AddCommand(sessionIssueCmd, sessionListCmd, sessionRevokeCmd)
+
 	var cinfoCmd = &cobra.Command{
 		Use:   "cinfo",
 		Short: "Show cryptographic parameters",
@@ -883,7 +983,60 @@ func main() {
 			for _, r := range report {
 				fmt.Printf("- %s\n", r)
 			}
+			detailed, _ := cmd.Flags().GetBool("detailed")
+			if detailed {
+				scores := vault.ComputeSecretTrustScores()
+				if len(scores) == 0 {
+					fmt.Println("\nNo per-secret trust telemetry yet.")
+				} else {
+					fmt.Println("\nTop Secret Risks")
+					fmt.Println("----------------")
+					limit := 10
+					if len(scores) < limit {
+						limit = len(scores)
+					}
+					for i := 0; i < limit; i++ {
+						s := scores[i]
+						space := s.Space
+						if space == "" {
+							space = "default"
+						}
+						fmt.Printf("%2d. [%s] %s/%s (space=%s) score=%d\n", i+1, strings.ToUpper(s.Risk), s.Category, s.Identifier, space, s.Score)
+					}
+				}
+			}
 			src.LogAction("HEALTH_CHECK", fmt.Sprintf("Score: %d", score))
+		},
+	}
+	healthCmd.Flags().Bool("detailed", false, "Include per-secret trust score details")
+
+	var trustCmd = &cobra.Command{
+		Use:   "trust",
+		Short: "View trust scores for individual secrets",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			scores := vault.ComputeSecretTrustScores()
+			if len(scores) == 0 {
+				fmt.Println("No trust telemetry available yet. Access or mutate entries to build trust data.")
+				return
+			}
+			fmt.Println("Secret Trust Scores")
+			fmt.Println("===================")
+			for _, s := range scores {
+				space := s.Space
+				if space == "" {
+					space = "default"
+				}
+				fmt.Printf("[%s] %-12s %-28s space=%-12s score=%3d", strings.ToUpper(s.Risk), s.Category, s.Identifier, space, s.Score)
+				if len(s.Reasons) > 0 {
+					fmt.Printf(" | %s", strings.Join(s.Reasons, "; "))
+				}
+				fmt.Println()
+			}
+			src.LogAction("TRUST_VIEWED", fmt.Sprintf("Displayed %d trust scores", len(scores)))
 		},
 	}
 
@@ -1799,6 +1952,53 @@ func main() {
 		},
 	}
 
+	var pluginsPushCmd = &cobra.Command{
+		Use:   "push [name]",
+		Short: "Push a plugin to the Google Drive marketplace",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				color.Red("Usage: pm plugins push <name> [--path <local-plugin-dir>]")
+				return
+			}
+			name := strings.TrimSpace(args[0])
+			localPath, _ := cmd.Flags().GetString("path")
+			sourcePath := strings.TrimSpace(localPath)
+			if sourcePath == "" {
+				sourcePath = filepath.Join(pluginMgr.PluginsDir, name)
+			}
+
+			pluginDefPath := filepath.Join(sourcePath, "plugin.json")
+			if _, err := os.Stat(pluginDefPath); os.IsNotExist(err) {
+				color.Red("Invalid plugin source. '%s' not found.", pluginDefPath)
+				return
+			}
+
+			def, err := plugins.LoadPluginDef(pluginDefPath)
+			if err != nil {
+				color.Red("Invalid plugin definition: %v", err)
+				return
+			}
+			if strings.TrimSpace(def.Name) != "" && def.Name != name {
+				color.Yellow("Plugin manifest name is '%s'. Uploading as '%s'.", def.Name, name)
+			}
+
+			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
+			if err != nil {
+				color.Red("Error connecting to plugin marketplace: %v", err)
+				return
+			}
+
+			if err := cm.UploadPlugin(name, sourcePath); err != nil {
+				color.Red("Failed to push plugin '%s': %v", name, err)
+				return
+			}
+
+			color.Green("Plugin '%s' pushed to marketplace successfully.", name)
+			src.LogAction("PLUGIN_PUSH", fmt.Sprintf("Plugin '%s' pushed from %s", name, sourcePath))
+		},
+	}
+	pluginsPushCmd.Flags().String("path", "", "Optional local plugin directory (defaults to installed plugin path)")
+
 	var pluginsRemoveCmd = &cobra.Command{
 		Use:   "remove [name]",
 		Short: "Remove a plugin",
@@ -1874,7 +2074,7 @@ func main() {
 		},
 	}
 
-	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsRemoveCmd, pluginLocalCmd, pluginSearchCmd)
+	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsPushCmd, pluginsRemoveCmd, pluginLocalCmd, pluginSearchCmd)
 
 	var setupCmd = &cobra.Command{
 		Use:   "setup",
@@ -2685,8 +2885,8 @@ func main() {
 
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, cinfoCmd, auditCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd)
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd)
 
 	for _, plugin := range pluginMgr.Loaded {
 		for cmdKey, cmdDef := range plugin.Definition.Commands {
@@ -3077,6 +3277,21 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 	}
 
 	localFailures := src.GetFailureCount()
+
+	if ephID := strings.TrimSpace(os.Getenv("APM_EPHEMERAL_ID")); ephID != "" {
+		eph, err := src.ValidateEphemeralSession(ephID, os.Getpid(), strings.TrimSpace(os.Getenv("APM_EPHEMERAL_AGENT")))
+		if err == nil {
+			data, lerr := src.LoadVault(vaultPath)
+			if lerr == nil {
+				vault, derr := src.DecryptVault(data, eph.MasterPassword, 1)
+				if derr == nil {
+					readonly := eph.Scope == "read"
+					src.LogAction("EPHEMERAL_UNLOCK", fmt.Sprintf("Unlocked using ephemeral session '%s' scope=%s", eph.ID, eph.Scope))
+					return eph.MasterPassword, vault, readonly, nil
+				}
+			}
+		}
+	}
 
 	if session, err := src.GetSession(); err == nil {
 		data, err := src.LoadVault(vaultPath)
@@ -4672,6 +4887,147 @@ var authChangeCmd = &cobra.Command{
 	},
 }
 
+var authQuorumSetupCmd = &cobra.Command{
+	Use:   "quorum-setup",
+	Short: "Split recovery key into threshold shares (e.g. 2-of-3)",
+	Run: func(cmd *cobra.Command, args []string) {
+		threshold, _ := cmd.Flags().GetInt("threshold")
+		shares, _ := cmd.Flags().GetInt("shares")
+
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot configure quorum recovery.")
+			return
+		}
+
+		if vault.RecoveryEmail == "" && len(vault.RecoveryHash) == 0 {
+			color.Yellow("Recovery is not configured yet. Run 'pm auth email <address>' first.")
+			return
+		}
+
+		shareMap, err := src.SetupRecoveryQuorum(vault, threshold, shares)
+		if err != nil {
+			color.Red("Failed to configure recovery quorum: %v", err)
+			return
+		}
+
+		data, err := src.EncryptVault(vault, pass)
+		if err != nil {
+			color.Red("Error encrypting vault: %v", err)
+			return
+		}
+		if err := src.SaveVault(vaultPath, data); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+
+		fmt.Printf("Recovery quorum configured: %d-of-%d\n", threshold, shares)
+		fmt.Println("Distribute these shares to distinct trustees. Each share is shown only here:")
+		for i := 1; i <= shares; i++ {
+			fmt.Printf("Share %d: %s\n", i, shareMap[i])
+		}
+		src.LogAction("RECOVERY_QUORUM_CONFIGURED", fmt.Sprintf("Configured %d-of-%d quorum recovery", threshold, shares))
+	},
+}
+
+var authQuorumRecoverCmd = &cobra.Command{
+	Use:   "quorum-recover",
+	Short: "Recover vault using trustee shares (threshold recovery)",
+	Run: func(cmd *cobra.Command, args []string) {
+		data, err := src.LoadVault(vaultPath)
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+
+		info, err := src.GetVaultRecoveryInfo(data)
+		if err != nil {
+			color.Red("Recovery not available for this vault version.\n")
+			return
+		}
+		if info.RecoveryShareThreshold < 2 || len(info.RecoveryShareHashes) == 0 {
+			color.Red("Quorum recovery is not configured for this vault.")
+			return
+		}
+
+		if len(info.EmailHash) > 0 {
+			fmt.Print("Enter recovery email to confirm identity: ")
+			email := strings.ToLower(readInput())
+			h := sha256.Sum256([]byte(email))
+			if !hmac.Equal(h[:], info.EmailHash) {
+				color.Red("Identity verification failed.\n")
+				return
+			}
+		}
+
+		tempVault := &src.Vault{
+			RecoveryShareThreshold: info.RecoveryShareThreshold,
+			RecoveryShareCount:     info.RecoveryShareCount,
+			RecoveryShareHashes:    info.RecoveryShareHashes,
+		}
+
+		fmt.Printf("Enter at least %d valid shares.\n", info.RecoveryShareThreshold)
+		shares := make([]string, 0, info.RecoveryShareThreshold)
+		for i := 0; i < info.RecoveryShareThreshold; i++ {
+			fmt.Printf("Share %d: ", i+1)
+			share := strings.TrimSpace(readInput())
+			if share == "" {
+				color.Red("Share cannot be empty.")
+				return
+			}
+			shares = append(shares, share)
+		}
+
+		recoveryKey, err := src.CombineRecoveryQuorumShares(tempVault, shares)
+		if err != nil {
+			color.Red("Share verification failed: %v", err)
+			return
+		}
+
+		dek, err := src.CheckRecoveryKey(data, recoveryKey)
+		if err != nil {
+			color.Red("Recovery key validation failed: %v", err)
+			return
+		}
+
+		fmt.Print("Enter new master password: ")
+		newPass, _ := readPassword()
+		fmt.Println()
+		fmt.Print("Retype new master password: ")
+		confPass, _ := readPassword()
+		fmt.Println()
+		if newPass != confPass {
+			color.Red("Passwords do not match.")
+			return
+		}
+
+		vault, err := src.DecryptVaultWithDEK(data, dek)
+		if err != nil {
+			color.Red("Error decrypting vault with recovered DEK: %v", err)
+			return
+		}
+		vault.FailedAttempts = 0
+		vault.EmergencyMode = false
+
+		newData, err := src.EncryptVault(vault, newPass)
+		if err != nil {
+			color.Red("Error re-encrypting vault: %v", err)
+			return
+		}
+		if err := src.SaveVault(vaultPath, newData); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		src.ClearFailures()
+		src.LogAction("RECOVERY_QUORUM_SUCCESS", "Vault recovered with quorum shares")
+		color.Green("Vault recovered successfully with trustee quorum.")
+	},
+}
+
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
 	Short: "Configure or start the APM MCP server",
@@ -4889,4 +5245,6 @@ func init() {
 	mcpTokenCmd.Flags().Bool("auto", false, "Automatically configure IDEs")
 	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
 	authAlertsCmd.Flags().Bool("disable", false, "Disable security alerts")
+	authQuorumSetupCmd.Flags().Int("threshold", 2, "Minimum shares required to recover")
+	authQuorumSetupCmd.Flags().Int("shares", 3, "Total shares to generate")
 }
