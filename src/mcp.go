@@ -42,6 +42,8 @@ var mcpToolPermissions = []string{
 	"install_plugin",
 	"cloud_sync",
 	"get_audit_logs",
+	"tx_list",
+	"tx_abort",
 }
 
 var legacyMCPScopePermissions = map[string][]string{
@@ -272,6 +274,41 @@ type PluginManager interface {
 	LoadPlugins() error
 	ListPlugins() []string
 	ExecuteHooks(hookType, hookName string, vault *Vault, vaultPath string) error
+}
+
+func ensureMCPMutationAuthorized(tokenName, tool string, args json.RawMessage, preview string) (bool, string, string, error) {
+	var meta struct {
+		TxID    string `json:"tx_id"`
+		Approve bool   `json:"approve"`
+	}
+	_ = json.Unmarshal(args, &meta)
+
+	if strings.TrimSpace(meta.TxID) == "" {
+		tx, err := CreateMCPTransaction(tokenName, tool, args, preview, 15*time.Minute)
+		if err != nil {
+			return false, "", "", err
+		}
+		msg := fmt.Sprintf("Preview: %s\nTransaction created: %s\nRe-run with {\"tx_id\":\"%s\",\"approve\":true,...} to commit.", preview, tx.ID, tx.ID)
+		return false, tx.ID, msg, nil
+	}
+
+	tx, err := GetMCPTransaction(meta.TxID)
+	if err != nil {
+		return false, "", "", err
+	}
+	if tx.Tool != tool {
+		return false, "", "", fmt.Errorf("transaction tool mismatch: expected %s, got %s", tool, tx.Tool)
+	}
+	if tx.TokenName != tokenName {
+		return false, "", "", fmt.Errorf("transaction token mismatch")
+	}
+	if tx.Status != "pending" {
+		return false, "", "", fmt.Errorf("transaction is %s", tx.Status)
+	}
+	if !meta.Approve {
+		return false, tx.ID, fmt.Sprintf("Transaction %s pending. Re-run with approve=true to commit.", tx.ID), nil
+	}
+	return true, tx.ID, "", nil
 }
 
 func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm PluginManager) error {
@@ -765,6 +802,19 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
+		allowed, txID, txMessage, txErr := ensureMCPMutationAuthorized(
+			mcpToken.Name,
+			"add_entry",
+			req.Params.Arguments,
+			fmt.Sprintf("Add %s entry '%s' in space '%s'", args.Type, args.Name, args.Space),
+		)
+		if txErr != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Transaction error: %v", txErr)}}}, nil
+		}
+		if !allowed {
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: txMessage}}}, nil
+		}
+
 		vault, masterPwd, err := unlockVaultForMCP(vaultPath)
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Vault Error: %v", err)}}}, nil
@@ -844,9 +894,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		if err := saveVault(vault, masterPwd, vaultPath); err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Save failed"}}}, nil
 		}
+		receipt, _ := FinalizeMCPTransaction(txID, fmt.Sprintf("added:%s", args.Name), true)
 		LogAction("MCP_ENTRY_ADDED", fmt.Sprintf("Token '%s' added entry '%s'", mcpToken.Name, args.Name))
-		fmt.Fprintf(os.Stderr, "DEBUG: add_entry success. Saved vault to %s. Entries: %d\n", vaultPath, len(vault.Entries))
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Entry added"}}}, nil
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Entry added. Receipt: %s", receipt)}}}, nil
 	})
 
 	s.AddTool(&mcp.Tool{
@@ -866,6 +916,19 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
+		allowed, txID, txMessage, txErr := ensureMCPMutationAuthorized(
+			mcpToken.Name,
+			"delete_entry",
+			req.Params.Arguments,
+			fmt.Sprintf("Delete entry '%s'", args.Name),
+		)
+		if txErr != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Transaction error: %v", txErr)}}}, nil
+		}
+		if !allowed {
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: txMessage}}}, nil
+		}
+
 		vault, masterPwd, err := unlockVaultForMCP(vaultPath)
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Vault Error"}}}, nil
@@ -875,8 +938,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Entry not found"}}}, nil
 		}
 		saveVault(vault, masterPwd, vaultPath)
+		receipt, _ := FinalizeMCPTransaction(txID, fmt.Sprintf("deleted:%s", args.Name), true)
 		LogAction("MCP_ENTRY_DELETED", fmt.Sprintf("Token '%s' deleted '%s'", mcpToken.Name, args.Name))
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Entry deleted"}}}, nil
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Entry deleted. Receipt: %s", receipt)}}}, nil
 	})
 
 	s.AddTool(&mcp.Tool{
@@ -913,6 +977,19 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			Space    string `json:"space"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
+
+		allowed, txID, txMessage, txErr := ensureMCPMutationAuthorized(
+			mcpToken.Name,
+			"edit_entry",
+			req.Params.Arguments,
+			fmt.Sprintf("Edit %s entry '%s' in space '%s'", args.Type, args.Name, args.Space),
+		)
+		if txErr != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Transaction error: %v", txErr)}}}, nil
+		}
+		if !allowed {
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: txMessage}}}, nil
+		}
 
 		vault, masterPwd, err := unlockVaultForMCP(vaultPath)
 		if err != nil {
@@ -966,8 +1043,9 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		}
 
 		saveVault(vault, masterPwd, vaultPath)
+		receipt, _ := FinalizeMCPTransaction(txID, fmt.Sprintf("edited:%s", args.Name), true)
 		LogAction("MCP_ENTRY_EDITED", fmt.Sprintf("Token '%s' edited entry '%s'", mcpToken.Name, args.Name))
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Entry updated"}}}, nil
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Entry updated. Receipt: %s", receipt)}}}, nil
 	})
 
 	s.AddTool(&mcp.Tool{
@@ -1308,6 +1386,53 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: sb.String()}}}, nil
 	})
 
+	s.AddTool(&mcp.Tool{
+		Name:        "tx_list",
+		Description: "List pending/recent MCP mutation transactions",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"limit": map[string]any{"type": "integer"}}},
+	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if !hasPermission(mcpToken.Permissions, "tx_list") {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		}
+		var args struct {
+			Limit int `json:"limit"`
+		}
+		_ = json.Unmarshal(req.Params.Arguments, &args)
+		if args.Limit == 0 {
+			args.Limit = 25
+		}
+		txs, err := ListMCPTransactions(args.Limit)
+		if err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Error: %v", err)}}}, nil
+		}
+		if len(txs) == 0 {
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "No active transactions"}}}, nil
+		}
+		var sb strings.Builder
+		for _, tx := range txs {
+			sb.WriteString(fmt.Sprintf("%s | %s | %s | %s | expires=%s\n", tx.ID, tx.Tool, tx.TokenName, tx.Status, tx.ExpiresAt.Format(time.RFC3339)))
+		}
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: sb.String()}}}, nil
+	})
+
+	s.AddTool(&mcp.Tool{
+		Name:        "tx_abort",
+		Description: "Abort a pending MCP transaction by id",
+		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"tx_id": map[string]any{"type": "string"}}, "required": []string{"tx_id"}},
+	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if !hasPermission(mcpToken.Permissions, "tx_abort") {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		}
+		var args struct {
+			TxID string `json:"tx_id"`
+		}
+		_ = json.Unmarshal(req.Params.Arguments, &args)
+		if err := AbortMCPTransaction(args.TxID); err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Error: %v", err)}}}, nil
+		}
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Transaction aborted"}}}, nil
+	})
+
 	if transport == nil {
 		transport = &mcp.StdioTransport{}
 	}
@@ -1398,7 +1523,23 @@ func hasPermission(scopes []string, required string) bool {
 func unlockVaultForMCP(vaultPath string) (*Vault, string, error) {
 	session, err := GetSession()
 	if err != nil {
-		return nil, "", errors.New("vault is locked. please run 'pm unlock' first to start an MCP session")
+		ephID := strings.TrimSpace(os.Getenv("APM_EPHEMERAL_ID"))
+		if ephID == "" {
+			return nil, "", errors.New("vault is locked. please run 'pm unlock' first to start an MCP session")
+		}
+		eph, ephErr := ValidateEphemeralSession(ephID, os.Getpid(), strings.TrimSpace(os.Getenv("APM_EPHEMERAL_AGENT")))
+		if ephErr != nil {
+			return nil, "", errors.New("vault is locked and ephemeral session is invalid")
+		}
+		data, loadErr := LoadVault(vaultPath)
+		if loadErr != nil {
+			return nil, "", loadErr
+		}
+		vault, decErr := DecryptVault(data, eph.MasterPassword, 1)
+		if decErr != nil {
+			return nil, "", decErr
+		}
+		return vault, eph.MasterPassword, nil
 	}
 
 	data, err := LoadVault(vaultPath)
