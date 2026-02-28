@@ -67,11 +67,13 @@ Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Count
 
 ### 1.3 Secure Recovery & Identity Verification
 APM features a robust recovery engine designed for zero-knowledge environments.
-- **Secure Tokens**: 32-byte cryptographically secure hex tokens for identity verification.
-- **Hashed Validation**: Tokens are stored only in hashed form (SHA-256) with strict 15-minute expirations.
+- **Email OTP Verification**: 6-digit cryptographically generated email verification codes with strict 15-minute expirations.
+- **Hashed Validation**: Verification codes are compared in hashed form (SHA-256) and never persisted in plaintext.
 - **Recovery Key Obfuscation**: XOR-obfuscation for recovery keys stored in the vault, preventing simple memory dumps from exposing them.
 - **Quorum Recovery Shares**: Optional threshold recovery with trustee shares (`pm auth quorum-setup`, `pm auth quorum-recover`).
-- **DEK Unlocking**: Successful identity verification and recovery key entry unlocks the Data Encryption Key (DEK), allowing master password resets without data loss.
+- **WebAuthn Passkeys**: Optional passkey recovery factor via local browser ceremony (`pm auth passkey register`).
+- **One-Time Recovery Codes**: Optional single-use recovery codes (`pm auth codes generate`).
+- **DEK Unlocking**: Recovery key verification gates DEK unlock, and email OTP plus optional second factors complete identity checks.
 
 ### 1.4 Threat Model Summary
 | Vector              | Status        | Mitigation                                                        |
@@ -79,7 +81,7 @@ APM features a robust recovery engine designed for zero-knowledge environments.
 | Offline Brute-Force | Protected     | Argon2id high-cost derivation.                                    |
 | Vault Tampering     | Protected     | HMAC-SHA256 integrity signature across all metadata.              |
 | Credential Theft    | Protected     | Cloud tokens are encrypted inside the vault.                      |
-| Identity Spoofing   | Protected     | Multi-factor recovery (Email -> Secure Token -> Recovery Key).    |
+| Identity Spoofing   | Protected     | Multi-factor recovery (Email -> Recovery Key -> OTP -> Optional 2nd factor). |
 | Session Hijacking   | Protected     | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts. |
 | Weak Passwords      | Controlled    | Enforceable password policies via YAML Policy Engine.             |
 | Compromised Host    | Not Protected | Outside the security boundary (Keyloggers/Malware).               |
