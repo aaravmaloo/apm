@@ -70,6 +70,7 @@ APM features a robust recovery engine designed for zero-knowledge environments.
 - **Secure Tokens**: 32-byte cryptographically secure hex tokens for identity verification.
 - **Hashed Validation**: Tokens are stored only in hashed form (SHA-256) with strict 15-minute expirations.
 - **Recovery Key Obfuscation**: XOR-obfuscation for recovery keys stored in the vault, preventing simple memory dumps from exposing them.
+- **Quorum Recovery Shares**: Optional threshold recovery with trustee shares (`pm auth quorum-setup`, `pm auth quorum-recover`).
 - **DEK Unlocking**: Successful identity verification and recovery key entry unlocks the Data Encryption Key (DEK), allowing master password resets without data loss.
 
 ### 1.4 Threat Model Summary
@@ -114,11 +115,13 @@ The personal edition focuses on local-first security and privacy with native mul
 | `totp show` | Security   | Real-time generation of 2FA codes with live countdowns.                |
 | `unlock`    | Session    | Starts a session-scoped unlock instance with inactivity timeout.       |
 | `lock`      | Session    | Immediately terminates and wipes the active session.                   |
+| `session`   | Session    | Issue/list/revoke ephemeral, context-bound delegated sessions.         |
 | `auth`      | Account    | Consistently manage `email`, `reset`, `change`, and `recover`.         |
 | `cloud`     | Sync       | Google Drive, GitHub, & Dropbox integration for cross-device syncing.  |
 | `space`     | Org        | Manage isolated compartments (e.g., Work, Personal, DevOps).           |
 | `mcp`       | Agentic    | Connect AI agents to your vault via Model Context Protocol.            |
 | `health`    | Audit      | Dashboard with security scoring and vulnerability reporting.           |
+| `trust`     | Audit      | Per-secret trust scoring with risk-level reasons.                      |
 | `audit`     | History    | Tamper-evident log of every vault interaction.                         |
 | `import`    | IO         | Ingest data from external files (JSON, CSV, KDBX).                     |
 | `export`    | IO         | Securely dump vault data to encrypted or plaintext formats.            |
@@ -133,6 +136,11 @@ The personal edition focuses on local-first security and privacy with native mul
 ## 4. MCP Server (Model Context Protocol)
 
 APM includes a native MCP server for integration with AI assistants (Claude Desktop, Cursor, etc.). This allows AI agents to read your vault entries, search for credentials, and even retrieve TOTP codes securely if granted permission.
+
+Mutation tools (`add_entry`, `edit_entry`, `delete_entry`) now support transaction guardrails:
+- First call creates a preview transaction.
+- Commit requires `tx_id` + `approve: true`.
+- Successful commits return a receipt id.
 
 ### 4.1 Configuration Guide
 
@@ -176,6 +184,7 @@ Add the following manual configuration:
 
 > [!IMPORTANT]
 > The MCP server requires an active APM session. You MUST run `pm unlock` in your terminal before the AI agent can access the vault.
+> You can alternatively provide an ephemeral delegated session using `APM_EPHEMERAL_ID`.
 
 ---
 
@@ -205,6 +214,7 @@ APM features a declarative, JSON-driven plugin architecture.
 - **Hook Execution**: Plugins can intercept standard events (e.g., `pre:add`) or register commands.
 - **Capabilities**: Over 150 granular permissions including vault access (`vault.item.*`), network protocols (`network.ssh`, `network.http`), system integration (`system.exec`, `system.env`), and UI control (`ui.prompt`, `ui.window`).
 - **Wildcards**: Supports hierarchical permission matching (e.g., `vault.*` grants all vault-related access).
+- **Marketplace Publishing**: Use `pm plugins push <name>` (or `--path`) to publish plugins to the Google Drive marketplace.
 
 ---
 
