@@ -51,12 +51,15 @@ See the [cloud sync guide](../guides/cloud-sync.md) to get started.
 
 Managing your master password and recovery options.
 
-- `pm auth email`: Update the associated email address.
+- `pm auth email`: Verify and register the associated recovery email address.
 - `pm auth reset`: Reset the master password (requires current password).
 - `pm auth change`: Change the master password.
-- `pm auth recover`: Recover vault access via recovery key and identity verification.
+- `pm auth recover`: Recover vault access via recovery key-first and email verification.
 - `pm auth quorum-setup`: Split the recovery key into threshold trustee shares.
 - `pm auth quorum-recover`: Recover with quorum shares (e.g., 2-of-3).
+- `pm auth passkey register`: Add WebAuthn passkey as recovery factor.
+- `pm auth codes generate`: Generate one-time recovery codes.
+- Security/recovery emails: Styled HTML templates with plaintext fallback for all APM recovery mail events.
 
 See the [recovery concept](../concepts/recovery.md) for details.
 
