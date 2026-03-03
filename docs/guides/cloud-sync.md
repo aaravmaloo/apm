@@ -74,32 +74,43 @@ This runs the setup flow for each provider in sequence.
 
 ## Custom retrieval keys
 
-You can set a custom retrieval key during initialization:
+During Google Drive and Dropbox setup, APM asks for explicit consent before storing a one-way hash
+of a retrieval key in cloud metadata.
+
+- If you consent, APM stores only `SHA-256(retrieval_key)` in provider metadata.
+- If you decline, no retrieval-key hash is stored in cloud metadata. Recovery uses direct file
+  identifiers (`file_id` for Drive, full Dropbox path for Dropbox).
+
+## Sync and retrieval
+
+Once a provider is configured, sync your vault with:
 
 ```console
-$ pm cloud init gdrive --key my-vault-key
+$ pm cloud sync [gdrive|github|dropbox]
 ```
 
-Or provide one interactively when prompted.
-
-## Pushing and pulling
-
-Once a provider is configured, sync your vault:
+Retrieve from cloud with:
 
 ```console
-$ pm cloud push
-Vault uploaded to Google Drive.
-```
-
-```console
-$ pm cloud pull
-Vault downloaded and merged.
+$ pm cloud get [gdrive|github|dropbox] [retrieval_key|file_id|repo|path]
 ```
 
 !!! important
 
-    Cloud synchronization uploads your encrypted vault file. Your master password and decryption
-    keys are never transmitted. The cloud provider only ever sees encrypted data.
+    Cloud synchronization uploads the encrypted vault blob as-is. Your master password and plaintext
+    entries are never sent to cloud providers.
+
+## Conflict handling for offline edits
+
+`pm cloud get` performs whole-vault conflict handling:
+
+- If downloaded data matches local vault bytes, APM writes normally.
+- If they differ, APM prompts you to:
+  1. overwrite local vault with cloud copy,
+  2. keep local vault and save cloud data as `vault.dat.conflict.<provider>.<timestamp>`,
+  3. cancel.
+
+APM does not perform entry-level merges.
 
 ## Next steps
 
