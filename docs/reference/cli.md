@@ -136,28 +136,30 @@ $ pm session revoke <id>
 Initialize a cloud sync provider.
 
 ```console
-$ pm cloud init <provider> [--key <retrieval-key>]
+$ pm cloud init <provider>
 ```
 
 | Argument     | Description                             |
 | :----------- | :-------------------------------------- |
 | `<provider>` | `gdrive`, `github`, `dropbox`, or `all` |
-| `--key`      | Optional custom retrieval key           |
 
-### pm cloud push
+During Drive/Dropbox setup, APM asks whether you consent to storing a retrieval-key hash in cloud
+metadata.
 
-Upload the encrypted vault to the configured provider(s).
+### pm cloud sync
+
+Upload the encrypted vault to configured provider(s).
 
 ```console
-$ pm cloud push
+$ pm cloud sync [gdrive|github|dropbox]
 ```
 
-### pm cloud pull
+### pm cloud get
 
-Download the vault from the configured provider(s).
+Download vault data from cloud and resolve whole-vault conflicts interactively.
 
 ```console
-$ pm cloud pull
+$ pm cloud get [gdrive|github|dropbox] [retrieval_key|file_id|repo|path]
 ```
 
 ## TOTP commands
