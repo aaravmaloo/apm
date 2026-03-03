@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -21,7 +22,9 @@ import (
 
 	"context"
 	src "password-manager/src"
+	"password-manager/src/autofillcmd"
 	"password-manager/src/plugins"
+	"password-manager/src/tui"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -101,17 +104,19 @@ func main() {
 		}
 		v.DriveSyncMode = mode
 
-		fmt.Print("Enter Custom Retrieval Key (leave blank to generate randomly): ")
-		customKey := readInput()
-
 		var gdriveKey string
-		if customKey != "" {
-			gdriveKey = customKey
-		} else {
-			gdriveKey, err = src.GenerateRetrievalKey()
-			if err != nil {
-				color.Red("Key generation failed: %v", err)
-				return err
+		v.DriveKeyMetadataConsent = promptKeyMetadataConsent("Google Drive")
+		if v.DriveKeyMetadataConsent {
+			fmt.Print("Enter Custom Retrieval Key (leave blank to generate randomly): ")
+			customKey := readInput()
+			if customKey != "" {
+				gdriveKey = customKey
+			} else {
+				gdriveKey, err = src.GenerateRetrievalKey()
+				if err != nil {
+					color.Red("Key generation failed: %v", err)
+					return err
+				}
 			}
 		}
 
@@ -131,7 +136,11 @@ func main() {
 		v.CloudFileID = fileID
 		v.LastCloudProvider = "gdrive"
 		color.Green("Google Drive sync setup successful.")
-		color.HiCyan("Retrieval Key: %s", gdriveKey)
+		if gdriveKey != "" {
+			color.HiCyan("Retrieval Key: %s", gdriveKey)
+		} else {
+			color.Yellow("Retrieval key metadata was not stored by consent choice. Use File ID for recovery: %s", fileID)
+		}
 		if mode == "self_hosted" {
 			color.Cyan("Mode: Self-Hosted (Owner: You)")
 		} else {
@@ -1657,7 +1666,7 @@ func main() {
 					src.LogAction("CLOUD_DOWNLOAD_FAILED", fmt.Sprintf("Provider: github, Key: %s, Error: %v", key, err))
 					return
 				}
-				handleDownloadedVault(data, tokenInput, key)
+				handleDownloadedVault(data, "github", tokenInput, key)
 				src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: github, Key: %s", key))
 				return
 			case "gdrive", "dropbox":
@@ -1665,7 +1674,11 @@ func main() {
 					key = strings.TrimSpace(args[1])
 				}
 				if key == "" {
-					fmt.Print("Enter Retrieval Key: ")
+					if provider == "gdrive" {
+						fmt.Print("Enter Retrieval Key or Drive File ID: ")
+					} else {
+						fmt.Print("Enter Retrieval Key or Dropbox File Path: ")
+					}
 					var err error
 					key, err = readPassword()
 					if err != nil {
@@ -1675,7 +1688,7 @@ func main() {
 					fmt.Println()
 				}
 				if key == "" {
-					color.Red("Retrieval key is required.")
+					color.Red("A retrieval key or direct cloud file identifier is required.")
 					return
 				}
 			default:
@@ -1757,7 +1770,7 @@ func main() {
 				return
 			}
 
-			handleDownloadedVault(data, "", "")
+			handleDownloadedVault(data, provider, "", "")
 			src.LogAction("CLOUD_DOWNLOAD_SUCCESS", fmt.Sprintf("Provider: %s, Key: %s", provider, key))
 		},
 	}
@@ -1841,12 +1854,14 @@ func main() {
 			vault.CloudFileID = ""
 			vault.LastCloudProvider = ""
 			vault.DriveSyncMode = ""
+			vault.DriveKeyMetadataConsent = false
 			vault.CloudCredentials = nil
 			vault.CloudToken = nil
 			vault.GitHubToken = ""
 			vault.GitHubRepo = ""
 			vault.DropboxToken = nil
 			vault.DropboxSyncMode = ""
+			vault.DropboxKeyMetadataConsent = false
 			vault.DropboxFileID = ""
 
 			data, err := src.EncryptVault(vault, masterPassword)
@@ -2887,6 +2902,11 @@ func main() {
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
 	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
+	autofillCmd, vaultCmd := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
+		VaultPath:    &vaultPath,
+		ReadPassword: readPassword,
+	})
+	rootCmd.AddCommand(autofillCmd, vaultCmd)
 	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
@@ -2943,6 +2963,22 @@ func main() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(mcpCmd)
 	rootCmd.AddCommand(bruteCmd)
+
+	var tuiCmd = &cobra.Command{
+		Use:   "tui",
+		Short: "Start the Advanced Password Manager TUI",
+		Run: func(cmd *cobra.Command, args []string) {
+			res, err := tui.RunUnlock(vaultPath)
+			if err != nil {
+				color.Red("Unlock failed: %v", err)
+				return
+			}
+			if err := tui.RunTUI(res, vaultPath); err != nil {
+				color.Red("TUI Error: %v", err)
+			}
+		},
+	}
+	rootCmd.AddCommand(tuiCmd)
 
 	rootCmd.PersistentFlags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	rootCmd.Execute()
@@ -4642,6 +4678,12 @@ func displayEntry(res src.SearchResult, showPass bool) {
 	fmt.Println("---")
 }
 
+func promptKeyMetadataConsent(provider string) bool {
+	fmt.Printf("%s can store a one-way hash of your retrieval key in cloud metadata for key-based recovery.\n", provider)
+	fmt.Print("Allow key hash storage in cloud metadata? (y/n) [n]: ")
+	return strings.ToLower(strings.TrimSpace(readInput())) == "y"
+}
+
 func setupDropbox(v *src.Vault, mp string) error {
 	color.Yellow("\nSetting up Dropbox...")
 
@@ -4686,17 +4728,19 @@ func setupDropbox(v *src.Vault, mp string) error {
 	v.DropboxSyncMode = mode
 	v.DropboxToken = token
 
-	fmt.Print("Enter Custom Retrieval Key (leave blank to generate randomly): ")
-	customKey := readInput()
-
 	var key string
-	if customKey != "" {
-		key = customKey
-	} else {
-		key, err = src.GenerateRetrievalKey()
-		if err != nil {
-			color.Red("Key generation failed: %v", err)
-			return err
+	v.DropboxKeyMetadataConsent = promptKeyMetadataConsent("Dropbox")
+	if v.DropboxKeyMetadataConsent {
+		fmt.Print("Enter Custom Retrieval Key (leave blank to generate randomly): ")
+		customKey := readInput()
+		if customKey != "" {
+			key = customKey
+		} else {
+			key, err = src.GenerateRetrievalKey()
+			if err != nil {
+				color.Red("Key generation failed: %v", err)
+				return err
+			}
 		}
 	}
 
@@ -4717,7 +4761,11 @@ func setupDropbox(v *src.Vault, mp string) error {
 	v.LastCloudProvider = "dropbox"
 
 	color.Green("Dropbox sync setup successful.")
-	color.HiCyan("Retrieval Key: %s", key)
+	if key != "" {
+		color.HiCyan("Retrieval Key: %s", key)
+	} else {
+		color.Yellow("Retrieval key metadata was not stored by consent choice. Use File Path for recovery: %s", fileID)
+	}
 	if mode == "self_hosted" {
 		color.Cyan("Mode: Self-Hosted (Owner: You)")
 	} else {
@@ -4787,7 +4835,7 @@ func getCloudManagerEx(ctx context.Context, vault *src.Vault, masterPassword str
 	return src.GetCloudProvider(provider, ctx, credentials, token, syncMode)
 }
 
-func handleDownloadedVault(data []byte, githubToken, githubRepo string) {
+func handleDownloadedVault(data []byte, provider, githubToken, githubRepo string) {
 	fmt.Print("Verify Master Password for downloaded vault: ")
 	pass, _ := readPassword()
 	fmt.Println()
@@ -4802,6 +4850,31 @@ func handleDownloadedVault(data []byte, githubToken, githubRepo string) {
 		vault.GitHubRepo = githubRepo
 
 		data, _ = src.EncryptVault(vault, pass)
+	}
+
+	if localData, readErr := os.ReadFile(vaultPath); readErr == nil {
+		if !bytes.Equal(localData, data) {
+			color.Yellow("Conflict detected: local vault and downloaded cloud vault differ.")
+			fmt.Println("APM does whole-vault conflict handling (no entry-level merge).")
+			fmt.Println("1. Overwrite local vault with cloud copy")
+			fmt.Println("2. Keep local vault and save cloud copy as conflict file")
+			fmt.Println("3. Cancel")
+			fmt.Print("Selection (1/2/3): ")
+			choice := strings.TrimSpace(readInput())
+			if choice == "2" {
+				conflictPath := fmt.Sprintf("%s.conflict.%s.%s", vaultPath, provider, time.Now().Format("20060102-150405"))
+				if saveErr := src.SaveVault(conflictPath, data); saveErr != nil {
+					color.Red("Failed to save conflict copy: %v\n", saveErr)
+					return
+				}
+				color.Green("Local vault kept. Cloud copy saved to: %s", conflictPath)
+				return
+			}
+			if choice != "1" {
+				color.Yellow("Cloud retrieval cancelled. Local vault unchanged.")
+				return
+			}
+		}
 	}
 
 	err = src.SaveVault(vaultPath, data)
