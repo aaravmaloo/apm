@@ -91,7 +91,7 @@ func readWindowUIHintsInternal(hwnd windows.HWND, windowTitle string) uiaContext
 
 	root, err := elementFromHandle(auto, hwnd)
 	if err == nil && root != nil {
-		collected = append(collected, collectSubtreeHints(auto, root, 40, 2)...)
+		collected = append(collected, collectSubtreeHints(auto, root, 80, 1, 1)...)
 	}
 
 	ctx.EmailHints = extractEmailHints(collected)
@@ -99,7 +99,7 @@ func readWindowUIHintsInternal(hwnd windows.HWND, windowTitle string) uiaContext
 	return ctx
 }
 
-func collectSubtreeHints(auto *wa.IUIAutomation, root *wa.IUIAutomationElement, maxNodes int, stopAfterEmails int) []string {
+func collectSubtreeHints(auto *wa.IUIAutomation, root *wa.IUIAutomationElement, maxNodes int, stopAfterEmails int, stopAfterDomains int) []string {
 	walker, err := wa.NewTreeWalker(auto)
 	if err != nil {
 		root.Release()
@@ -131,9 +131,13 @@ func collectSubtreeHints(auto *wa.IUIAutomation, root *wa.IUIAutomationElement, 
 			out = append(out, value)
 		}
 
-		if stopAfterEmails > 0 && len(extractEmailHints(out)) >= stopAfterEmails {
-			elem.Release()
-			break
+		if stopAfterEmails > 0 || stopAfterDomains > 0 {
+			emailReady := stopAfterEmails <= 0 || len(extractEmailHints(out)) >= stopAfterEmails
+			domainReady := stopAfterDomains <= 0 || len(extractDomainHints(out)) >= stopAfterDomains
+			if emailReady && domainReady {
+				elem.Release()
+				break
+			}
 		}
 
 		child, err := walker.GetFirstChildElement(elem)
