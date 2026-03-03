@@ -95,9 +95,11 @@ func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (s
 	}
 
 	driveFile := &drive.File{
-		Name:        randomName,
-		Description: HashKey(customKey),
-		Parents:     []string{parent},
+		Name:    randomName,
+		Parents: []string{parent},
+	}
+	if strings.TrimSpace(customKey) != "" {
+		driveFile.Description = HashKey(customKey)
 	}
 
 	res, err := cm.Service.Files.Create(driveFile).Media(f).Do()
@@ -177,6 +179,10 @@ func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
 	listLegacy, err := cm.Service.Files.List().Q(queryLegacy).Fields("files(id, name)").Do()
 	if err == nil && len(listLegacy.Files) > 0 {
 		return listLegacy.Files[0].Id, nil
+	}
+
+	if !strings.ContainsAny(key, " \t\r\n") && len(key) >= 16 && len(key) <= 128 {
+		return key, nil
 	}
 
 	return "", fmt.Errorf("no vault found with key '%s'", key)
@@ -406,7 +412,16 @@ func (cm *DropboxManager) UploadVault(vaultPath string, customKey string) (strin
 	}
 	defer f.Close()
 
-	fileName := fmt.Sprintf("/v_%s.bin", HashKey(customKey))
+	fileName := ""
+	if strings.TrimSpace(customKey) != "" {
+		fileName = fmt.Sprintf("/v_%s.bin", HashKey(customKey))
+	} else {
+		randomName, randErr := GenerateRandomHex(6)
+		if randErr != nil {
+			randomName = fmt.Sprintf("%d", time.Now().Unix())
+		}
+		fileName = fmt.Sprintf("/v_%s.bin", randomName)
+	}
 
 	arg := files.NewUploadArg(fileName)
 	arg.Mode = &files.WriteMode{Tagged: dropbox.Tagged{Tag: "overwrite"}}
@@ -462,6 +477,10 @@ func (cm *DropboxManager) DeleteVault(fileID string) error {
 }
 
 func (cm *DropboxManager) ResolveKeyToID(key string) (string, error) {
+	if strings.HasPrefix(key, "/") && strings.HasSuffix(strings.ToLower(key), ".bin") {
+		return key, nil
+	}
+
 	target := fmt.Sprintf("/v_%s.bin", HashKey(key))
 	_, err := cm.Client.GetMetadata(files.NewGetMetadataArg(target))
 	if err == nil {
