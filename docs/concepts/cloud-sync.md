@@ -1,25 +1,51 @@
 # Cloud synchronization
 
-APM provides native multi-cloud synchronization to keep your vault available across all your trusted
-devices. The vault is always encrypted before transmission — cloud providers never see your
-plaintext data.
+APM provides native multi-cloud synchronization to keep your vault available across trusted
+devices. The vault blob is encrypted before transmission, so cloud providers do not see plaintext
+entries.
 
 !!! note
 
-    See the [cloud sync guide](../guides/cloud-sync.md) for an introduction to setting up cloud
-    providers — this document discusses the synchronization architecture.
+    See the [cloud sync guide](../guides/cloud-sync.md) for setup instructions. This page focuses
+    on architecture and safeguards.
 
 ## Architecture
 
-Cloud sync in APM follows a simple push/pull model:
+Cloud sync uses whole-vault upload and download:
 
 ```text
 [Local Vault] --encrypt--> [Encrypted Blob] --upload--> [Cloud Provider]
 [Cloud Provider] --download--> [Encrypted Blob] --decrypt--> [Local Vault]
 ```
 
-The encrypted vault file is transmitted as an opaque binary blob. No metadata, entry names, or
-structural information is visible to the cloud provider.
+Providers store an opaque encrypted blob, plus provider-managed object metadata such as file ID,
+repository/path, and optional retrieval-key hash metadata when user consent is granted.
+
+## Encryption guarantees
+
+- Vault payload remains encrypted end-to-end using APM vault encryption.
+- Master password is never sent to cloud providers.
+- OAuth/PAT credentials are stored inside the encrypted vault, not plaintext files.
+
+## Retrieval-key metadata consent
+
+Google Drive and Dropbox support retrieval-key indexing.
+
+- With consent: APM stores only `SHA-256(retrieval_key)` in provider metadata.
+- Without consent: no retrieval-key hash is written to cloud metadata.
+- Without metadata hashing, recovery still works via direct identifiers:
+  Google Drive `file_id` or Dropbox full file path.
+
+## Conflict resolution behavior
+
+Conflict handling is whole-vault and user-mediated during `pm cloud get`.
+
+- If cloud and local vault bytes differ, APM prompts to overwrite local, save a conflict copy, or
+  cancel.
+- Conflict copies are written as `vault.dat.conflict.<provider>.<timestamp>`.
+- Entry-level/field-level merges are out of scope for personal cloud sync.
+
+For concurrent collaborative edits, use the [team edition](../team/index.md).
 
 ## Supported providers
 
@@ -28,53 +54,25 @@ structural information is visible to the cloud provider.
 | Property             | Value                                      |
 | :------------------- | :----------------------------------------- |
 | **Authentication**   | OAuth2 with PKCE flow                      |
-| **Storage location** | Application Data Folder (hidden from user) |
-| **Version history**  | Limited (Drive's built-in versioning)      |
+| **Storage location** | App Data folder or user drive (mode-based) |
 | **Setup**            | `pm cloud init gdrive`                     |
-
-APM uses an embedded OAuth flow — no external `credentials.json` or `token.json` files are
-required. Authentication is handled through an obfuscated internal layer.
 
 ### GitHub
 
 | Property             | Value                                  |
 | :------------------- | :------------------------------------- |
-| **Authentication**   | Personal Access Token                  |
-| **Storage location** | Private repository (configurable name) |
-| **Version history**  | Comprehensive (full Git history)       |
+| **Authentication**   | Personal Access Token / OAuth2 token   |
+| **Storage location** | Private repository file (`vault.dat`)  |
 | **Setup**            | `pm cloud init github`                 |
-
-GitHub sync stores the vault as a file in a private repository, providing full version history
-through Git commits. This makes it ideal for developers who want granular rollback capability.
 
 ### Dropbox
 
 | Property             | Value                                   |
 | :------------------- | :-------------------------------------- |
-| **Authentication**   | OAuth2 with PKCE flow                   |
-| **Storage location** | Application Folder (isolated)           |
-| **Version history**  | Limited (Dropbox's built-in versioning) |
+| **Authentication**   | OAuth2 flow                             |
+| **Storage location** | App folder / self-hosted app            |
 | **Setup**            | `pm cloud init dropbox`                 |
-
-## Conflict resolution
-
-When pulling from a cloud provider, APM detects if the remote vault is newer than the local copy:
-
-- If the remote vault is newer, it replaces the local vault.
-- If the local vault is newer, the pull is skipped with a warning.
-- If both have been modified, APM prompts the user to choose which version to keep.
-
-!!! important
-
-    APM does not perform entry-level merging. Conflict resolution operates on the entire vault
-    file. For collaborative use cases, see the [team edition](../team/index.md).
-
-## Token security
-
-OAuth tokens and Personal Access Tokens are encrypted inside the vault itself using the same
-AES-256-GCM encryption as your secrets. They are never stored in plaintext on disk.
 
 ## Next steps
 
-See the [cloud sync guide](../guides/cloud-sync.md) for setup instructions, or learn about the
-[plugin architecture](./plugins.md).
+See the [cloud sync guide](../guides/cloud-sync.md) for operational commands.
