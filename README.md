@@ -283,6 +283,16 @@ To set up synchronization, use the following commands:
 - `pm cloud init dropbox`: Setup Dropbox sync.
 - `pm cloud init all`: Initialize all supported providers simultaneously.
 
+### 12.2 Safeguards and Scope
+- End-to-end encrypted vault blobs are uploaded; cloud providers do not receive plaintext entries or
+  your master password.
+- Google Drive and Dropbox ask explicit user consent before storing a one-way retrieval-key hash in
+  provider metadata.
+- If metadata consent is declined, retrieval works with direct provider identifiers (Drive file ID /
+  Dropbox path) instead of key-hash lookup.
+- Conflict handling is whole-vault only: `pm cloud get` prompts to overwrite local, keep local and
+  save a conflict copy, or cancel.
+
 ---
 
 ## 13. AI Usage
