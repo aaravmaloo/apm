@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"unicode"
 
 	src "password-manager/src"
 )
@@ -102,6 +103,7 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 	totpByAccount, totpByDomain := buildTOTPIndexes(vault)
 	emailHints := contextEmailHints(ctx)
 	typedEmail := focusedTypedEmail(ctx)
+	intent := inferFieldIntent(ctx)
 
 	out := make([]intelligentCandidate, 0, len(vault.Entries)+len(totpByAccount))
 	usedTOTPAccount := map[string]struct{}{}
@@ -133,6 +135,10 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 			c.TOTPSecret = group.Secret
 			usedTOTPAccount[group.Account] = struct{}{}
 		}
+		c.Score += scoreCandidateForIntent(c, intent)
+		if c.Score <= 0 {
+			continue
+		}
 
 		out = append(out, c)
 	}
@@ -152,7 +158,7 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 			continue
 		}
 
-		out = append(out, intelligentCandidate{
+		c := intelligentCandidate{
 			ID:         "totp-" + sanitizeID(group.Account),
 			Service:    group.Account,
 			Domain:     group.Domain,
@@ -160,7 +166,12 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 			TOTPCount:  group.Count,
 			TOTPSecret: group.Secret,
 			Score:      score,
-		})
+		}
+		c.Score += scoreCandidateForIntent(c, intent)
+		if c.Score <= 0 {
+			continue
+		}
+		out = append(out, c)
 	}
 
 	sort.SliceStable(out, func(i, j int) bool {
@@ -298,7 +309,7 @@ func scoreAccountContext(account, username string, ctx RequestContext, emailHint
 
 	if len(emailHints) > 0 {
 		hintBoost := scoreEmailHint(usernameLower, accountLower, emailHints)
-		if hintBoost == 0 && score < 220 {
+		if hintBoost == 0 && score < 220 && !looksLikeOTPWindow(ctx.WindowTitle) {
 			return 0
 		}
 		score += hintBoost
@@ -436,6 +447,25 @@ func accountTokens(value string) []string {
 }
 
 func chooseSystemSequence(c intelligentCandidate, ctx RequestContext, totpCode string) string {
+	intent := inferFieldIntent(ctx)
+	switch intent {
+	case fieldIntentOTP:
+		if totpCode != "" {
+			return "{TOTP}"
+		}
+	case fieldIntentPassword:
+		if c.Password != "" {
+			return "{PASSWORD}"
+		}
+	case fieldIntentUsername:
+		if c.Username != "" && c.Password != "" && strings.EqualFold(strings.TrimSpace(ctx.FocusedValue), strings.TrimSpace(c.Username)) {
+			return "{TAB}{PASSWORD}{ENTER}"
+		}
+		if c.Username != "" {
+			return "{USERNAME}"
+		}
+	}
+
 	if looksLikeOTPWindow(ctx.WindowTitle) && totpCode != "" {
 		return "{TOTP}"
 	}
@@ -479,6 +509,94 @@ func looksLikeOTPWindow(title string) bool {
 		}
 	}
 	return false
+}
+
+const (
+	fieldIntentUnknown = iota
+	fieldIntentUsername
+	fieldIntentPassword
+	fieldIntentOTP
+)
+
+func inferFieldIntent(ctx RequestContext) int {
+	name := strings.ToLower(strings.TrimSpace(ctx.FocusedName))
+	value := strings.ToLower(strings.TrimSpace(ctx.FocusedValue))
+	title := strings.ToLower(strings.TrimSpace(ctx.WindowTitle))
+
+	joined := strings.TrimSpace(name + " " + title)
+	if containsAny(joined, "otp", "2fa", "two-factor", "verification", "authenticator", "one-time", "security code") {
+		return fieldIntentOTP
+	}
+	if containsAny(name, "password", "passcode", "pass phrase") {
+		return fieldIntentPassword
+	}
+	if containsAny(name, "email", "username", "user", "login", "identifier") {
+		return fieldIntentUsername
+	}
+	if strings.Contains(value, "@") {
+		return fieldIntentUsername
+	}
+	if isLikelyOTPValue(value) && looksLikeOTPWindow(title) {
+		return fieldIntentOTP
+	}
+	return fieldIntentUnknown
+}
+
+func scoreCandidateForIntent(c intelligentCandidate, intent int) int {
+	switch intent {
+	case fieldIntentOTP:
+		if c.TOTPCount == 1 {
+			return 600
+		}
+		if c.TOTPCount > 1 {
+			return 260
+		}
+		if c.HasPassword {
+			return -180
+		}
+	case fieldIntentPassword:
+		if c.HasPassword {
+			return 320
+		}
+		return -220
+	case fieldIntentUsername:
+		if strings.TrimSpace(c.Username) != "" {
+			return 280
+		}
+		if c.HasPassword {
+			return 80
+		}
+		return -120
+	}
+	return 0
+}
+
+func containsAny(s string, keywords ...string) bool {
+	for _, kw := range keywords {
+		if kw != "" && strings.Contains(s, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+func isLikelyOTPValue(v string) bool {
+	v = strings.TrimSpace(v)
+	if v == "" || len(v) > 8 {
+		return false
+	}
+	digits := 0
+	for _, r := range v {
+		if unicode.IsDigit(r) {
+			digits++
+			continue
+		}
+		if r == ' ' || r == '-' {
+			continue
+		}
+		return false
+	}
+	return digits >= 3
 }
 
 func pickIntelligentCandidate(matches []intelligentCandidate, selectionID string) (intelligentCandidate, bool) {
