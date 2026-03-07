@@ -2,6 +2,7 @@
 
 Read the concept documents to learn more about APM's features:
 
+- [Architecture](./architecture.md)
 - [Encryption](./encryption.md)
 - [Vault format](./vault-format.md)
 - [Secret types](./secret-types.md)
