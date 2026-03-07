@@ -1,34 +1,34 @@
 {
-    "name": "vault_cleaner",
-    "version": "1.0.0",
-    "description": "Remove temporary or unwanted entries",
-    "author": "Antigravity",
-    "permissions": [
-        "vault.write"
-    ],
-    "commands": {
-        "remove": {
-            "description": "Delete an entry by name",
-            "flags": {
-                "name": {
-                    "type": "string",
-                    "default": ""
-                }
-            },
-            "steps": [
-                {
-                    "op": "v:del",
-                    "args": [
-                        "{{name}}"
-                    ]
-                },
-                {
-                    "op": "s:out",
-                    "args": [
-                        "Entry {{name}} removed if it existed."
-                    ]
-                }
-            ]
+  "schema_version": "1.0",
+  "name": "vault_cleaner",
+  "version": "1.0.0",
+  "description": "Remove vault entries by account name",
+  "author": "APM",
+  "permissions": [
+    "vault.write"
+  ],
+  "file_storage": {
+    "enabled": false,
+    "allowed_types": []
+  },
+  "commands": {
+    "clean": {
+      "description": "Delete an entry account from vault",
+      "flags": {
+        "account": {
+          "type": "string",
+          "default": ""
         }
+      },
+      "steps": [
+        {
+          "op": "v:del",
+          "args": [
+            "{{account}}"
+          ]
+        }
+      ]
     }
+  },
+  "hooks": {}
 }
