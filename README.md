@@ -33,13 +33,14 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
     - [For Cursor / Windsurf / Others](#for-cursor--windsurf--others)
 - [5. Team Edition (pm-team)](#5-team-edition-pm-team)
 - [6. Supported Secret Types](#6-supported-secret-types)
-- [7. Plugin Architecture and SDK Reference](#7-plugin-architecture-and-sdk-reference)
+- [7. Plugin Architecture](#7-plugin-architecture)
 - [8. Policy Engine \& Compliance](#8-policy-engine--compliance)
 - [9. Installation and Deployment](#9-installation-and-deployment)
-  - [9.1 Build from Source](#91-build-from-source)
-  - [9.2 Build Requirements](#92-build-requirements)
-  - [9.3 Pre-built Binaries](#93-pre-built-binaries)
-  - [9.4 Installation of Previews and Betas](#94-installation-of-previews-and-betas)
+  - [9.1 One-Command Install](#91-one-command-install)
+  - [9.2 Build from Source](#92-build-from-source)
+  - [9.3 Build Requirements](#93-build-requirements)
+  - [9.4 Pre-built Binaries](#94-pre-built-binaries)
+  - [9.5 Installation of Previews and Betas](#95-installation-of-previews-and-betas)
 - [10. Contact \& Support](#10-contact--support)
 - [11. Development \& Contributing](#11-development--contributing)
 - [12. Cloud Synchronization Matrix](#12-cloud-synchronization-matrix)
@@ -114,7 +115,7 @@ The personal edition focuses on local-first security and privacy with native mul
 | `edit [n]`  | Mutation   | Interactive modification of existing entry metadata.                   |
 | `del [n]`   | Mutation   | Permanent deletion of an entry from the vault.                         |
 | `gen`       | Utility    | High-entropy password generator.                                       |
-| `totp show` | Security   | Real-time generation of 2FA codes with live countdowns.                |
+| `totp`      | Security   | Interactive 2FA list, copy, and persistent ordering.                   |
 | `unlock`    | Session    | Starts a session-scoped unlock instance with inactivity timeout.       |
 | `lock`      | Session    | Immediately terminates and wipes the active session.                   |
 | `session`   | Session    | Issue/list/revoke ephemeral, context-bound delegated sessions.         |
@@ -128,7 +129,7 @@ The personal edition focuses on local-first security and privacy with native mul
 | `import`    | IO         | Ingest data from external files (JSON, CSV, KDBX).                     |
 | `export`    | IO         | Securely dump vault data to encrypted or plaintext formats.            |
 | `policy`    | Compliance | Load and enforce YAML-based password requirement policies.             |
-| `plugins`   | Extension  | Extend APM via the declarative plugin SDK.                             |
+| `plugins`   | Extension  | Manage manifest plugins, marketplace actions, and permissions.         |
 | `info`      | System     | Display version, install path, and environment details.                |
 | `cinfo`     | Crypto     | Inspection of current vault cryptographic parameters.                  |
 | `update`    | System     | Automated self-update engine to fetch the latest builds.               |
@@ -210,13 +211,13 @@ APM supports 22 distinct data structures:
 
 ---
 
-## 7. Plugin Architecture and SDK Reference
+## 7. Plugin Architecture
 
-APM features a declarative, JSON-driven plugin architecture.
-- **Hook Execution**: Plugins can intercept standard events (e.g., `pre:add`) or register commands.
-- **Capabilities**: Over 150 granular permissions including vault access (`vault.item.*`), network protocols (`network.ssh`, `network.http`), system integration (`system.exec`, `system.env`), and UI control (`ui.prompt`, `ui.window`).
-- **Wildcards**: Supports hierarchical permission matching (e.g., `vault.*` grants all vault-related access).
-- **Marketplace Publishing**: Use `pm plugins push <name>` (or `--path`) to publish plugins to the Google Drive marketplace.
+APM plugins use the legacy manifest architecture based on `plugin.json`.
+- **Local plugins directory**: `plugins/<name>/plugin.json`
+- **Marketplace flow**: `pm plugins market`, `pm plugins install`, `pm plugins push`
+- **Permissions control**: `pm plugins access` toggles per-plugin permissions on/off
+- **Examples**: `examples/plugins/` contains working manifest plugins
 
 ---
 
@@ -230,7 +231,23 @@ APM enforces security standards through a flexible, YAML-based policy engine.
 
 ## 9. Installation and Deployment
 
-### 9.1 Build from Source
+### 9.1 One-Command Install
+Linux and macOS (latest stable release):
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaravmaloo/apm/main/scripts/install.sh | sh
+```
+
+Windows PowerShell (latest stable release):
+```powershell
+powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/aaravmaloo/apm/main/scripts/install.ps1 -UseBasicParsing | iex"
+```
+
+Install layout used by the scripts:
+- **macOS**: installs to `/usr/local/opt/apm/apm` and symlinks `/usr/local/bin/apm -> /usr/local/opt/apm/apm`
+- **Linux**: installs to `/opt/apm/apm` and symlinks `/usr/local/bin/apm -> /opt/apm/apm`
+- **Windows**: installs `apm.exe` to `%LOCALAPPDATA%\pm` and safely appends that directory to user `PATH` if missing
+
+### 9.2 Build from Source
 ```bash
 git clone https://github.com/aaravmaloo/apm.git
 cd apm
@@ -238,14 +255,14 @@ go build -o pm.exe main.go
 ./pm.exe init
 ```
 
-### 9.2 Build Requirements
+### 9.3 Build Requirements
 - Go 1.21+
 - Windows, macOS, or Linux
 
-### 9.3 Pre-built Binaries
+### 9.4 Pre-built Binaries
 Pre-built binaries for Windows, macOS, and Linux for stable releases are available for download from the [Releases page](https://github.com/aaravmaloo/apm/releases).
 
-### 9.4 Installation of Previews and Betas
+### 9.5 Installation of Previews and Betas
 Pre-built binaries for Windows, macOS, and Linux for previews, betas, and canarys will be available for download from the [Builds page](https://github.com/aaravmaloo/apm/tree/master/build).
 Note that these builds may break your vault, or may not be stable. These builds are solely for developers and testers to report any bugs present and resolve them. Do not use these builds for production use. Use them at your own risk.
 
