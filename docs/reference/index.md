@@ -3,6 +3,7 @@
 Consult the reference documentation for comprehensive details on APM's internals:
 
 - [CLI commands](./cli.md)
+- [.apmignore](./apmignore.md)
 - [Storage](./storage.md)
 - [Environment variables](./environment-variables.md)
 - [Plugin API](./plugin-api.md)
