@@ -1,67 +1,46 @@
 # Environment variables
 
-APM reads the following environment variables to customize behavior. Set these in your shell
-profile to persist across sessions.
+APM reads the following variables when set.
 
-## Core variables
+## Core
 
-| Variable              | Description                                                  | Default            |
-| :-------------------- | :----------------------------------------------------------- | :----------------- |
-| `APM_VAULT_PATH`      | Override the default vault file location                     | `~/.apm/vault.dat` |
-| `APM_CONFIG_DIR`      | Override the configuration directory                         | `~/.apm/`          |
-| `APM_SESSION_ID`      | Active session identifier (set automatically by `pm unlock`) | None               |
-| `APM_SESSION_TIMEOUT` | Session inactivity timeout in minutes                        | `60`               |
+| Variable | Description | Default |
+| :-- | :-- | :-- |
+| `APM_VAULT_PATH` | Absolute or relative vault path override | `vault.dat` near executable |
 
-## Cloud variables
+## Session and runtime
 
-| Variable             | Description                                            | Default        |
-| :------------------- | :----------------------------------------------------- | :------------- |
-| `APM_CLOUD_PROVIDER` | Default cloud provider (`gdrive`, `github`, `dropbox`) | None           |
-| `APM_GITHUB_TOKEN`   | GitHub Personal Access Token for cloud sync            | None           |
-| `APM_GITHUB_REPO`    | GitHub repository name for vault storage               | `vault-backup` |
+| Variable | Description | Default |
+| :-- | :-- | :-- |
+| `APM_SESSION_ID` | Active session identifier (managed by APM) | unset |
+| `APM_SESSION_TIMEOUT` | Session timeout hint in minutes | `60` |
 
-## Security variables
+## Cloud
 
-| Variable               | Description                         | Default    |
-| :--------------------- | :---------------------------------- | :--------- |
-| `APM_SECURITY_PROFILE` | Default security profile name       | `standard` |
-| `APM_POLICY_PATH`      | Path to the active YAML policy file | None       |
-| `APM_EPHEMERAL_ID`     | Ephemeral delegated session id      | None       |
-| `APM_EPHEMERAL_AGENT`  | Optional agent binding label        | None       |
+| Variable | Description | Default |
+| :-- | :-- | :-- |
+| `APM_CLOUD_PROVIDER` | Preferred provider (`gdrive`, `github`, `dropbox`) | unset |
+| `APM_GITHUB_TOKEN` | GitHub token for sync | unset |
+| `APM_GITHUB_REPO` | GitHub repository for sync | unset |
 
-## MCP variables
+## Security and policy
 
-| Variable            | Description                                                 | Default |
-| :------------------ | :---------------------------------------------------------- | :------ |
-| `APM_MCP_TOKEN`     | MCP access token for the server                             | None    |
-| `APM_MCP_LOG_LEVEL` | MCP server log verbosity (`debug`, `info`, `warn`, `error`) | `info`  |
+| Variable | Description | Default |
+| :-- | :-- | :-- |
+| `APM_SECURITY_PROFILE` | Default encryption profile | `standard` |
+| `APM_POLICY_PATH` | YAML policy location | unset |
+| `APM_EPHEMERAL_ID` | Ephemeral session id | unset |
+| `APM_EPHEMERAL_AGENT` | Ephemeral session agent label | unset |
 
-## Plugin variables
+## MCP
 
-| Variable         | Description                         | Default                 |
-| :--------------- | :---------------------------------- | :---------------------- |
-| `APM_PLUGIN_DIR` | Override the plugin cache directory | `~/.apm/plugins_cache/` |
+| Variable | Description | Default |
+| :-- | :-- | :-- |
+| `APM_MCP_TOKEN` | MCP access token | unset |
+| `APM_MCP_LOG_LEVEL` | MCP logging level | `info` |
 
-## Team variables
+## Plugins
 
-| Variable       | Description                              | Default        |
-| :------------- | :--------------------------------------- | :------------- |
-| `APM_TEAM_DIR` | Override the team edition data directory | `~/.apm-team/` |
-
-## Platform-specific defaults
-
-=== "Windows"
-
-    | Variable         | Resolved Default               |
-    | :--------------- | :----------------------------- |
-    | `APM_VAULT_PATH` | `%USERPROFILE%\.apm\vault.dat` |
-    | `APM_CONFIG_DIR` | `%USERPROFILE%\.apm\`          |
-    | `APM_TEAM_DIR`   | `%USERPROFILE%\.apm-team\`     |
-
-=== "macOS and Linux"
-
-    | Variable         | Resolved Default   |
-    | :--------------- | :----------------- |
-    | `APM_VAULT_PATH` | `~/.apm/vault.dat` |
-    | `APM_CONFIG_DIR` | `~/.apm/`          |
-    | `APM_TEAM_DIR`   | `~/.apm-team/`     |
+| Variable | Description | Default |
+| :-- | :-- | :-- |
+| `APM_PLUGIN_DIR` | Override plugin source directory | `<install_root>/plugins` |
