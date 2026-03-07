@@ -1,17 +1,34 @@
 {
-    "name": "cloud_sync_hook",
-    "version": "1.0.0",
-    "description": "Automatically trigger cloud sync after adding entries",
-    "author": "Aarav Maloo",
-    "permissions": [
-        "cloud.sync"
-    ],
-    "hooks": {
-        "post:add": [
-            {
-                "op": "c:sync",
-                "args": []
-            }
-        ]
+  "schema_version": "1.0",
+  "name": "cloud_sync_hook",
+  "version": "1.0.0",
+  "description": "Trigger cloud sync after unlock",
+  "author": "APM",
+  "permissions": [
+    "cloud.sync"
+  ],
+  "file_storage": {
+    "enabled": false,
+    "allowed_types": []
+  },
+  "commands": {
+    "sync-now": {
+      "description": "Manually trigger cloud sync",
+      "flags": {},
+      "steps": [
+        {
+          "op": "c:sync",
+          "args": []
+        }
+      ]
     }
+  },
+  "hooks": {
+    "post:unlock": [
+      {
+        "op": "c:sync",
+        "args": []
+      }
+    ]
+  }
 }
