@@ -2,7 +2,30 @@
 
 ## Installation methods
 
-Install APM by building from source or downloading a pre-built binary from GitHub Releases.
+Install APM using one command (recommended), build from source, or download a pre-built binary from GitHub Releases.
+
+### One-command install (recommended)
+
+=== "macOS and Linux"
+
+    ```console
+    $ curl -fsSL https://raw.githubusercontent.com/aaravmaloo/apm/main/scripts/install.sh | sh
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```pwsh-session
+    PS> powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/aaravmaloo/apm/main/scripts/install.ps1 -UseBasicParsing | iex"
+    ```
+
+The installer fetches the latest stable release from:
+`https://api.github.com/repos/aaravmaloo/apm/releases/latest`
+
+Install layout used by the scripts:
+
+- **macOS**: `/usr/local/opt/apm/apm`, with `/usr/local/bin/apm` symlinked to it.
+- **Linux**: `/opt/apm/apm`, with `/usr/local/bin/apm` symlinked to it.
+- **Windows**: `%LOCALAPPDATA%\pm\apm.exe`, with `%LOCALAPPDATA%\pm` appended to user `PATH` if not already present.
 
 ### Build from source
 
@@ -53,7 +76,9 @@ Updated to v9.2 successfully.
 
 ## Adding to PATH
 
-After building or downloading the binary, ensure it is available on your system `PATH`:
+If you used the one-command installer, PATH and launch links are already configured.
+
+After building or manually downloading the binary, ensure it is available on your system `PATH`:
 
 === "Windows"
 
@@ -88,13 +113,15 @@ To remove APM from your system:
     === "Windows"
 
         ```pwsh-session
-        PS> Remove-Item C:\path\to\pm.exe
+        PS> Remove-Item "$env:LOCALAPPDATA\pm\apm.exe" -ErrorAction SilentlyContinue
+        PS> Remove-Item "$env:LOCALAPPDATA\pm" -Recurse -Force -ErrorAction SilentlyContinue
         ```
 
     === "macOS and Linux"
 
         ```console
-        $ rm /usr/local/bin/pm
+        $ sudo rm -f /usr/local/bin/apm
+        $ sudo rm -rf /usr/local/opt/apm /opt/apm
         ```
 
 2. Optionally, remove stored vault data:
