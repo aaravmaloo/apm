@@ -100,6 +100,19 @@ $ pm cloud get [gdrive|github|dropbox] [retrieval_key|file_id|repo|path]
     Cloud synchronization uploads the encrypted vault blob as-is. Your master password and plaintext
     entries are never sent to cloud providers.
 
+## Filtering uploads with `.apmignore`
+
+Before upload, APM optionally filters vault data using `.apmignore`.
+
+Supported controls include:
+
+- ignore complete spaces
+- ignore entry patterns (`space:type:name`)
+- provider-specific ignore patterns
+- vocab stripping via `[misc]` `ignore:vocab`
+
+See [Using .apmignore](./apmignore.md) for full syntax and examples.
+
 ## Conflict handling for offline edits
 
 `pm cloud get` performs whole-vault conflict handling:
