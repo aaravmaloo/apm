@@ -1,13 +1,15 @@
-# Hello Vault Plugin
+# Hello Vault (Legacy `plugin.json` Example)
 
-This is a sample plugin for APM to demonstrate how to use the plugin system.
+This example demonstrates a legacy plugin manifest and command-step flow.
 
-## Commands
+## What it does
 
-### `greet`
-Greets the user and displays a username retrieved from the vault.
+- Requests `vault.read`
+- Exposes a `hello` command
+- Reads one vault key (default: `username`) and prints it
 
-**Usage:**
-```bash
-pm plugin run hello_vault greet --user "Alice"
+## Usage
+
+```console
+pm plugins local ./examples/plugins/hello_vault
 ```
