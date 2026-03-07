@@ -1,54 +1,43 @@
----
-title: Generating TOTP codes
-description:
-  A guide to adding TOTP seeds and generating time-based one-time passwords with APM.
----
-
 # Generating TOTP codes
 
-APM can generate time-based one-time passwords (TOTP) directly in your terminal, complete with live
-countdowns.
+APM supports interactive and direct TOTP retrieval.
 
-## Adding a TOTP entry
-
-When adding an entry, select the **TOTP** category and provide the seed:
+## Show all codes
 
 ```console
-$ pm add
-? Select category: TOTP
-? Account name: GitHub 2FA
-? TOTP Secret/Seed: JBSWY3DPEHPK3PXP
-? Issuer (optional): GitHub
-
-Entry added successfully.
+$ pm totp
 ```
 
-!!! tip
+Behavior:
 
-    You can also add a TOTP seed to an existing password entry. Many services provide a TOTP
-    secret alongside your password credentials.
+- lists all TOTP entries in current space
+- refreshes code countdown continuously
+- `Enter` copies selected code
+- `1-9` copies by visible index
+- `Shift+Up` / `Shift+Down` reorders entries and persists priority
 
-## Viewing TOTP codes
-
-Generate a code for a specific entry using `pm totp show`:
+## Fast copy by entry name
 
 ```console
-$ pm totp show
-? Select entry: GitHub 2FA
-
-  Code: 482 913
-  Expires in: 18s [==================------]
+$ pm totp github
 ```
 
-The code refreshes automatically with a live countdown showing the remaining validity window.
+If a match is found, the code is copied directly to clipboard.
 
-## Using TOTP with MCP
+## Domain links for autofill
 
-If you have configured the [MCP server](./mcp-integration.md) with `totp` permissions, AI
-assistants can also retrieve TOTP codes via the `get_totp` tool. See the
-[MCP tools reference](../reference/mcp-tools.md) for details.
+Link an existing TOTP entry to a domain:
 
-## Next steps
+```console
+$ pm autocomplete link-totp
+domain: https://www.github.com
+link-totp-id: 4
+```
 
-Learn about [session management](./sessions.md) to control vault access, or see the
-[command reference](../reference/cli.md) for all TOTP-related options.
+This improves intelligent autofill matching for OTP prompts.
+
+## Troubleshooting
+
+- Ensure system clock is accurate.
+- Verify secret was added correctly.
+- If multiple similar entries exist, reorder frequently used ones to top.
