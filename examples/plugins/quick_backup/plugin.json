@@ -1,32 +1,33 @@
 {
-    "name": "quick_backup",
-    "version": "1.0.0",
-    "description": "Create a timestamped local backup of your vault",
-    "author": "Aarav Maloo",
-    "permissions": [
-        "vault.write"
-    ],
-    "commands": {
-        "run": {
-            "description": "Backup the vault",
-            "steps": [
-                {
-                    "op": "s:out",
-                    "args": [
-                        "Creating local backup..."
-                    ]
-                },
-                {
-                    "op": "v:backup",
-                    "args": []
-                },
-                {
-                    "op": "s:out",
-                    "args": [
-                        "Backup created successfully."
-                    ]
-                }
-            ]
+  "schema_version": "1.0",
+  "name": "quick_backup",
+  "version": "1.0.0",
+  "description": "Create a timestamped local backup of vault.dat",
+  "author": "APM",
+  "permissions": [
+    "vault.write"
+  ],
+  "file_storage": {
+    "enabled": false,
+    "allowed_types": []
+  },
+  "commands": {
+    "backup": {
+      "description": "Create backup next to current vault",
+      "flags": {},
+      "steps": [
+        {
+          "op": "v:backup",
+          "args": []
+        },
+        {
+          "op": "s:out",
+          "args": [
+            "Vault backup created."
+          ]
         }
+      ]
     }
+  },
+  "hooks": {}
 }
