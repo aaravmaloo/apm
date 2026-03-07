@@ -1,45 +1,47 @@
 {
-    "name": "hello_vault",
-    "version": "1.0.0",
-    "description": "A simple plugin to demonstrate APM plugin system",
-    "author": "Aarav Maloo",
-    "permissions": [
-        "vault.read"
-    ],
-    "commands": {
-        "greet": {
-            "description": "Greet the user with a secret from the vault",
-            "flags": {
-                "user": {
-                    "type": "string",
-                    "default": "User"
-                }
-            },
-            "steps": [
-                {
-                    "op": "v:get",
-                    "args": [
-                        "username",
-                        "vault_user"
-                    ]
-                },
-                {
-                    "op": "s:out",
-                    "args": [
-                        "Hello {{user}}! Vault says hello to {{vault_user}}."
-                    ]
-                }
-            ]
+  "schema_version": "1.0",
+  "name": "hello_vault",
+  "version": "1.0.0",
+  "description": "Read one value from vault and print it",
+  "author": "APM",
+  "permissions": [
+    "vault.read"
+  ],
+  "file_storage": {
+    "enabled": false,
+    "allowed_types": []
+  },
+  "commands": {
+    "hello": {
+      "description": "Read a key and print a greeting",
+      "flags": {
+        "key": {
+          "type": "string",
+          "default": "username"
         }
-    },
-    "hooks": {
-        "post:unlock": [
-            {
-                "op": "s:out",
-                "args": [
-                    "Vault successfully unlocked. Plugin system active."
-                ]
-            }
-        ]
+      },
+      "steps": [
+        {
+          "op": "v:get",
+          "args": [
+            "{{key}}",
+            "value"
+          ]
+        },
+        {
+          "op": "s:out",
+          "args": [
+            "Hello from hello_vault"
+          ]
+        },
+        {
+          "op": "s:out",
+          "args": [
+            "Value: {{value}}"
+          ]
+        }
+      ]
     }
+  },
+  "hooks": {}
 }
