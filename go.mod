@@ -1,4 +1,4 @@
-module password-manager
+module github.com/aaravmaloo/apm
 
 go 1.25
 
