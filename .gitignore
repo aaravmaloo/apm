@@ -6,6 +6,8 @@ team/team_vault.dat
 CHANGES.md
 
 scripts/*
+!scripts/install.sh
+!scripts/install.ps1
 dev/bin/
 dev/pm.exe
 
