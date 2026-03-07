@@ -1,43 +1,44 @@
 {
-    "name": "safe_add",
-    "version": "1.0.0",
-    "description": "Quickly add a new entry with a generated password",
-    "author": "Aarav Maloo",
-    "permissions": [
-        "vault.write"
-    ],
-    "commands": {
-        "run": {
-            "description": "Add an entry quickly",
-            "steps": [
-                {
-                    "op": "s:in",
-                    "args": [
-                        "Enter Account Name",
-                        "new_acc"
-                    ]
-                },
-                {
-                    "op": "s:in",
-                    "args": [
-                        "Enter Password",
-                        "new_pass"
-                    ]
-                },
-                {
-                    "op": "v:add",
-                    "args": [
-                        "{{new_acc}}",
-                        "{{new_pass}}"
-                    ]
-                },
-                {
-                    "op": "s:out",
-                    "args": [
-                        "Entry {{new_acc}} added successfully."
-                    ]
-                }
-            ]
+  "schema_version": "1.0",
+  "name": "safe_add",
+  "version": "1.0.0",
+  "description": "Add a vault password entry with flags",
+  "author": "APM",
+  "permissions": [
+    "vault.write"
+  ],
+  "file_storage": {
+    "enabled": false,
+    "allowed_types": []
+  },
+  "commands": {
+    "add-secret": {
+      "description": "Add an account/username/password entry",
+      "flags": {
+        "account": {
+          "type": "string",
+          "default": "new_entry"
+        },
+        "username": {
+          "type": "string",
+          "default": "plugin_user"
+        },
+        "password": {
+          "type": "string",
+          "default": ""
         }
+      },
+      "steps": [
+        {
+          "op": "v:add",
+          "args": [
+            "{{account}}",
+            "{{password}}",
+            "{{username}}"
+          ]
+        }
+      ]
     }
+  },
+  "hooks": {}
 }
