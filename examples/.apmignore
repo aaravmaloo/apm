@@ -1,0 +1,33 @@
+# APM ignore rules example
+
+[spaces]
+	x_space
+	temp_*
+	*_archive
+
+[entries]
+	# space:type:name
+	x_space:notes:note_name
+	x_space:notes:*
+	work:password:*token*
+	*:photo:x*
+	*:token:*test*
+
+[vocab]
+	# case-sensitive
+	'cause
+	A
+	tmp*
+	*debug*
+
+[cloud-specific-ignore]
+	# cloud_service:space:type:entry
+	dropbox:x_space:password:y_pass
+	GitHub:x_space:note:demo
+	drive:x_space:photo:example-photo
+	gdrive:work:token:*sandbox*
+
+[misc]
+	ignore:vocab
+	ignore:audit
+	ignore:history
