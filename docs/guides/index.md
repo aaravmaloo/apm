@@ -4,6 +4,7 @@ Check out one of the core guides to get started:
 
 - [Managing your vault](./vault-management.md)
 - [Cloud synchronization](./cloud-sync.md)
+- [Using .apmignore](./apmignore.md)
 - [Generating TOTP codes](./totp.md)
 - [Managing sessions](./sessions.md)
 - [Using plugins](./plugins.md)
