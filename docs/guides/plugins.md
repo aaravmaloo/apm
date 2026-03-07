@@ -1,108 +1,64 @@
 ---
 title: Using plugins
 description:
-  A guide to installing, managing, and developing plugins for APM.
+  Build and manage APM plugins with legacy plugin manifests.
 ---
 
 # Using plugins
 
-APM features a declarative, JSON-driven plugin architecture that allows extending the CLI with
-custom commands and workflows without writing Go code.
+APM plugins are manifest-driven (`plugin.json`).
 
-## Installing plugins
+## Create a plugin
 
-### From the marketplace
-
-Install a plugin from the cloud-synced marketplace:
-
-```console
-$ pm plugins add backup-tool
-Downloading backup-tool v1.2.0...
-Plugin installed successfully.
-```
-
-### From a local directory
-
-Install a plugin from a local directory for development:
-
-```console
-$ pm plugins local ./my-plugin
-Plugin loaded from ./my-plugin
-```
-
-## Listing installed plugins
-
-View all installed plugins:
-
-```console
-$ pm plugins list
-+-------------+---------+---------------------------+
-| Name        | Version | Description               |
-+-------------+---------+---------------------------+
-| backup-tool | 1.2.0   | Backup vault to server    |
-| audit-ext   | 0.5.0   | Extended audit reports     |
-+-------------+---------+---------------------------+
-```
-
-## Running plugin commands
-
-Plugins register their own commands that are available at the top level:
-
-```console
-$ pm backup-remote
-Syncing vault to remote endpoint...
-Server Response: 200 OK
-```
-
-## Removing plugins
-
-Uninstall a plugin:
-
-```console
-$ pm plugins remove backup-tool
-Plugin removed.
-```
-
-## Creating a plugin
-
-A plugin is a directory containing a `plugin.json` manifest file:
-
-```text
-my-plugin/
-  plugin.json
-```
-
-The manifest defines metadata, permissions, and command definitions:
+Create a folder with `plugin.json`:
 
 ```json
 {
-  "name": "backup-tool",
-  "version": "1.2.0",
-  "description": "Backup vault to remote server",
-  "author": "Aarav Maloo",
-  "permissions": [
-    "vault.read",
-    "network.outbound"
-  ],
+  "schema_version": "1.0",
+  "name": "my_plugin",
+  "version": "1.0.0",
+  "description": "Example plugin",
+  "author": "you",
+  "permissions": ["vault.read"],
+  "file_storage": {
+    "enabled": false,
+    "allowed_types": []
+  },
   "commands": {
-    "backup-remote": {
-      "description": "Sync vault to remote endpoint",
+    "hello": {
+      "description": "Print a greeting",
+      "flags": {},
       "steps": [
-        { "op": "v:get", "args": ["MySecret", "pass"] },
-        { "op": "net:post", "args": ["https://api.myapp.com/sync", "{\"key\": \"{{pass}}\"}", "resp"] },
-        { "op": "s:out", "args": ["Server Response: {{resp}}"] }
+        { "op": "s:out", "args": ["hello from my_plugin"] }
       ]
     }
-  }
+  },
+  "hooks": {}
 }
 ```
 
-!!! tip
+## Install local plugin
 
-    See the [Plugin API reference](../reference/plugin-api.md) for the complete operations
-    glossary and permissions list.
+```console
+pm plugins local ./path/to/my_plugin
+```
 
-## Next steps
+## Marketplace flow
 
-See the [plugins concept](../concepts/plugins.md) for details on the plugin architecture, or read
-the [Plugin API reference](../reference/plugin-api.md) for the full SDK documentation.
+```console
+pm plugins push my_plugin --path ./path/to/my_plugin
+pm plugins market
+pm plugins install my_plugin
+```
+
+## Permission controls
+
+```console
+pm plugins access
+pm plugins access my_plugin vault.write off
+pm plugins access my_plugin vault.write on
+```
+
+## Examples
+
+See `examples/plugins/` for working `plugin.json` examples.
