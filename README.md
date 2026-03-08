@@ -233,12 +233,13 @@ APM enforces security standards through a flexible, YAML-based policy engine.
 ### 9.1 One-Command Install
 Linux and macOS (latest stable release):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aaravmaloo/apm/main/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh | bash
 ```
 
 Windows PowerShell (latest stable release):
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/aaravmaloo/apm/main/scripts/install.ps1 -UseBasicParsing | iex"
+powershell -ExecutionPolicy Bypass -Command "iwr Set-ExecutionPolicy Bypass -Scope Process -Force
+iwr https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.ps1 -UseBasicParsing | iex
 ```
 
 Install layout used by the scripts:
