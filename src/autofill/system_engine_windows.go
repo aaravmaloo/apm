@@ -51,6 +51,7 @@ type input struct {
 
 type windowsSystemEngine struct {
 	mu       sync.Mutex
+	typeMu   sync.Mutex
 	stopCh   chan struct{}
 	stopped  bool
 	hotkey   Hotkey
@@ -90,6 +91,11 @@ func (w *windowsSystemEngine) Stop() error {
 }
 
 func (w *windowsSystemEngine) Type(actions []SequenceAction) error {
+	w.typeMu.Lock()
+	defer w.typeMu.Unlock()
+
+	w.waitForModifierRelease(500 * time.Millisecond)
+
 	for _, action := range actions {
 		switch action.Type {
 		case ActionText:
@@ -111,7 +117,7 @@ func (w *windowsSystemEngine) Type(actions []SequenceAction) error {
 }
 
 func (w *windowsSystemEngine) pollHotkey() {
-	ticker := time.NewTicker(60 * time.Millisecond)
+	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
 
 	wasDown := false
@@ -122,13 +128,43 @@ func (w *windowsSystemEngine) pollHotkey() {
 		case <-ticker.C:
 			down := w.hotkeyPressed()
 			if down && !wasDown {
-				ctx, err := getActiveWindowContext()
-				if err == nil && w.callback != nil {
-					go w.callback(ctx)
-				}
+				go w.dispatchHotkey()
 			}
 			wasDown = down
 		}
+	}
+}
+
+func (w *windowsSystemEngine) dispatchHotkey() {
+	// Wait for the hotkey combo to be released before handling callback so
+	// autofill typing doesn't run while Ctrl/Shift are still physically held.
+	deadline := time.Now().Add(500 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		select {
+		case <-w.stopCh:
+			return
+		default:
+		}
+		if !w.hotkeyPressed() && !isKeyDown(vkControl) && !isKeyDown(vkShift) && !isKeyDown(vkAlt) {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	time.Sleep(15 * time.Millisecond)
+
+	ctx, err := getActiveWindowContext()
+	if err == nil && w.callback != nil {
+		w.callback(ctx)
+	}
+}
+
+func (w *windowsSystemEngine) waitForModifierRelease(maxWait time.Duration) {
+	deadline := time.Now().Add(maxWait)
+	for time.Now().Before(deadline) {
+		if !isKeyDown(vkControl) && !isKeyDown(vkShift) && !isKeyDown(vkAlt) {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 }
 
@@ -242,6 +278,7 @@ func typeText(text string) error {
 		if err := typeRune(r); err != nil {
 			return err
 		}
+		time.Sleep(8 * time.Millisecond)
 	}
 	return nil
 }
