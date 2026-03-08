@@ -1,7 +1,7 @@
 package tui
 
 import (
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 	"strings"
 
 	"github.com/atotto/clipboard"
