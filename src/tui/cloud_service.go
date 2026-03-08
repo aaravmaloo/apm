@@ -7,7 +7,7 @@ import (
 
 	oauth "golang.org/x/oauth2"
 
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 )
 
 func setupCloudProvider(vault *src.Vault, masterPassword, vaultPath, provider, mode, retrievalKey, githubToken, githubRepo, dropboxToken, appKey, appSecret string, keyConsent bool) error {
@@ -47,7 +47,13 @@ func setupCloudProvider(vault *src.Vault, masterPassword, vaultPath, provider, m
 		if err != nil {
 			return err
 		}
-		fileID, err := cp.UploadVault(vaultPath, key)
+		uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(vault, masterPassword, vaultPath, "gdrive")
+		if err != nil {
+			return err
+		}
+		defer cleanupUpload()
+
+		fileID, err := cp.UploadVault(uploadPath, key)
 		if err != nil {
 			return err
 		}
@@ -67,7 +73,13 @@ func setupCloudProvider(vault *src.Vault, masterPassword, vaultPath, provider, m
 			return err
 		}
 		gm.SetRepo(repo)
-		if _, err := gm.UploadVault(vaultPath, ""); err != nil {
+		uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(vault, masterPassword, vaultPath, "github")
+		if err != nil {
+			return err
+		}
+		defer cleanupUpload()
+
+		if _, err := gm.UploadVault(uploadPath, ""); err != nil {
 			return err
 		}
 		vault.GitHubToken = token
@@ -119,7 +131,13 @@ func setupCloudProvider(vault *src.Vault, masterPassword, vaultPath, provider, m
 		if err != nil {
 			return err
 		}
-		fileID, err := cp.UploadVault(vaultPath, key)
+		uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(vault, masterPassword, vaultPath, "dropbox")
+		if err != nil {
+			return err
+		}
+		defer cleanupUpload()
+
+		fileID, err := cp.UploadVault(uploadPath, key)
 		if err != nil {
 			return err
 		}
@@ -172,7 +190,13 @@ func syncCloudProvider(vault *src.Vault, masterPassword, vaultPath, provider str
 	if err != nil {
 		return err
 	}
-	return cp.SyncVault(vaultPath, targetID)
+	uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(vault, masterPassword, vaultPath, provider)
+	if err != nil {
+		return err
+	}
+	defer cleanupUpload()
+
+	return cp.SyncVault(uploadPath, targetID)
 }
 
 func resetCloudMetadata(vault *src.Vault, masterPassword, vaultPath string) error {
