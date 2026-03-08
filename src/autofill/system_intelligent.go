@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 )
 
 type intelligentCandidate struct {
@@ -101,6 +101,7 @@ func resolveSystemIntelligentFill(vault *src.Vault, req FillRequest) (FillRespon
 
 func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intelligentCandidate {
 	totpByAccount, totpByDomain := buildTOTPIndexes(vault)
+	linkedAccounts := linkedTOTPAccountsForContext(vault, ctx)
 	emailHints := contextEmailHints(ctx)
 	typedEmail := focusedTypedEmail(ctx)
 	intent := inferFieldIntent(ctx)
@@ -135,6 +136,9 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 			c.TOTPSecret = group.Secret
 			usedTOTPAccount[group.Account] = struct{}{}
 		}
+		if linkedAccounts[strings.ToLower(strings.TrimSpace(entry.Account))] {
+			c.Score += 360
+		}
 		c.Score += scoreCandidateForIntent(c, intent)
 		if c.Score <= 0 {
 			continue
@@ -154,6 +158,11 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 		}
 
 		score := scoreAccountContext(group.Account, "", ctx, emailHints)
+		if linkedAccounts[accountKey] {
+			if score < 800 {
+				score = 800
+			}
+		}
 		if score == 0 {
 			continue
 		}
@@ -188,6 +197,9 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 func buildTOTPIndexes(vault *src.Vault) (map[string]totpGroup, map[string]totpGroup) {
 	byAccount := map[string]totpGroup{}
 	byDomain := map[string]totpGroup{}
+	if vault == nil {
+		return byAccount, byDomain
+	}
 
 	for _, t := range vault.TOTPEntries {
 		account := strings.TrimSpace(t.Account)
@@ -222,7 +234,49 @@ func buildTOTPIndexes(vault *src.Vault) (map[string]totpGroup, map[string]totpGr
 		byDomain[domainKey] = agg
 	}
 
+	for domain, linkedAccount := range vault.TOTPDomainLinks {
+		domain = normalizeDomain(domain)
+		if domain == "" {
+			continue
+		}
+		accountKey := strings.ToLower(strings.TrimSpace(linkedAccount))
+		group, ok := byAccount[accountKey]
+		if !ok {
+			continue
+		}
+		group.Domain = domain
+		byDomain[strings.ToLower(domain)] = group
+	}
+
 	return byAccount, byDomain
+}
+
+func linkedTOTPAccountsForContext(vault *src.Vault, ctx RequestContext) map[string]bool {
+	out := map[string]bool{}
+	if vault == nil || len(vault.TOTPDomainLinks) == 0 {
+		return out
+	}
+
+	hints := normalizeDomainHints(ctx.DomainHints)
+	if domain := normalizeDomain(ctx.Domain); domain != "" {
+		hints = append(hints, domain)
+	}
+	if len(hints) == 0 {
+		return out
+	}
+
+	for domain, account := range vault.TOTPDomainLinks {
+		normalizedDomain := strings.ToLower(normalizeDomain(domain))
+		if normalizedDomain == "" {
+			continue
+		}
+		for _, hint := range hints {
+			if hint == normalizedDomain || strings.HasSuffix(hint, "."+normalizedDomain) || strings.HasSuffix(normalizedDomain, "."+hint) {
+				out[strings.ToLower(strings.TrimSpace(account))] = true
+			}
+		}
+	}
+	return out
 }
 
 func findMatchingTOTPGroup(account string, byAccount map[string]totpGroup, byDomain map[string]totpGroup) *totpGroup {
