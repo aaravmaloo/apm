@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 )
 
 type RunOptions struct {
@@ -37,6 +37,7 @@ type Daemon struct {
 	lastActivity      time.Time
 
 	pendingCandidates []MatchCandidate
+	recentNotices     map[string]time.Time
 
 	listener net.Listener
 	server   *http.Server
@@ -44,6 +45,7 @@ type Daemon struct {
 	stopped  bool
 
 	systemEngine SystemEngine
+	notifier     PopupNotifier
 }
 
 func Run(opts RunOptions) error {
@@ -92,9 +94,11 @@ func Run(opts RunOptions) error {
 		stopCh:            make(chan struct{}),
 		systemEngine:      newSystemEngine(),
 		inactivityTimeout: 15 * time.Minute,
+		notifier:          newPopupNotifier(),
+		recentNotices:     make(map[string]time.Time),
 	}
 	if daemon.hotkeyRaw == "" {
-		daemon.hotkeyRaw = "CTRL+SHIFT+ALT+A"
+		daemon.hotkeyRaw = "CTRL+SHIFT+L"
 	}
 
 	mux := http.NewServeMux()
@@ -116,6 +120,7 @@ func Run(opts RunOptions) error {
 	}
 
 	go daemon.watchLockState()
+	go daemon.watchContextHints()
 
 	err = daemon.server.Serve(listener)
 	if errors.Is(err, http.ErrServerClosed) {
@@ -389,29 +394,73 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 }
 
 func (d *Daemon) handleHotkey(ctx WindowContext) {
+	if d.tryHandleHotkeyContext(requestContextFromWindow(ctx)) {
+		return
+	}
+
+	// Retry once with a fresh window snapshot. Some web OTP fields update focus
+	// asynchronously, so a second capture improves first-try reliability.
+	freshCtx, err := captureActiveWindowContext()
+	if err != nil {
+		return
+	}
+	_ = d.tryHandleHotkeyContext(requestContextFromWindow(freshCtx))
+}
+
+func (d *Daemon) tryHandleHotkeyContext(requestContext RequestContext) bool {
 	req := FillRequest{
-		Context: RequestContext{
-			Kind:         ContextSystem,
-			Domain:       ctx.Domain,
-			DomainHints:  ctx.DomainHints,
-			WindowTitle:  ctx.WindowTitle,
-			ProcessName:  ctx.ProcessName,
-			ProcessPath:  ctx.ProcessPath,
-			FocusedName:  ctx.FocusedName,
-			FocusedValue: ctx.FocusedValue,
-			EmailHints:   ctx.EmailHints,
-		},
+		Context:        requestContext,
 		IncludeTOTP:    true,
 		ExplicitAction: true,
 	}
 
 	resp, statusCode := d.resolveFill(req)
+	if statusCode == http.StatusOK && resp.Status == ResponseStatusMultiple && len(resp.Candidates) > 0 {
+		// Prefer the top ranked candidate for hotkey flows to avoid requiring
+		// manual re-trigger when several close matches exist.
+		req.SelectionID = resp.Candidates[0].ProfileID
+		resp, statusCode = d.resolveFill(req)
+	}
 	if statusCode != http.StatusOK || resp.Status != ResponseStatusOK || resp.Error != "" {
-		return
+		return false
 	}
 
 	actions := renderSequence(resp.Sequence, resp.Username, resp.Password, resp.TOTP)
 	_ = d.systemEngine.Type(actions)
+	return true
+}
+
+func (d *Daemon) watchContextHints() {
+	ticker := time.NewTicker(1500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			ctx, err := captureActiveWindowContext()
+			if err != nil {
+				continue
+			}
+			requestContext := requestContextFromWindow(ctx)
+			contextKey := contextFingerprint(requestContext)
+
+			d.mu.Lock()
+			hasMatch := !d.locked && d.vault != nil && len(buildIntelligentCandidates(d.vault, requestContext)) > 0
+			d.mu.Unlock()
+
+			if !hasMatch || !contextSuggestsCredentialEntry(requestContext) {
+				continue
+			}
+
+			if strings.TrimSpace(contextKey) == "" {
+				contextKey = "match"
+			}
+
+			d.maybeNotify("autocomplete:"+contextKey, fmt.Sprintf("Autocomplete found for the website. Press %s for completion", strings.ToUpper(d.hotkeyRaw)), 20*time.Second)
+		case <-d.stopCh:
+			return
+		}
+	}
 }
 
 func (d *Daemon) watchLockState() {
@@ -433,6 +482,26 @@ func (d *Daemon) watchLockState() {
 			return
 		}
 	}
+}
+
+func (d *Daemon) maybeNotify(key, message string, cooldown time.Duration) {
+	key = strings.TrimSpace(strings.ToLower(key))
+	message = strings.TrimSpace(message)
+	if key == "" || message == "" {
+		return
+	}
+
+	now := time.Now().UTC()
+	d.mu.Lock()
+	lastSeen := d.recentNotices[key]
+	if !lastSeen.IsZero() && now.Sub(lastSeen) < cooldown {
+		d.mu.Unlock()
+		return
+	}
+	d.recentNotices[key] = now
+	d.mu.Unlock()
+
+	d.notifier.Show(message)
 }
 
 func (d *Daemon) shutdownNow() {
@@ -478,6 +547,81 @@ func toCandidates(matches []Profile) []MatchCandidate {
 		})
 	}
 	return out
+}
+
+func requestContextFromWindow(ctx WindowContext) RequestContext {
+	return RequestContext{
+		Kind:         ContextSystem,
+		Domain:       ctx.Domain,
+		DomainHints:  ctx.DomainHints,
+		WindowTitle:  ctx.WindowTitle,
+		ProcessName:  ctx.ProcessName,
+		ProcessPath:  ctx.ProcessPath,
+		FocusedName:  ctx.FocusedName,
+		FocusedValue: ctx.FocusedValue,
+		EmailHints:   ctx.EmailHints,
+	}
+}
+
+func contextSuggestsCredentialEntry(ctx RequestContext) bool {
+	windowTitle := strings.ToLower(strings.TrimSpace(ctx.WindowTitle))
+	focusedName := strings.ToLower(strings.TrimSpace(ctx.FocusedName))
+	signals := strings.TrimSpace(windowTitle + " " + focusedName)
+
+	// Suppress hints in common non-auth surfaces even if an account match exists.
+	if containsAny(signals, "inbox", "mailbox", "compose", "message list", "thread list", "chat", "channel", "timeline", "feed") &&
+		!containsAny(signals, "login", "log in", "sign in", "signin", "password", "otp", "2fa", "verification", "auth", "security code", "authenticator") {
+		return false
+	}
+
+	authPageSignals := containsAny(
+		windowTitle,
+		"login", "log in", "sign in", "signin", "password", "otp", "2fa",
+		"verification", "verify", "two-factor", "one-time", "authenticator", "security code",
+	)
+	focusSignals := containsAny(
+		focusedName,
+		"email", "username", "user", "login", "password", "passcode", "otp",
+		"verification", "code", "pin", "authenticator", "security",
+	)
+
+	switch inferFieldIntent(ctx) {
+	case fieldIntentOTP, fieldIntentPassword:
+		return true
+	case fieldIntentUsername:
+		return authPageSignals || focusSignals
+	default:
+		return authPageSignals && focusSignals
+	}
+}
+
+func contextIntentBucket(ctx RequestContext) string {
+	switch inferFieldIntent(ctx) {
+	case fieldIntentOTP:
+		return "otp"
+	case fieldIntentPassword:
+		return "password"
+	case fieldIntentUsername:
+		return "username"
+	}
+	windowSignals := strings.ToLower(strings.TrimSpace(ctx.WindowTitle + " " + ctx.FocusedName))
+	if containsAny(windowSignals, "login", "log in", "sign in", "signin", "password", "username", "email", "otp", "2fa", "verification", "auth") {
+		return "login"
+	}
+	return "generic"
+}
+
+func contextFingerprint(ctx RequestContext) string {
+	domain := normalizeDomain(ctx.Domain)
+	if domain == "" && len(ctx.DomainHints) > 0 {
+		domain = normalizeDomain(ctx.DomainHints[0])
+	}
+	process := strings.ToLower(strings.TrimSpace(ctx.ProcessName))
+	bucket := contextIntentBucket(ctx)
+	if domain == "" && process == "" && bucket == "generic" {
+		return ""
+	}
+	return strings.TrimSpace(domain + "|" + process + "|" + bucket)
 }
 
 func pickProfile(matches []Profile, selectionID string) (Profile, bool) {
