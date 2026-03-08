@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 )
 
 func loadConfiguredProfiles() ([]Profile, error) {
