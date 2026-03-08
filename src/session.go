@@ -11,11 +11,11 @@ import (
 )
 
 type Session struct {
-	MasterPassword	string		`json:"master_password"`
-	ReadOnly	bool		`json:"readonly"`
-	Expiry	time.Time		`json:"expiry"`
-	LastUsed	time.Time		`json:"last_used"`
-	InactivityTimeout	time.Duration		`json:"inactivity_timeout"`
+	MasterPassword    string        `json:"master_password"`
+	ReadOnly          bool          `json:"readonly"`
+	Expiry            time.Time     `json:"expiry"`
+	LastUsed          time.Time     `json:"last_used"`
+	InactivityTimeout time.Duration `json:"inactivity_timeout"`
 }
 
 func getSessionFile() string {
@@ -38,11 +38,11 @@ func getSessionFile() string {
 
 func CreateSession(password string, duration time.Duration, readonly bool, inactivity time.Duration) error {
 	session := Session{
-		MasterPassword:	password,
-		ReadOnly:	readonly,
-		Expiry:	time.Now().Add(duration),
-		LastUsed:	time.Now(),
-		InactivityTimeout:	inactivity,
+		MasterPassword:    password,
+		ReadOnly:          readonly,
+		Expiry:            time.Now().Add(duration),
+		LastUsed:          time.Now(),
+		InactivityTimeout: inactivity,
 	}
 
 	data, err := json.Marshal(session)
