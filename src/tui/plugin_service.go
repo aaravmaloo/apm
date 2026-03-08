@@ -3,9 +3,9 @@ package tui
 import (
 	"context"
 	"fmt"
+	src "github.com/aaravmaloo/apm/src"
+	"github.com/aaravmaloo/apm/src/plugins"
 	"os"
-	src "password-manager/src"
-	"password-manager/src/plugins"
 	"path/filepath"
 	"sort"
 	"strings"
