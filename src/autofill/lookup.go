@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 )
 
 var ErrAmbiguousCredential = errors.New("ambiguous credential profile")
