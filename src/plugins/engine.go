@@ -3,6 +3,7 @@ package plugins
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	apm "password-manager/src"
+	apm "github.com/aaravmaloo/apm/src"
 )
 
 type ExecutionContext struct {
@@ -135,6 +136,52 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		if assignTo != "" {
 			se.Context.Variables[assignTo] = strings.Join(names, ", ")
 		}
+		return nil
+
+	case "v:dump":
+		if !hasPermission(permissions, "vault.read") {
+			return fmt.Errorf("permission denied: vault.read")
+		}
+		if se.Vault == nil {
+			return fmt.Errorf("vault not available")
+		}
+		assignTo := se.getArg(step.Args, 0)
+		format := strings.ToLower(strings.TrimSpace(se.getArg(step.Args, 1)))
+		var (
+			data []byte
+			err  error
+		)
+		if format == "pretty" {
+			data, err = json.MarshalIndent(se.Vault, "", "  ")
+		} else {
+			data, err = json.Marshal(se.Vault)
+		}
+		if err != nil {
+			return err
+		}
+		if assignTo != "" {
+			se.Context.Variables[assignTo] = string(data)
+			return nil
+		}
+		fmt.Println(string(data))
+		return nil
+
+	case "v:replace":
+		if !hasPermission(permissions, "vault.write") {
+			return fmt.Errorf("permission denied: vault.write")
+		}
+		if se.Vault == nil {
+			return fmt.Errorf("vault not available")
+		}
+		payload := strings.TrimSpace(se.getArg(step.Args, 0))
+		if payload == "" {
+			return fmt.Errorf("vault payload required")
+		}
+		var updated apm.Vault
+		if err := json.Unmarshal([]byte(payload), &updated); err != nil {
+			return fmt.Errorf("invalid vault payload: %w", err)
+		}
+		*se.Vault = updated
 		return nil
 
 	case "v:del":
@@ -303,13 +350,35 @@ func (pm *PluginManager) ExecuteHooks(event, command string, vault *apm.Vault, v
 	se := NewStepExecutor(ctx, vault, vaultPath)
 
 	for _, plugin := range pm.Loaded {
+		permissions := effectivePluginPermissions(vault, plugin.Definition.Name, plugin.Definition.Permissions)
 		if actions, ok := plugin.Definition.Hooks[hookKey]; ok {
 			for _, action := range actions {
-				if err := se.ExecuteStep(CommandStep(action), plugin.Definition.Permissions); err != nil {
+				if err := se.ExecuteStep(CommandStep(action), permissions); err != nil {
 					return err
 				}
 			}
 		}
 	}
 	return nil
+}
+
+func effectivePluginPermissions(vault *apm.Vault, pluginName string, declared []string) []string {
+	if vault == nil || vault.PluginPermissionOverrides == nil {
+		return declared
+	}
+	pluginKey := strings.ToLower(strings.TrimSpace(pluginName))
+	overrides := vault.PluginPermissionOverrides[pluginKey]
+	if len(overrides) == 0 {
+		return declared
+	}
+
+	filtered := make([]string, 0, len(declared))
+	for _, permission := range declared {
+		key := strings.ToLower(strings.TrimSpace(permission))
+		enabled, exists := overrides[key]
+		if !exists || enabled {
+			filtered = append(filtered, permission)
+		}
+	}
+	return filtered
 }
