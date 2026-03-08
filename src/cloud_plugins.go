@@ -24,9 +24,9 @@ func (cm *GoogleDriveManager) EnsurePluginsFolder() (string, error) {
 	}
 
 	dir := &drive.File{
-		Name:	"plugins",
-		Parents:	[]string{DriveFolderID},
-		MimeType:	"application/vnd.google-apps.folder",
+		Name:     "plugins",
+		Parents:  []string{DriveFolderID},
+		MimeType: "application/vnd.google-apps.folder",
 	}
 	res, err := cm.Service.Files.Create(dir).Fields("id").Do()
 	if err != nil {
@@ -65,8 +65,8 @@ func (cm *GoogleDriveManager) UploadPlugin(name string, pluginPath string) error
 	} else {
 
 		file := &drive.File{
-			Name:	name + ".zip",
-			Parents:	[]string{pluginsFolderID},
+			Name:    name + ".zip",
+			Parents: []string{pluginsFolderID},
 		}
 		_, err = cm.Service.Files.Create(file).Media(f).Do()
 	}
