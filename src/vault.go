@@ -295,6 +295,8 @@ type Vault struct {
 	SecurityLevel         int                    `json:"security_level"` // 1-3
 	Entries               []Entry                `json:"entries"`
 	TOTPEntries           []TOTPEntry            `json:"totp_entries"`
+	TOTPOrder             []string               `json:"totp_order,omitempty"`
+	TOTPDomainLinks       map[string]string      `json:"totp_domain_links,omitempty"`
 	Tokens                []TokenEntry           `json:"tokens"`
 	SecureNotes           []SecureNoteEntry      `json:"secure_notes"`
 	APIKeys               []APIKeyEntry          `json:"api_keys"`
@@ -328,23 +330,26 @@ type Vault struct {
 	DecoyMode             bool                   `json:"decoy_mode,omitempty"`
 	DecoySessionCount     int                    `json:"decoy_session_count,omitempty"`
 	Profile               string                 `json:"profile,omitempty"`
+	AutocompleteEnabled   bool                   `json:"autocomplete_enabled,omitempty"`
+	VocabCompressed       []byte                 `json:"vocab_compressed,omitempty"`
 
-	AlertEmail                string   `json:"alert_email,omitempty"`
-	AlertsEnabled             bool     `json:"alerts_enabled,omitempty"`
-	AnomalyDetectionEnabled   bool     `json:"anomaly_detection_enabled,omitempty"`
-	LastCloudProvider         string   `json:"last_cloud_provider,omitempty"`
-	DriveSyncMode             string   `json:"drive_sync_mode,omitempty"` // "apm_public" or "self_hosted"
-	DriveKeyMetadataConsent   bool     `json:"drive_key_metadata_consent,omitempty"`
-	GitHubToken               string   `json:"github_token,omitempty"`
-	GitHubRepo                string   `json:"github_repo,omitempty"`
-	DropboxToken              []byte   `json:"dropbox_token,omitempty"`
-	DropboxSyncMode           string   `json:"dropbox_sync_mode,omitempty"`
-	DropboxKeyMetadataConsent bool     `json:"dropbox_key_metadata_consent,omitempty"`
-	DropboxFileID             string   `json:"dropbox_file_id,omitempty"`
-	CurrentSpace              string   `json:"current_space,omitempty"`
-	Spaces                    []string `json:"spaces"`
-	ActivePolicy              Policy   `json:"active_policy,omitempty"`
-	NeedsRepair               bool     `json:"-"` // Internal flag for silent self-healing
+	AlertEmail                string                     `json:"alert_email,omitempty"`
+	AlertsEnabled             bool                       `json:"alerts_enabled,omitempty"`
+	AnomalyDetectionEnabled   bool                       `json:"anomaly_detection_enabled,omitempty"`
+	LastCloudProvider         string                     `json:"last_cloud_provider,omitempty"`
+	DriveSyncMode             string                     `json:"drive_sync_mode,omitempty"` // "apm_public" or "self_hosted"
+	DriveKeyMetadataConsent   bool                       `json:"drive_key_metadata_consent,omitempty"`
+	GitHubToken               string                     `json:"github_token,omitempty"`
+	GitHubRepo                string                     `json:"github_repo,omitempty"`
+	DropboxToken              []byte                     `json:"dropbox_token,omitempty"`
+	DropboxSyncMode           string                     `json:"dropbox_sync_mode,omitempty"`
+	DropboxKeyMetadataConsent bool                       `json:"dropbox_key_metadata_consent,omitempty"`
+	DropboxFileID             string                     `json:"dropbox_file_id,omitempty"`
+	CurrentSpace              string                     `json:"current_space,omitempty"`
+	Spaces                    []string                   `json:"spaces"`
+	ActivePolicy              Policy                     `json:"active_policy,omitempty"`
+	PluginPermissionOverrides map[string]map[string]bool `json:"plugin_permission_overrides,omitempty"`
+	NeedsRepair               bool                       `json:"-"` // Internal flag for silent self-healing
 
 	CurrentProfileParams   *CryptoProfile             `json:"-"`
 	RecoveryEmail          string                     `json:"recovery_email,omitempty"`
