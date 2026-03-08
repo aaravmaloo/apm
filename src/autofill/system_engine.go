@@ -33,7 +33,7 @@ type SystemEngine interface {
 
 func parseHotkey(input string) (Hotkey, error) {
 	if strings.TrimSpace(input) == "" {
-		input = "CTRL+SHIFT+ALT+A"
+		input = "CTRL+SHIFT+L"
 	}
 	parts := strings.Split(strings.ToUpper(strings.TrimSpace(input)), "+")
 	if len(parts) < 2 {
