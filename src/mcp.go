@@ -1346,7 +1346,13 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			targetID = vault.GitHubRepo
 		}
 		if targetID == "" {
-			newID, err := cm.UploadVault(vaultPath, vault.RetrievalKey)
+			uploadPath, cleanupUpload, prepErr := PrepareCloudUploadVaultPath(vault, masterPwd, vaultPath, args.Provider)
+			if prepErr != nil {
+				return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Ignore parse failed: %v", prepErr)}}}, nil
+			}
+			defer cleanupUpload()
+
+			newID, err := cm.UploadVault(uploadPath, vault.RetrievalKey)
 			if err != nil {
 				return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Upload failed: %v", err)}}}, nil
 			}
@@ -1358,7 +1364,13 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 			saveVault(vault, masterPwd, vaultPath)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Uploaded to %s (ID: %s)", args.Provider, newID)}}}, nil
 		}
-		if err := cm.SyncVault(vaultPath, targetID); err != nil {
+		uploadPath, cleanupUpload, prepErr := PrepareCloudUploadVaultPath(vault, masterPwd, vaultPath, args.Provider)
+		if prepErr != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Ignore parse failed: %v", prepErr)}}}, nil
+		}
+		defer cleanupUpload()
+
+		if err := cm.SyncVault(uploadPath, targetID); err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Sync failed: %v", err)}}}, nil
 		}
 		LogAction("MCP_CLOUD_SYNC", fmt.Sprintf("Synced to %s", args.Provider))
