@@ -2,7 +2,7 @@ package tui
 
 import (
 	"fmt"
-	src "password-manager/src"
+	src "github.com/aaravmaloo/apm/src"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
