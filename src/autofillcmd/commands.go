@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"password-manager/src/autofill"
+	"github.com/aaravmaloo/apm/src/autofill"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -47,7 +47,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 			color.Green("Autofill daemon started.")
 		},
 	}
-	autofillStartCmd.Flags().StringVar(&daemonHotkey, "hotkey", "CTRL+SHIFT+ALT+A", "Global hotkey for system autofill")
+	autofillStartCmd.Flags().StringVar(&daemonHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
 
 	autofillStopCmd := &cobra.Command{
 		Use:   "stop",
@@ -149,7 +149,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 			}
 		},
 	}
-	autofillDaemonCmd.Flags().String("hotkey", "CTRL+SHIFT+ALT+A", "Global hotkey for system autofill")
+	autofillDaemonCmd.Flags().String("hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
 
 	autofillCmd.AddCommand(
 		autofillStartCmd,
@@ -160,8 +160,9 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 	)
 
 	vaultCmd := &cobra.Command{
-		Use:   "vault",
-		Short: "Manage daemon vault lock state for autofill",
+		Use:    "vault",
+		Short:  "Manage daemon vault lock state for autofill",
+		Hidden: true,
 	}
 
 	vaultUnlockCmd := &cobra.Command{
@@ -212,7 +213,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 	}
 	vaultUnlockCmd.Flags().Duration("timeout", 1*time.Hour, "Unlock duration")
 	vaultUnlockCmd.Flags().Duration("inactivity", 15*time.Minute, "Inactivity auto-lock duration")
-	vaultUnlockCmd.Flags().String("hotkey", "CTRL+SHIFT+ALT+A", "Global hotkey used if daemon must be started")
+	vaultUnlockCmd.Flags().String("hotkey", "CTRL+SHIFT+L", "Global hotkey used if daemon must be started")
 
 	vaultLockCmd := &cobra.Command{
 		Use:   "lock",
@@ -264,4 +265,34 @@ func ensureAutofillDaemonRunning(vaultPath, hotkey string) error {
 		}
 	}
 	return errors.New("daemon did not become ready")
+}
+
+func UnlockDaemonWithPassword(vaultPath, password string, timeout, inactivity time.Duration, hotkey string) error {
+	if strings.TrimSpace(hotkey) == "" {
+		hotkey = "CTRL+SHIFT+L"
+	}
+	if err := ensureAutofillDaemonRunning(vaultPath, hotkey); err != nil {
+		return err
+	}
+	client, err := autofill.NewClientFromState()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return client.Unlock(ctx, autofill.UnlockRequest{
+		MasterPassword:       password,
+		SessionTimeoutSec:    int(timeout.Seconds()),
+		InactivityTimeoutSec: int(inactivity.Seconds()),
+	})
+}
+
+func LockDaemonIfRunning() error {
+	client, err := autofill.NewClientFromState()
+	if err != nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+	return client.Lock(ctx)
 }
