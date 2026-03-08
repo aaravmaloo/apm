@@ -2,8 +2,8 @@ package tui
 
 import (
 	"fmt"
+	src "github.com/aaravmaloo/apm/src"
 	"os"
-	src "password-manager/src"
 	"path/filepath"
 	runtime2 "runtime"
 	"strings"
