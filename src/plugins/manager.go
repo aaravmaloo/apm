@@ -19,7 +19,7 @@ type PluginManager struct {
 
 func NewPluginManager(rootDir string) *PluginManager {
 	return &PluginManager{
-		PluginsDir: filepath.Join(rootDir, "plugins_cache"),
+		PluginsDir: filepath.Join(rootDir, "plugins"),
 		Loaded:     make(map[string]*Plugin),
 	}
 }
@@ -29,6 +29,7 @@ func (pm *PluginManager) LoadPlugins() error {
 		if err := os.MkdirAll(pm.PluginsDir, 0755); err != nil {
 			return err
 		}
+		pm.Loaded = make(map[string]*Plugin)
 		return nil
 	}
 
@@ -36,6 +37,7 @@ func (pm *PluginManager) LoadPlugins() error {
 	if err != nil {
 		return err
 	}
+	pm.Loaded = make(map[string]*Plugin)
 
 	for _, entry := range entries {
 		if !entry.IsDir() {
