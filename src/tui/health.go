@@ -2,8 +2,8 @@ package tui
 
 import (
 	"fmt"
+	src "github.com/aaravmaloo/apm/src"
 	"github.com/charmbracelet/lipgloss"
-	src "password-manager/src"
 )
 
 func RenderHealth(vault *src.Vault) string {
