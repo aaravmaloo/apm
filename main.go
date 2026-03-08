@@ -9,6 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"net/http"
 	"os"
@@ -21,10 +25,11 @@ import (
 	"time"
 
 	"context"
-	src "password-manager/src"
-	"password-manager/src/autofillcmd"
-	"password-manager/src/plugins"
-	"password-manager/src/tui"
+
+	src "github.com/aaravmaloo/apm/src"
+	"github.com/aaravmaloo/apm/src/autofillcmd"
+	"github.com/aaravmaloo/apm/src/plugins"
+	"github.com/aaravmaloo/apm/src/tui"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
@@ -126,7 +131,14 @@ func main() {
 			return err
 		}
 
-		fileID, err := cm.UploadVault(vaultPath, gdriveKey)
+		uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(v, mp, vaultPath, "gdrive")
+		if err != nil {
+			color.Red("Failed to apply .apmignore for upload: %v", err)
+			return err
+		}
+		defer cleanupUpload()
+
+		fileID, err := cm.UploadVault(uploadPath, gdriveKey)
 		if err != nil {
 			color.Red("Upload failed: %v", err)
 			return err
@@ -179,7 +191,14 @@ func main() {
 			return err
 		}
 		gm.SetRepo(repo)
-		_, err = gm.UploadVault(vaultPath, "")
+		uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(v, pat, vaultPath, "github")
+		if err != nil {
+			color.Red("Failed to apply .apmignore for upload: %v", err)
+			return err
+		}
+		defer cleanupUpload()
+
+		_, err = gm.UploadVault(uploadPath, "")
 		if err != nil {
 			color.Red("Upload failed: %v", err)
 			return err
@@ -191,8 +210,9 @@ func main() {
 	}
 
 	var addCmd = &cobra.Command{
-		Use:   "add",
+		Use:   "add [type]",
 		Short: "Add a new entry to the vault interactively",
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
@@ -209,119 +229,192 @@ func main() {
 				return
 			}
 
-			fmt.Println("Select type to add:")
-			color.HiCyan("\n--- CATEGORIES ---")
-			color.Cyan("1. Identity & Personal")
-			color.Cyan("2. Developer & Infrastructure")
-			color.Cyan("3. Media & Files")
-			color.Cyan("4. Finance & Legal")
-			fmt.Print("\nSelect Category: ")
-			catChoice := readInput()
-
 			var choice string
-			switch catChoice {
-			case "1":
-				color.HiCyan("\n--- IDENTITY & PERSONAL ---")
-				fmt.Println("1. Password")
-				fmt.Println("2. TOTP")
-				fmt.Println("3. Government ID")
-				fmt.Println("4. Contact")
-				fmt.Println("5. Medical Record")
-				fmt.Print("\nSelect item: ")
-				sub := readInput()
-				switch sub {
-				case "1":
-					choice = "1"
-				case "2":
-					choice = "2"
-				case "3":
-					choice = "12"
-				case "4":
-					choice = "15"
-				case "5":
-					choice = "13"
+			resolveAddChoice := func(raw string) string {
+				normalized := strings.ToLower(strings.TrimSpace(raw))
+				normalized = strings.ReplaceAll(normalized, " ", "")
+				normalized = strings.ReplaceAll(normalized, "-", "")
+				normalized = strings.ReplaceAll(normalized, "_", "")
+				if normalized == "" {
+					return ""
 				}
-			case "2":
-				color.HiCyan("\n--- DEVELOPER & INFRASTRUCTURE ---")
-				fmt.Println("1. API Key")
-				fmt.Println("2. Token")
-				fmt.Println("3. SSH Key")
-				fmt.Println("4. SSH Config")
-				fmt.Println("5. Cloud Credentials")
-				fmt.Println("6. Kubernetes Secret")
-				fmt.Println("7. Docker Registry")
-				fmt.Println("8. CI/CD Secret")
-				fmt.Print("\nSelect item: ")
-				sub := readInput()
-				switch sub {
-				case "1":
-					choice = "5"
-				case "2":
-					choice = "3"
-				case "3":
-					choice = "6"
-				case "4":
-					choice = "19"
-				case "5":
-					choice = "16"
-				case "6":
-					choice = "17"
-				case "7":
-					choice = "18"
-				case "8":
-					choice = "20"
+				switch normalized {
+				case "1", "password", "pass", "login":
+					return "1"
+				case "2", "totp", "otp", "2fa":
+					return "2"
+				case "3", "token":
+					return "3"
+				case "4", "note", "securenote", "notes":
+					return "4"
+				case "5", "apikey", "api":
+					return "5"
+				case "6", "ssh", "sshkey":
+					return "6"
+				case "7", "wifi", "wireless":
+					return "7"
+				case "8", "recovery", "recoverycode", "recoverycodes":
+					return "8"
+				case "9", "certificate", "cert":
+					return "9"
+				case "10", "bank", "banking":
+					return "10"
+				case "11", "document", "doc", "file":
+					return "11"
+				case "12", "governmentid", "govid":
+					return "12"
+				case "13", "medical", "medicalrecord":
+					return "13"
+				case "14", "travel", "traveldoc":
+					return "14"
+				case "15", "contact":
+					return "15"
+				case "16", "cloud", "cloudcredentials":
+					return "16"
+				case "17", "k8s", "kubernetes", "kubernetessecret":
+					return "17"
+				case "18", "docker", "dockerregistry":
+					return "18"
+				case "19", "sshconfig":
+					return "19"
+				case "20", "cicd", "cicdsecret", "ci", "cd":
+					return "20"
+				case "21", "softwarelicense", "license":
+					return "21"
+				case "22", "legal", "legalcontract":
+					return "22"
+				case "23", "audio":
+					return "23"
+				case "24", "video":
+					return "24"
+				case "25", "photo", "image", "picture":
+					return "25"
+				default:
+					return ""
 				}
-			case "3":
-				color.HiCyan("\n--- MEDIA & FILES ---")
-				fmt.Println("1. Document")
-				fmt.Println("2. Audio")
-				fmt.Println("3. Video")
-				fmt.Println("4. Photo")
-				fmt.Println("5. Secure Note")
-				fmt.Print("\nSelect item: ")
-				sub := readInput()
-				switch sub {
-				case "1":
-					choice = "11"
-				case "2":
-					choice = "23"
-				case "3":
-					choice = "24"
-				case "4":
-					choice = "25"
-				case "5":
-					choice = "4"
+			}
+
+			if len(args) > 0 {
+				choice = resolveAddChoice(args[0])
+				if choice == "" {
+					color.Red("Unknown add type '%s'.", args[0])
+					color.Yellow("Try: password, totp, token, note, apikey, sshkey, wifi, recoverycodes, certificate, banking, document, govid, medicalrecord, traveldoc, contact, cloudcredentials, kubernetes, dockerregistry, sshconfig, cicdsecret, softwarelicense, legalcontract, audio, video, photo")
+					return
 				}
-			case "4":
-				color.HiCyan("\n--- FINANCE & LEGAL ---")
-				fmt.Println("1. Banking")
-				fmt.Println("2. WiFi")
-				fmt.Println("3. Recovery Codes")
-				fmt.Println("4. Certificate")
-				fmt.Println("5. Software License")
-				fmt.Println("6. Legal Contract")
-				fmt.Println("7. Travel Doc")
-				fmt.Print("\nSelect item: ")
-				sub := readInput()
-				switch sub {
+			} else {
+				fmt.Println("Select type to add:")
+				color.HiCyan("\n--- CATEGORIES ---")
+				color.Cyan("1. Identity & Personal")
+				color.Cyan("2. Developer & Infrastructure")
+				color.Cyan("3. Media & Files")
+				color.Cyan("4. Finance & Legal")
+				fmt.Print("\nSelect Category: ")
+				catChoice := readInput()
+
+				switch catChoice {
 				case "1":
-					choice = "10"
+					color.HiCyan("\n--- IDENTITY & PERSONAL ---")
+					fmt.Println("1. Password")
+					fmt.Println("2. TOTP")
+					fmt.Println("3. Government ID")
+					fmt.Println("4. Contact")
+					fmt.Println("5. Medical Record")
+					fmt.Print("\nSelect item: ")
+					sub := readInput()
+					switch sub {
+					case "1":
+						choice = "1"
+					case "2":
+						choice = "2"
+					case "3":
+						choice = "12"
+					case "4":
+						choice = "15"
+					case "5":
+						choice = "13"
+					}
 				case "2":
-					choice = "7"
+					color.HiCyan("\n--- DEVELOPER & INFRASTRUCTURE ---")
+					fmt.Println("1. API Key")
+					fmt.Println("2. Token")
+					fmt.Println("3. SSH Key")
+					fmt.Println("4. SSH Config")
+					fmt.Println("5. Cloud Credentials")
+					fmt.Println("6. Kubernetes Secret")
+					fmt.Println("7. Docker Registry")
+					fmt.Println("8. CI/CD Secret")
+					fmt.Print("\nSelect item: ")
+					sub := readInput()
+					switch sub {
+					case "1":
+						choice = "5"
+					case "2":
+						choice = "3"
+					case "3":
+						choice = "6"
+					case "4":
+						choice = "19"
+					case "5":
+						choice = "16"
+					case "6":
+						choice = "17"
+					case "7":
+						choice = "18"
+					case "8":
+						choice = "20"
+					}
 				case "3":
-					choice = "8"
+					color.HiCyan("\n--- MEDIA & FILES ---")
+					fmt.Println("1. Document")
+					fmt.Println("2. Audio")
+					fmt.Println("3. Video")
+					fmt.Println("4. Photo")
+					fmt.Println("5. Secure Note")
+					fmt.Print("\nSelect item: ")
+					sub := readInput()
+					switch sub {
+					case "1":
+						choice = "11"
+					case "2":
+						choice = "23"
+					case "3":
+						choice = "24"
+					case "4":
+						choice = "25"
+					case "5":
+						choice = "4"
+					}
 				case "4":
-					choice = "9"
-				case "5":
-					choice = "21"
-				case "6":
-					choice = "22"
-				case "7":
-					choice = "14"
+					color.HiCyan("\n--- FINANCE & LEGAL ---")
+					fmt.Println("1. Banking")
+					fmt.Println("2. WiFi")
+					fmt.Println("3. Recovery Codes")
+					fmt.Println("4. Certificate")
+					fmt.Println("5. Software License")
+					fmt.Println("6. Legal Contract")
+					fmt.Println("7. Travel Doc")
+					fmt.Print("\nSelect item: ")
+					sub := readInput()
+					switch sub {
+					case "1":
+						choice = "10"
+					case "2":
+						choice = "7"
+					case "3":
+						choice = "8"
+					case "4":
+						choice = "9"
+					case "5":
+						choice = "21"
+					case "6":
+						choice = "22"
+					case "7":
+						choice = "14"
+					}
+				default:
+					color.Red("Invalid category.")
+					return
 				}
-			default:
-				color.Red("Invalid category.")
-				return
 			}
 
 			if choice == "" {
@@ -357,6 +450,14 @@ func main() {
 					color.Red("Error: %v\n", err)
 					return
 				}
+				fmt.Print("Link domain for autofill (optional, e.g. github.com): ")
+				domainLink := normalizeDomainInput(readInput())
+				if domainLink != "" {
+					if vault.TOTPDomainLinks == nil {
+						vault.TOTPDomainLinks = make(map[string]string)
+					}
+					vault.TOTPDomainLinks[domainLink] = acc
+				}
 			case "3":
 				fmt.Print("Token Name: ")
 				name := readInput()
@@ -371,19 +472,16 @@ func main() {
 			case "4":
 				fmt.Print("Note Name: ")
 				name := readInput()
-				fmt.Println("Content (end with empty line):")
-				var contentLines []string
-				for {
-					line := readInput()
-					if line == "" {
-						break
-					}
-					contentLines = append(contentLines, line)
+				content, err := captureNoteContent(vault, name, "")
+				if err != nil {
+					color.Red("Note creation canceled: %v\n", err)
+					return
 				}
-				if err := vault.AddSecureNote(name, strings.Join(contentLines, "\n")); err != nil {
+				if err := vault.AddSecureNote(name, content); err != nil {
 					color.Red("Error: %v\n", err)
 					return
 				}
+				reindexNoteVocabularyIfEnabled(vault)
 			case "5":
 				fmt.Print("Label: ")
 				name := readInput()
@@ -755,6 +853,7 @@ func main() {
 		Short: "Search and manage vault entries interactively",
 		Run: func(cmd *cobra.Command, args []string) {
 			initialQuery := ""
+			showPass, _ := cmd.Flags().GetBool("show-pass")
 			if len(args) > 0 {
 				initialQuery = args[0]
 			}
@@ -765,7 +864,7 @@ func main() {
 				return
 			}
 
-			handleInteractiveEntries(vault, masterPassword, initialQuery, readonly)
+			handleInteractiveEntries(vault, masterPassword, initialQuery, readonly, showPass)
 		},
 	}
 	getCmd.Flags().Bool("show-pass", false, "Show password in output")
@@ -793,6 +892,9 @@ func main() {
 			}
 			src.LogAction("VAULT_UNLOCKED", "Session updated")
 			color.Green("Vault session updated. Expires in %v or after %v of inactivity.\n", timeout, inactivity)
+			if err := autofillcmd.UnlockDaemonWithPassword(vaultPath, masterPassword, timeout, inactivity, "CTRL+SHIFT+L"); err != nil {
+				color.Yellow("Autofill daemon unlock skipped: %v", err)
+			}
 		},
 	}
 	unlockCmd.Flags().Duration("timeout", 1*time.Hour, "Session duration (e.g. 1h, 30m)")
@@ -837,6 +939,9 @@ func main() {
 			} else {
 				src.LogAction("VAULT_LOCKED", "Session terminated")
 				color.Green("Vault locked.\n")
+			}
+			if err := autofillcmd.LockDaemonIfRunning(); err != nil {
+				color.Yellow("Autofill daemon lock failed: %v", err)
 			}
 		},
 	}
@@ -1120,8 +1225,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "9.1.0"
-			infoBuild := "18dcd72 (23-02-2026)"
+			infoVersion := "can10.0.0"
+			infoBuild := "commits left to be pushed (23-02-2026)"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
@@ -1159,103 +1264,42 @@ func main() {
 	}
 
 	var totpCmd = &cobra.Command{
-		Use:   "totp",
-		Short: "Manage TOTP accounts",
-	}
-
-	var totpShowCmd = &cobra.Command{
-		Use:   "show [account]",
-		Short: "Show TOTP code(s) with live updates",
+		Use:   "totp [entry_name]",
+		Short: "Show or copy TOTP codes",
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			company, _ := cmd.Flags().GetString("company")
-			_, vault, _, err := src_unlockVault()
+			masterPassword, vault, _, err := src_unlockVault()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			var targets []src.TOTPEntry
-			if len(args) == 0 || args[0] == "all" {
-				targets = vault.TOTPEntries
-			} else {
-				entry, ok := vault.GetTOTPEntry(args[0])
-				if !ok {
-					fmt.Printf("TOTP account %s not found.\n", args[0])
-					return
-				}
-				targets = append(targets, entry)
-			}
-			if company != "" {
-				var filtered []src.TOTPEntry
-				for _, t := range targets {
-					if strings.Contains(strings.ToLower(t.Account), strings.ToLower(company)) {
-						filtered = append(filtered, t)
-					}
-				}
-				targets = filtered
-			}
-			if len(targets) == 0 {
-				fmt.Println("No matching TOTP accounts found.")
+			entries := orderedTOTPEntries(vault)
+			if len(entries) == 0 {
+				fmt.Println("No TOTP entries found.")
 				return
 			}
 
-			fmt.Println("\x1b[?25lPress Ctrl+C to stop.")
-			fmt.Println("Type entry number to copy to clipboard.")
-			defer fmt.Print("\x1b[?25h")
-
-			inputChan := make(chan string)
-			go func() {
-				scanner := bufio.NewScanner(os.Stdin)
-				for scanner.Scan() {
-					inputChan <- scanner.Text()
+			if len(args) == 1 {
+				target, ok := findTOTPEntry(entries, args[0])
+				if !ok {
+					fmt.Printf("TOTP entry '%s' not found.\n", args[0])
+					return
 				}
-			}()
-
-			for {
-				remaining := 30 - (time.Now().Unix() % 30)
-				fmt.Printf("\r\x1b[KUpdating in %ds... [", remaining)
-
-				for i := 0; i < 30; i++ {
-					if i < int(remaining) {
-						fmt.Print("=")
-					} else {
-						fmt.Print(" ")
-					}
+				code, err := src.GenerateTOTP(target.Secret)
+				if err != nil {
+					color.Red("Failed to generate TOTP for %s: %v", target.Account, err)
+					return
 				}
-				fmt.Println("]")
-
-				for i, entry := range targets {
-					code, err := src.GenerateTOTP(entry.Secret)
-					if err != nil {
-						fmt.Printf("\r\x1b[K[%d] %-20s : INVALID\n", i+1, entry.Account)
-					} else {
-						fmt.Printf("\r\x1b[K[%d] %-20s : \x1b[1;32m%s\x1b[0m\n", i+1, entry.Account, code)
-					}
-				}
-
-				select {
-				case input := <-inputChan:
-					num, err := strconv.Atoi(input)
-					if err == nil && num >= 1 && num <= len(targets) {
-						targetEntry := targets[num-1]
-						code, _ := src.GenerateTOTP(targetEntry.Secret)
-						copyToClipboard(code)
-						fmt.Printf("\r\x1b[K\x1b[1;36m>> Copied TOTP for %s to clipboard!\x1b[0m\n", targetEntry.Account)
-						time.Sleep(1 * time.Second)
-						fmt.Printf("\033[%dA", len(targets)+2)
-						src.LogAction("TOTP_COPIED", fmt.Sprintf("Account: %s", targetEntry.Account))
-					} else {
-						fmt.Printf("\033[%dA", len(targets)+1)
-					}
-				default:
-					time.Sleep(500 * time.Millisecond)
-					fmt.Printf("\033[%dA", len(targets)+1)
-				}
+				copyToClipboard(code)
+				color.Green("Copied TOTP for %s to clipboard.", target.Account)
+				src.LogAction("TOTP_COPIED", fmt.Sprintf("Account: %s", target.Account))
+				return
 			}
+
+			runInteractiveTOTP(vault, masterPassword)
 		},
 	}
-	totpShowCmd.Flags().StringP("company", "c", "", "Filter by company name")
-	totpCmd.AddCommand(totpShowCmd)
 
 	var importCmd = &cobra.Command{
 		Use:   "import <file>",
@@ -1483,7 +1527,14 @@ func main() {
 					targetID = vault.DropboxFileID
 				}
 
-				err = cm.SyncVault(vaultPath, targetID)
+				uploadPath, cleanupUpload, prepErr := src.PrepareCloudUploadVaultPath(vault, masterPassword, vaultPath, provider)
+				if prepErr != nil {
+					color.Red("[%s] Failed to apply .apmignore: %v", provider, prepErr)
+					src.LogAction("CLOUD_SYNC_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, prepErr))
+					continue
+				}
+				err = cm.SyncVault(uploadPath, targetID)
+				cleanupUpload()
 				if err != nil {
 					color.Red("[%s] Sync failed: %v", provider, err)
 					src.LogAction("CLOUD_SYNC_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, err))
@@ -1559,7 +1610,15 @@ func main() {
 										targetID = vault.GitHubRepo
 									}
 
-									err = cm.SyncVault(vaultPath, targetID)
+									uploadPath, cleanupUpload, prepErr := src.PrepareCloudUploadVaultPath(vault, masterPassword, vaultPath, provider)
+									if prepErr != nil {
+										src.LogAction("CLOUD_AUTOSYNC_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, prepErr))
+										color.Red("[%s] Failed to apply .apmignore: %v", provider, prepErr)
+										continue
+									}
+
+									err = cm.SyncVault(uploadPath, targetID)
+									cleanupUpload()
 									if err != nil {
 										src.LogAction("CLOUD_AUTOSYNC_FAILED", fmt.Sprintf("Provider: %s, Error: %v", provider, err))
 										color.Red("[%s] Auto-sync failed: %v", provider, err)
@@ -1912,7 +1971,25 @@ func main() {
 
 	var pluginsListCmd = &cobra.Command{
 		Use:   "list",
-		Short: "List available plugins in Marketplace (Drive)",
+		Short: "List installed plugins (alias of installed)",
+		Run: func(cmd *cobra.Command, args []string) {
+			list := pluginMgr.ListPlugins()
+			if len(list) == 0 {
+				fmt.Println("No plugins installed locally.")
+				return
+			}
+			sort.Strings(list)
+			fmt.Println("Installed Plugins:")
+			for _, n := range list {
+				fmt.Printf("- %s\n", n)
+			}
+		},
+	}
+
+	var pluginsMarketCmd = &cobra.Command{
+		Use:     "market",
+		Aliases: []string{"marketplace"},
+		Short:   "List available plugins in Marketplace (Drive)",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Fetching plugins from Marketplace...")
 			cm, err := getCloudManagerEx(context.Background(), nil, "", "gdrive")
@@ -1968,6 +2045,14 @@ func main() {
 		},
 	}
 
+	var pluginsInstallCmd = &cobra.Command{
+		Use:   "install [name]",
+		Short: "Install a plugin from Marketplace",
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginsAddCmd.Run(cmd, args)
+		},
+	}
+
 	var pluginsPushCmd = &cobra.Command{
 		Use:   "push [name]",
 		Short: "Push a plugin to the Google Drive marketplace",
@@ -1981,17 +2066,24 @@ func main() {
 			sourcePath := strings.TrimSpace(localPath)
 			if sourcePath == "" {
 				sourcePath = filepath.Join(pluginMgr.PluginsDir, name)
+				if stat, err := os.Stat(sourcePath); err != nil || !stat.IsDir() {
+					cwdCandidate := filepath.Join(".", name)
+					if cwdStat, cwdErr := os.Stat(cwdCandidate); cwdErr == nil && cwdStat.IsDir() {
+						sourcePath = cwdCandidate
+					}
+				}
 			}
-
-			pluginDefPath := filepath.Join(sourcePath, "plugin.json")
-			if _, err := os.Stat(pluginDefPath); os.IsNotExist(err) {
-				color.Red("Invalid plugin source. '%s' not found.", pluginDefPath)
+			sourcePath = filepath.Clean(sourcePath)
+			info, err := os.Stat(sourcePath)
+			if err != nil || !info.IsDir() {
+				color.Red("Invalid plugin source directory: %s", sourcePath)
 				return
 			}
 
-			def, err := plugins.LoadPluginDef(pluginDefPath)
-			if err != nil {
-				color.Red("Invalid plugin definition: %v", err)
+			pluginDefPath := filepath.Join(sourcePath, "plugin.json")
+			def, loadErr := plugins.LoadPluginDef(pluginDefPath)
+			if loadErr != nil {
+				color.Red("Invalid plugin source. '%s' is required and must be valid: %v", pluginDefPath, loadErr)
 				return
 			}
 			if strings.TrimSpace(def.Name) != "" && def.Name != name {
@@ -2090,7 +2182,221 @@ func main() {
 		},
 	}
 
-	pluginsCmd.AddCommand(pluginsListCmd, pluginsInstalledCmd, pluginsAddCmd, pluginsPushCmd, pluginsRemoveCmd, pluginLocalCmd, pluginSearchCmd)
+	var pluginAccessCmd = &cobra.Command{
+		Use:   "access [plugin] [permission] [on|off]",
+		Short: "View or change plugin permission access (2 args toggles)",
+		Args:  cobra.MaximumNArgs(3),
+		Run: func(cmd *cobra.Command, args []string) {
+			pass, vault, readonly, err := src_unlockVault()
+			if err != nil {
+				color.Red("Error: %v", err)
+				return
+			}
+
+			resolvePlugin := func(input string) (string, *plugins.Plugin, bool) {
+				target := strings.TrimSpace(input)
+				for loadedName, loadedPlugin := range pluginMgr.Loaded {
+					if strings.EqualFold(strings.TrimSpace(loadedName), target) {
+						return loadedName, loadedPlugin, true
+					}
+				}
+				return "", nil, false
+			}
+
+			printPluginPermissions := func(displayName string, plugin *plugins.Plugin) {
+				fmt.Printf("%s\n", displayName)
+				perms := append([]string{}, plugin.Definition.Permissions...)
+				sort.Strings(perms)
+				for _, permission := range perms {
+					status := "ON"
+					if !pluginPermissionEnabled(vault, plugin.Definition.Name, permission) {
+						status = "OFF"
+					}
+					fmt.Printf("  %-28s %s\n", permission, status)
+				}
+			}
+
+			if len(args) == 0 {
+				if len(pluginMgr.Loaded) == 0 {
+					fmt.Println("No plugins loaded.")
+					return
+				}
+				names := make([]string, 0, len(pluginMgr.Loaded))
+				for name := range pluginMgr.Loaded {
+					names = append(names, name)
+				}
+				sort.Strings(names)
+				for _, name := range names {
+					plugin := pluginMgr.Loaded[name]
+					printPluginPermissions(name, plugin)
+				}
+				fmt.Println("Toggle example: pm plugins access <plugin> <permission>")
+				fmt.Println("Set example:    pm plugins access <plugin> <permission> on|off")
+				return
+			}
+
+			displayName, plugin, ok := resolvePlugin(args[0])
+			if !ok {
+				color.Red("Plugin '%s' not found.", strings.TrimSpace(args[0]))
+				return
+			}
+
+			if len(args) == 1 {
+				printPluginPermissions(displayName, plugin)
+				return
+			}
+
+			if len(args) < 2 || len(args) > 3 {
+				color.Red("Usage: pm plugins access [plugin] [permission] [on|off]")
+				return
+			}
+			if readonly {
+				color.Red("Vault is READ-ONLY. Cannot modify plugin permissions.")
+				return
+			}
+
+			permission := strings.TrimSpace(args[1])
+
+			known := false
+			for _, p := range plugin.Definition.Permissions {
+				if strings.EqualFold(p, permission) {
+					permission = p
+					known = true
+					break
+				}
+			}
+			if !known {
+				color.Red("Permission '%s' is not declared by plugin '%s'.", permission, displayName)
+				return
+			}
+
+			stateRaw := ""
+			enabled := false
+			if len(args) == 2 {
+				enabled = !pluginPermissionEnabled(vault, plugin.Definition.Name, permission)
+				if enabled {
+					stateRaw = "on"
+				} else {
+					stateRaw = "off"
+				}
+			} else {
+				stateRaw = strings.ToLower(strings.TrimSpace(args[2]))
+				switch stateRaw {
+				case "on", "true", "1", "yes":
+					enabled = true
+				case "off", "false", "0", "no":
+					enabled = false
+				default:
+					color.Red("State must be 'on' or 'off'.")
+					return
+				}
+			}
+
+			setPluginPermissionOverride(vault, plugin.Definition.Name, permission, enabled)
+			if err := saveVaultState(vault, pass); err != nil {
+				color.Red("Failed to save permission change: %v", err)
+				return
+			}
+			color.Green("Plugin '%s' permission '%s' set to %s.", displayName, permission, strings.ToUpper(stateRaw))
+		},
+	}
+
+	executePluginCommand := func(pluginName string, plugin *plugins.Plugin, commandName string, cmdDef plugins.CommandDef, overrides map[string]string, args []string) error {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			return err
+		}
+		if readonly {
+			return fmt.Errorf("vault is READ-ONLY. Plugin commands are disabled in read-only mode")
+		}
+
+		ctx := plugins.NewExecutionContext()
+		for flagName, flagDef := range cmdDef.Flags {
+			value := strings.TrimSpace(overrides[flagName])
+			if value == "" {
+				value = flagDef.Default
+			}
+			ctx.Variables[flagName] = value
+		}
+		for i, arg := range args {
+			ctx.Variables[fmt.Sprintf("arg%d", i+1)] = arg
+		}
+
+		effectivePerms := applyPluginPermissionOverrides(vault, plugin.Definition.Name, plugin.Definition.Permissions)
+		executor := plugins.NewStepExecutor(ctx, vault, vaultPath)
+		if err := executor.ExecuteSteps(cmdDef.Steps, effectivePerms); err != nil {
+			return err
+		}
+		return saveVaultState(vault, pass)
+	}
+
+	var pluginRunCmd = &cobra.Command{
+		Use:   "run [plugin] [command] [args...]",
+		Short: "Run an installed plugin command",
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			pluginInput := strings.TrimSpace(args[0])
+			commandInput := strings.TrimSpace(args[1])
+
+			var (
+				pluginName string
+				plugin     *plugins.Plugin
+				found      bool
+			)
+			for loadedName, loadedPlugin := range pluginMgr.Loaded {
+				if strings.EqualFold(strings.TrimSpace(loadedName), pluginInput) {
+					pluginName = loadedName
+					plugin = loadedPlugin
+					found = true
+					break
+				}
+			}
+			if !found || plugin == nil || plugin.Definition == nil {
+				color.Red("Plugin '%s' not found.", pluginInput)
+				return
+			}
+
+			var (
+				commandName string
+				cmdDef      plugins.CommandDef
+				cmdFound    bool
+			)
+			for loadedCommand, loadedDef := range plugin.Definition.Commands {
+				if strings.EqualFold(strings.TrimSpace(loadedCommand), commandInput) {
+					commandName = loadedCommand
+					cmdDef = loadedDef
+					cmdFound = true
+					break
+				}
+			}
+			if !cmdFound {
+				color.Red("Command '%s' not found in plugin '%s'.", commandInput, pluginName)
+				return
+			}
+
+			rawOverrides, _ := cmd.Flags().GetStringArray("set")
+			overrides := make(map[string]string)
+			for _, pair := range rawOverrides {
+				parts := strings.SplitN(pair, "=", 2)
+				if len(parts) != 2 {
+					continue
+				}
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+				if key == "" {
+					continue
+				}
+				overrides[key] = value
+			}
+
+			if err := executePluginCommand(pluginName, plugin, commandName, cmdDef, overrides, args[2:]); err != nil {
+				color.Red("Plugin command failed: %v", err)
+			}
+		},
+	}
+	pluginRunCmd.Flags().StringArray("set", nil, "Set plugin flag as key=value (repeatable)")
+
+	pluginsCmd.AddCommand(pluginsInstalledCmd, pluginsListCmd, pluginsMarketCmd, pluginsAddCmd, pluginsInstallCmd, pluginsPushCmd, pluginsRemoveCmd, pluginLocalCmd, pluginSearchCmd, pluginAccessCmd, pluginRunCmd)
 
 	var setupCmd = &cobra.Command{
 		Use:   "setup",
@@ -2901,55 +3207,169 @@ func main() {
 
 	spaceCmd.AddCommand(spaceSwitchCmd, spaceListCmd, spaceCreateCmd)
 	policyCmd.AddCommand(policyLoadCmd, policyShowCmd, policyClearCmd)
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd)
-	autofillCmd, vaultCmd := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
+	loadedCmd := &cobra.Command{
+		Use:   "loaded",
+		Short: "Show loaded plugins, policies, and .apmignore state",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Loaded state")
+			fmt.Println("============")
+
+			fmt.Println("\n[plugins]")
+			if pluginMgr == nil {
+				fmt.Println("error: plugin manager unavailable")
+			} else {
+				if err := pluginMgr.LoadPlugins(); err != nil {
+					fmt.Printf("error: %v\n", err)
+				}
+				list := pluginMgr.ListPlugins()
+				if len(list) == 0 {
+					fmt.Println("(none)")
+				} else {
+					sort.Strings(list)
+					for _, name := range list {
+						fmt.Printf("- %s\n", name)
+					}
+				}
+			}
+
+			fmt.Println("\n[policies]")
+			policyDir := filepath.Join(filepath.Dir(vaultPath), "policies")
+			policies, policyErr := src.LoadPolicies(policyDir)
+			if policyErr != nil {
+				fmt.Printf("error: %v\n", policyErr)
+			} else if len(policies) == 0 {
+				fmt.Printf("(none) dir=%s\n", policyDir)
+			} else {
+				names := make([]string, 0, len(policies))
+				for _, p := range policies {
+					label := strings.TrimSpace(p.Name)
+					if label == "" {
+						label = "(unnamed)"
+					}
+					names = append(names, label)
+				}
+				sort.Strings(names)
+				fmt.Printf("dir=%s\n", policyDir)
+				for _, name := range names {
+					fmt.Printf("- %s\n", name)
+				}
+			}
+
+			fmt.Println("\n[.apmignore]")
+			ignoreCfg, ignorePath, ignoreErr := src.LoadIgnoreConfigForVault(vaultPath)
+			if ignoreErr != nil {
+				fmt.Printf("error: %v\n", ignoreErr)
+			} else if ignorePath == "" {
+				fmt.Println("(not found)")
+			} else {
+				fmt.Printf("path=%s\n", ignorePath)
+				fmt.Printf("spaces=%d entries=%d vocab=%d cloud-specific=%d misc=%d\n",
+					len(ignoreCfg.Spaces), len(ignoreCfg.Entries), len(ignoreCfg.Vocab), len(ignoreCfg.CloudSpecific), len(ignoreCfg.Misc))
+			}
+		},
+	}
+
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd)
+	autofillCmd, _ := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
 		VaultPath:    &vaultPath,
 		ReadPassword: readPassword,
 	})
-	rootCmd.AddCommand(autofillCmd, vaultCmd)
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
+	autocompleteCmd := &cobra.Command{
+		Use:   "autocomplete",
+		Short: "Manage autocomplete features",
+	}
+	autocompleteEnableCmd := &cobra.Command{
+		Use:   "enable",
+		Short: "Enable note autocomplete indexing",
+		Run: func(cmd *cobra.Command, args []string) {
+			authAutocompleteCmd.Run(cmd, []string{"true"})
+		},
+	}
+	autocompleteDisableCmd := &cobra.Command{
+		Use:   "disable",
+		Short: "Disable note autocomplete indexing",
+		Run: func(cmd *cobra.Command, args []string) {
+			authAutocompleteCmd.Run(cmd, []string{"false"})
+		},
+	}
+	autocompleteStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show note autocomplete status",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, vault, _, err := src_unlockVault()
+			if err != nil {
+				color.Red("Error: %v", err)
+				return
+			}
+			if vault.AutocompleteEnabled {
+				color.Green("Autocomplete: enabled")
+			} else {
+				color.Yellow("Autocomplete: disabled")
+			}
+		},
+	}
+	autocompleteLinkTOTPCmd := &cobra.Command{
+		Use:   "link-totp",
+		Short: "Link a domain to an existing TOTP entry",
+		Run: func(cmd *cobra.Command, args []string) {
+			pass, vault, readonly, err := src_unlockVault()
+			if err != nil {
+				color.Red("Error: %v", err)
+				return
+			}
+			if readonly {
+				color.Red("Vault is READ-ONLY. Cannot modify links.")
+				return
+			}
+
+			fmt.Print("domain: ")
+			domain := normalizeDomainInput(readInput())
+			if domain == "" {
+				color.Red("Domain is required.")
+				return
+			}
+
+			entries := orderedTOTPEntries(vault)
+			if len(entries) == 0 {
+				color.Red("No TOTP entries found in current space.")
+				return
+			}
+			fmt.Println("Available TOTP entries:")
+			for i, entry := range entries {
+				fmt.Printf("[%d] %s\n", i+1, entry.Account)
+			}
+			fmt.Print("link-totp-id: ")
+			idInput := strings.TrimSpace(readInput())
+			idx, err := strconv.Atoi(idInput)
+			if err != nil || idx < 1 || idx > len(entries) {
+				color.Red("Invalid link-totp-id.")
+				return
+			}
+
+			if vault.TOTPDomainLinks == nil {
+				vault.TOTPDomainLinks = make(map[string]string)
+			}
+			selected := entries[idx-1]
+			vault.TOTPDomainLinks[domain] = selected.Account
+			if err := saveVaultState(vault, pass); err != nil {
+				color.Red("Failed to save TOTP link: %v", err)
+				return
+			}
+			color.Green("Linked %s -> %s", domain, selected.Account)
+			if err := autofillcmd.UnlockDaemonWithPassword(vaultPath, pass, 1*time.Hour, 15*time.Minute, "CTRL+SHIFT+L"); err != nil {
+				color.Yellow("Link saved, but autofill daemon auto-start failed: %v", err)
+			} else {
+				color.Cyan("Autofill daemon is running and unlocked for autocomplete.")
+			}
+		},
+	}
+	autocompleteCmd.AddCommand(autocompleteEnableCmd, autocompleteDisableCmd, autocompleteStatusCmd, autocompleteLinkTOTPCmd)
+
+	rootCmd.AddCommand(autofillCmd, autocompleteCmd)
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authAutocompleteCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
-
-	for _, plugin := range pluginMgr.Loaded {
-		for cmdKey, cmdDef := range plugin.Definition.Commands {
-			cmdName := cmdKey
-			desc := cmdDef.Description
-
-			dynamicCmd := &cobra.Command{
-				Use:   cmdName,
-				Short: desc,
-				Run: func(c *cobra.Command, args []string) {
-					ctx := plugins.NewExecutionContext()
-
-					for flagName, flagDef := range cmdDef.Flags {
-						val, _ := c.Flags().GetString(flagName)
-						if val == "" {
-							val = flagDef.Default
-						}
-						ctx.Variables[flagName] = val
-					}
-
-					_, vault, _, err := src_unlockVault()
-					if err != nil {
-						color.Red("Error unlocking vault for plugin: %v\n", err)
-						return
-					}
-					executor := plugins.NewStepExecutor(ctx, vault, vaultPath)
-
-					if err := executor.ExecuteSteps(cmdDef.Steps, plugin.Definition.Permissions); err != nil {
-						color.Red("Plugin execution error: %v\n", err)
-					}
-				},
-			}
-
-			for flagName, flagDef := range cmdDef.Flags {
-				dynamicCmd.Flags().String(flagName, flagDef.Default, flagName)
-			}
-
-			rootCmd.AddCommand(dynamicCmd)
-		}
-	}
+	vocabCmd.AddCommand(vocabAliasCmd, vocabAliasListCmd, vocabAliasRemoveCmd, vocabRankCmd, vocabRemoveCmd, vocabReindexCmd)
 
 	var updateCmd = &cobra.Command{
 		Use:   "update",
@@ -2979,6 +3399,92 @@ func main() {
 		},
 	}
 	rootCmd.AddCommand(tuiCmd)
+
+	// Register plugin commands as top-level commands (e.g. "pm hello").
+	registerDynamicPluginCommands := func() {
+		existingNames := make(map[string]struct{})
+		for _, registered := range rootCmd.Commands() {
+			existingNames[strings.ToLower(strings.TrimSpace(registered.Name()))] = struct{}{}
+			for _, alias := range registered.Aliases {
+				existingNames[strings.ToLower(strings.TrimSpace(alias))] = struct{}{}
+			}
+		}
+
+		pluginNames := make([]string, 0, len(pluginMgr.Loaded))
+		for name := range pluginMgr.Loaded {
+			pluginNames = append(pluginNames, name)
+		}
+		sort.Strings(pluginNames)
+
+		for _, pluginName := range pluginNames {
+			plugin := pluginMgr.Loaded[pluginName]
+			if plugin == nil || plugin.Definition == nil || len(plugin.Definition.Commands) == 0 {
+				continue
+			}
+
+			commandNames := make([]string, 0, len(plugin.Definition.Commands))
+			for commandName := range plugin.Definition.Commands {
+				commandNames = append(commandNames, commandName)
+			}
+			sort.Strings(commandNames)
+
+			for _, commandName := range commandNames {
+				cmdDef := plugin.Definition.Commands[commandName]
+				useName := strings.TrimSpace(commandName)
+				if useName == "" {
+					continue
+				}
+
+				useKey := strings.ToLower(useName)
+				if _, exists := existingNames[useKey]; exists {
+					continue
+				}
+
+				pluginNameCopy := pluginName
+				pluginCopy := plugin
+				commandNameCopy := commandName
+				cmdDefCopy := cmdDef
+
+				short := strings.TrimSpace(cmdDefCopy.Description)
+				if short == "" {
+					short = fmt.Sprintf("Plugin command: %s/%s", pluginNameCopy, commandNameCopy)
+				}
+
+				registeredCmd := &cobra.Command{
+					Use:   useName,
+					Short: short,
+					Args:  cobra.ArbitraryArgs,
+					Run: func(cmd *cobra.Command, args []string) {
+						overrides := make(map[string]string)
+						for flagName := range cmdDefCopy.Flags {
+							value, _ := cmd.Flags().GetString(flagName)
+							if strings.TrimSpace(value) != "" {
+								overrides[flagName] = value
+							}
+						}
+
+						if err := executePluginCommand(pluginNameCopy, pluginCopy, commandNameCopy, cmdDefCopy, overrides, args); err != nil {
+							color.Red("Plugin command failed: %v", err)
+						}
+					},
+				}
+
+				flagNames := make([]string, 0, len(cmdDefCopy.Flags))
+				for flagName := range cmdDefCopy.Flags {
+					flagNames = append(flagNames, flagName)
+				}
+				sort.Strings(flagNames)
+				for _, flagName := range flagNames {
+					flagDef := cmdDefCopy.Flags[flagName]
+					registeredCmd.Flags().String(flagName, flagDef.Default, fmt.Sprintf("Plugin flag (%s)", flagDef.Type))
+				}
+
+				rootCmd.AddCommand(registeredCmd)
+				existingNames[useKey] = struct{}{}
+			}
+		}
+	}
+	registerDynamicPluginCommands()
 
 	rootCmd.PersistentFlags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	rootCmd.Execute()
@@ -3259,6 +3765,281 @@ func readIntWithDefault(label string, defaultVal int) int {
 func readInput() string {
 	input, _ := inputReader.ReadString('\n')
 	return strings.TrimSpace(input)
+}
+
+func loadIgnoreConfigOrEmpty() src.IgnoreConfig {
+	cfg, _, err := src.LoadIgnoreConfigForVault(vaultPath)
+	if err != nil {
+		return src.IgnoreConfig{}
+	}
+	return cfg
+}
+
+func reindexNoteVocabularyIfEnabled(vault *src.Vault) {
+	if vault == nil || !vault.AutocompleteEnabled {
+		return
+	}
+	ignoreCfg := loadIgnoreConfigOrEmpty()
+	_ = vault.ReindexNoteVocabulary(ignoreCfg)
+}
+
+func saveVaultState(vault *src.Vault, masterPassword string) error {
+	data, err := src.EncryptVault(vault, masterPassword)
+	if err != nil {
+		return err
+	}
+	return src.SaveVault(vaultPath, data)
+}
+
+func captureNoteContent(vault *src.Vault, title, initial string) (string, error) {
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		if strings.TrimSpace(initial) != "" {
+			return initial, nil
+		}
+		fmt.Println("Content (end with empty line):")
+		var contentLines []string
+		for {
+			line := readInput()
+			if line == "" {
+				break
+			}
+			contentLines = append(contentLines, line)
+		}
+		return strings.Join(contentLines, "\n"), nil
+	}
+
+	if title == "" {
+		title = "Untitled Note"
+	}
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return "", err
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	buffer := []rune(initial)
+	cursor := len(buffer)
+	dismissedSuggestion := ""
+
+	type suggestionState struct {
+		prefix string
+		word   string
+	}
+
+	getWordRangeAtCursor := func() (int, int, string) {
+		if cursor == 0 {
+			return cursor, cursor, ""
+		}
+		i := cursor - 1
+		for i >= 0 && !isNoteWordRune(buffer[i]) {
+			if unicode.IsSpace(buffer[i]) {
+				i--
+				continue
+			}
+			return cursor, cursor, ""
+		}
+		if i < 0 || !isNoteWordRune(buffer[i]) {
+			return cursor, cursor, ""
+		}
+		end := i + 1
+		for i >= 0 && isNoteWordRune(buffer[i]) {
+			i--
+		}
+		start := i + 1
+		return start, end, string(buffer[start:end])
+	}
+
+	insertRunes := func(insert []rune) {
+		left := append([]rune{}, buffer[:cursor]...)
+		right := append([]rune{}, buffer[cursor:]...)
+		buffer = append(left, append(insert, right...)...)
+		cursor += len(insert)
+	}
+
+	deleteBeforeCursor := func() {
+		if cursor == 0 {
+			return
+		}
+		buffer = append(buffer[:cursor-1], buffer[cursor:]...)
+		cursor--
+	}
+
+	applyWordTransforms := func() {
+		start, end, word := getWordRangeAtCursor()
+		if word == "" {
+			return
+		}
+
+		lowerWord := strings.ToLower(word)
+		autocorrect := map[string]string{
+			"teh":        "the",
+			"adn":        "and",
+			"recieve":    "receive",
+			"seperate":   "separate",
+			"definately": "definitely",
+		}
+
+		replacement := word
+		if corrected, ok := autocorrect[lowerWord]; ok {
+			replacement = corrected
+		}
+		if value, ok := vault.ResolveVocabAlias(lowerWord); ok {
+			replacement = value
+		}
+		if replacement == word {
+			return
+		}
+
+		left := append([]rune{}, buffer[:start]...)
+		right := append([]rune{}, buffer[end:]...)
+		insert := []rune(replacement)
+		buffer = append(left, append(insert, right...)...)
+		cursor = start + len(insert)
+	}
+
+	render := func(s suggestionState) {
+		fmt.Print("\033[H\033[2J")
+		fmt.Printf("APM Note Editor - %s\n", title)
+		fmt.Println("Ctrl+S save | Esc cancel | Right accept suggestion | Left dismiss suggestion")
+		fmt.Println("Auto: autocorrect, bracket pair (), alias replacement on space")
+		fmt.Println("--------------------------------------------------------------")
+
+		ghostSuffix := ""
+		if s.word != "" {
+			ghostSuffix = strings.TrimPrefix(s.word, strings.ToLower(s.prefix))
+		}
+
+		var view strings.Builder
+		for i, r := range buffer {
+			if i == cursor {
+				view.WriteRune('█')
+				if ghostSuffix != "" {
+					view.WriteString("\033[90m")
+					view.WriteString(ghostSuffix)
+					view.WriteString("\033[0m")
+				}
+			}
+			view.WriteRune(r)
+		}
+		if cursor == len(buffer) {
+			view.WriteRune('█')
+			if ghostSuffix != "" {
+				view.WriteString("\033[90m")
+				view.WriteString(ghostSuffix)
+				view.WriteString("\033[0m")
+			}
+		}
+		if len(buffer) == 0 {
+			view.WriteRune('█')
+		}
+		fmt.Println(view.String())
+		fmt.Println("--------------------------------------------------------------")
+	}
+
+	buildSuggestion := func() suggestionState {
+		if vault == nil || !vault.AutocompleteEnabled {
+			return suggestionState{}
+		}
+		start, end, word := getWordRangeAtCursor()
+		_ = start
+		if word == "" {
+			return suggestionState{}
+		}
+		if end != cursor {
+			return suggestionState{}
+		}
+		prefix := strings.ToLower(word)
+		if dismissedSuggestion == prefix {
+			return suggestionState{}
+		}
+		suggestions, err := vault.SuggestNoteWords(prefix, 1, loadIgnoreConfigOrEmpty())
+		if err != nil || len(suggestions) == 0 {
+			return suggestionState{}
+		}
+		return suggestionState{prefix: prefix, word: suggestions[0]}
+	}
+
+	for {
+		s := buildSuggestion()
+		render(s)
+
+		key := make([]byte, 8)
+		n, err := os.Stdin.Read(key)
+		if err != nil || n == 0 {
+			return "", err
+		}
+		seq := string(key[:n])
+
+		if n == 1 {
+			ch := key[0]
+			switch ch {
+			case 19: // Ctrl+S
+				return string(buffer), nil
+			case 27: // Esc
+				return "", fmt.Errorf("note edit cancelled")
+			case 127, 8:
+				deleteBeforeCursor()
+				dismissedSuggestion = ""
+			case '\r', '\n':
+				if cursor < len(buffer) && isNoteWordRune(buffer[cursor]) {
+					for cursor < len(buffer) && isNoteWordRune(buffer[cursor]) {
+						cursor++
+					}
+				}
+				insertRunes([]rune{'\n'})
+				dismissedSuggestion = ""
+			case ' ':
+				applyWordTransforms()
+				insertRunes([]rune{' '})
+				dismissedSuggestion = ""
+			case '(':
+				insertRunes([]rune{'(', ')'})
+				cursor--
+				dismissedSuggestion = ""
+			case ')':
+				if cursor < len(buffer) && buffer[cursor] == ')' {
+					cursor++
+				} else {
+					insertRunes([]rune{')'})
+				}
+			default:
+				if ch >= 32 && ch <= 126 {
+					insertRunes([]rune{rune(ch)})
+					dismissedSuggestion = ""
+				}
+			}
+			continue
+		}
+
+		switch {
+		case strings.Contains(seq, "\x1b[C"):
+			if s.word != "" {
+				suffix := strings.TrimPrefix(s.word, strings.ToLower(s.prefix))
+				if suffix != "" {
+					insertRunes([]rune(suffix))
+					_ = vault.RecordNoteSuggestionFeedback(s.word, true)
+					dismissedSuggestion = ""
+				}
+			} else if cursor < len(buffer) {
+				cursor++
+			}
+		case strings.Contains(seq, "\x1b[D"):
+			if s.word != "" {
+				_ = vault.RecordNoteSuggestionFeedback(s.word, false)
+				dismissedSuggestion = s.prefix
+			} else if cursor > 0 {
+				cursor--
+			}
+		case strings.Contains(seq, "\x1b[A"):
+			// Cursor up reserved for future line navigation.
+		case strings.Contains(seq, "\x1b[B"):
+			// Cursor down reserved for future line navigation.
+		}
+	}
+}
+
+func isNoteWordRune(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '\''
 }
 
 var k_m = []byte("AaravMalooAPMSecureCloudSync2025!")
@@ -3592,7 +4373,7 @@ func rankMatch(query, target string) int {
 	return totalScore
 }
 
-func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string, readonly bool) {
+func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string, readonly, showPass bool) {
 	query := initialQuery
 	selectedIndex := 0
 	selectedItems := make(map[string]src.SearchResult)
@@ -3604,7 +4385,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			return
 		}
 		if len(results) == 1 {
-			displayEntry(results[0], true)
+			displayEntry(results[0], showPass, false)
 		} else {
 			for i, r := range results {
 				fmt.Printf("[%d] %s (%s)\n", i+1, r.Identifier, r.Type)
@@ -3665,7 +4446,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			line := fmt.Sprintf("%s[%d] %-30s (%s)", prefix, i+1, r.Identifier, r.Type)
 			if i == selectedIndex {
 				if focusMode == 1 {
-					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V/SPACE\x1b[0m\n", line)
+					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V/SPACE/S\x1b[0m\n", line)
 				} else {
 					fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
 				}
@@ -3682,7 +4463,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		if focusMode == 0 {
 			fmt.Println("\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
 		} else {
-			fmt.Println("\x1b[1;37mΓåæ/Γåô\x1b[0m: Navigate | \x1b[1;37mSpace\x1b[0m: Select | \x1b[1;37ma\x1b[0m: All | \x1b[1;37mc\x1b[0m: Clear")
+			fmt.Println("\x1b[1;37mUp/Down\x1b[0m: Navigate | \x1b[1;37mSpace\x1b[0m: Quicklook | \x1b[1;37ms\x1b[0m: Select | \x1b[1;37ma\x1b[0m: All | \x1b[1;37mc\x1b[0m: Clear")
 			fmt.Println("\x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37mi\x1b[0m: Metadata | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
 		}
 
@@ -3742,7 +4523,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			if focusMode == 0 {
 				focusMode = 1
 			} else if len(results) > 0 {
-				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
+				handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, showPass, oldState)
 				oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 			}
 			continue
@@ -3750,6 +4531,13 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 
 		if focusMode == 1 {
 			if b[0] == ' ' {
+				if len(results) > 0 {
+					handleAction(v, masterPassword, results[selectedIndex], 'q', readonly, showPass, oldState)
+					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
+				}
+				continue
+			}
+			if b[0] == 's' || b[0] == 'S' {
 				if len(results) > 0 {
 					r := results[selectedIndex]
 					key := fmt.Sprintf("%s:%s", r.Type, r.Identifier)
@@ -3784,7 +4572,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 					}
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				} else if len(results) > 0 {
-					handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, oldState)
+					handleAction(v, masterPassword, results[selectedIndex], 'e', readonly, showPass, oldState)
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
@@ -3795,10 +4583,17 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 					fmt.Print("\033[H\033[2J")
 					fmt.Printf("Are you sure you want to delete %d selected items? (y/n): ", len(selectedItems))
 					if strings.ToLower(readInput()) == "y" {
+						noteChanged := false
 						for key, res := range selectedItems {
 							if deleteEntryByResult(v, res) {
+								if res.Type == "Note" {
+									noteChanged = true
+								}
 								delete(selectedItems, key)
 							}
+						}
+						if noteChanged {
+							reindexNoteVocabularyIfEnabled(v)
 						}
 						data, _ := src.EncryptVault(v, masterPassword)
 						src.SaveVault(vaultPath, data)
@@ -3808,14 +4603,14 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 					}
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				} else if len(results) > 0 {
-					handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, oldState)
+					handleAction(v, masterPassword, results[selectedIndex], 'd', readonly, showPass, oldState)
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
 			}
 			if b[0] == 'v' {
 				if len(results) > 0 {
-					handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, oldState)
+					handleAction(v, masterPassword, results[selectedIndex], 'v', readonly, showPass, oldState)
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
@@ -3831,7 +4626,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 					}
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				} else if len(results) > 0 {
-					handleAction(v, masterPassword, results[selectedIndex], 'i', readonly, oldState)
+					handleAction(v, masterPassword, results[selectedIndex], 'i', readonly, showPass, oldState)
 					oldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 				}
 				continue
@@ -3870,27 +4665,350 @@ func performSearch(v *src.Vault, query string) []src.SearchResult {
 	return out
 }
 
-func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, readonly bool, oldState *term.State) {
+func currentSpaceDisplay(v *src.Vault) string {
+	if v == nil || strings.TrimSpace(v.CurrentSpace) == "" {
+		return "default"
+	}
+	return strings.TrimSpace(v.CurrentSpace)
+}
+
+func normalizeDomainInput(raw string) string {
+	raw = strings.ToLower(strings.TrimSpace(raw))
+	raw = strings.TrimPrefix(raw, "http://")
+	raw = strings.TrimPrefix(raw, "https://")
+	raw = strings.TrimPrefix(raw, "www.")
+	if idx := strings.Index(raw, "/"); idx >= 0 {
+		raw = raw[:idx]
+	}
+	return strings.TrimSpace(raw)
+}
+
+func totpOrderKey(entry src.TOTPEntry) string {
+	space := strings.TrimSpace(entry.Space)
+	if space == "" {
+		space = "default"
+	}
+	return strings.ToLower(space + "|" + strings.TrimSpace(entry.Account))
+}
+
+func orderedTOTPEntries(v *src.Vault) []src.TOTPEntry {
+	if v == nil || len(v.TOTPEntries) == 0 {
+		return nil
+	}
+	current := currentSpaceDisplay(v)
+	target := make([]src.TOTPEntry, 0, len(v.TOTPEntries))
+	for _, entry := range v.TOTPEntries {
+		space := strings.TrimSpace(entry.Space)
+		if space == "" {
+			space = "default"
+		}
+		if strings.EqualFold(space, current) {
+			target = append(target, entry)
+		}
+	}
+
+	if len(target) == 0 {
+		return target
+	}
+
+	orderIndex := make(map[string]int, len(v.TOTPOrder))
+	for i, key := range v.TOTPOrder {
+		key = strings.ToLower(strings.TrimSpace(key))
+		if key != "" {
+			orderIndex[key] = i
+		}
+	}
+
+	sort.SliceStable(target, func(i, j int) bool {
+		keyI := totpOrderKey(target[i])
+		keyJ := totpOrderKey(target[j])
+		idxI, okI := orderIndex[keyI]
+		idxJ, okJ := orderIndex[keyJ]
+		if okI && okJ {
+			return idxI < idxJ
+		}
+		if okI != okJ {
+			return okI
+		}
+		return strings.ToLower(target[i].Account) < strings.ToLower(target[j].Account)
+	})
+	return target
+}
+
+func persistTOTPOrder(v *src.Vault, masterPassword string, ordered []src.TOTPEntry) error {
+	kept := make([]string, 0, len(v.TOTPOrder)+len(ordered))
+	seen := make(map[string]struct{}, len(v.TOTPOrder)+len(ordered))
+
+	currentPrefix := strings.ToLower(currentSpaceDisplay(v) + "|")
+	for _, entry := range ordered {
+		key := totpOrderKey(entry)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		kept = append(kept, key)
+	}
+	for _, key := range v.TOTPOrder {
+		key = strings.ToLower(strings.TrimSpace(key))
+		if key == "" || strings.HasPrefix(key, currentPrefix) {
+			continue
+		}
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		kept = append(kept, key)
+	}
+
+	v.TOTPOrder = kept
+	data, err := src.EncryptVault(v, masterPassword)
+	if err != nil {
+		return err
+	}
+	return src.SaveVault(vaultPath, data)
+}
+
+func findTOTPEntry(entries []src.TOTPEntry, query string) (src.TOTPEntry, bool) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return src.TOTPEntry{}, false
+	}
+	for _, entry := range entries {
+		if strings.EqualFold(entry.Account, query) {
+			return entry, true
+		}
+	}
+
+	lowerQuery := strings.ToLower(query)
+	for _, entry := range entries {
+		if strings.Contains(strings.ToLower(entry.Account), lowerQuery) {
+			return entry, true
+		}
+	}
+	return src.TOTPEntry{}, false
+}
+
+func runInteractiveTOTP(v *src.Vault, masterPassword string) {
+	entries := orderedTOTPEntries(v)
+	if len(entries) == 0 {
+		fmt.Println("No TOTP entries found.")
+		return
+	}
+
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		for i, entry := range entries {
+			code, err := src.GenerateTOTP(entry.Secret)
+			if err != nil {
+				code = "INVALID"
+			}
+			fmt.Printf("[%d] %-24s : %s\n", i+1, entry.Account, code)
+		}
+		return
+	}
+
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		color.Red("Failed to initialize interactive TOTP view: %v", err)
+		return
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	fmt.Println("\x1b[?25l")
+	defer fmt.Print("\x1b[?25h")
+
+	inputCh := make(chan []byte, 16)
+	go func() {
+		for {
+			buf := make([]byte, 8)
+			n, err := os.Stdin.Read(buf)
+			if err != nil || n == 0 {
+				close(inputCh)
+				return
+			}
+			packet := make([]byte, n)
+			copy(packet, buf[:n])
+			inputCh <- packet
+		}
+	}()
+
+	selected := 0
+	status := ""
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		entries = orderedTOTPEntries(v)
+		if len(entries) == 0 {
+			fmt.Print("\033[H\033[2J")
+			fmt.Println("No TOTP entries left in the current space.")
+			return
+		}
+		if selected < 0 {
+			selected = 0
+		}
+		if selected >= len(entries) {
+			selected = len(entries) - 1
+		}
+
+		fmt.Print("\033[H\033[2J")
+		fmt.Printf("APM TOTP | Space: %s | Refresh: %ds\n", currentSpaceDisplay(v), src.TimeRemaining())
+		fmt.Println("Enter: copy selected | 1-9: copy by number | Shift+Up/Down: reorder | Up/Down: move | q/Esc: exit")
+		if status != "" {
+			fmt.Printf("%s\n", status)
+			status = ""
+		}
+		fmt.Println("--------------------------------------------------------------")
+		for i, entry := range entries {
+			code, err := src.GenerateTOTP(entry.Secret)
+			if err != nil {
+				code = "INVALID"
+			}
+			marker := " "
+			if i == selected {
+				marker = ">"
+			}
+			fmt.Printf("%s [%d] %-26s %s\n", marker, i+1, entry.Account, code)
+		}
+
+		select {
+		case packet, ok := <-inputCh:
+			if !ok {
+				return
+			}
+
+			if len(packet) == 1 {
+				ch := packet[0]
+				switch ch {
+				case 'q', 'Q', 3, 4, 27:
+					return
+				case '\r', '\n':
+					entry := entries[selected]
+					code, err := src.GenerateTOTP(entry.Secret)
+					if err != nil {
+						status = color.RedString("Failed to generate TOTP for %s", entry.Account)
+						break
+					}
+					copyToClipboard(code)
+					src.LogAction("TOTP_COPIED", fmt.Sprintf("Account: %s", entry.Account))
+					status = color.GreenString("Copied TOTP for %s", entry.Account)
+				default:
+					if ch >= '1' && ch <= '9' {
+						idx := int(ch - '1')
+						if idx >= 0 && idx < len(entries) {
+							entry := entries[idx]
+							code, err := src.GenerateTOTP(entry.Secret)
+							if err != nil {
+								status = color.RedString("Failed to generate TOTP for %s", entry.Account)
+								break
+							}
+							copyToClipboard(code)
+							src.LogAction("TOTP_COPIED", fmt.Sprintf("Account: %s", entry.Account))
+							status = color.GreenString("Copied TOTP for %s", entry.Account)
+							selected = idx
+						}
+					}
+				}
+				continue
+			}
+
+			sequence := string(packet)
+			switch {
+			case strings.Contains(sequence, "\x1b[1;2A"):
+				if selected > 0 {
+					entries[selected], entries[selected-1] = entries[selected-1], entries[selected]
+					if err := persistTOTPOrder(v, masterPassword, entries); err != nil {
+						status = color.RedString("Failed to save TOTP order: %v", err)
+					} else {
+						selected--
+						status = color.CyanString("Moved %s up", entries[selected].Account)
+					}
+				}
+			case strings.Contains(sequence, "\x1b[1;2B"):
+				if selected < len(entries)-1 {
+					entries[selected], entries[selected+1] = entries[selected+1], entries[selected]
+					if err := persistTOTPOrder(v, masterPassword, entries); err != nil {
+						status = color.RedString("Failed to save TOTP order: %v", err)
+					} else {
+						selected++
+						status = color.CyanString("Moved %s down", entries[selected].Account)
+					}
+				}
+			case strings.Contains(sequence, "\x1b[A"):
+				if selected > 0 {
+					selected--
+				}
+			case strings.Contains(sequence, "\x1b[B"):
+				if selected < len(entries)-1 {
+					selected++
+				}
+			}
+		case <-ticker.C:
+		}
+	}
+}
+
+func pluginPermissionEnabled(vault *src.Vault, pluginName, permission string) bool {
+	if vault == nil || vault.PluginPermissionOverrides == nil {
+		return true
+	}
+	pluginKey := strings.ToLower(strings.TrimSpace(pluginName))
+	permKey := strings.ToLower(strings.TrimSpace(permission))
+	if pluginKey == "" || permKey == "" {
+		return true
+	}
+	pluginRules := vault.PluginPermissionOverrides[pluginKey]
+	if len(pluginRules) == 0 {
+		return true
+	}
+	enabled, exists := pluginRules[permKey]
+	if !exists {
+		return true
+	}
+	return enabled
+}
+
+func setPluginPermissionOverride(vault *src.Vault, pluginName, permission string, enabled bool) {
+	if vault.PluginPermissionOverrides == nil {
+		vault.PluginPermissionOverrides = make(map[string]map[string]bool)
+	}
+	pluginKey := strings.ToLower(strings.TrimSpace(pluginName))
+	permKey := strings.ToLower(strings.TrimSpace(permission))
+	if pluginKey == "" || permKey == "" {
+		return
+	}
+	if vault.PluginPermissionOverrides[pluginKey] == nil {
+		vault.PluginPermissionOverrides[pluginKey] = make(map[string]bool)
+	}
+	vault.PluginPermissionOverrides[pluginKey][permKey] = enabled
+}
+
+func applyPluginPermissionOverrides(vault *src.Vault, pluginName string, declared []string) []string {
+	filtered := make([]string, 0, len(declared))
+	for _, permission := range declared {
+		if pluginPermissionEnabled(vault, pluginName, permission) {
+			filtered = append(filtered, permission)
+		}
+	}
+	return filtered
+}
+
+func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, readonly, showPass bool, oldState *term.State) {
 	_ = term.Restore(int(os.Stdin.Fd()), oldState)
 	fmt.Print("\033[H\033[2J")
 
 	switch action {
 	case 'v':
-		displayEntry(res, true)
-		fmt.Print("\nPress Enter to continue...")
-		readInput()
+		displayEntry(res, showPass, true)
+	case 'q':
+		displayQuicklook(res)
 	case 'i':
 		displayEntryMetadata(v, res)
-		fmt.Print("\nPress Enter to continue...")
-		readInput()
 	case 'e':
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
 		} else {
 			editEntryInVault(v, mp, res)
 		}
-		fmt.Print("\nPress Enter to continue...")
-		readInput()
 	case 'd':
 		if readonly {
 			color.Red("Vault is READ-ONLY.")
@@ -3898,6 +5016,9 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 			fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
 			if strings.ToLower(readInput()) == "y" {
 				if deleteEntryByResult(v, res) {
+					if res.Type == "Note" {
+						reindexNoteVocabularyIfEnabled(v)
+					}
 					data, _ := src.EncryptVault(v, mp)
 					if err := src.SaveVault(vaultPath, data); err != nil {
 						color.Red("Error saving vault: %v", err)
@@ -3913,6 +5034,102 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 	}
 	fmt.Print("\nPress Enter to continue...")
 	readInput()
+}
+
+func displayQuicklook(res src.SearchResult) {
+	switch res.Type {
+	case "Note":
+		n := res.Data.(src.SecureNoteEntry)
+		fmt.Printf("Quicklook: Note/%s\n", n.Name)
+		fmt.Println("--------------------------------------------------")
+		content := strings.TrimSpace(n.Content)
+		if content == "" {
+			fmt.Println("(empty note)")
+			return
+		}
+		lines := strings.Split(content, "\n")
+		limit := 18
+		if len(lines) > limit {
+			for _, line := range lines[:limit] {
+				fmt.Println(line)
+			}
+			fmt.Printf("... (%d more lines)\n", len(lines)-limit)
+			return
+		}
+		for _, line := range lines {
+			fmt.Println(line)
+		}
+	case "Photo":
+		p := res.Data.(src.PhotoEntry)
+		fmt.Printf("Quicklook: Photo/%s (%s)\n", p.Name, p.FileName)
+		fmt.Println("--------------------------------------------------")
+		preview, err := renderPhotoASCIIQuicklook(p.Content, 64)
+		if err != nil {
+			fmt.Printf("Photo preview unavailable: %v\n", err)
+			fmt.Printf("Size: %.2f KB\n", float64(len(p.Content))/1024)
+			return
+		}
+		fmt.Println(preview)
+	case "Audio":
+		a := res.Data.(src.AudioEntry)
+		fmt.Printf("Quicklook: Audio/%s (%s)\n", a.Name, a.FileName)
+		fmt.Printf("Size: %.2f KB\n", float64(len(a.Content))/1024)
+	case "Video":
+		v := res.Data.(src.VideoEntry)
+		fmt.Printf("Quicklook: Video/%s (%s)\n", v.Name, v.FileName)
+		fmt.Printf("Size: %.2f KB\n", float64(len(v.Content))/1024)
+	case "Document":
+		d := res.Data.(src.DocumentEntry)
+		fmt.Printf("Quicklook: Document/%s (%s)\n", d.Name, d.FileName)
+		fmt.Printf("Size: %.2f KB\n", float64(len(d.Content))/1024)
+	default:
+		fmt.Printf("Quicklook is supported for notes and media entries only. Selected type: %s\n", res.Type)
+	}
+}
+
+func renderPhotoASCIIQuicklook(content []byte, maxWidth int) (string, error) {
+	if maxWidth <= 0 {
+		maxWidth = 64
+	}
+	img, _, err := image.Decode(bytes.NewReader(content))
+	if err != nil {
+		return "", err
+	}
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+	if width <= 0 || height <= 0 {
+		return "", fmt.Errorf("invalid image dimensions")
+	}
+
+	targetWidth := width
+	if targetWidth > maxWidth {
+		targetWidth = maxWidth
+	}
+	if targetWidth < 1 {
+		targetWidth = 1
+	}
+
+	targetHeight := int(float64(height) * (float64(targetWidth) / float64(width)) * 0.5)
+	if targetHeight < 1 {
+		targetHeight = 1
+	}
+
+	palette := []rune(" .:-=+*#%@")
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("%dx%d -> %dx%d\n", width, height, targetWidth, targetHeight))
+	for y := 0; y < targetHeight; y++ {
+		srcY := bounds.Min.Y + (y*height)/targetHeight
+		for x := 0; x < targetWidth; x++ {
+			srcX := bounds.Min.X + (x*width)/targetWidth
+			r, g, bl, _ := img.At(srcX, srcY).RGBA()
+			gray := (299*int(r>>8) + 587*int(g>>8) + 114*int(bl>>8)) / 1000
+			idx := (gray * (len(palette) - 1)) / 255
+			b.WriteRune(palette[idx])
+		}
+		b.WriteByte('\n')
+	}
+	return b.String(), nil
 }
 
 func resultTypeToHistoryCategory(resultType string) string {
@@ -4176,7 +5393,11 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	case "Note":
 		e := res.Data.(src.SecureNoteEntry)
 		newName := prompt("New Name", e.Name)
-		newContent := prompt("New Content", e.Content)
+		newContent, err := captureNoteContent(v, newName, e.Content)
+		if err != nil {
+			color.Yellow("Note edit canceled.")
+			return
+		}
 
 		if v.DeleteSecureNote(e.Name) {
 			v.AddSecureNote(newName, newContent)
@@ -4419,6 +5640,9 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	}
 
 	if updated {
+		if res.Type == "Note" {
+			reindexNoteVocabularyIfEnabled(v)
+		}
 		data, _ := src.EncryptVault(v, mp)
 		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v", err)
@@ -4429,253 +5653,226 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	}
 }
 
-func displayEntry(res src.SearchResult, showPass bool) {
+func displayEntry(res src.SearchResult, showPass, promptCopy bool) {
+	showField := func(label, value string) {
+		if showPass {
+			fmt.Printf("%s: %s\n", label, value)
+			return
+		}
+		if strings.TrimSpace(value) == "" {
+			fmt.Printf("%s: (empty)\n", label)
+			return
+		}
+		fmt.Printf("%s: ******** (hidden", label)
+		if promptCopy {
+			fmt.Print(", press Enter to copy)\n")
+			fmt.Printf("Copy %s? [Enter=copy, type skip to continue]: ", strings.ToLower(label))
+			if strings.ToLower(strings.TrimSpace(readInput())) != "skip" {
+				copyToClipboardWithExpiry(value)
+			}
+			return
+		}
+		fmt.Println(")")
+	}
+
 	fmt.Println("---")
 	switch res.Type {
 	case "Password":
 		e := res.Data.(src.Entry)
 		fmt.Printf("Type: Password\nAccount: %s\nUser: %s\n", e.Account, e.Username)
-		if showPass {
-			fmt.Printf("Password: %s\n", e.Password)
-		}
-		copyToClipboardWithExpiry(e.Password)
+		showField("Password", e.Password)
 	case "TOTP":
 		t := res.Data.(src.TOTPEntry)
 		code, err := src.GenerateTOTP(t.Secret)
 		if err != nil {
 			code = "INVALID SECRET"
 		}
-		fmt.Printf("Type: TOTP\nAccount: %s\nCode: %s\n", t.Account, code)
+		fmt.Printf("Type: TOTP\nAccount: %s\n", t.Account)
+		showField("Code", code)
 	case "Token":
 		tok := res.Data.(src.TokenEntry)
 		fmt.Printf("Type: Token\nName: %s\n", tok.Name)
-		if showPass {
-			fmt.Printf("Token: %s\n", tok.Token)
-		}
-		copyToClipboardWithExpiry(tok.Token)
+		showField("Token", tok.Token)
 	case "Note":
 		n := res.Data.(src.SecureNoteEntry)
 		fmt.Printf("Type: Note\nName: %s\nContent:\n%s\n", n.Name, n.Content)
 	case "API Key":
 		k := res.Data.(src.APIKeyEntry)
 		fmt.Printf("Type: API Key\nLabel: %s\nService: %s\n", k.Name, k.Service)
-		if showPass {
-			fmt.Printf("Key: %s\n", k.Key)
-		}
-		copyToClipboardWithExpiry(k.Key)
+		showField("Key", k.Key)
 	case "SSH Key":
 		s := res.Data.(src.SSHKeyEntry)
 		fmt.Printf("Type: SSH Key\nLabel: %s\n", s.Name)
-		if showPass {
-			fmt.Printf("Private Key:\n%s\n", s.PrivateKey)
-		}
-		copyToClipboardWithExpiry(s.PrivateKey)
+		showField("Private Key", s.PrivateKey)
 	case "Wi-Fi":
 		w := res.Data.(src.WiFiEntry)
 		fmt.Printf("Type: Wi-Fi\nSSID: %s\nSecurity: %s\n", w.SSID, w.SecurityType)
-		if showPass {
-			fmt.Printf("Password: %s\n", w.Password)
-		}
-		copyToClipboardWithExpiry(w.Password)
+		showField("Password", w.Password)
 	case "Recovery Codes":
 		r := res.Data.(src.RecoveryCodeEntry)
-		fmt.Printf("Type: Recovery\nService: %s\nCodes: %v\n", r.Service, r.Codes)
+		fmt.Printf("Type: Recovery\nService: %s\n", r.Service)
+		showField("Codes", strings.Join(r.Codes, ", "))
 	case "Certificate":
 		c := res.Data.(src.CertificateEntry)
 		fmt.Printf("Type: Certificate\nLabel: %s\nIssuer: %s\nExpiry: %s\n", c.Label, c.Issuer, c.Expiry.Format("2006-01-02"))
 		if time.Until(c.Expiry) < 30*24*time.Hour {
 			color.Red("  [ALERT] Certificate is expiring soon! (%s left)\n", time.Until(c.Expiry).Truncate(time.Hour))
 		}
-		if showPass {
-			fmt.Printf("Cert Data:\n%s\n", c.CertData)
-			if c.PrivateKey != "" {
-				fmt.Printf("Private Key:\n%s\n", c.PrivateKey)
-			}
+		showField("Cert Data", c.CertData)
+		if c.PrivateKey != "" {
+			showField("Private Key", c.PrivateKey)
 		}
 	case "Banking":
 		b := res.Data.(src.BankingEntry)
 		fmt.Printf("Type: Banking (%s)\nLabel: %s\n", b.Type, b.Label)
 		displayDetails := b.Details
-
 		if b.Type == "Card" && len(displayDetails) > 4 {
 			displayDetails = "**** **** **** " + displayDetails[len(displayDetails)-4:]
 		} else if len(displayDetails) > 4 {
 			displayDetails = displayDetails[:4] + " **** **** ****"
 		}
 		fmt.Printf("Details (Redacted): %s\n", displayDetails)
-		if showPass {
-			fmt.Printf("Full Details: %s\n", b.Details)
-			if b.CVV != "" {
-				fmt.Printf("CVV: %s\n", b.CVV)
-			}
-			if b.Expiry != "" {
-				fmt.Printf("Expiry: %s\n", b.Expiry)
-			}
+		showField("Full Details", b.Details)
+		if b.CVV != "" {
+			showField("CVV", b.CVV)
+		}
+		if b.Expiry != "" {
+			fmt.Printf("Expiry: %s\n", b.Expiry)
 		}
 	case "Document":
 		d := res.Data.(src.DocumentEntry)
 		fmt.Printf("Type: Document\nName: %s\nFile: %s\n", d.Name, d.FileName)
-		fmt.Print("This is a secure document. Open it? (y/n): ")
-		if strings.ToLower(readInput()) == "y" {
-			fmt.Print("Enter Document Password: ")
-			docPass, _ := readPassword()
-			fmt.Println()
-			if docPass == d.Password {
-				tmpDir := os.TempDir()
-				tmpFile := filepath.Join(tmpDir, d.FileName)
-				err := os.WriteFile(tmpFile, d.Content, 0600)
-				if err != nil {
-					color.Red("Error writing temporary file: %v\n", err)
-					return
-				}
-				defer func() {
-					time.Sleep(5 * time.Second)
-					os.Remove(tmpFile)
-				}()
-				color.Green("Opening document...")
-				var cmd *exec.Cmd
-				if runtime.GOOS == "windows" {
-					cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
-				} else if runtime.GOOS == "darwin" {
-					cmd = exec.Command("open", tmpFile)
+		if promptCopy {
+			fmt.Print("This is a secure document. Open it? (y/n): ")
+			if strings.ToLower(readInput()) == "y" {
+				fmt.Print("Enter Document Password: ")
+				docPass, _ := readPassword()
+				fmt.Println()
+				if docPass == d.Password {
+					tmpDir := os.TempDir()
+					tmpFile := filepath.Join(tmpDir, d.FileName)
+					err := os.WriteFile(tmpFile, d.Content, 0600)
+					if err != nil {
+						color.Red("Error writing temporary file: %v\n", err)
+						return
+					}
+					defer func() {
+						time.Sleep(5 * time.Second)
+						_ = os.Remove(tmpFile)
+					}()
+					color.Green("Opening document...")
+					var cmd *exec.Cmd
+					if runtime.GOOS == "windows" {
+						cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
+					} else if runtime.GOOS == "darwin" {
+						cmd = exec.Command("open", tmpFile)
+					} else {
+						cmd = exec.Command("xdg-open", tmpFile)
+					}
+					_ = cmd.Run()
 				} else {
-					cmd = exec.Command("xdg-open", tmpFile)
+					color.Red("Incorrect document password.")
 				}
-				cmd.Run()
-			} else {
-				color.Red("Incorrect document password.")
 			}
 		}
 	case "Government ID":
 		g := res.Data.(src.GovIDEntry)
-		fmt.Printf("Type: %s\nID Number: %s\nName: %s\nExpiry: %s\n", g.Type, g.IDNumber, g.Name, g.Expiry)
-		copyToClipboardWithExpiry(g.IDNumber)
+		fmt.Printf("Type: %s\nName: %s\nExpiry: %s\n", g.Type, g.Name, g.Expiry)
+		showField("ID Number", g.IDNumber)
 	case "Medical Record":
 		m := res.Data.(src.MedicalRecordEntry)
 		fmt.Printf("Type: Medical Record\nLabel: %s\nInsurance ID: %s\nPrescriptions: %s\nAllergies: %s\n", m.Label, m.InsuranceID, m.Prescriptions, m.Allergies)
 	case "Travel":
 		t := res.Data.(src.TravelEntry)
-		fmt.Printf("Type: Travel\nLabel: %s\nTicket: %s\nBooking Code: %s\nLoyalty: %s\n", t.Label, t.TicketNumber, t.BookingCode, t.LoyaltyProgram)
-		copyToClipboardWithExpiry(t.BookingCode)
+		fmt.Printf("Type: Travel\nLabel: %s\nTicket: %s\nLoyalty: %s\n", t.Label, t.TicketNumber, t.LoyaltyProgram)
+		showField("Booking Code", t.BookingCode)
 	case "Contact":
 		c := res.Data.(src.ContactEntry)
 		fmt.Printf("Type: Contact\nName: %s\nPhone: %s\nEmail: %s\nAddress: %s\nEmergency: %v\n", c.Name, c.Phone, c.Email, c.Address, c.Emergency)
 	case "Cloud Credentials":
 		c := res.Data.(src.CloudCredentialEntry)
 		fmt.Printf("Type: Cloud Credentials\nLabel: %s\nRegion: %s\nAccount ID: %s\nRole: %s\nExpiration: %s\n", c.Label, c.Region, c.AccountID, c.Role, c.Expiration)
-		if showPass {
-			fmt.Printf("Access Key: %s\nSecret Key: %s\n", c.AccessKey, c.SecretKey)
-		}
-		copyToClipboardWithExpiry(c.SecretKey)
+		showField("Access Key", c.AccessKey)
+		showField("Secret Key", c.SecretKey)
 	case "Kubernetes Secret":
 		k := res.Data.(src.K8sSecretEntry)
 		fmt.Printf("Type: K8s Secret\nName: %s\nCluster URL: %s\nNamespace: %s\nExpiration: %s\n", k.Name, k.ClusterURL, k.K8sNamespace, k.Expiration)
 	case "Docker Registry":
 		d := res.Data.(src.DockerRegistryEntry)
 		fmt.Printf("Type: Docker Registry\nName: %s\nRegistry URL: %s\nUsername: %s\n", d.Name, d.RegistryURL, d.Username)
-		if showPass {
-			fmt.Printf("Token: %s\n", d.Token)
-		}
-		copyToClipboardWithExpiry(d.Token)
+		showField("Token", d.Token)
 	case "SSH Config":
 		s := res.Data.(src.SSHConfigEntry)
 		fmt.Printf("Type: SSH Config\nAlias: %s\nHost: %s\nUser: %s\nPort: %s\nKey Path: %s\nFingerprint: %s\n", s.Alias, s.Host, s.User, s.Port, s.KeyPath, s.Fingerprint)
-		if showPass {
-			fmt.Printf("Private Key:\n%s\n", s.PrivateKey)
-		}
-		copyToClipboardWithExpiry(s.PrivateKey)
+		showField("Private Key", s.PrivateKey)
 	case "CI/CD Secret":
 		c := res.Data.(src.CICDSecretEntry)
 		fmt.Printf("Type: CI/CD Secret\nName: %s\nWebhook: %s\nEnv Vars: %s\n", c.Name, c.Webhook, c.EnvVars)
 	case "Software License":
 		s := res.Data.(src.SoftwareLicenseEntry)
-		fmt.Printf("Type: Software License\nProduct: %s\nSerial Key: %s\nActivation: %s\nExpiration: %s\n", s.ProductName, s.SerialKey, s.ActivationInfo, s.Expiration)
+		fmt.Printf("Type: Software License\nProduct: %s\nActivation: %s\nExpiration: %s\n", s.ProductName, s.ActivationInfo, s.Expiration)
+		showField("Serial Key", s.SerialKey)
 	case "Legal Contract":
 		l := res.Data.(src.LegalContractEntry)
 		fmt.Printf("Type: Legal Contract\nName: %s\nSummary: %s\nParties: %s\nSigned: %s\n", l.Name, l.Summary, l.PartiesInvolved, l.SignedDate)
 	case "Audio":
 		a := res.Data.(src.AudioEntry)
-		fmt.Printf("Type: Audio\nName: %s\nFile: %s\n", a.Name, a.FileName)
-		fmt.Print("Open audio file? (y/n): ")
-		if strings.ToLower(readInput()) == "y" {
-			tmpDir := os.TempDir()
-			tmpFile := filepath.Join(tmpDir, a.FileName)
-			err := os.WriteFile(tmpFile, a.Content, 0600)
-			if err != nil {
-				color.Red("Error writing temporary file: %v\n", err)
-				return
+		fmt.Printf("Type: Audio\nName: %s\nFile: %s\nSize: %.2f KB\n", a.Name, a.FileName, float64(len(a.Content))/1024)
+		if promptCopy {
+			fmt.Print("Open audio file? (y/n): ")
+			if strings.ToLower(readInput()) == "y" {
+				openTempMediaFile(a.FileName, a.Content)
 			}
-			defer func() {
-				time.Sleep(5 * time.Second)
-				os.Remove(tmpFile)
-			}()
-			color.Green("Opening audio...")
-			var cmd *exec.Cmd
-			if runtime.GOOS == "windows" {
-				cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
-			} else if runtime.GOOS == "darwin" {
-				cmd = exec.Command("open", tmpFile)
-			} else {
-				cmd = exec.Command("xdg-open", tmpFile)
-			}
-			cmd.Run()
 		}
 	case "Video":
 		vi := res.Data.(src.VideoEntry)
-		fmt.Printf("Type: Video\nName: %s\nFile: %s\n", vi.Name, vi.FileName)
-		fmt.Print("Open video file? (y/n): ")
-		if strings.ToLower(readInput()) == "y" {
-			tmpDir := os.TempDir()
-			tmpFile := filepath.Join(tmpDir, vi.FileName)
-			err := os.WriteFile(tmpFile, vi.Content, 0600)
-			if err != nil {
-				color.Red("Error writing temporary file: %v\n", err)
-				return
+		fmt.Printf("Type: Video\nName: %s\nFile: %s\nSize: %.2f KB\n", vi.Name, vi.FileName, float64(len(vi.Content))/1024)
+		if promptCopy {
+			fmt.Println("Video quicklook is not available in terminal mode. Use open if needed.")
+			fmt.Print("Open video file? (y/n): ")
+			if strings.ToLower(readInput()) == "y" {
+				openTempMediaFile(vi.FileName, vi.Content)
 			}
-			defer func() {
-				time.Sleep(5 * time.Second)
-				os.Remove(tmpFile)
-			}()
-			color.Green("Opening video...")
-			var cmd *exec.Cmd
-			if runtime.GOOS == "windows" {
-				cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
-			} else if runtime.GOOS == "darwin" {
-				cmd = exec.Command("open", tmpFile)
-			} else {
-				cmd = exec.Command("xdg-open", tmpFile)
-			}
-			cmd.Run()
 		}
 	case "Photo":
 		p := res.Data.(src.PhotoEntry)
 		fmt.Printf("Type: Photo\nName: %s\nFile: %s\n", p.Name, p.FileName)
-		fmt.Print("Open photo? (y/n): ")
-		if strings.ToLower(readInput()) == "y" {
-			tmpDir := os.TempDir()
-			tmpFile := filepath.Join(tmpDir, p.FileName)
-			err := os.WriteFile(tmpFile, p.Content, 0600)
-			if err != nil {
-				color.Red("Error writing temporary file: %v\n", err)
-				return
+		if preview, err := renderPhotoASCIIQuicklook(p.Content, 80); err == nil {
+			fmt.Println(preview)
+		}
+		if promptCopy {
+			fmt.Print("Open photo? (y/n): ")
+			if strings.ToLower(readInput()) == "y" {
+				openTempMediaFile(p.FileName, p.Content)
 			}
-			defer func() {
-				time.Sleep(5 * time.Second)
-				os.Remove(tmpFile)
-			}()
-			color.Green("Opening photo...")
-			var cmd *exec.Cmd
-			if runtime.GOOS == "windows" {
-				cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
-			} else if runtime.GOOS == "darwin" {
-				cmd = exec.Command("open", tmpFile)
-			} else {
-				cmd = exec.Command("xdg-open", tmpFile)
-			}
-			cmd.Run()
 		}
 	}
 	fmt.Println("---")
+}
+
+func openTempMediaFile(fileName string, content []byte) {
+	tmpDir := os.TempDir()
+	tmpFile := filepath.Join(tmpDir, fileName)
+	if err := os.WriteFile(tmpFile, content, 0600); err != nil {
+		color.Red("Error writing temporary file: %v\n", err)
+		return
+	}
+	defer func() {
+		time.Sleep(5 * time.Second)
+		_ = os.Remove(tmpFile)
+	}()
+
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", "start", "", tmpFile)
+	} else if runtime.GOOS == "darwin" {
+		cmd = exec.Command("open", tmpFile)
+	} else {
+		cmd = exec.Command("xdg-open", tmpFile)
+	}
+	if err := cmd.Run(); err != nil {
+		color.Red("Open failed: %v", err)
+	}
 }
 
 func promptKeyMetadataConsent(provider string) bool {
@@ -4750,7 +5947,14 @@ func setupDropbox(v *src.Vault, mp string) error {
 		return err
 	}
 
-	fileID, err := cm.UploadVault(vaultPath, key)
+	uploadPath, cleanupUpload, err := src.PrepareCloudUploadVaultPath(v, mp, vaultPath, "dropbox")
+	if err != nil {
+		color.Red("Failed to apply .apmignore for upload: %v", err)
+		return err
+	}
+	defer cleanupUpload()
+
+	fileID, err := cm.UploadVault(uploadPath, key)
 	if err != nil {
 		color.Red("Upload failed: %v", err)
 		return err
@@ -5586,6 +6790,280 @@ var authChangeCmd = &cobra.Command{
 			src.SendAlert(vault, src.LevelSettings, "PASSWORD CHANGE", "Master password has been successfully rotated.")
 			color.Green("Master password changed successfully.\n")
 		}
+	},
+}
+
+var authAutocompleteCmd = &cobra.Command{
+	Use:   "autocomplete [true|false]",
+	Short: "Enable or disable note autocomplete indexing",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot change autocomplete settings.")
+			return
+		}
+
+		value := strings.ToLower(strings.TrimSpace(args[0]))
+		enabled := value == "true" || value == "1" || value == "yes" || value == "on"
+		disabled := value == "false" || value == "0" || value == "no" || value == "off"
+		if !enabled && !disabled {
+			color.Red("Use true/false.")
+			return
+		}
+
+		vault.AutocompleteEnabled = enabled
+		if enabled {
+			if err := vault.ReindexNoteVocabulary(loadIgnoreConfigOrEmpty()); err != nil {
+				color.Yellow("Autocomplete enabled, but indexing failed: %v", err)
+			}
+		}
+
+		if err := saveVaultState(vault, pass); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		if enabled {
+			color.Green("Autocomplete enabled and vocabulary indexed.")
+		} else {
+			color.Yellow("Autocomplete disabled.")
+		}
+	},
+}
+
+var vocabCmd = &cobra.Command{
+	Use:   "vocab",
+	Short: "Manage personal note vocabulary and aliases",
+	Run: func(cmd *cobra.Command, args []string) {
+		_, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+
+		words, err := vault.ListVocabWords()
+		if err != nil {
+			color.Red("Failed to load vocab: %v", err)
+			return
+		}
+		aliases, _ := vault.ListVocabAliases()
+		ignoreCfg := loadIgnoreConfigOrEmpty()
+
+		type row struct {
+			Word  string
+			Stats src.VocabWord
+		}
+		rows := make([]row, 0, len(words))
+		for word, stats := range words {
+			if ignoreCfg.ShouldIgnoreVocabWord(word) {
+				continue
+			}
+			rows = append(rows, row{Word: word, Stats: stats})
+		}
+		sort.Slice(rows, func(i, j int) bool {
+			if rows[i].Stats.Score == rows[j].Stats.Score {
+				return rows[i].Word < rows[j].Word
+			}
+			return rows[i].Stats.Score > rows[j].Stats.Score
+		})
+
+		if len(rows) == 0 {
+			fmt.Println("Vocabulary is empty.")
+		} else {
+			fmt.Printf("%-24s %-8s %-8s %-8s %-8s\n", "WORD", "SCORE", "SEEN", "ACCEPT", "DISMISS")
+			fmt.Println(strings.Repeat("-", 62))
+			for _, r := range rows {
+				fmt.Printf("%-24s %-8d %-8d %-8d %-8d\n", r.Word, r.Stats.Score, r.Stats.Seen, r.Stats.Accepted, r.Stats.Dismissed)
+			}
+		}
+
+		if len(aliases) > 0 {
+			fmt.Println("\nAliases:")
+			keys := make([]string, 0, len(aliases))
+			for alias := range aliases {
+				keys = append(keys, alias)
+			}
+			sort.Strings(keys)
+			for _, alias := range keys {
+				fmt.Printf("  %s -> %s\n", alias, aliases[alias])
+			}
+		}
+	},
+}
+
+var vocabAliasCmd = &cobra.Command{
+	Use:   "alias",
+	Short: "Create or update a note alias",
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot edit aliases.")
+			return
+		}
+
+		fmt.Print("Alias trigger (typed word): ")
+		alias := readInput()
+		fmt.Print("Alias replacement value: ")
+		value := readInput()
+
+		if strings.TrimSpace(alias) == "" || strings.TrimSpace(value) == "" {
+			color.Red("Alias and value are required.")
+			return
+		}
+		if err := vault.UpsertVocabAlias(alias, value); err != nil {
+			color.Red("Failed to save alias: %v", err)
+			return
+		}
+		if err := saveVaultState(vault, pass); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		color.Green("Alias saved: %s -> %s", strings.ToLower(strings.TrimSpace(alias)), value)
+	},
+}
+
+var vocabAliasListCmd = &cobra.Command{
+	Use:   "alias-list",
+	Short: "List all vocab aliases",
+	Run: func(cmd *cobra.Command, args []string) {
+		_, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		aliases, err := vault.ListVocabAliases()
+		if err != nil {
+			color.Red("Failed to load aliases: %v", err)
+			return
+		}
+		if len(aliases) == 0 {
+			fmt.Println("No aliases found.")
+			return
+		}
+		keys := make([]string, 0, len(aliases))
+		for alias := range aliases {
+			keys = append(keys, alias)
+		}
+		sort.Strings(keys)
+		for _, alias := range keys {
+			fmt.Printf("%s -> %s\n", alias, aliases[alias])
+		}
+	},
+}
+
+var vocabAliasRemoveCmd = &cobra.Command{
+	Use:   "alias-remove [alias]",
+	Short: "Remove an alias",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot remove aliases.")
+			return
+		}
+		if err := vault.DeleteVocabAlias(args[0]); err != nil {
+			color.Red("Failed to remove alias: %v", err)
+			return
+		}
+		if err := saveVaultState(vault, pass); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		color.Green("Alias removed.")
+	},
+}
+
+var vocabRankCmd = &cobra.Command{
+	Use:   "rank [word] [delta]",
+	Short: "Adjust ranking score for a vocab word",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot rank vocab.")
+			return
+		}
+		delta, err := strconv.Atoi(strings.TrimSpace(args[1]))
+		if err != nil {
+			color.Red("Delta must be an integer.")
+			return
+		}
+		if err := vault.AdjustVocabWordScore(args[0], delta); err != nil {
+			color.Red("Failed to adjust rank: %v", err)
+			return
+		}
+		if err := saveVaultState(vault, pass); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		color.Green("Updated rank for %s by %+d.", strings.ToLower(strings.TrimSpace(args[0])), delta)
+	},
+}
+
+var vocabRemoveCmd = &cobra.Command{
+	Use:   "remove [word]",
+	Short: "Remove a word from vocabulary",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot remove vocab words.")
+			return
+		}
+		if err := vault.DeleteVocabWord(args[0]); err != nil {
+			color.Red("Failed to remove word: %v", err)
+			return
+		}
+		if err := saveVaultState(vault, pass); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		color.Green("Removed word %s.", strings.ToLower(strings.TrimSpace(args[0])))
+	},
+}
+
+var vocabReindexCmd = &cobra.Command{
+	Use:   "reindex",
+	Short: "Rebuild vocabulary from secure notes",
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, vault, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot reindex vocabulary.")
+			return
+		}
+		if err := vault.ReindexNoteVocabulary(loadIgnoreConfigOrEmpty()); err != nil {
+			color.Red("Reindex failed: %v", err)
+			return
+		}
+		if err := saveVaultState(vault, pass); err != nil {
+			color.Red("Error saving vault: %v", err)
+			return
+		}
+		color.Green("Vocabulary reindexed.")
 	},
 }
 
