@@ -1,20 +1,14 @@
+version: 2
+project_name: apm
+
 before:
   hooks:
     - go mod tidy
+
 builds:
-  - id: pm
-    binary: pm
+  - id: apm
+    binary: apm
     main: ./main.go
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-  - id: pm-team
-    binary: pm-team
-    main: ./team/main.go
     goos:
       - linux
       - windows
@@ -25,16 +19,28 @@ builds:
 
 archives:
   - format: tar.gz
-    name_template: >-
-      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
 
+nfpms:
+  - id: apm
+    package_name: apm
+    formats:
+      - deb
+    vendor: "APM"
+    maintainer: "Aarav Maloo <aaravmaloo06@gmail.com>"
+    homepage: "https://aaravmaloo.github.io/apm/"
+    description: "Advanced Package Manager."
+    license: "MIT"
+
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
+
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
   filters:
