@@ -1,220 +1,78 @@
-# CLI reference
+# CLI Reference
 
-This page documents primary APM commands for the current CLI behavior.
+This reference lists the primary `pm` commands and explains what they do. For flags, run `pm <command> --help`.
 
-## Global usage
+## Core lifecycle
 
-```console
-$ pm [command] [flags]
-```
+- `pm init` initializes a new vault.
+- `pm unlock` starts a session and unlocks daemon state.
+- `pm lock` ends a session and wipes decrypted data.
 
-Global flag:
+## Entry operations
 
-- `--vault, -v <path>`: override vault file path
-
-## Core vault commands
-
-### `pm add`
-
-Interactive add flow for supported entry categories.
-
-### `pm get [query]`
-
-Interactive search and management.
-
-Key behavior:
-
-- hides sensitive values by default
-- reveals sensitive values only with `--show-pass`
-- quicklook on `Space` for notes/photos
-- multi-select toggle on `s`
-
-Flags:
-
-```console
-$ pm get --show-pass
-```
-
-### `pm gen`
-
-Generate passwords.
-
-### `pm unlock`
-
-Unlock vault session and unlock autofill daemon state.
-
-Flags:
-
-- `--timeout` (default `1h`)
-- `--inactivity` (default `15m`)
-
-### `pm lock`
-
-Lock vault session and autofill daemon state.
-
-## TOTP commands
-
-### `pm totp`
-
-Interactive TOTP list with copy support.
-
-Controls:
-
-- `Enter`: copy selected code
-- `1-9`: quick copy by index
-- `Shift+Up/Shift+Down`: reorder entries
-
-### `pm totp <entry_name>`
-
-Copy matching TOTP code directly.
+- `pm add` adds an entry via an interactive flow.
+- `pm get [query]` searches the vault with fuzzy matching.
+- `pm edit [id]` edits an existing entry.
+- `pm del [id]` deletes an entry.
+- `pm gen` generates passwords.
 
 ## Spaces
 
-- `pm space list`
-- `pm space create <name>`
-- `pm space switch <name>`
-- `pm space remove <name>`
+- `pm space list` lists spaces.
+- `pm space create <name>` creates a space.
+- `pm space switch <name>` switches active space.
+- `pm space remove <name>` removes a space.
 
-## Cloud sync
+## Notes and vocabulary
 
-- `pm cloud init`
-- `pm cloud sync`
-- `pm cloud autosync`
-- `pm cloud get`
-- `pm cloud reset`
+- `pm vocab enable|disable|status` toggles indexing.
+- `pm vocab` lists words and aliases.
+- `pm vocab alias` creates or updates aliases.
+- `pm vocab alias-list` lists aliases.
+- `pm vocab alias-remove <alias>` removes an alias.
+- `pm vocab rank <word> <delta>` adjusts ranking.
+- `pm vocab remove <word>` deletes a word.
+- `pm vocab reindex` rebuilds the vocabulary.
+## TOTP
 
-Cloud upload payloads are filtered by `.apmignore` if present.
+- `pm totp` opens the interactive list.
+- `pm totp <entry>` copies a specific code.
+- `pm autocomplete link-totp` links a TOTP entry to a domain.
 
 ## Autofill and autocomplete
 
-### `pm autofill start`
+- `pm autofill start|stop|status|list-profiles` controls the Windows daemon.
+- `pm autocomplete enable|disable` controls autostart registration.
+- `pm autocomplete start|stop` manually starts or stops the daemon.
+- `pm autocomplete status` shows daemon state and autostart status.
+- `pm autocomplete window enable|disable|status` controls popup hints.
 
-Start Windows/system autofill daemon.
+## Cloud sync
 
-### `pm autocomplete enable`
+- `pm cloud init` configures provider credentials.
+- `pm cloud sync` uploads or downloads the vault blob.
+- `pm cloud autosync` runs periodic sync loops.
+- `pm cloud get` downloads remote vault blob.
+- `pm cloud reset` clears sync configuration.
 
-Register autocomplete daemon autostart on Windows and start it immediately.
+## Plugins
 
-### `pm autocomplete disable`
+- `pm plugins market` lists marketplace plugins.
+- `pm plugins install <name>` installs a plugin.
+- `pm plugins installed` lists local plugins.
+- `pm plugins push <name>` publishes a plugin.
+- `pm plugins access` shows permission overrides.
+- `pm plugins access <plugin> <permission> on|off` toggles a permission.
 
-Disable autocomplete daemon autostart and stop the daemon.
+## MCP
 
-### `pm autocomplete start`
-
-Start the autocomplete daemon manually.
-
-### `pm autocomplete stop`
-
-Stop the autocomplete daemon manually.
-
-### `pm autocomplete status`
-
-Show autocomplete daemon status and autostart state.
-
-### `pm autocomplete window enable|disable|status`
-
-Enable/disable the Windows popup hints for autocomplete availability.
-
-### `pm autofill stop`
-
-Stop daemon.
-
-### `pm autofill status`
-
-Show daemon status.
-
-### `pm autofill list-profiles`
-
-List profiles known by daemon.
-
-### `pm autocomplete link-totp`
-
-Link domain to existing TOTP entry id for intelligent OTP autofill.
-
-## Notes autocomplete and vocab
-
-### `pm vocab enable|disable|status`
-
-Enable/disable notes autocomplete indexing and show status.
-
-### `pm vocab`
-
-Show vocabulary words and alias state.
-
-### `pm vocab alias`
-
-Create/update an alias.
-
-### `pm vocab alias-list`
-
-List aliases.
-
-### `pm vocab alias-remove <alias>`
-
-Remove alias.
-
-### `pm vocab rank <word> <delta>`
-
-Adjust rank manually.
-
-### `pm vocab remove <word>`
-
-Delete vocab word.
-
-### `pm vocab reindex`
-
-Rebuild vocabulary index from notes.
-
-## Plugin commands
-
-APM plugins use legacy `plugin.json` manifests.
-
-### `pm plugins market`
-
-List marketplace plugins.
-
-### `pm plugins install <name>`
-
-Install plugin from marketplace.
-
-### `pm plugins push <name> [--path <dir>]`
-
-Publish local `plugin.json` plugin directory to marketplace.
-
-### `pm plugins installed`
-
-List locally loaded plugins.
-
-### `pm plugins access`
-
-Show plugin permissions and ON/OFF states.
-
-### `pm plugins access <plugin> <permission> <on|off>`
-
-Toggle one permission override.
-
-## Policy commands
-
-- `pm policy load <file>`
-- `pm policy show`
-- `pm policy clear`
-
-## Session delegation
-
-- `pm session issue`
-- `pm session list`
-- `pm session revoke <id>`
-
-## MCP commands
-
-- `pm mcp token`
-- `pm mcp serve`
-- `pm mcp config`
+- `pm mcp token` generates a token.
+- `pm mcp serve` starts the server.
+- `pm mcp config` outputs config hints.
 
 ## Utility
 
-- `pm info`
-- `pm health`
-- `pm trust`
-- `pm update`
-- `pm setup`
+- `pm info` shows version and environment.
+- `pm health` runs health checks.
+- `pm trust` shows trust/risk scoring.
+- `pm update` updates the binary.
