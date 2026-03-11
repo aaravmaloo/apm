@@ -1,92 +1,39 @@
 # Using .apmignore
 
-`.apmignore` controls what APM excludes from cloud uploads.
+`.apmignore` controls what APM excludes from cloud upload payloads. It is evaluated during `pm cloud sync` before encryption and upload.
 
 ## File location
 
-Place `.apmignore` in:
-
-- current working directory, or
-- same directory as your vault file
+Place `.apmignore` in the current working directory or next to your vault file. APM loads the nearest applicable file.
 
 ## Sections
 
-## `[spaces]`
+- `[spaces]` ignores whole spaces.
+- `[entries]` ignores `space:type:name` patterns with wildcards.
+- `[vocab]` ignores words from vocabulary export.
+- `[cloud-specific-ignore]` ignores entries only for a provider.
+- `[misc]` contains flags such as `ignore:vocab`.
 
-Ignore whole spaces.
+## Example
 
 ```ini
 [spaces]
-private_space
+private
 archive_*
-```
 
-## `[entries]`
-
-Ignore by `space:type:name` with wildcards.
-
-```ini
 [entries]
-work:notes:*
-*:password:*token*
-```
+work:notes:*token*
+*:password:*legacy*
 
-## `[vocab]`
-
-Case-sensitive word ignore list for vocabulary export filtering.
-
-```ini
-[vocab]
-'cause
-A
-```
-
-## `[cloud-specific-ignore]`
-
-Ignore only for one provider (`provider:space:type:name`).
-
-```ini
 [cloud-specific-ignore]
 dropbox:work:password:legacy_admin
-GitHub:personal:note:journal
-```
 
-## `[misc]`
-
-Special flags.
-
-```ini
 [misc]
 ignore:vocab
 ```
 
-`ignore:vocab` strips compressed vocab data from cloud-uploaded vault payloads.
+## Notes
 
-## Example
-
-Full example file:
-
-- `examples/.apmignore`
-
-## Type aliases
-
-Common type aliases are normalized:
-
-- `notes` -> `note`
-- `apikey` -> `api-key`
-- `otp` -> `totp`
-- `image` -> `photo`
-
-## Wildcards
-
-Supported pattern syntax:
-
-- `*` any sequence
-- `?` single char
-- `[]` character class
-
-## Validation tips
-
-1. Start with one rule and run `pm cloud sync`.
-2. Add provider-specific rules only when needed.
-3. Keep vocab ignore separate from entry ignore to avoid confusion.
+- Use `ignore:vocab` to strip the compressed vocabulary from cloud uploads.
+- Keep vocab rules separate from entry rules to avoid confusion.
+- Provider-specific ignores are useful for multi-cloud strategies.
