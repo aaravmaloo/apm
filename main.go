@@ -1226,8 +1226,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "can-v10.0.0-03-11-2026"
-			infoBuild := "commits left to be pushed (23-02-2026)"
+			infoVersion := "v10.0.0-stable"
+			infoBuild := "d162a99 (11-03-2026)"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
@@ -1244,7 +1244,7 @@ func main() {
 				}
 			}
 
-			fmt.Println("APM Canary Preview Release")
+			fmt.Println("APM Stable v10 Release")
 			fmt.Println("────────────────────────────")
 			fmt.Println()
 			fmt.Printf("User:       %s@apm\n", processedHomeName)
