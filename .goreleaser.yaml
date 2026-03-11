@@ -20,20 +20,17 @@ builds:
       - CGO_ENABLED=0
 
 archives:
-  - id: default
+  - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    files:
-      - LICENSE
-      - README.md
     format_overrides:
       - goos: windows
         format: zip
 
-nfpm:
+nfpms:
   - id: apm
+    package_name: apm
     formats:
       - deb
-    package_name: apm
     vendor: "APM"
     maintainer: "Aarav Maloo <aaravmaloo06@gmail.com>"
     homepage: "https://aaravmaloo.github.io/apm/"
@@ -49,10 +46,3 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-
-release:
-  github:
-    owner: "aaravmaloo"
-    name: "apm"
-    draft: false
-    prerelease: false
