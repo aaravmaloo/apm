@@ -2183,6 +2183,8 @@ func main() {
 		},
 	}
 
+	var runInteractivePluginAccess func(v *src.Vault, pass string, pluginName string, plugin *plugins.Plugin)
+
 	var pluginAccessCmd = &cobra.Command{
 		Use:   "access [plugin] [permission] [on|off]",
 		Short: "View or change plugin permission access (2 args toggles)",
@@ -2243,7 +2245,7 @@ func main() {
 			}
 
 			if len(args) == 1 {
-				printPluginPermissions(displayName, plugin)
+				runInteractivePluginAccess(vault, pass, displayName, plugin)
 				return
 			}
 
@@ -2300,6 +2302,129 @@ func main() {
 			}
 			color.Green("Plugin '%s' permission '%s' set to %s.", displayName, permission, strings.ToUpper(stateRaw))
 		},
+	}
+
+	runInteractivePluginAccess = func(v *src.Vault, pass string, pluginName string, plugin *plugins.Plugin) {
+		if !term.IsTerminal(int(os.Stdin.Fd())) {
+			fmt.Printf("Plugin: %s\n", pluginName)
+			perms := append([]string{}, plugin.Definition.Permissions...)
+			sort.Strings(perms)
+			for _, permission := range perms {
+				state := "OFF"
+				if pluginPermissionEnabled(v, plugin.Definition.Name, permission) {
+					state = "ON"
+				}
+				fmt.Printf("  %-28s %s\n", permission, state)
+			}
+			return
+		}
+
+		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			color.Red("Failed to initialize interactive view: %v", err)
+			return
+		}
+		defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+		fmt.Print("\x1b[?25l")       // Hide cursor
+		defer fmt.Print("\x1b[?25h") // Show cursor
+
+		perms := append([]string{}, plugin.Definition.Permissions...)
+		sort.Strings(perms)
+
+		if len(perms) == 0 {
+			term.Restore(int(os.Stdin.Fd()), oldState)
+			fmt.Println("\x1b[?25hPlugin requires no permissions.")
+			return
+		}
+
+		statusMap := make(map[string]bool)
+		for _, p := range perms {
+			statusMap[p] = pluginPermissionEnabled(v, plugin.Definition.Name, p)
+		}
+
+		selectedIndex := 0
+		statusMsg := ""
+
+		render := func() {
+			fmt.Print("\033[H\033[J")
+			fmt.Printf("\x1b[1;36mAPM Plugin Access\x1b[0m | Plugin: \x1b[1;32m%s\x1b[0m\n", pluginName)
+			fmt.Println("Up/Down: Navigate | Space: Toggle | Enter: Save | Esc/q: Cancel")
+			if statusMsg != "" {
+				fmt.Printf("%s\n", statusMsg)
+				statusMsg = ""
+			}
+			fmt.Println(strings.Repeat("-", 50))
+
+			for i, p := range perms {
+				cursor := " "
+				if i == selectedIndex {
+					cursor = "\x1b[1;34m>\x1b[0m"
+				}
+				checkbox := "[ ]"
+				colorCode := ""
+				if statusMap[p] {
+					checkbox = "[\x1b[1;32mx\x1b[0m]"
+					colorCode = "\x1b[1;32m"
+				}
+
+				fmt.Printf("%s %s %s%-30s\x1b[0m\n", cursor, checkbox, colorCode, p)
+			}
+		}
+
+		b := make([]byte, 3)
+		for {
+			render()
+			os.Stdin.Read(b)
+			if b[0] == 27 {
+				if b[1] == 91 {
+					if b[2] == 65 {
+						selectedIndex--
+						if selectedIndex < 0 {
+							selectedIndex = len(perms) - 1
+						}
+					} else if b[2] == 66 {
+						selectedIndex++
+						if selectedIndex >= len(perms) {
+							selectedIndex = 0
+						}
+					}
+				} else {
+					return
+				}
+			} else if b[0] == '\r' || b[0] == '\n' {
+				break
+			} else if b[0] == ' ' {
+				p := perms[selectedIndex]
+				statusMap[p] = !statusMap[p]
+			} else if b[0] == 'q' || b[0] == 3 {
+				return
+			}
+			b[1] = 0
+			b[2] = 0
+		}
+
+		term.Restore(int(os.Stdin.Fd()), oldState)
+		fmt.Print("\x1b[?25h\033[H\033[J")
+
+		changed := false
+		for p, enabled := range statusMap {
+			wasEnabled := pluginPermissionEnabled(v, plugin.Definition.Name, p)
+			if enabled != wasEnabled {
+				setPluginPermissionOverride(v, plugin.Definition.Name, p, enabled)
+				changed = true
+			}
+		}
+
+		if changed {
+			if err := saveVaultState(v, pass); err != nil {
+				color.Red("Failed to save changes: %v", err)
+			} else {
+				color.Green("Plugin permissions updated successfully.")
+			}
+		} else {
+			fmt.Println("No changes made.")
+		}
 	}
 
 	executePluginCommand := func(pluginName string, plugin *plugins.Plugin, commandName string, cmdDef plugins.CommandDef, overrides map[string]string, args []string) error {
@@ -4517,7 +4642,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			profileDisplay = "default"
 		}
 
-		fmt.Print("\033[H\033[2J")
+		fmt.Print("\033[H\033[J")
 		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Space: \x1b[1;32m%s\x1b[0m (readonly: %v)\n", profileDisplay, readonly)
 
 		if focusMode == 0 {
@@ -4656,7 +4781,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 				if len(selectedItems) > 0 {
 					_ = term.Restore(int(os.Stdin.Fd()), oldState)
 					for key, res := range selectedItems {
-						fmt.Print("\033[H\033[2J")
+						fmt.Print("\033[H\033[J")
 						editEntryInVault(v, masterPassword, res)
 						delete(selectedItems, key)
 						fmt.Print("\nPress Enter to continue...")
@@ -4672,7 +4797,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			if b[0] == 'd' {
 				if len(selectedItems) > 0 {
 					_ = term.Restore(int(os.Stdin.Fd()), oldState)
-					fmt.Print("\033[H\033[2J")
+					fmt.Print("\033[H\033[J")
 					fmt.Printf("Are you sure you want to delete %d selected items? (y/n): ", len(selectedItems))
 					if strings.ToLower(readInput()) == "y" {
 						noteChanged := false
@@ -4711,7 +4836,7 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 				if len(selectedItems) > 0 {
 					_ = term.Restore(int(os.Stdin.Fd()), oldState)
 					for _, res := range selectedItems {
-						fmt.Print("\033[H\033[2J")
+						fmt.Print("\033[H\033[J")
 						displayEntryMetadata(v, res)
 						fmt.Print("\nPress Enter to continue...")
 						readInput()
@@ -4931,7 +5056,7 @@ func runInteractiveTOTP(v *src.Vault, masterPassword string) {
 	for {
 		entries = orderedTOTPEntries(v)
 		if len(entries) == 0 {
-			fmt.Print("\033[H\033[2J")
+			fmt.Print("\033[H\033[J")
 			fmt.Println("No TOTP entries left in the current space.")
 			return
 		}
@@ -4942,7 +5067,7 @@ func runInteractiveTOTP(v *src.Vault, masterPassword string) {
 			selected = len(entries) - 1
 		}
 
-		fmt.Print("\033[H\033[2J")
+		fmt.Print("\033[H\033[J")
 		fmt.Printf("APM TOTP | Space: %s | Refresh: %ds\n", currentSpaceDisplay(v), src.TimeRemaining())
 		fmt.Println("Enter: copy selected | 1-9: copy by number | Shift+Up/Down: reorder | Up/Down: move | q/Esc: exit")
 		if status != "" {
