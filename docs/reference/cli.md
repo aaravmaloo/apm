@@ -91,6 +91,30 @@ Cloud upload payloads are filtered by `.apmignore` if present.
 
 Start Windows/system autofill daemon.
 
+### `pm autocomplete enable`
+
+Register autocomplete daemon autostart on Windows and start it immediately.
+
+### `pm autocomplete disable`
+
+Disable autocomplete daemon autostart and stop the daemon.
+
+### `pm autocomplete start`
+
+Start the autocomplete daemon manually.
+
+### `pm autocomplete stop`
+
+Stop the autocomplete daemon manually.
+
+### `pm autocomplete status`
+
+Show autocomplete daemon status and autostart state.
+
+### `pm autocomplete window enable|disable|status`
+
+Enable/disable the Windows popup hints for autocomplete availability.
+
 ### `pm autofill stop`
 
 Stop daemon.
@@ -109,9 +133,9 @@ Link domain to existing TOTP entry id for intelligent OTP autofill.
 
 ## Notes autocomplete and vocab
 
-### `pm auth autocomplete [true|false]`
+### `pm vocab enable|disable|status`
 
-Enable/disable notes autocomplete indexing.
+Enable/disable notes autocomplete indexing and show status.
 
 ### `pm vocab`
 
