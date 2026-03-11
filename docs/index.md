@@ -1,164 +1,153 @@
 # APM Documentation
 
-APM is a zero-knowledge, Go-based CLI password manager with multi-type secret storage, cloud sync, TOTP, system autofill, notes vocabulary, plugins, and MCP tooling. This page is the comprehensive reference and user guide for the entire system. It covers how to install, how to operate the CLI day-to-day, and how the internals behave so you can make safe operational decisions.
+**APM** (Advanced Password Manager) is a professional-grade, zero-knowledge command-line password manager built in Go. It provides encrypted-at-rest vault storage, multi-cloud synchronization, AI-agent integration via MCP, a Windows autofill daemon, a manifest-based plugin system, and organizational team support — all driven from a single CLI binary.
 
-## What APM is
+---
 
-APM is a local-first vault with encrypted-at-rest storage and explicit session-based unlock behavior. You do not “stay logged in” in the background. You open a session, perform work, and lock the vault. Optional features like autofill or MCP integrate with that session boundary rather than bypassing it.
+## Why APM?
 
-The platform has three major user personas:
+- **Zero-Knowledge Architecture** — Your master password never leaves your machine. The vault is encrypted with Argon2id + AES-256-GCM and protected by HMAC-SHA256 integrity signatures.
+- **25+ Secret Types** — Passwords, TOTP, API keys, SSH keys, certificates, banking, medical records, legal contracts, documents with file attachments, and more — each with a structured schema.
+- **Multi-Cloud Sync** — Native support for Google Drive, GitHub, and Dropbox. Your vault is uploaded as an encrypted blob; providers never see plaintext.
+- **AI-Agent Integration** — Built-in MCP (Model Context Protocol) server lets AI assistants like Claude, Cursor, and Windsurf read and manage vault entries with permission-scoped, token-based access.
+- **Windows Autofill** — A local daemon that detects credential forms and injects keystrokes via hotkey — no browser extension required.
+- **Plugin Ecosystem** — Manifest-based plugins with 100+ granular permissions, a marketplace, and hook-based lifecycle integration.
+- **Team Edition** — Multi-user credential sharing with RBAC, departments, and approval workflows.
 
-- Personal users who want a secure CLI vault with automation and notes.
-- Power users who want cloud sync, plugins, and policy enforcement.
-- Developers who want to integrate APM into tooling via MCP or plugins.
+---
 
-## One-line install
+## Quick Install
 
-macOS and Linux:
+=== "macOS / Linux"
 
-```console
-curl -sSL https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh | bash
-```
+    ```bash
+    curl -sSL https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh | bash
+    ```
 
-Windows PowerShell:
+=== "Windows PowerShell"
 
-```powershell
-powershell -ExecutionPolicy Bypass -Command "iwr https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.ps1 -UseBasicParsing | iex"
-```
+    ```powershell
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    iwr https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.ps1 -UseBasicParsing | iex
+    ```
+
+=== "Build from Source"
+
+    ```bash
+    git clone https://github.com/aaravmaloo/apm.git
+    cd apm
+    go build -o pm main.go
+    ```
+
+For full installation details, see [Installation](getting-started/installation.md).
+
+---
 
 ## Quickstart
 
-1. Initialize a vault with `pm init` and set a strong master password.
-2. Unlock the vault with `pm unlock` and confirm you are in an active session.
-3. Add entries with `pm add` and find them with `pm get`.
-4. Lock the vault with `pm lock` when you are done.
-5. If you are on Windows, start the autofill daemon with `pm autofill start` and use `CTRL+SHIFT+L` in login contexts.
-6. If you use cloud sync, configure with `pm cloud init` and run `pm cloud sync`.
+```bash
+# 1. Initialize a new vault (choose a security profile)
+pm init
 
-## Vault lifecycle and sessions
+# 2. Unlock the vault to start a session
+pm unlock
 
-APM uses explicit sessions to gate access to decrypted data. This is a security boundary and also a mental model:
+# 3. Add your first entry
+pm add
 
-- The vault is encrypted at rest on disk.
-- `pm unlock` decrypts it in memory and starts a session.
-- All sensitive commands require an active session.
-- `pm lock` ends the session and wipes in-memory secrets.
-- Session timeouts and inactivity timeouts auto-lock to reduce exposure.
+# 4. Search and retrieve entries
+pm get github
 
-This model also applies to the autofill daemon and MCP server. They do not operate unless the vault is unlocked or unless you provide a delegated session token.
-## Entry model and secret types
+# 5. Generate a strong password
+pm gen
 
-APM supports a broad range of entry types so that you can keep sensitive data in one encrypted vault. Common categories include passwords, TOTP secrets, secure notes, tokens, API keys, SSH keys, Wi-Fi credentials, certificates, recovery codes, and documents. Each entry type has a structured schema and validated fields rather than untyped blobs, which allows APM to provide safer UI workflows and stronger automation.
+# 6. Lock when done
+pm lock
+```
 
-The `pm add` command walks you through the available entry types. `pm get` is a fuzzy search interface with quicklook for notes and photos, and a safe-by-default display mode that hides sensitive values unless explicitly requested.
+For a detailed walkthrough, see [First Steps](getting-started/first-steps.md).
 
-## Notes and vocabulary
+---
 
-Secure notes in APM are not just text blobs. When vocabulary indexing is enabled, APM builds a compressed vocabulary from notes and uses it to offer autocomplete suggestions, alias normalization, and ranking. This makes note writing faster and more consistent over time.
+## How the Documentation Is Organized
 
-Key commands:
+### [Getting Started](getting-started/index.md)
 
-- `pm vocab enable|disable|status` controls whether vocabulary indexing is active.
-- `pm vocab` lists words and alias state.
-- `pm vocab alias` creates or updates an alias so terms normalize during writing.
-- `pm vocab rank` adjusts ranking to promote frequently used terms.
-- `pm vocab reindex` rebuilds the vocabulary from current notes.
+Installation, first steps, and a feature overview to get productive quickly.
 
-The vocabulary is stored inside the encrypted vault in a compressed form. You can strip it from cloud uploads with `.apmignore` if you want to reduce metadata exposure.
+### [Guides](guides/index.md)
 
-## Spaces
+Practical how-to guides for day-to-day tasks:
 
-Spaces provide a lightweight organization layer so you can separate Work, Personal, or Project-specific entries. Commands such as `pm space create`, `pm space list`, and `pm space switch` let you segment vault content without splitting into multiple vault files. `.apmignore` can filter whole spaces during cloud sync.
-## TOTP and OTP linking
+- [Managing your vault](guides/vault-management.md) — Adding, searching, editing, and organizing entries
+- [Cloud synchronization](guides/cloud-sync.md) — Setting up GDrive, GitHub, and Dropbox sync
+- [Using .apmignore](guides/apmignore.md) — Controlling what gets uploaded to cloud providers
+- [Autofill on Windows](autofill_windows.md) — The autofill daemon and hotkey injection
+- [Generating TOTP codes](guides/totp.md) — 2FA management and autofill linking
+- [Managing sessions](guides/sessions.md) — Unlock, lock, ephemeral sessions, and delegation
+- [Using plugins](guides/plugins.md) — Installing, managing, and creating plugins
+- [MCP integration](guides/mcp-integration.md) — Connecting AI assistants to your vault
+- [Team edition](guides/team-edition.md) — Organizational credential sharing
+- [Importing and exporting](guides/import-export.md) — JSON, CSV, and TXT import/export
 
-APM supports time-based one-time passwords for 2FA.
+### [Concepts](concepts/index.md)
 
-- `pm totp` opens an interactive list with copy and ordering controls.
-- `pm totp <entry>` copies a specific code directly.
+Deep technical explanations of how APM works:
 
-Autofill-aware OTP flows are supported by linking a TOTP entry to a domain. Use `pm autocomplete link-totp` so the autofill engine can select the correct OTP for a website or desktop app.
+- [Architecture](concepts/architecture.md) — The four-layer design
+- [Encryption](concepts/encryption.md) — Argon2id, AES-256-GCM, HMAC-SHA256
+- [Vault format](concepts/vault-format.md) — The V4 binary format specification
+- [Secret types](concepts/secret-types.md) — All 25+ structured entry types
+- [Security profiles](concepts/security-profiles.md) — Standard, Hardened, Paranoid, Legacy
+- [Policy engine](concepts/policy-engine.md) — YAML-based password and rotation policies
+- [Sessions](concepts/sessions.md) — Shell-scoped and ephemeral delegated sessions
+- [Cloud synchronization](concepts/cloud-sync.md) — Provider comparison and sync mechanics
+- [Plugins](concepts/plugins.md) — Plugin architecture and permission model
+- [MCP server](concepts/mcp.md) — Model Context Protocol server internals
+- [Recovery](concepts/recovery.md) — Multi-factor recovery, quorum shares, passkeys
 
-## Autofill daemon on Windows
+### [Reference](reference/index.md)
 
-APM autofill is implemented as a local Windows daemon. It runs without a browser extension and listens for a global hotkey, defaulting to `CTRL+SHIFT+L`.
+Precise technical specifications:
 
-Core behaviors:
+- [CLI reference](reference/cli.md) — Every command, subcommand, and flag
+- [.apmignore reference](reference/apmignore.md) — Format specification
+- [Storage reference](reference/storage.md) — File locations and data layout
+- [Environment variables](reference/environment-variables.md) — All supported env vars
+- [Plugin API](reference/plugin-api.md) — Manifest schema and permissions catalog
+- [MCP tools](reference/mcp-tools.md) — Tool schemas and permission requirements
+- [Policies](reference/policies.md) — YAML policy schema and examples
 
-- The daemon watches active window context and detects credential-like forms.
-- It surfaces transient popup hints indicating a possible match or a detection event.
-- When the hotkey is pressed, it resolves the best match and injects keystrokes.
-- It never uses the clipboard for core typing flows.
-- It rejects requests if the vault is locked.
+### [Team](team/index.md)
 
-Daemon control:
+Team edition documentation for organizational deployments:
 
-- `pm autofill start|stop|status|list-profiles` manages the daemon.
-- `pm autocomplete enable` registers autostart on login and starts the daemon.
-- `pm autocomplete start|stop` handles manual lifecycle control.
-- `pm autocomplete window enable|disable|status` toggles popup hints.
+- [RBAC and roles](team/rbac.md)
+- [Departments](team/departments.md)
+- [Approval workflows](team/approvals.md)
 
-The daemon uses loopback IPC and bearer-token state to keep local communications protected.
-## Cloud sync
+---
 
-APM syncs encrypted vault blobs to supported providers. Your master password never leaves the machine, and the providers never see plaintext. The upload is an encrypted file, optionally filtered via `.apmignore`.
+## Threat Model
 
-Typical flow:
+| Vector              | Status        | Mitigation                                                               |
+| :------------------ | :------------ | :----------------------------------------------------------------------- |
+| Offline Brute-Force | Protected     | Argon2id high-cost derivation (up to 512 MB, 6 iterations)               |
+| Vault Tampering     | Protected     | HMAC-SHA256 integrity signature across all metadata                      |
+| Credential Theft    | Protected     | Cloud tokens are encrypted inside the vault                              |
+| Identity Spoofing   | Protected     | Multi-factor recovery (Email → Recovery Key → OTP → Optional 2nd factor) |
+| Session Hijacking   | Protected     | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts         |
+| Weak Passwords      | Controlled    | Enforceable password policies via YAML Policy Engine                     |
+| Compromised Host    | Not Protected | Outside security boundary (keyloggers, malware)                          |
 
-1. `pm cloud init` to configure provider credentials.
-2. `pm cloud sync` to upload or download as needed.
-3. `pm cloud autosync` to run periodic sync loops.
+---
 
-### .apmignore
+## Contact & Support
 
-`.apmignore` is read before upload and can remove entries from the payload. It supports:
+- **Primary Maintainer**: Aarav Maloo
+- **Security Alerts**: aaravmaloo06@gmail.com
+- **GitHub Issues**: [aaravmaloo/apm/issues](https://github.com/aaravmaloo/apm/issues)
 
-- Space-level ignores.
-- Entry-level ignores with `space:type:name` patterns.
-- Provider-specific ignores using `provider:space:type:name`.
-- Vocabulary stripping with `ignore:vocab`.
+---
 
-This lets you maintain local-only data while still using cloud backups for the rest of your vault.
-## Auth and recovery
-
-APM recovery is designed for zero-knowledge environments. A recovery flow can verify identity without exposing secret data to a server.
-
-Key elements:
-
-- Email verification tokens are time-limited and stored hashed.
-- A recovery key gates access to the Data Encryption Key (DEK).
-- Optional recovery factors such as passkeys or recovery codes add safety.
-- A recovery attempt re-encrypts the vault with a new master password.
-
-If you do not configure a recovery key, losing the master password means the vault cannot be recovered. This is an intentional property of the zero-knowledge design.
-## Plugins and PACs
-
-APM plugins are manifest-based (`plugin.json`). Each plugin declares required permissions and commands it exposes. Runtime permission overrides are enforced by the engine and stored in the vault so policy travels with your data.
-
-Relevant commands:
-
-- `pm plugins market`, `pm plugins install`, `pm plugins installed`
-- `pm plugins access` to view permissions
-- `pm plugins access <plugin> <permission> on|off` to toggle overrides
-
-Treat plugins as executable code. The permission model is designed to reduce blast radius if a plugin should not access certain capabilities.
-
-## MCP server
-
-APM exposes a Model Context Protocol server for AI assistants and automation. MCP access is token-scoped and permissioned, and it requires an active session.
-
-- `pm mcp token` creates a token with specified permissions.
-- `pm mcp serve` starts the server.
-- `pm mcp config` helps with client configuration.
-
-Write tools use transaction guardrails, requiring explicit commit steps for modifications.
-
-## Policies
-
-Policies are YAML files that enforce password complexity and compliance requirements. They are loaded with `pm policy load` and applied at entry creation time.
-## Where to look next
-
-- Getting Started for install and first workflows.
-- Guides for cloud sync, sessions, plugins, and MCP.
-- Concepts for architecture, encryption, recovery, and vault format.
-- Reference for exact CLI command definitions.
-- Plugin API for developer reference.
+*APM is open-source software licensed under the [MIT License](https://github.com/aaravmaloo/apm/blob/master/LICENSE). Copyright © 2025–2026 Aarav Maloo.*
