@@ -1,93 +1,36 @@
-# APM architecture
+# Architecture
 
-This page describes APM internals at a system level.
+APM is layered to separate CLI interaction, domain logic, and integrations.
 
-## High-level layers
+## Layers
 
-1. CLI layer (`main.go`)
-2. Domain layer (`src/` vault, crypto, entries, policies, sync)
-3. Integration layer (cloud providers, autofill daemon, MCP server)
-4. Extension layer (manifest plugins)
+1. CLI layer in `main.go` provides the user-facing command tree.
+2. Domain layer in `src/` implements vault, entries, crypto, policy, and sync.
+3. Integration layer contains cloud providers, autofill daemon, and MCP server.
+4. Extension layer supports manifest-based plugins.
 
-## Vault data flow
+## Vault flow
 
-1. Unlock: encrypted vault bytes are loaded from disk.
-2. KDF: Argon2id derives encryption/auth keys.
-3. Decrypt: AES-GCM decrypts serialized vault payload.
-4. In-memory operations: add/get/edit/search/reindex.
-5. Save: vault re-encrypted and persisted.
+- Encrypted vault bytes are loaded from disk.
+- Argon2id derives encryption and authentication keys.
+- AES-GCM decrypts the vault payload.
+- Operations run in memory within a session.
+- The vault is re-encrypted and persisted on save.
 
-## Security boundaries
+## Autofill subsystem
 
-- Encrypted-at-rest vault file
-- Session-scoped unlock state
-- Read-only session mode
-- Memory wipe on lock for primary secret fields
-- Local-only daemon IPC (loopback + bearer token)
+- Windows daemon runs locally on loopback.
+- Active window context is captured and analyzed.
+- Popup hints notify users when matches exist.
+- Hotkey triggers sequence injection.
 
-## Space model
+## Notes vocabulary subsystem
 
-Entries are partitioned by `space` labels.
+- Vocabulary is stored in `Vault.VocabCompressed`.
+- Indexing runs on note changes if enabled.
+- Alias and ranking influence suggestion output.
 
-- `CurrentSpace` drives most interactive operations
-- `.apmignore` can exclude full spaces from cloud payloads
+## Plugin subsystem
 
-## Cloud sync path
-
-On upload:
-
-1. Load active vault object
-2. Load `.apmignore`
-3. Clone + filter vault for provider
-4. Re-encrypt filtered vault to temporary file
-5. Upload to provider API
-
-This ensures ignored entries are never serialized into cloud payloads.
-
-## Autofill architecture (Windows)
-
-- `pm autofill start` launches daemon
-- daemon listens on local HTTP endpoint
-- hotkey engine captures `CTRL+SHIFT+L`
-- active-window context + UI hints feed intelligent candidate scoring
-- sequence renderer emits actions (`{USERNAME}`, `{PASSWORD}`, `{TOTP}`, `{TAB}`, `{ENTER}`)
-- system engine sends keystrokes
-
-Background context watcher triggers user popup hints for entry detection and autocomplete availability.
-
-## Notes autocomplete architecture
-
-- vocab stored in `Vault.VocabCompressed` (gzip-compressed JSON)
-- enabling autocomplete triggers full reindex from secure notes
-- note edits/additions/deletions trigger reindex when enabled
-- suggestion ranking updates from accept/dismiss feedback
-- alias replacement can run on space while editing notes
-
-## TOTP architecture
-
-- `Vault.TOTPEntries` stores TOTP secrets
-- `Vault.TOTPOrder` stores interactive ordering
-- `Vault.TOTPDomainLinks` maps domains to preferred TOTP account names
-- `pm totp` interactive list supports copy and reordering
-- `pm totp <entry_name>` performs fast lookup + copy
-
-## Plugin architecture
-
-APM plugins are manifest-driven (`plugin.json`) and loaded from local plugin folders.
-
-Permissions are declared per plugin and governed by runtime toggles in `pm plugins access`.
-
-## MCP architecture
-
-- Token-scoped tool access
-- Vault operations exposed as MCP tools
-- Optional plugin listing/install endpoints (depending on plugin manager availability)
-
-## Major directories
-
-- `src/` core implementation
-- `src/autofill` daemon + matching + system engine
-- `src/tui` terminal UI
-- `plugins/` installed plugin directories (manifest-based)
-- `examples/` sample plugin and policy files
-- `docs/` documentation
+- `plugin.json` declares metadata, permissions, commands, and hooks.
+- Runtime permission overrides are enforced for every step.
