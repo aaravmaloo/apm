@@ -38,6 +38,7 @@ type Daemon struct {
 
 	pendingCandidates []MatchCandidate
 	recentNotices     map[string]time.Time
+	popupDisabled     bool
 
 	listener net.Listener
 	server   *http.Server
@@ -238,6 +239,7 @@ func (d *Daemon) handleUnlock(w http.ResponseWriter, r *http.Request) {
 	d.mu.Lock()
 	d.vault = vault
 	d.locked = false
+	d.popupDisabled = vault.AutocompleteWindowDisabled
 	d.unlockExpiresAt = now.Add(time.Duration(timeoutSec) * time.Second)
 	d.inactivityTimeout = time.Duration(inactivitySec) * time.Second
 	d.lastActivity = now
@@ -493,6 +495,10 @@ func (d *Daemon) maybeNotify(key, message string, cooldown time.Duration) {
 
 	now := time.Now().UTC()
 	d.mu.Lock()
+	if d.popupDisabled {
+		d.mu.Unlock()
+		return
+	}
 	lastSeen := d.recentNotices[key]
 	if !lastSeen.IsZero() && now.Sub(lastSeen) < cooldown {
 		d.mu.Unlock()
