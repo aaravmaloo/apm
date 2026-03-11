@@ -27,6 +27,7 @@ import (
 	"context"
 
 	src "github.com/aaravmaloo/apm/src"
+	"github.com/aaravmaloo/apm/src/autofill"
 	"github.com/aaravmaloo/apm/src/autofillcmd"
 	"github.com/aaravmaloo/apm/src/plugins"
 	"github.com/aaravmaloo/apm/src/tui"
@@ -1225,7 +1226,7 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "can10.0.0"
+			infoVersion := "can-v10.0.0-03-11-2026"
 			infoBuild := "commits left to be pushed (23-02-2026)"
 
 			vaultAccessible := true
@@ -1243,7 +1244,7 @@ func main() {
 				}
 			}
 
-			fmt.Println("APM v9.1 Stable Release")
+			fmt.Println("APM Canary Preview Release")
 			fmt.Println("────────────────────────────")
 			fmt.Println()
 			fmt.Printf("User:       %s@apm\n", processedHomeName)
@@ -3276,35 +3277,125 @@ func main() {
 	})
 	autocompleteCmd := &cobra.Command{
 		Use:   "autocomplete",
-		Short: "Manage autocomplete features",
+		Short: "Manage autocomplete daemon and hints",
 	}
+	var autocompleteHotkey string
 	autocompleteEnableCmd := &cobra.Command{
 		Use:   "enable",
-		Short: "Enable note autocomplete indexing",
+		Short: "Enable autocomplete daemon autostart and start now",
 		Run: func(cmd *cobra.Command, args []string) {
-			authAutocompleteCmd.Run(cmd, []string{"true"})
+			if err := autofillcmd.EnableAutofillAutostart(vaultPath, autocompleteHotkey); err != nil {
+				color.Red("Failed to enable autostart: %v", err)
+				return
+			}
+			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey); err != nil {
+				color.Red("Failed to start autocomplete daemon: %v", err)
+				return
+			}
+			color.Green("Autocomplete daemon autostart enabled and started.")
 		},
 	}
+	autocompleteEnableCmd.Flags().StringVar(&autocompleteHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
 	autocompleteDisableCmd := &cobra.Command{
 		Use:   "disable",
-		Short: "Disable note autocomplete indexing",
+		Short: "Disable autocomplete daemon autostart and stop daemon",
 		Run: func(cmd *cobra.Command, args []string) {
-			authAutocompleteCmd.Run(cmd, []string{"false"})
+			if err := autofillcmd.DisableAutofillAutostart(); err != nil {
+				color.Red("Failed to disable autostart: %v", err)
+				return
+			}
+			if err := autofillcmd.StopAutofillDaemon(); err != nil {
+				color.Yellow("Autofill daemon stop failed: %v", err)
+			}
+			color.Yellow("Autocomplete daemon autostart disabled.")
+		},
+	}
+	autocompleteStartCmd := &cobra.Command{
+		Use:   "start",
+		Short: "Start the autocomplete daemon",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey); err != nil {
+				color.Red("Failed to start autocomplete daemon: %v", err)
+				return
+			}
+			color.Green("Autocomplete daemon started.")
+		},
+	}
+	autocompleteStartCmd.Flags().StringVar(&autocompleteHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
+	autocompleteStopCmd := &cobra.Command{
+		Use:   "stop",
+		Short: "Stop the autocomplete daemon",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := autofillcmd.StopAutofillDaemon(); err != nil {
+				color.Yellow("Autocomplete daemon stop failed: %v", err)
+				return
+			}
+			color.Green("Autocomplete daemon stopped.")
 		},
 	}
 	autocompleteStatusCmd := &cobra.Command{
 		Use:   "status",
-		Short: "Show note autocomplete status",
+		Short: "Show autocomplete daemon status",
+		Run: func(cmd *cobra.Command, args []string) {
+			enabled, err := autofillcmd.AutofillAutostartEnabled()
+			if err != nil {
+				color.Red("Autostart: error (%v)", err)
+			} else if enabled {
+				color.Green("Autostart: enabled")
+			} else {
+				color.Yellow("Autostart: disabled")
+			}
+
+			status, err := autofill.TryStatus(context.Background())
+			if err != nil || status == nil {
+				fmt.Println("Daemon: stopped")
+				return
+			}
+			state := "unlocked"
+			if status.Locked {
+				state = "locked"
+			}
+			fmt.Printf("Daemon: %s\n", state)
+			fmt.Printf("PID: %d\n", status.PID)
+			fmt.Printf("Hotkey: %s\n", status.Hotkey)
+			fmt.Printf("System Engine: %s\n", status.SystemEngine)
+			fmt.Printf("Profiles: %d\n", status.ProfileCount)
+			if status.PendingSelection > 0 {
+				fmt.Printf("Pending Selection: %d matches\n", status.PendingSelection)
+			}
+		},
+	}
+	autocompleteWindowCmd := &cobra.Command{
+		Use:   "window",
+		Short: "Manage autocomplete popup window",
+	}
+	autocompleteWindowEnableCmd := &cobra.Command{
+		Use:   "enable",
+		Short: "Enable autocomplete popup window",
+		Run: func(cmd *cobra.Command, args []string) {
+			setAutocompletePopupDisabled(false)
+		},
+	}
+	autocompleteWindowDisableCmd := &cobra.Command{
+		Use:   "disable",
+		Short: "Disable autocomplete popup window",
+		Run: func(cmd *cobra.Command, args []string) {
+			setAutocompletePopupDisabled(true)
+		},
+	}
+	autocompleteWindowStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show autocomplete popup window status",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
 				color.Red("Error: %v", err)
 				return
 			}
-			if vault.AutocompleteEnabled {
-				color.Green("Autocomplete: enabled")
+			if vault.AutocompleteWindowDisabled {
+				color.Yellow("Autocomplete popup: disabled")
 			} else {
-				color.Yellow("Autocomplete: disabled")
+				color.Green("Autocomplete popup: enabled")
 			}
 		},
 	}
@@ -3363,13 +3454,14 @@ func main() {
 			}
 		},
 	}
-	autocompleteCmd.AddCommand(autocompleteEnableCmd, autocompleteDisableCmd, autocompleteStatusCmd, autocompleteLinkTOTPCmd)
+	autocompleteWindowCmd.AddCommand(autocompleteWindowEnableCmd, autocompleteWindowDisableCmd, autocompleteWindowStatusCmd)
+	autocompleteCmd.AddCommand(autocompleteEnableCmd, autocompleteDisableCmd, autocompleteStartCmd, autocompleteStopCmd, autocompleteStatusCmd, autocompleteWindowCmd, autocompleteLinkTOTPCmd)
 
 	rootCmd.AddCommand(autofillCmd, autocompleteCmd)
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authAutocompleteCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
-	vocabCmd.AddCommand(vocabAliasCmd, vocabAliasListCmd, vocabAliasRemoveCmd, vocabRankCmd, vocabRemoveCmd, vocabReindexCmd)
+	vocabCmd.AddCommand(vocabEnableCmd, vocabDisableCmd, vocabStatusCmd, vocabAliasCmd, vocabAliasListCmd, vocabAliasRemoveCmd, vocabRankCmd, vocabRemoveCmd, vocabReindexCmd)
 
 	var updateCmd = &cobra.Command{
 		Use:   "update",
@@ -6793,46 +6885,60 @@ var authChangeCmd = &cobra.Command{
 	},
 }
 
-var authAutocompleteCmd = &cobra.Command{
-	Use:   "autocomplete [true|false]",
-	Short: "Enable or disable note autocomplete indexing",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		pass, vault, readonly, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		if readonly {
-			color.Red("Vault is READ-ONLY. Cannot change autocomplete settings.")
-			return
-		}
+func setNotesAutocompleteEnabled(enabled bool) {
+	pass, vault, readonly, err := src_unlockVault()
+	if err != nil {
+		color.Red("Error: %v\n", err)
+		return
+	}
+	if readonly {
+		color.Red("Vault is READ-ONLY. Cannot change autocomplete settings.")
+		return
+	}
 
-		value := strings.ToLower(strings.TrimSpace(args[0]))
-		enabled := value == "true" || value == "1" || value == "yes" || value == "on"
-		disabled := value == "false" || value == "0" || value == "no" || value == "off"
-		if !enabled && !disabled {
-			color.Red("Use true/false.")
-			return
+	vault.AutocompleteEnabled = enabled
+	if enabled {
+		if err := vault.ReindexNoteVocabulary(loadIgnoreConfigOrEmpty()); err != nil {
+			color.Yellow("Autocomplete enabled, but indexing failed: %v", err)
 		}
+	}
 
-		vault.AutocompleteEnabled = enabled
-		if enabled {
-			if err := vault.ReindexNoteVocabulary(loadIgnoreConfigOrEmpty()); err != nil {
-				color.Yellow("Autocomplete enabled, but indexing failed: %v", err)
-			}
-		}
+	if err := saveVaultState(vault, pass); err != nil {
+		color.Red("Error saving vault: %v", err)
+		return
+	}
+	if enabled {
+		color.Green("Autocomplete enabled and vocabulary indexed.")
+	} else {
+		color.Yellow("Autocomplete disabled.")
+	}
+}
 
-		if err := saveVaultState(vault, pass); err != nil {
-			color.Red("Error saving vault: %v", err)
-			return
-		}
-		if enabled {
-			color.Green("Autocomplete enabled and vocabulary indexed.")
-		} else {
-			color.Yellow("Autocomplete disabled.")
-		}
-	},
+func setAutocompletePopupDisabled(disabled bool) {
+	pass, vault, readonly, err := src_unlockVault()
+	if err != nil {
+		color.Red("Error: %v\n", err)
+		return
+	}
+	if readonly {
+		color.Red("Vault is READ-ONLY. Cannot change autocomplete window settings.")
+		return
+	}
+
+	vault.AutocompleteWindowDisabled = disabled
+	if err := saveVaultState(vault, pass); err != nil {
+		color.Red("Error saving vault: %v", err)
+		return
+	}
+	if disabled {
+		color.Yellow("Autocomplete popup window disabled.")
+	} else {
+		color.Green("Autocomplete popup window enabled.")
+	}
+
+	if status, err := autofill.TryStatus(context.Background()); err == nil && status != nil {
+		color.Cyan("Restart or re-unlock the daemon to apply popup changes.")
+	}
 }
 
 var vocabCmd = &cobra.Command{
@@ -6891,6 +6997,39 @@ var vocabCmd = &cobra.Command{
 			for _, alias := range keys {
 				fmt.Printf("  %s -> %s\n", alias, aliases[alias])
 			}
+		}
+	},
+}
+
+var vocabEnableCmd = &cobra.Command{
+	Use:   "enable",
+	Short: "Enable note autocomplete indexing",
+	Run: func(cmd *cobra.Command, args []string) {
+		setNotesAutocompleteEnabled(true)
+	},
+}
+
+var vocabDisableCmd = &cobra.Command{
+	Use:   "disable",
+	Short: "Disable note autocomplete indexing",
+	Run: func(cmd *cobra.Command, args []string) {
+		setNotesAutocompleteEnabled(false)
+	},
+}
+
+var vocabStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show note autocomplete status",
+	Run: func(cmd *cobra.Command, args []string) {
+		_, vault, _, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v", err)
+			return
+		}
+		if vault.AutocompleteEnabled {
+			color.Green("Autocomplete: enabled")
+		} else {
+			color.Yellow("Autocomplete: disabled")
 		}
 	},
 }
