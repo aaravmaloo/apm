@@ -16,6 +16,8 @@ builds:
     goarch:
       - amd64
       - arm64
+    env:
+      - CGO_ENABLED=0
 
 archives:
   - format: tar.gz
@@ -38,8 +40,9 @@ nfpms:
 checksum:
   name_template: "checksums.txt"
 
+
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  name_template: "{{ .Version }}-{{ .ShortCommit }}"
 
 changelog:
   sort: asc
