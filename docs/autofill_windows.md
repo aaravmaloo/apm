@@ -5,6 +5,9 @@ APM autofill on Windows is daemon-based and works system-wide without a browser 
 ## Command model
 
 - `pm autofill start|stop|status|list-profiles`
+- `pm autocomplete enable` registers daemon autostart on login (Windows) and starts now
+- `pm autocomplete start|stop` manual daemon control
+- `pm autocomplete window enable|disable` toggles popup hints
 - `pm unlock` unlocks both the CLI session and autofill daemon vault state
 - `pm lock` locks both the CLI session and autofill daemon vault state
 - `pm autocomplete link-totp` links an existing TOTP entry to a domain
@@ -44,6 +47,12 @@ On Windows, the daemon renders a native WPF popup with:
 - fade-in / fade-out animation
 - close `x` button
 - 5 second auto-dismiss
+
+Disable popup hints:
+
+```console
+$ pm autocomplete window disable
+```
 
 ## TOTP linking
 
