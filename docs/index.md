@@ -41,7 +41,7 @@ $ pm get
 
 ### Notes autocomplete and vocab
 
-- `pm auth autocomplete true|false`
+- `pm vocab enable|disable|status`
 - `pm vocab`
 - `pm vocab alias`
 - `pm vocab rank <word> <delta>`
@@ -49,6 +49,9 @@ $ pm get
 ### Autofill on Windows
 
 - `pm autofill start`
+- `pm autocomplete enable` (register autostart + start now)
+- `pm autocomplete start|stop`
+- `pm autocomplete window enable|disable`
 - `pm unlock` (also unlocks daemon vault state)
 - `pm lock` (also locks daemon)
 - `pm autocomplete link-totp`
