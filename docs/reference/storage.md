@@ -15,7 +15,7 @@ The vault contains:
 - secret entries by type
 - spaces and current space pointer
 - TOTP ordering and domain links
-- autocomplete settings and compressed vocab
+- autocomplete settings (`autocomplete_enabled`, `autocomplete_window_disabled`) and compressed vocab
 - cloud metadata and provider tokens (encrypted within vault)
 - plugin permission overrides
 
