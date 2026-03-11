@@ -44,7 +44,7 @@ See [APM ignore guide](../guides/apmignore.md).
 
 ## Notes autocomplete and vocab
 
-- `pm auth autocomplete true|false`
+- `pm vocab enable|disable|status`
 - `pm vocab`
 - `pm vocab alias`
 - `pm vocab rank`
@@ -56,6 +56,9 @@ Vocab is stored in the vault in compressed form.
 ## Autofill daemon
 
 - `pm autofill start|stop|status|list-profiles`
+- `pm autocomplete enable` (register autostart on Windows + start now)
+- `pm autocomplete start|stop` (manual daemon control)
+- `pm autocomplete window enable|disable` (popup hints)
 - background context hints + popup notifications on Windows
 - default hotkey: `CTRL+SHIFT+L`
 
