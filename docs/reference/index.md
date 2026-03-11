@@ -1,11 +1,1 @@
-# Reference overview
-
-Consult the reference documentation for comprehensive details on APM's internals:
-
-- [CLI commands](./cli.md)
-- [.apmignore](./apmignore.md)
-- [Storage](./storage.md)
-- [Environment variables](./environment-variables.md)
-- [Plugin API](./plugin-api.md)
-- [MCP tools](./mcp-tools.md)
-- [Policies](./policies.md)
+# Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
