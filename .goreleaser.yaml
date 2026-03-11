@@ -20,29 +20,28 @@ builds:
       - CGO_ENABLED=0
 
 archives:
-  - format: tar.gz
+  - id: default
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
     format_overrides:
       - goos: windows
         format: zip
 
-nfpms:
+nfpm:
   - id: apm
-    package_name: apm
     formats:
       - deb
+    package_name: apm
     vendor: "APM"
     maintainer: "Aarav Maloo <aaravmaloo06@gmail.com>"
     homepage: "https://aaravmaloo.github.io/apm/"
     description: "Advanced Package Manager."
-    license: "MIT"
+    license: MIT
 
 checksum:
   name_template: "checksums.txt"
-
-
-snapshot:
-  name_template: "{{ .Version }}-{{ .ShortCommit }}"
 
 changelog:
   sort: asc
@@ -50,3 +49,10 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+release:
+  github:
+    owner: "aaravmaloo"
+    name: "apm"
+    draft: false
+    prerelease: false
