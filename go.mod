@@ -4,12 +4,15 @@ go 1.25
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/atotto/clipboard v0.1.4
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
+	github.com/go-ole/go-ole v1.3.0
 	github.com/go-webauthn/webauthn v0.15.0
 	github.com/google/go-github/v60 v60.0.0
+	github.com/hnakamur/w32uiautomation v0.0.0-20210808143226-23a1f2281c99
 	github.com/modelcontextprotocol/go-sdk v1.2.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.47.0
@@ -23,7 +26,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/oauth2 v0.34.0
-	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/sys v0.40.0
 	google.golang.org/api v0.263.0
 )
 
@@ -31,7 +34,6 @@ require (
 	cloud.google.com/go/auth v0.18.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
-	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/boombuler/barcode v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -47,7 +49,6 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/go-webauthn/x v0.1.26 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
@@ -58,7 +59,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.11 // indirect
 	github.com/googleapis/gax-go/v2 v2.16.0 // indirect
-	github.com/hnakamur/w32uiautomation v0.0.0-20210808143226-23a1f2281c99 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
