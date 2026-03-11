@@ -21,11 +21,11 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
-        <title>APM Plugin API Reference - APM Documentation</title>
+        <title>Plugin API (Developer Reference)\n\nDeveloper-focused reference for plugin.json structure and runtime permissions. - APM Documentation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#apm-plugin-api-reference" class="md-skip">
+        <a href="#plugin-api-developer-referencenndeveloper-focused-reference-for-pluginjson-structure-and-runtime-permissions" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              APM Plugin API Reference
+              Plugin API (Developer Reference)\n\nDeveloper-focused reference for plugin.json structure and runtime permissions.
             
           </span>
         </div>
@@ -486,7 +486,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -687,7 +687,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -744,6 +744,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -1000,7 +1056,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1369,7 +1453,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1398,6 +1482,34 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
   
 
     
@@ -1626,7 +1738,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1751,252 +1863,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#plugin-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plugin Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#manifest-pluginjson" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manifest (plugin.json)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Manifest (plugin.json)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#schema-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operations-glossary-op" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operations Glossary (op)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operations Glossary (op)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#vault-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vault Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#system-io-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System &amp; IO Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#network-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Network Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cryptographic-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cryptographic Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#variable-substitution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Variable Substitution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permissions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Permissions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#vault-operations_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vault Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#item-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Item Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#network-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Network Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#system-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cryptography" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cryptography
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#plugin-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plugin Management
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui-interaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UI &amp; Interaction
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user-session" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User &amp; Session
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#audit-logging" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Audit &amp; Logging
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Details
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -2015,233 +1881,7 @@
   
 
 
-<h1 id="apm-plugin-api-reference">APM Plugin API Reference<a class="headerlink" href="#apm-plugin-api-reference" title="Permanent link">&para;</a></h1>
-<p>This document describes how to create plugins for the APM CLI. APM uses a declarative, JSON-driven execution engine that allows building complex workflows without writing Go code.</p>
-<h2 id="plugin-structure">Plugin Structure<a class="headerlink" href="#plugin-structure" title="Permanent link">&para;</a></h2>
-<p>A plugin is a directory containing a <code>plugin.json</code> manifest file. All assets are stored relative to this directory.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>my-plugin/
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>└── plugin.json      # Manifest file
-</code></pre></div>
-<h2 id="manifest-pluginjson">Manifest (<code>plugin.json</code>)<a class="headerlink" href="#manifest-pluginjson" title="Permanent link">&para;</a></h2>
-<p>The manifest defines the plugin's metadata, permissions, and command definitions.</p>
-<h3 id="schema-example">Schema Example<a class="headerlink" href="#schema-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;backup-tool&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.2.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Backup vault to remote server&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Aarav Maloo&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">&quot;permissions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="s2">&quot;vault.read&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="s2">&quot;network.outbound&quot;</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">&quot;commands&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">&quot;backup-remote&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sync vault to remote endpoint&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="nt">&quot;steps&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v:get&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;MySecret&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pass&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;net:post&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;https://api.myapp.com/sync&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;{\&quot;key\&quot;: \&quot;{{pass}}\&quot;}&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resp&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;op&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;s:out&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Server Response: {{resp}}&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">      </span><span class="p">]</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="operations-glossary-op">Operations Glossary (<code>op</code>)<a class="headerlink" href="#operations-glossary-op" title="Permanent link">&para;</a></h2>
-<p>APM execute plugins through a series of "ops". Each op takes a list of <code>args</code>.</p>
-<h3 id="vault-operations">Vault Operations<a class="headerlink" href="#vault-operations" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Op</th>
-<th style="text-align: left;">Args</th>
-<th style="text-align: left;">Description</th>
-<th style="text-align: left;">Permission</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>v:get</code></td>
-<td style="text-align: left;"><code>[key, assignTo]</code></td>
-<td style="text-align: left;">Retrieves password/token for <code>key</code>.</td>
-<td style="text-align: left;"><code>vault.read</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>v:add</code></td>
-<td style="text-align: left;"><code>[acc, pass, user]</code></td>
-<td style="text-align: left;">Adds a new entry to the vault.</td>
-<td style="text-align: left;"><code>vault.write</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>v:list</code></td>
-<td style="text-align: left;"><code>[assignTo]</code></td>
-<td style="text-align: left;">Lists all accounts as a CSV string.</td>
-<td style="text-align: left;"><code>vault.read</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>v:del</code></td>
-<td style="text-align: left;"><code>[key]</code></td>
-<td style="text-align: left;">Deletes an entry from the vault.</td>
-<td style="text-align: left;"><code>vault.write</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>v:backup</code></td>
-<td style="text-align: left;"><code>[]</code></td>
-<td style="text-align: left;">Creates a timestamped local backup.</td>
-<td style="text-align: left;"><code>vault.write</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>v:lock</code></td>
-<td style="text-align: left;"><code>[]</code></td>
-<td style="text-align: left;">Signals a vault lock event.</td>
-<td style="text-align: left;">None</td>
-</tr>
-</tbody>
-</table>
-<h3 id="system-io-operations">System &amp; IO Operations<a class="headerlink" href="#system-io-operations" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Op</th>
-<th style="text-align: left;">Args</th>
-<th style="text-align: left;">Description</th>
-<th style="text-align: left;">Permission</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>s:out</code></td>
-<td style="text-align: left;"><code>[message]</code></td>
-<td style="text-align: left;">Prints a message to the console.</td>
-<td style="text-align: left;">None</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>s:in</code></td>
-<td style="text-align: left;"><code>[prompt, assignTo]</code></td>
-<td style="text-align: left;">Prompts for user input.</td>
-<td style="text-align: left;">None</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>s:clip</code></td>
-<td style="text-align: left;"><code>[text]</code></td>
-<td style="text-align: left;">Copies text to system clipboard.</td>
-<td style="text-align: left;"><code>system.write</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>s:sleep</code></td>
-<td style="text-align: left;"><code>[seconds]</code></td>
-<td style="text-align: left;">Pauses execution.</td>
-<td style="text-align: left;">None</td>
-</tr>
-</tbody>
-</table>
-<h3 id="network-operations">Network Operations<a class="headerlink" href="#network-operations" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Op</th>
-<th style="text-align: left;">Args</th>
-<th style="text-align: left;">Description</th>
-<th style="text-align: left;">Permission</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>net:get</code></td>
-<td style="text-align: left;"><code>[url, assignTo]</code></td>
-<td style="text-align: left;">Performs an HTTP GET request.</td>
-<td style="text-align: left;"><code>network.outbound</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>net:post</code></td>
-<td style="text-align: left;"><code>[url, payload, assignTo]</code></td>
-<td style="text-align: left;">Performs an HTTP POST request.</td>
-<td style="text-align: left;"><code>network.outbound</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="cryptographic-operations">Cryptographic Operations<a class="headerlink" href="#cryptographic-operations" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Op</th>
-<th style="text-align: left;">Args</th>
-<th style="text-align: left;">Description</th>
-<th style="text-align: left;">Permission</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>crypto:hash</code></td>
-<td style="text-align: left;"><code>[data, assignTo]</code></td>
-<td style="text-align: left;">Computes SHA-256 hash.</td>
-<td style="text-align: left;"><code>crypto.use</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="variable-substitution">Variable Substitution<a class="headerlink" href="#variable-substitution" title="Permanent link">&para;</a></h2>
-<p>You can use variables stored via <code>assignTo</code> in any argument using the <code>{{name}}</code> syntax.
-- <strong>System Reserved</strong>: <code>{{USER}}</code>, <code>{{OS}}</code>, <code>{{TIMESTAMP}}</code> (Available at runtime).</p>
-<h2 id="permissions">Permissions<a class="headerlink" href="#permissions" title="Permanent link">&para;</a></h2>
-<p>Permissions must be explicitly requested in the <code>permissions</code> array of the manifest.
-Support for wildcard matching is available (e.g., <code>vault.*</code> grants all vault permissions).</p>
-<h3 id="vault-operations_1">Vault Operations<a class="headerlink" href="#vault-operations_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>vault.read</code>, <code>vault.write</code>, <code>vault.delete</code></li>
-<li><code>vault.import</code>, <code>vault.export</code>, <code>vault.backup</code>, <code>vault.restore</code></li>
-<li><code>vault.history</code>, <code>vault.lock</code>, <code>vault.unlock</code>, <code>vault.sync</code></li>
-</ul>
-<h3 id="item-operations">Item Operations<a class="headerlink" href="#item-operations" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>vault.item.create</code>, <code>vault.item.read</code>, <code>vault.item.update</code>, <code>vault.item.delete</code></li>
-<li><code>vault.item.move</code>, <code>vault.item.copy</code>, <code>vault.item.share</code></li>
-<li><code>vault.item.field.*</code> (Granular field access: password, username, url, notes, totp, tags, metadata)</li>
-</ul>
-<h3 id="network-access">Network Access<a class="headerlink" href="#network-access" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>network.outbound</code>, <code>network.inbound</code></li>
-<li>Protocol specific: <code>network.http</code>, <code>network.https</code>, <code>network.ssh</code>, <code>network.ftp</code>, <code>network.ws</code>, etc.</li>
-<li><code>network.proxy</code>, <code>network.dns</code></li>
-</ul>
-<h3 id="system-integration">System Integration<a class="headerlink" href="#system-integration" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>system.read</code>, <code>system.write</code>, <code>system.exec</code></li>
-<li><code>system.clipboard.read</code>, <code>system.clipboard.write</code></li>
-<li><code>system.env.read</code>, <code>system.env.write</code></li>
-<li><code>system.process.read</code>, <code>system.process.write</code>, <code>system.process.kill</code></li>
-<li><code>system.notification</code>, <code>system.audio.*</code>, <code>system.camera</code></li>
-</ul>
-<h3 id="cryptography">Cryptography<a class="headerlink" href="#cryptography" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>crypto.hash</code>, <code>crypto.random</code></li>
-<li><code>crypto.encrypt</code>, <code>crypto.decrypt</code></li>
-<li><code>crypto.sign</code>, <code>crypto.verify</code></li>
-<li><code>crypto.key.*</code> (generate, store, load, delete)</li>
-</ul>
-<h3 id="plugin-management">Plugin Management<a class="headerlink" href="#plugin-management" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>plugin.list</code>, <code>plugin.install</code>, <code>plugin.uninstall</code>, <code>plugin.update</code></li>
-<li><code>plugin.config.read</code>, <code>plugin.config.write</code></li>
-</ul>
-<h3 id="ui-interaction">UI &amp; Interaction<a class="headerlink" href="#ui-interaction" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>ui.prompt</code>, <code>ui.alert</code>, <code>ui.confirm</code>, <code>ui.toast</code></li>
-<li><code>ui.window.*</code>, <code>ui.menu.*</code>, <code>ui.theme.set</code></li>
-</ul>
-<h3 id="user-session">User &amp; Session<a class="headerlink" href="#user-session" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>user.read</code>, <code>user.write</code>, <code>user.auth</code></li>
-<li><code>user.session.read</code>, <code>user.session.write</code></li>
-</ul>
-<h3 id="audit-logging">Audit &amp; Logging<a class="headerlink" href="#audit-logging" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>audit.read</code>, <code>audit.write</code></li>
-<li><code>audit.log.read</code>, <code>audit.log.write</code></li>
-</ul>
-<h2 id="implementation-details">Implementation Details<a class="headerlink" href="#implementation-details" title="Permanent link">&para;</a></h2>
-<p>Plugins are installed via:
-1. <code>pm plugins add &lt;name&gt;</code> (Marketplace)
-2. <code>pm plugins local &lt;path&gt;</code> (Local Development)</p>
-<p>The manager stores them in <code>/plugins_cache/</code> and dynamically registers commands on startup.</p>
+<h1 id="plugin-api-developer-referencenndeveloper-focused-reference-for-pluginjson-structure-and-runtime-permissions">Plugin API (Developer Reference)\n\nDeveloper-focused reference for plugin.json structure and runtime permissions.<a class="headerlink" href="#plugin-api-developer-referencenndeveloper-focused-reference-for-pluginjson-structure-and-runtime-permissions" title="Permanent link">&para;</a></h1>
 
 
 

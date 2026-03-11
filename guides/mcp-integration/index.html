@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A guide to connecting AI assistants to your APM vault via the Model Context Protocol.">
+        <meta name="description" content="Documentation for APM — a professional-grade, zero-knowledge CLI password manager.">
       
       
         <meta name="author" content="Aarav Maloo">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mcp-integration" class="md-skip">
+        <a href="#mcp-integrationnnrun-the-mcp-server-with-token-scoped-permissions-and-an-active-apm-session" class="md-skip">
           Skip to content
         </a>
       
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -696,7 +696,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -753,6 +753,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -866,24 +922,6 @@
         
       
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MCP integration
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -900,130 +938,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#generating-an-access-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generating an access token
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-your-ai-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring your AI client
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuring your AI client">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Claude Desktop
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cursor-windsurf-others" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cursor / Windsurf / Others
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#starting-the-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Starting the server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Available tools
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security best practices
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -1161,7 +1075,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1530,7 +1472,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1559,6 +1501,34 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
   
 
     
@@ -1787,7 +1757,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1912,119 +1882,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#generating-an-access-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generating an access token
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-your-ai-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring your AI client
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuring your AI client">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Claude Desktop
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cursor-windsurf-others" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cursor / Windsurf / Others
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#starting-the-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Starting the server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Available tools
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security best practices
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -2043,132 +1900,13 @@
   
 
 
-<h1 id="mcp-integration">MCP integration<a class="headerlink" href="#mcp-integration" title="Permanent link">&para;</a></h1>
-<p>APM includes a native MCP (Model Context Protocol) server that allows AI assistants like Claude
-Desktop, Cursor, and Windsurf to interact with your encrypted vault in a safe, controlled manner.</p>
-<h2 id="generating-an-access-token">Generating an access token<a class="headerlink" href="#generating-an-access-token" title="Permanent link">&para;</a></h2>
-<p>Create a token with specific permissions for your AI assistant:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>pm<span class="w"> </span>mcp<span class="w"> </span>token
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">? Select permissions:</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">  [x] read    - List and search entries</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">  [x] secrets - Retrieve passwords and secrets</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">  [ ] totp    - Generate TOTP codes</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">  [ ] write   - Add new entries</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="go">Token generated: POXXXXXX...</span>
-</code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>Use separate tokens for different AI clients with the minimum required permissions. You can
-always generate additional tokens with different scopes.</p>
-</div>
-<h2 id="configuring-your-ai-client">Configuring your AI client<a class="headerlink" href="#configuring-your-ai-client" title="Permanent link">&para;</a></h2>
-<h3 id="claude-desktop">Claude Desktop<a class="headerlink" href="#claude-desktop" title="Permanent link">&para;</a></h3>
-<p>Add the following to your <code>claude_desktop_config.json</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;apm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C:\\path\\to\\pm.exe&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;mcp&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serve&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--token&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;POXXXXXX...&quot;</span><span class="p">]</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="cursor-windsurf-others">Cursor / Windsurf / Others<a class="headerlink" href="#cursor-windsurf-others" title="Permanent link">&para;</a></h3>
-<p>Add the following to your MCP configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">&quot;apm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C:\\path\\to\\pm.exe&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;mcp&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;serve&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--token&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;POXXXXXX...&quot;</span><span class="p">],</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">&quot;capabilities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;tools&quot;</span><span class="p">],</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">        </span><span class="nt">&quot;APM_VAULT_PATH&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C:\\path\\to\\vault.dat&quot;</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="quick-configuration">Quick configuration<a class="headerlink" href="#quick-configuration" title="Permanent link">&para;</a></h3>
-<p>Use <code>pm mcp config</code> to get a ready-to-paste configuration snippet:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>pm<span class="w"> </span>mcp<span class="w"> </span>config
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="go">Copy the following configuration to your MCP client:</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="go">{</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="go">  &quot;mcpServers&quot;: {</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="go">    &quot;apm&quot;: {</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="go">      ...</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="go">    }</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="go">  }</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="go">}</span>
-</code></pre></div>
-<h2 id="starting-the-server">Starting the server<a class="headerlink" href="#starting-the-server" title="Permanent link">&para;</a></h2>
-<p>The MCP server is started automatically by the AI client using the configured command. You can also
-start it manually for testing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>pm<span class="w"> </span>mcp<span class="w"> </span>serve<span class="w"> </span>--token<span class="w"> </span>POXXXXXX...
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="go">MCP server listening on stdio...</span>
-</code></pre></div>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>The MCP server requires an active APM session. You <strong>must</strong> run <code>pm unlock</code> in your terminal
-before the AI agent can access the vault.</p>
-</div>
-<h2 id="available-tools">Available tools<a class="headerlink" href="#available-tools" title="Permanent link">&para;</a></h2>
-<p>The MCP server exposes the following tools to AI assistants:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Tool</th>
-<th style="text-align: left;">Description</th>
-<th style="text-align: left;">Required Permission</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>list_vault</code></td>
-<td style="text-align: left;">Lists all entries by category (titles only)</td>
-<td style="text-align: left;"><code>read</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>search_vault</code></td>
-<td style="text-align: left;">Performs fuzzy search across metadata</td>
-<td style="text-align: left;"><code>read</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>get_entry</code></td>
-<td style="text-align: left;">Retrieves full details including secrets</td>
-<td style="text-align: left;"><code>secrets</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>get_totp</code></td>
-<td style="text-align: left;">Generates a 2FA code for a specific entry</td>
-<td style="text-align: left;"><code>totp</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>add_entry</code></td>
-<td style="text-align: left;">Securely adds a new entry to the vault</td>
-<td style="text-align: left;"><code>write</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="security-best-practices">Security best practices<a class="headerlink" href="#security-best-practices" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Session locking</strong>: Always <code>pm lock</code> when not using the AI assistant to wipe the session key.</li>
-<li><strong>Granular tokens</strong>: Use separate tokens for different AI clients with minimal required scopes.</li>
-<li><strong>Audit logs</strong>: Monitor <code>pm audit</code> to see which actions the AI has performed.</li>
-<li><strong>Token rotation</strong>: Periodically regenerate tokens and revoke old ones.</li>
-</ul>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>See the <a href="../../concepts/mcp/">MCP concept</a> for details on the server architecture. Or, read the
-<a href="../../reference/mcp-tools/">MCP tools reference</a> for full tool schemas and permission details.</p>
+<h1 id="mcp-integrationnnrun-the-mcp-server-with-token-scoped-permissions-and-an-active-apm-session">MCP Integration\n\nRun the MCP server with token-scoped permissions and an active APM session.<a class="headerlink" href="#mcp-integrationnnrun-the-mcp-server-with-token-scoped-permissions-and-an-active-apm-session" title="Permanent link">&para;</a></h1>
 
 
 
 
 
 
-
-  
-  
 
 
 

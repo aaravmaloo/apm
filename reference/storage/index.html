@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://aaravmaloo.github.io/apm/reference/storage/">
       
       
-        <link rel="prev" href="../cli/">
+        <link rel="prev" href="../apmignore/">
       
       
         <link rel="next" href="../environment-variables/">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#storage" class="md-skip">
+        <a href="#storage-referencennencrypted-vault-payload-includes-entries-totp-metadata-vocab-and-permission-overrides" class="md-skip">
           Skip to content
         </a>
       
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -693,7 +693,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -750,6 +750,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -1006,7 +1062,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1378,7 +1462,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1424,6 +1508,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1435,24 +1547,6 @@
       
         
       
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Storage
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -1470,108 +1564,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#vault-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vault file
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration directory
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration directory">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#directory-contents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Directory contents
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plugin-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plugin storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cloud-provider-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud provider tokens
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#team-edition-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Team edition storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -1765,7 +1757,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1890,97 +1882,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#vault-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vault file
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration directory
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration directory">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#directory-contents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Directory contents
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plugin-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plugin storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cloud-provider-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud provider tokens
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#team-edition-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Team edition storage
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1999,158 +1900,7 @@
   
 
 
-<h1 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h1>
-<p>APM stores data in the following locations. All paths are configurable via
-<a href="../environment-variables/">environment variables</a>.</p>
-<h2 id="vault-file">Vault file<a class="headerlink" href="#vault-file" title="Permanent link">&para;</a></h2>
-<p>The primary encrypted vault file.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Windows</label><label for="__tabbed_1_2">macOS and Linux</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>%USERPROFILE%\.apm\vault.dat
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>~/.apm/vault.dat
-</code></pre></div>
-</div>
-</div>
-</div>
-<p>Override with <code>APM_VAULT_PATH</code>.</p>
-<h2 id="configuration-directory">Configuration directory<a class="headerlink" href="#configuration-directory" title="Permanent link">&para;</a></h2>
-<p>APM's configuration files and metadata.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Windows</label><label for="__tabbed_2_2">macOS and Linux</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>%USERPROFILE%\.apm\
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>~/.apm/
-</code></pre></div>
-</div>
-</div>
-</div>
-<h3 id="directory-contents">Directory contents<a class="headerlink" href="#directory-contents" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Path</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>vault.dat</code></td>
-<td style="text-align: left;">Primary encrypted vault</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>config.yaml</code></td>
-<td style="text-align: left;">User configuration</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>policies/</code></td>
-<td style="text-align: left;">Loaded YAML policy files</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>plugins_cache/</code></td>
-<td style="text-align: left;">Installed plugin manifests</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>cloud/</code></td>
-<td style="text-align: left;">Cloud provider tokens (encrypted)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>audit.log</code></td>
-<td style="text-align: left;">Tamper-evident audit log</td>
-</tr>
-</tbody>
-</table>
-<h2 id="session-storage">Session storage<a class="headerlink" href="#session-storage" title="Permanent link">&para;</a></h2>
-<p>Active session keys are stored in platform-specific temporary locations:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Windows</label><label for="__tabbed_3_2">macOS and Linux</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>%TEMP%\apm-session-&lt;id&gt;
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>/tmp/apm-session-&lt;id&gt;
-</code></pre></div>
-</div>
-</div>
-</div>
-<p>Session files are memory-only where supported and are wiped on <code>pm lock</code> or session timeout.</p>
-<h2 id="plugin-storage">Plugin storage<a class="headerlink" href="#plugin-storage" title="Permanent link">&para;</a></h2>
-<p>Plugins are stored in the <code>plugins_cache/</code> directory within the configuration directory:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>~/.apm/plugins_cache/
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  backup-tool/
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    plugin.json
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  audit-ext/
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    plugin.json
-</code></pre></div>
-<h2 id="cloud-provider-tokens">Cloud provider tokens<a class="headerlink" href="#cloud-provider-tokens" title="Permanent link">&para;</a></h2>
-<p>OAuth tokens and personal access tokens for cloud providers are encrypted inside the vault:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Provider</th>
-<th style="text-align: left;">Token Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">Google Drive</td>
-<td style="text-align: left;">OAuth2 access + refresh token</td>
-</tr>
-<tr>
-<td style="text-align: left;">GitHub</td>
-<td style="text-align: left;">Personal Access Token</td>
-</tr>
-<tr>
-<td style="text-align: left;">Dropbox</td>
-<td style="text-align: left;">OAuth2 access + refresh token</td>
-</tr>
-</tbody>
-</table>
-<p>These tokens are never stored in plaintext. They are encrypted alongside your secrets using the
-same AES-256-GCM scheme.</p>
-<h2 id="team-edition-storage">Team edition storage<a class="headerlink" href="#team-edition-storage" title="Permanent link">&para;</a></h2>
-<p>The team edition uses a separate storage model:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Windows</label><label for="__tabbed_4_2">macOS and Linux</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>%USERPROFILE%\.apm-team\
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>~/.apm-team/
-</code></pre></div>
-</div>
-</div>
-</div>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Path</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>org.dat</code></td>
-<td style="text-align: left;">Encrypted organization vault</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>members/</code></td>
-<td style="text-align: left;">Per-member key material</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>departments/</code></td>
-<td style="text-align: left;">Department-scoped encryption domains</td>
-</tr>
-</tbody>
-</table>
+<h1 id="storage-referencennencrypted-vault-payload-includes-entries-totp-metadata-vocab-and-permission-overrides">Storage Reference\n\nEncrypted vault payload includes entries, TOTP metadata, vocab, and permission overrides.<a class="headerlink" href="#storage-referencennencrypted-vault-payload-includes-entries-totp-metadata-vocab-and-permission-overrides" title="Permanent link">&para;</a></h1>
 
 
 

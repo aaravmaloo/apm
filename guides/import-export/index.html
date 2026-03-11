@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A guide to migrating data to and from APM using import and export commands.">
+        <meta name="description" content="Documentation for APM — a professional-grade, zero-knowledge CLI password manager.">
       
       
         <meta name="author" content="Aarav Maloo">
@@ -25,11 +25,11 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
-        <title>Importing and exporting data - APM Documentation</title>
+        <title>Importing and exporting - APM Documentation</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#importing-and-exporting-data" class="md-skip">
+        <a href="#import-and-exportnnuse-pm-import-for-migrations-and-pm-export-for-backups-treat-plaintext-exports-as-sensitive" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Importing and exporting data
+              Importing and exporting
             
           </span>
         </div>
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -696,7 +696,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -753,6 +753,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -922,24 +978,6 @@
         
       
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Importing and exporting
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -956,125 +994,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#importing-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Importing data
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Importing data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#supported-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported formats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#import-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Import command
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exporting-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exporting data
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Exporting data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#export-to-encrypted-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Export to encrypted format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#export-to-plaintext" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Export to plaintext
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#supported-export-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported export formats
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -1156,7 +1075,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1525,7 +1472,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1554,6 +1501,34 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
   
 
     
@@ -1782,7 +1757,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1907,114 +1882,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#importing-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Importing data
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Importing data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#supported-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported formats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#import-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Import command
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exporting-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exporting data
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Exporting data">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#export-to-encrypted-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Export to encrypted format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#export-to-plaintext" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Export to plaintext
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#supported-export-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported export formats
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -2033,113 +1900,13 @@
   
 
 
-<h1 id="importing-and-exporting-data">Importing and exporting data<a class="headerlink" href="#importing-and-exporting-data" title="Permanent link">&para;</a></h1>
-<p>APM supports importing credentials from external sources and exporting vault data to various
-formats for backup or migration purposes.</p>
-<h2 id="importing-data">Importing data<a class="headerlink" href="#importing-data" title="Permanent link">&para;</a></h2>
-<h3 id="supported-formats">Supported formats<a class="headerlink" href="#supported-formats" title="Permanent link">&para;</a></h3>
-<p>APM can ingest data from the following formats:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Format</th>
-<th style="text-align: left;">Extension</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">JSON</td>
-<td style="text-align: left;"><code>.json</code></td>
-<td style="text-align: left;">Structured JSON export from other managers</td>
-</tr>
-<tr>
-<td style="text-align: left;">CSV</td>
-<td style="text-align: left;"><code>.csv</code></td>
-<td style="text-align: left;">Comma-separated values with header row</td>
-</tr>
-<tr>
-<td style="text-align: left;">KeePass</td>
-<td style="text-align: left;"><code>.kdbx</code></td>
-<td style="text-align: left;">KeePass database files</td>
-</tr>
-</tbody>
-</table>
-<h3 id="import-command">Import command<a class="headerlink" href="#import-command" title="Permanent link">&para;</a></h3>
-<p>Import entries from an external file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>pm<span class="w"> </span>import<span class="w"> </span>./exports/bitwarden.json
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">? Detected format: JSON</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">? Import 47 entries? Yes</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">Imported 47 entries successfully.</span>
-</code></pre></div>
-<p>APM will automatically detect the format and map fields to the appropriate categories.</p>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>Review imported entries with <code>pm get</code> after import to verify field mapping. Some fields may
-require manual adjustment depending on the source format.</p>
-</div>
-<h2 id="exporting-data">Exporting data<a class="headerlink" href="#exporting-data" title="Permanent link">&para;</a></h2>
-<h3 id="export-to-encrypted-format">Export to encrypted format<a class="headerlink" href="#export-to-encrypted-format" title="Permanent link">&para;</a></h3>
-<p>Export your vault to an encrypted archive:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>pm<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--encrypted
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="go">? Master Password: ********</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="go">? Export path: ./backup/vault-backup.apm</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="go">Exported 142 entries to encrypted archive.</span>
-</code></pre></div>
-<h3 id="export-to-plaintext">Export to plaintext<a class="headerlink" href="#export-to-plaintext" title="Permanent link">&para;</a></h3>
-<p>Export your vault to a plaintext format for migration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>pm<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--format<span class="w"> </span>json
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="go">? Master Password: ********</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="go">? Export path: ./backup/vault-export.json</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="go">Exported 142 entries to JSON.</span>
-</code></pre></div>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Plaintext exports contain your secrets in cleartext. Handle these files with extreme care and
-delete them securely after use. Prefer encrypted exports for backups.</p>
-</div>
-<h3 id="supported-export-formats">Supported export formats<a class="headerlink" href="#supported-export-formats" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Format</th>
-<th style="text-align: left;">Flag</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">JSON</td>
-<td style="text-align: left;"><code>--format json</code></td>
-<td style="text-align: left;">Structured JSON output</td>
-</tr>
-<tr>
-<td style="text-align: left;">CSV</td>
-<td style="text-align: left;"><code>--format csv</code></td>
-<td style="text-align: left;">Comma-separated values</td>
-</tr>
-<tr>
-<td style="text-align: left;">Encrypted</td>
-<td style="text-align: left;"><code>--encrypted</code></td>
-<td style="text-align: left;">APM native encrypted archive</td>
-</tr>
-</tbody>
-</table>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>See the <a href="../vault-management/">vault management guide</a> for more on managing entries, or learn
-about <a href="../cloud-sync/">cloud synchronization</a> for automated backups.</p>
+<h1 id="import-and-exportnnuse-pm-import-for-migrations-and-pm-export-for-backups-treat-plaintext-exports-as-sensitive">Import and Export\n\nUse pm import for migrations and pm export for backups. Treat plaintext exports as sensitive.<a class="headerlink" href="#import-and-exportnnuse-pm-import-for-migrations-and-pm-export-for-backups-treat-plaintext-exports-as-sensitive" title="Permanent link">&para;</a></h1>
 
 
 
 
 
 
-
-  
-  
 
 
 

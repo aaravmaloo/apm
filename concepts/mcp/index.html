@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mcp-server" class="md-skip">
+        <a href="#mcpnntoken-scoped-tool-access-for-ai-clients-with-session-gating-and-transaction-guardrails" class="md-skip">
           Skip to content
         </a>
       
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -693,7 +693,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -750,6 +750,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -1009,7 +1065,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1263,24 +1347,6 @@
         
       
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MCP server
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1297,169 +1363,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token authentication
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Token authentication">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#permission-scopes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission scopes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tool-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tool registry
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Tool registry">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list_vault
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#search_vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        search_vault
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_entry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_entry
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_totp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_totp
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add_entry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        add_entry
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-dependency" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session dependency
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security model
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -1569,7 +1472,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1598,6 +1501,34 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
   
 
     
@@ -1826,7 +1757,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1951,158 +1882,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token authentication
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Token authentication">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#permission-scopes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission scopes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tool-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tool registry
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Tool registry">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list_vault
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#search_vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        search_vault
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_entry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_entry
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_totp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_totp
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add_entry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        add_entry
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-dependency" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session dependency
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security model
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -2121,126 +1900,7 @@
   
 
 
-<h1 id="mcp-server">MCP server<a class="headerlink" href="#mcp-server" title="Permanent link">&para;</a></h1>
-<p>APM includes a high-performance, secure MCP (Model Context Protocol) server that allows AI
-assistants to interact with your encrypted vault in a safe, controlled manner.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>See the <a href="../../guides/mcp-integration/">MCP integration guide</a> for setup instructions — this
-document discusses the server architecture and security model.</p>
-</div>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>The MCP server acts as a bridge between your local APM vault and an AI client. It implements the
-Model Context Protocol, exposing specific "tools" that the AI can call.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[AI Client] &lt;--stdio--&gt; [MCP Server (pm.exe)] &lt;--session--&gt; [Encrypted Vault]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Component</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>CLI Wrapper</strong></td>
-<td style="text-align: left;">The <code>pm mcp serve</code> command starts the MCP server using the same binary as the CLI</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Token Auth</strong></td>
-<td style="text-align: left;">Access is controlled via HMAC-signed JWT-like tokens generated with <code>pm mcp token</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Session Control</strong></td>
-<td style="text-align: left;">The server requires an active, unlocked vault session (<code>APM_SESSION_ID</code>)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Tool Registry</strong></td>
-<td style="text-align: left;">Defines the available operations and their JSON schemas</td>
-</tr>
-</tbody>
-</table>
-<h2 id="token-authentication">Token authentication<a class="headerlink" href="#token-authentication" title="Permanent link">&para;</a></h2>
-<p>MCP tokens are HMAC-signed payloads that encode:</p>
-<ul>
-<li><strong>Permissions</strong>: Which tools the token holder can invoke.</li>
-<li><strong>Creation timestamp</strong>: When the token was generated.</li>
-<li><strong>Vault binding</strong>: Which vault the token is authorized for.</li>
-</ul>
-<p>Tokens are generated interactively with <code>pm mcp token</code>, where the user selects the specific
-permissions to grant.</p>
-<h3 id="permission-scopes">Permission scopes<a class="headerlink" href="#permission-scopes" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Scope</th>
-<th style="text-align: left;">Access Level</th>
-<th style="text-align: left;">Tools Available</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>read</code></td>
-<td style="text-align: left;">List and search entries (metadata only)</td>
-<td style="text-align: left;"><code>list_vault</code>, <code>search_vault</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>secrets</code></td>
-<td style="text-align: left;">Retrieve full entry details including passwords</td>
-<td style="text-align: left;"><code>get_entry</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>totp</code></td>
-<td style="text-align: left;">Generate TOTP codes</td>
-<td style="text-align: left;"><code>get_totp</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>write</code></td>
-<td style="text-align: left;">Create new entries</td>
-<td style="text-align: left;"><code>add_entry</code></td>
-</tr>
-</tbody>
-</table>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Each scope is independent. Granting <code>secrets</code> does not automatically grant <code>read</code> — both must
-be explicitly selected during token generation.</p>
-</div>
-<h2 id="tool-registry">Tool registry<a class="headerlink" href="#tool-registry" title="Permanent link">&para;</a></h2>
-<p>The MCP server exposes the following tools:</p>
-<h3 id="list_vault">list_vault<a class="headerlink" href="#list_vault" title="Permanent link">&para;</a></h3>
-<p>Lists all entries in the vault, grouped by category. Returns titles and metadata only — no
-secrets are included in the response.</p>
-<h3 id="search_vault">search_vault<a class="headerlink" href="#search_vault" title="Permanent link">&para;</a></h3>
-<p>Performs fuzzy search across entry metadata. Accepts a query string and returns matching entries
-ranked by relevance.</p>
-<h3 id="get_entry">get_entry<a class="headerlink" href="#get_entry" title="Permanent link">&para;</a></h3>
-<p>Retrieves the full details of a specific entry, including the stored secret. Requires the
-<code>secrets</code> permission scope.</p>
-<h3 id="get_totp">get_totp<a class="headerlink" href="#get_totp" title="Permanent link">&para;</a></h3>
-<p>Generates a time-based one-time password for a specific entry. Requires the <code>totp</code> permission
-scope and the entry must have a TOTP seed configured.</p>
-<h3 id="add_entry">add_entry<a class="headerlink" href="#add_entry" title="Permanent link">&para;</a></h3>
-<p>Securely adds a new entry to the vault. Requires the <code>write</code> permission scope.</p>
-<h2 id="session-dependency">Session dependency<a class="headerlink" href="#session-dependency" title="Permanent link">&para;</a></h2>
-<p>The MCP server does not handle vault decryption directly. It relies on an active APM session
-established via <code>pm unlock</code>. If no session is active, all tool calls will fail with an
-authentication error.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Terminal 1: pm unlock
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Terminal 2: AI client starts MCP server
-</code></pre></div>
-<h2 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>No persistent state</strong>: The MCP server is stateless — it does not cache secrets or maintain
-  connections.</li>
-<li><strong>Audit trail</strong>: All MCP tool invocations are logged in the <code>pm audit</code> log.</li>
-<li><strong>Token revocation</strong>: Tokens can be invalidated by regenerating them.</li>
-<li><strong>Process isolation</strong>: The MCP server runs as a child process of the AI client, inheriting the
-  session from the shell environment.</li>
-</ul>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>See the <a href="../../reference/mcp-tools/">MCP tools reference</a> for full tool schemas, or learn about
-<a href="../recovery/">vault recovery</a>.</p>
+<h1 id="mcpnntoken-scoped-tool-access-for-ai-clients-with-session-gating-and-transaction-guardrails">MCP\n\nToken-scoped tool access for AI clients with session gating and transaction guardrails.<a class="headerlink" href="#mcpnntoken-scoped-tool-access-for-ai-clients-with-session-gating-and-transaction-guardrails" title="Permanent link">&para;</a></h1>
 
 
 

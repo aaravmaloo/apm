@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A guide to unlocking, locking, and managing shell-scoped sessions in APM.">
+        <meta name="description" content="Documentation for APM — a professional-grade, zero-knowledge CLI password manager.">
       
       
         <meta name="author" content="Aarav Maloo">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#managing-sessions" class="md-skip">
+        <a href="#sessions-guidennsessions-gate-access-to-decrypted-data-use-pm-unlock-and-pm-lock-with-timeouts-for-safety" class="md-skip">
           Skip to content
         </a>
       
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -696,7 +696,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -773,6 +773,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../totp/" class="md-nav__link">
         
   
@@ -810,24 +866,6 @@
         
       
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Managing sessions
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -844,91 +882,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#unlocking-the-vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unlocking the vault
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#locking-the-vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Locking the vault
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session scope
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inactivity-timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inactivity timeout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#read-only-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Read-only mode
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -1122,7 +1075,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1491,7 +1472,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1520,6 +1501,34 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
   
 
     
@@ -1748,7 +1757,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1873,80 +1882,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#unlocking-the-vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unlocking the vault
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#locking-the-vault" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Locking the vault
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session scope
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inactivity-timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inactivity timeout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#read-only-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Read-only mode
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1965,58 +1900,13 @@
   
 
 
-<h1 id="managing-sessions">Managing sessions<a class="headerlink" href="#managing-sessions" title="Permanent link">&para;</a></h1>
-<p>APM uses shell-scoped sessions to provide secure, time-limited access to your decrypted vault. Once
-a session is started, subsequent commands can access the vault without re-entering the master
-password.</p>
-<h2 id="unlocking-the-vault">Unlocking the vault<a class="headerlink" href="#unlocking-the-vault" title="Permanent link">&para;</a></h2>
-<p>Start a session with <code>pm unlock</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>pm<span class="w"> </span>unlock
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">? Master Password: ********</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">Session started (timeout: 1 hour).</span>
-</code></pre></div>
-<p>The first manual unlock automatically initializes a session that lasts for 1 hour. Subsequent
-commands within the same shell session can access the vault without prompting for the password.</p>
-<h2 id="locking-the-vault">Locking the vault<a class="headerlink" href="#locking-the-vault" title="Permanent link">&para;</a></h2>
-<p>Immediately terminate and wipe the active session:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>pm<span class="w"> </span>lock
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="go">Session terminated. Memory wiped.</span>
-</code></pre></div>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Always lock your vault when stepping away from your terminal. The session key is wiped from
-memory on lock, preventing any further access until the next unlock.</p>
-</div>
-<h2 id="session-scope">Session scope<a class="headerlink" href="#session-scope" title="Permanent link">&para;</a></h2>
-<p>Sessions are scoped to the shell environment via the <code>APM_SESSION_ID</code> environment variable. This
-means:</p>
-<ul>
-<li>Each terminal window has its own independent session.</li>
-<li>Closing the terminal automatically invalidates the session.</li>
-<li>Sessions cannot be shared across different shell instances.</li>
-</ul>
-<h2 id="inactivity-timeout">Inactivity timeout<a class="headerlink" href="#inactivity-timeout" title="Permanent link">&para;</a></h2>
-<p>Sessions automatically expire after a period of inactivity (default: 1 hour). After expiration,
-the next vault operation will require re-entering the master password.</p>
-<h2 id="read-only-mode">Read-only mode<a class="headerlink" href="#read-only-mode" title="Permanent link">&para;</a></h2>
-<p>APM supports a read-only mode that prevents any mutations to the vault:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>pm<span class="w"> </span><span class="nb">readonly</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="go">Read-only mode enabled.</span>
-</code></pre></div>
-<p>This is useful when you need to look up credentials without risking accidental modifications.</p>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>See the <a href="../../concepts/sessions/">sessions concept</a> for details on the session architecture. Or,
-learn about <a href="../plugins/">extending APM with plugins</a>.</p>
+<h1 id="sessions-guidennsessions-gate-access-to-decrypted-data-use-pm-unlock-and-pm-lock-with-timeouts-for-safety">Sessions Guide\n\nSessions gate access to decrypted data. Use pm unlock and pm lock, with timeouts for safety.<a class="headerlink" href="#sessions-guidennsessions-gate-access-to-decrypted-data-use-pm-unlock-and-pm-lock-with-timeouts-for-safety" title="Permanent link">&para;</a></h1>
 
 
 
 
 
 
-
-  
-  
 
 
 

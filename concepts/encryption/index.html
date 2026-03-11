@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://aaravmaloo.github.io/apm/concepts/encryption/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../architecture/">
       
       
         <link rel="next" href="../vault-format/">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -693,7 +693,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -750,6 +750,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -1009,7 +1065,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1090,99 +1174,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#key-derivation-argon2id" class="md-nav__link">
+  <a href="#key-derivation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key derivation: Argon2id
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key derivation: Argon2id">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-hard-properties" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory-hard properties
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authenticated-encryption-aes-256-gcm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authenticated encryption: AES-256-GCM
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authenticated encryption: AES-256-GCM">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#authenticated-encryption" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authenticated encryption
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#double-layer-integrity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Double-layer integrity
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nonce-integrity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Nonce integrity
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#threat-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Threat model
+        Key derivation
       
     </span>
   </a>
@@ -1190,10 +1185,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cryptographic-inspection" class="md-nav__link">
+  <a href="#encryption-and-integrity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cryptographic inspection
+        Encryption and integrity
       
     </span>
   </a>
@@ -1201,10 +1196,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#recovery-design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next steps
+        Recovery design
       
     </span>
   </a>
@@ -1547,7 +1542,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1576,6 +1571,34 @@
     
   
     CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
   
 
     
@@ -1804,7 +1827,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -1936,99 +1959,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#key-derivation-argon2id" class="md-nav__link">
+  <a href="#key-derivation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key derivation: Argon2id
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key derivation: Argon2id">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-hard-properties" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory-hard properties
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authenticated-encryption-aes-256-gcm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authenticated encryption: AES-256-GCM
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authenticated encryption: AES-256-GCM">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#authenticated-encryption" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authenticated encryption
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#double-layer-integrity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Double-layer integrity
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nonce-integrity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Nonce integrity
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#threat-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Threat model
+        Key derivation
       
     </span>
   </a>
@@ -2036,10 +1970,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cryptographic-inspection" class="md-nav__link">
+  <a href="#encryption-and-integrity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cryptographic inspection
+        Encryption and integrity
       
     </span>
   </a>
@@ -2047,10 +1981,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#recovery-design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next steps
+        Recovery design
       
     </span>
   </a>
@@ -2078,139 +2012,13 @@
 
 
 <h1 id="encryption">Encryption<a class="headerlink" href="#encryption" title="Permanent link">&para;</a></h1>
-<p>APM uses industry-standard, high-performance cryptographic primitives designed to withstand modern
-attack vectors, including high-end GPU clusters and dictionary attacks.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>See the <a href="../../guides/vault-management/">vault management guide</a> for an introduction to
-working with the vault — this document discusses the cryptographic internals.</p>
-</div>
-<h2 id="key-derivation-argon2id">Key derivation: Argon2id<a class="headerlink" href="#key-derivation-argon2id" title="Permanent link">&para;</a></h2>
-<p>The master password is never stored. Keys are derived using <strong>Argon2id</strong>, the winner of the
-Password Hashing Competition.</p>
-<h3 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
-<p>Argon2id is a memory-hard key derivation function that combines the advantages of Argon2i (data-
-independent memory access, resistant to side-channel attacks) and Argon2d (data-dependent memory
-access, resistant to GPU cracking).</p>
-<p>When you enter your master password, APM derives <strong>96 bytes</strong> of key material using Argon2id. This
-material is split into three distinct 32-byte keys:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Key</th>
-<th style="text-align: left;">Purpose</th>
-<th style="text-align: left;">Usage</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">Encryption Key (32 bytes)</td>
-<td style="text-align: left;">Data confidentiality</td>
-<td style="text-align: left;">AES-256-GCM encryption of vault entries</td>
-</tr>
-<tr>
-<td style="text-align: left;">Authentication Key (32 bytes)</td>
-<td style="text-align: left;">Data integrity</td>
-<td style="text-align: left;">HMAC-SHA256 signature over the vault file</td>
-</tr>
-<tr>
-<td style="text-align: left;">Validation Key (32 bytes)</td>
-<td style="text-align: left;">Password verification</td>
-<td style="text-align: left;">Confirms correct master password on unlock</td>
-</tr>
-</tbody>
-</table>
-<h3 id="memory-hard-properties">Memory-hard properties<a class="headerlink" href="#memory-hard-properties" title="Permanent link">&para;</a></h3>
-<p>Argon2id requires significant RAM during key derivation, making it extremely expensive to attack
-with GPU or ASIC hardware:</p>
-<ul>
-<li><strong>Default</strong>: 64 MB of RAM per derivation</li>
-<li><strong>Configurable</strong>: Up to 512 MB via <a href="../security-profiles/">security profiles</a></li>
-<li><strong>Parallelism</strong>: Multi-threaded derivation for faster unlock on modern CPUs</li>
-</ul>
-<h2 id="authenticated-encryption-aes-256-gcm">Authenticated encryption: AES-256-GCM<a class="headerlink" href="#authenticated-encryption-aes-256-gcm" title="Permanent link">&para;</a></h2>
-<p>Confidentiality and integrity are provided by <strong>AES-256</strong> in <strong>GCM (Galois/Counter Mode)</strong>.</p>
-<h3 id="authenticated-encryption">Authenticated encryption<a class="headerlink" href="#authenticated-encryption" title="Permanent link">&para;</a></h3>
-<p>GCM mode provides both encryption and authentication in a single pass. This means that APM can
-detect if any part of the encrypted vault has been modified, corrupted, or tampered with — the
-decryption will fail with an authentication error rather than silently producing garbage data.</p>
-<h3 id="double-layer-integrity">Double-layer integrity<a class="headerlink" href="#double-layer-integrity" title="Permanent link">&para;</a></h3>
-<p>Beyond GCM's built-in authentication tag, APM applies an additional <strong>HMAC-SHA256</strong> signature over
-the entire vault file. This signature is derived from the master password and covers all metadata,
-providing defense-in-depth against sophisticated tampering attacks.</p>
-<h3 id="nonce-integrity">Nonce integrity<a class="headerlink" href="#nonce-integrity" title="Permanent link">&para;</a></h3>
-<p>Every save operation generates a unique, cryptographically random nonce matched to the encryption
-operation. This prevents:</p>
-<ul>
-<li><strong>Replay attacks</strong>: Re-submitting an older version of the vault.</li>
-<li><strong>Pattern analysis</strong>: Detecting whether the same data was encrypted twice.</li>
-</ul>
-<h2 id="threat-model">Threat model<a class="headerlink" href="#threat-model" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Vector</th>
-<th style="text-align: left;">Status</th>
-<th style="text-align: left;">Mitigation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">Offline Brute-Force</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Argon2id high-cost derivation</td>
-</tr>
-<tr>
-<td style="text-align: left;">Vault Tampering</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">HMAC-SHA256 integrity signature across all metadata</td>
-</tr>
-<tr>
-<td style="text-align: left;">Credential Theft</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Cloud tokens are encrypted inside the vault</td>
-</tr>
-<tr>
-<td style="text-align: left;">Identity Spoofing</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Multi-factor recovery (Email -&gt; Secure Token -&gt; Recovery Key)</td>
-</tr>
-<tr>
-<td style="text-align: left;">Session Hijacking</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Shell-scoped sessions (<code>APM_SESSION_ID</code>) and inactivity timeouts</td>
-</tr>
-<tr>
-<td style="text-align: left;">Weak Passwords</td>
-<td style="text-align: left;">Controlled</td>
-<td style="text-align: left;">Enforceable password policies via YAML <a href="../policy-engine/">Policy Engine</a></td>
-</tr>
-<tr>
-<td style="text-align: left;">Compromised Host</td>
-<td style="text-align: left;">Not Protected</td>
-<td style="text-align: left;">Outside the security boundary (Keyloggers/Malware)</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>APM is designed to protect your secrets at rest and during transit to cloud providers. It
-cannot protect against a fully compromised host machine where an attacker has kernel-level
-access or has installed keylogging software.</p>
-</div>
-<h2 id="cryptographic-inspection">Cryptographic inspection<a class="headerlink" href="#cryptographic-inspection" title="Permanent link">&para;</a></h2>
-<p>You can inspect the current cryptographic parameters of your vault at any time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>pm<span class="w"> </span>cinfo
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="go">Cipher: AES-256-GCM</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="go">KDF: Argon2id</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="go">Memory: 64 MB</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="go">Iterations: 3</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="go">Parallelism: 2</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="go">Nonce Size: 12 bytes</span>
-</code></pre></div>
-<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>See the <a href="../vault-format/">vault format</a> for details on the on-disk structure, or learn about
-configurable <a href="../security-profiles/">security profiles</a>.</p>
+<p>APM uses a zero-knowledge model with encrypted-at-rest storage and authenticated encryption.</p>
+<h2 id="key-derivation">Key derivation<a class="headerlink" href="#key-derivation" title="Permanent link">&para;</a></h2>
+<p>Argon2id derives encryption and authentication keys from the master password. This is memory-hard and slows GPU attacks.</p>
+<h2 id="encryption-and-integrity">Encryption and integrity<a class="headerlink" href="#encryption-and-integrity" title="Permanent link">&para;</a></h2>
+<p>Vault data is encrypted with AES-GCM. Integrity is enforced with HMAC signatures over vault metadata to detect tampering.</p>
+<h2 id="recovery-design">Recovery design<a class="headerlink" href="#recovery-design" title="Permanent link">&para;</a></h2>
+<p>Recovery uses verified identity steps and a recovery key that gates DEK access. Optional recovery factors add extra assurance without breaking zero-knowledge guarantees.</p>
 
 
 

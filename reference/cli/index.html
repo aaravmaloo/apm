@@ -18,14 +18,14 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../storage/">
+        <link rel="next" href="../apmignore/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -492,7 +492,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
   
 
     
@@ -693,7 +693,7 @@
   <span class="md-ellipsis">
     
   
-    Guides overview
+    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
   
 
     
@@ -750,6 +750,62 @@
     
   
     Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autofill_windows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
   
 
     
@@ -1006,7 +1062,35 @@
   <span class="md-ellipsis">
     
   
-    Concepts overview
+    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
   
 
     
@@ -1378,7 +1462,7 @@
   <span class="md-ellipsis">
     
   
-    Reference overview
+    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
   
 
     
@@ -1459,657 +1543,112 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#core-commands" class="md-nav__link">
+  <a href="#core-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core commands
+        Core lifecycle
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Core commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-init" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm init
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-get" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm get
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-edit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm edit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-del" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm del
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-gen" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm gen
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#session-commands" class="md-nav__link">
+  <a href="#entry-operations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Session commands
+        Entry operations
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Session commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-unlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm unlock
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-lock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm lock
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-readonly" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm readonly
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cloud-commands" class="md-nav__link">
+  <a href="#spaces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cloud commands
+        Spaces
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Cloud commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-cloud-init" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cloud init
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-cloud-push" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cloud push
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-cloud-pull" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cloud pull
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#totp-commands" class="md-nav__link">
+  <a href="#notes-and-vocabulary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOTP commands
+        Notes and vocabulary
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="TOTP commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-totp-show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm totp show
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#namespace-commands" class="md-nav__link">
+  <a href="#totp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Namespace commands
+        TOTP
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Namespace commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-space-create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm space create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-space-switch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm space switch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-space-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm space list
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-commands" class="md-nav__link">
+  <a href="#autofill-and-autocomplete" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security commands
+        Autofill and autocomplete
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Security commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-health" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm health
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-cinfo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cinfo
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-profile-set" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm profile set
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-profile-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm profile list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-sec_profile-create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm sec_profile create
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#policy-commands" class="md-nav__link">
+  <a href="#cloud-sync" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Policy commands
+        Cloud sync
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Policy commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-policy-load" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm policy load
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-policy-show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm policy show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-policy-clear" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm policy clear
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#auth-commands" class="md-nav__link">
+  <a href="#plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auth commands
+        Plugins
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Auth commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-email" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth email
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-reset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth reset
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth change
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-recover" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth recover
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#mcp-commands" class="md-nav__link">
+  <a href="#mcp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MCP commands
+        MCP
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="MCP commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-mcp-serve" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm mcp serve
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-mcp-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm mcp token
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-mcp-config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm mcp config
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugin-commands" class="md-nav__link">
+  <a href="#utility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plugin commands
+        Utility
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Plugin commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-local" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins local
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-remove" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins remove
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#import-export-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Import / Export commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Import / Export commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-import" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm import
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-export" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm export
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#utility-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Utility commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Utility commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm setup
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-audit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm audit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm version
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-help" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm help
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2117,6 +1656,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../apmignore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    .apmignore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2337,7 +1904,7 @@
   <span class="md-ellipsis">
     
   
-    Team edition
+    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
   
 
     
@@ -2469,657 +2036,112 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#core-commands" class="md-nav__link">
+  <a href="#core-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core commands
+        Core lifecycle
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Core commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-init" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm init
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-get" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm get
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-edit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm edit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-del" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm del
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-gen" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm gen
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#session-commands" class="md-nav__link">
+  <a href="#entry-operations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Session commands
+        Entry operations
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Session commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-unlock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm unlock
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-lock" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm lock
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-readonly" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm readonly
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cloud-commands" class="md-nav__link">
+  <a href="#spaces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cloud commands
+        Spaces
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Cloud commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-cloud-init" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cloud init
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-cloud-push" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cloud push
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-cloud-pull" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cloud pull
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#totp-commands" class="md-nav__link">
+  <a href="#notes-and-vocabulary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOTP commands
+        Notes and vocabulary
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="TOTP commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-totp-show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm totp show
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#namespace-commands" class="md-nav__link">
+  <a href="#totp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Namespace commands
+        TOTP
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Namespace commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-space-create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm space create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-space-switch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm space switch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-space-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm space list
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-commands" class="md-nav__link">
+  <a href="#autofill-and-autocomplete" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security commands
+        Autofill and autocomplete
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Security commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-health" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm health
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-cinfo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm cinfo
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-profile-set" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm profile set
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-profile-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm profile list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-sec_profile-create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm sec_profile create
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#policy-commands" class="md-nav__link">
+  <a href="#cloud-sync" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Policy commands
+        Cloud sync
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Policy commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-policy-load" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm policy load
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-policy-show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm policy show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-policy-clear" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm policy clear
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#auth-commands" class="md-nav__link">
+  <a href="#plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auth commands
+        Plugins
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Auth commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-email" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth email
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-reset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth reset
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth change
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-auth-recover" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm auth recover
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#mcp-commands" class="md-nav__link">
+  <a href="#mcp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MCP commands
+        MCP
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="MCP commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-mcp-serve" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm mcp serve
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-mcp-token" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm mcp token
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-mcp-config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm mcp config
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugin-commands" class="md-nav__link">
+  <a href="#utility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plugin commands
+        Utility
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Plugin commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-local" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins local
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-plugins-remove" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm plugins remove
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#import-export-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Import / Export commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Import / Export commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-import" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm import
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-export" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm export
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#utility-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Utility commands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Utility commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pm-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm setup
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-audit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm audit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm version
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pm-help" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pm help
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3143,247 +2165,84 @@
   
 
 
-<h1 id="cli-reference">CLI reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
-<p>APM provides a comprehensive set of commands for managing secrets, sessions, cloud sync, plugins,
-and more.</p>
-<h2 id="core-commands">Core commands<a class="headerlink" href="#core-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-init">pm init<a class="headerlink" href="#pm-init" title="Permanent link">&para;</a></h3>
-<p>Initialize a new encrypted vault.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">$ </span>pm<span class="w"> </span>init
-</code></pre></div>
-<p>Creates the vault file, prompts for a master password, and optionally sets a recovery key. If a
-vault already exists, the command exits with an error.</p>
-<h3 id="pm-add">pm add<a class="headerlink" href="#pm-add" title="Permanent link">&para;</a></h3>
-<p>Add a new entry to the vault.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>pm<span class="w"> </span>add
-</code></pre></div>
-<p>Launches an interactive prompt to select a category, fill in fields, and encrypt the entry. The
-active <a href="../../concepts/policy-engine/">policy</a> is enforced during entry creation.</p>
-<h3 id="pm-get">pm get<a class="headerlink" href="#pm-get" title="Permanent link">&para;</a></h3>
-<p>Search and retrieve an entry.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>pm<span class="w"> </span>get<span class="w"> </span>&lt;query&gt;<span class="w"> </span><span class="o">[</span>--show-pass<span class="o">]</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Flag</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>&lt;query&gt;</code></td>
-<td style="text-align: left;">Fuzzy search term to match against entry names</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>--show-pass</code></td>
-<td style="text-align: left;">Reveal secret fields in the output</td>
-</tr>
-</tbody>
-</table>
-<h3 id="pm-edit">pm edit<a class="headerlink" href="#pm-edit" title="Permanent link">&para;</a></h3>
-<p>Modify an existing entry.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gp">$ </span>pm<span class="w"> </span>edit<span class="w"> </span>&lt;name&gt;
-</code></pre></div>
-<p>Opens an interactive editor to change individual fields of the matched entry.</p>
-<h3 id="pm-del">pm del<a class="headerlink" href="#pm-del" title="Permanent link">&para;</a></h3>
-<p>Delete an entry permanently.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>pm<span class="w"> </span>del<span class="w"> </span>&lt;name&gt;
-</code></pre></div>
-<p>Prompts for confirmation before removing the entry from the vault.</p>
-<h3 id="pm-gen">pm gen<a class="headerlink" href="#pm-gen" title="Permanent link">&para;</a></h3>
-<p>Generate a high-entropy random password.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gp">$ </span>pm<span class="w"> </span>gen
-</code></pre></div>
-<p>Produces a cryptographically secure password and copies it to the clipboard.</p>
-<h2 id="session-commands">Session commands<a class="headerlink" href="#session-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-unlock">pm unlock<a class="headerlink" href="#pm-unlock" title="Permanent link">&para;</a></h3>
-<p>Start a new session by entering the master password.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gp">$ </span>pm<span class="w"> </span>unlock
-</code></pre></div>
-<p>Derives encryption keys, validates them, and caches the session for subsequent commands.</p>
-<h3 id="pm-lock">pm lock<a class="headerlink" href="#pm-lock" title="Permanent link">&para;</a></h3>
-<p>Terminate the active session and wipe keys from memory.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>pm<span class="w"> </span>lock
-</code></pre></div>
-<h3 id="pm-readonly">pm readonly<a class="headerlink" href="#pm-readonly" title="Permanent link">&para;</a></h3>
-<p>Toggle read-only mode for the current session.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="gp">$ </span>pm<span class="w"> </span><span class="nb">readonly</span>
-</code></pre></div>
-<h2 id="cloud-commands">Cloud commands<a class="headerlink" href="#cloud-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-cloud-init">pm cloud init<a class="headerlink" href="#pm-cloud-init" title="Permanent link">&para;</a></h3>
-<p>Initialize a cloud sync provider.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gp">$ </span>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>&lt;provider&gt;<span class="w"> </span><span class="o">[</span>--key<span class="w"> </span>&lt;retrieval-key&gt;<span class="o">]</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Argument</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>&lt;provider&gt;</code></td>
-<td style="text-align: left;"><code>gdrive</code>, <code>github</code>, <code>dropbox</code>, or <code>all</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>--key</code></td>
-<td style="text-align: left;">Optional custom retrieval key</td>
-</tr>
-</tbody>
-</table>
-<h3 id="pm-cloud-push">pm cloud push<a class="headerlink" href="#pm-cloud-push" title="Permanent link">&para;</a></h3>
-<p>Upload the encrypted vault to the configured provider(s).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="gp">$ </span>pm<span class="w"> </span>cloud<span class="w"> </span>push
-</code></pre></div>
-<h3 id="pm-cloud-pull">pm cloud pull<a class="headerlink" href="#pm-cloud-pull" title="Permanent link">&para;</a></h3>
-<p>Download the vault from the configured provider(s).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="gp">$ </span>pm<span class="w"> </span>cloud<span class="w"> </span>pull
-</code></pre></div>
-<h2 id="totp-commands">TOTP commands<a class="headerlink" href="#totp-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-totp-show">pm totp show<a class="headerlink" href="#pm-totp-show" title="Permanent link">&para;</a></h3>
-<p>Generate and display a TOTP code with a live countdown.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="gp">$ </span>pm<span class="w"> </span>totp<span class="w"> </span>show
-</code></pre></div>
-<h2 id="namespace-commands">Namespace commands<a class="headerlink" href="#namespace-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-space-create">pm space create<a class="headerlink" href="#pm-space-create" title="Permanent link">&para;</a></h3>
-<p>Create a new namespace.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="gp">$ </span>pm<span class="w"> </span>space<span class="w"> </span>create<span class="w"> </span>&lt;name&gt;
-</code></pre></div>
-<h3 id="pm-space-switch">pm space switch<a class="headerlink" href="#pm-space-switch" title="Permanent link">&para;</a></h3>
-<p>Switch to a different namespace.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="gp">$ </span>pm<span class="w"> </span>space<span class="w"> </span>switch<span class="w"> </span>&lt;name&gt;
-</code></pre></div>
-<h3 id="pm-space-list">pm space list<a class="headerlink" href="#pm-space-list" title="Permanent link">&para;</a></h3>
-<p>List all available namespaces.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="gp">$ </span>pm<span class="w"> </span>space<span class="w"> </span>list
-</code></pre></div>
-<h2 id="security-commands">Security commands<a class="headerlink" href="#security-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-health">pm health<a class="headerlink" href="#pm-health" title="Permanent link">&para;</a></h3>
-<p>Run a vault health audit against the active policy.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="gp">$ </span>pm<span class="w"> </span>health
-</code></pre></div>
-<h3 id="pm-cinfo">pm cinfo<a class="headerlink" href="#pm-cinfo" title="Permanent link">&para;</a></h3>
-<p>Display cryptographic parameters for the current vault.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="gp">$ </span>pm<span class="w"> </span>cinfo
-</code></pre></div>
-<h3 id="pm-profile-set">pm profile set<a class="headerlink" href="#pm-profile-set" title="Permanent link">&para;</a></h3>
-<p>Switch the security profile.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="gp">$ </span>pm<span class="w"> </span>profile<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;profile&gt;
-</code></pre></div>
-<h3 id="pm-profile-list">pm profile list<a class="headerlink" href="#pm-profile-list" title="Permanent link">&para;</a></h3>
-<p>List available security profiles.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="gp">$ </span>pm<span class="w"> </span>profile<span class="w"> </span>list
-</code></pre></div>
-<h3 id="pm-sec_profile-create">pm sec_profile create<a class="headerlink" href="#pm-sec_profile-create" title="Permanent link">&para;</a></h3>
-<p>Create a custom security profile with specific Argon2id parameters.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="gp">$ </span>pm<span class="w"> </span>sec_profile<span class="w"> </span>create
-</code></pre></div>
-<h2 id="policy-commands">Policy commands<a class="headerlink" href="#policy-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-policy-load">pm policy load<a class="headerlink" href="#pm-policy-load" title="Permanent link">&para;</a></h3>
-<p>Load a YAML policy file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="gp">$ </span>pm<span class="w"> </span>policy<span class="w"> </span>load<span class="w"> </span>&lt;path&gt;
-</code></pre></div>
-<h3 id="pm-policy-show">pm policy show<a class="headerlink" href="#pm-policy-show" title="Permanent link">&para;</a></h3>
-<p>Display the active policy.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="gp">$ </span>pm<span class="w"> </span>policy<span class="w"> </span>show
-</code></pre></div>
-<h3 id="pm-policy-clear">pm policy clear<a class="headerlink" href="#pm-policy-clear" title="Permanent link">&para;</a></h3>
-<p>Remove the active policy.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="gp">$ </span>pm<span class="w"> </span>policy<span class="w"> </span>clear
-</code></pre></div>
-<h2 id="auth-commands">Auth commands<a class="headerlink" href="#auth-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-auth-email">pm auth email<a class="headerlink" href="#pm-auth-email" title="Permanent link">&para;</a></h3>
-<p>Update the registered recovery email address.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="gp">$ </span>pm<span class="w"> </span>auth<span class="w"> </span>email
-</code></pre></div>
-<h3 id="pm-auth-reset">pm auth reset<a class="headerlink" href="#pm-auth-reset" title="Permanent link">&para;</a></h3>
-<p>Reset the master password (requires the current password).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="gp">$ </span>pm<span class="w"> </span>auth<span class="w"> </span>reset
-</code></pre></div>
-<h3 id="pm-auth-change">pm auth change<a class="headerlink" href="#pm-auth-change" title="Permanent link">&para;</a></h3>
-<p>Change the master password.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="gp">$ </span>pm<span class="w"> </span>auth<span class="w"> </span>change
-</code></pre></div>
-<h3 id="pm-auth-recover">pm auth recover<a class="headerlink" href="#pm-auth-recover" title="Permanent link">&para;</a></h3>
-<p>Initiate the recovery flow.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="gp">$ </span>pm<span class="w"> </span>auth<span class="w"> </span>recover
-</code></pre></div>
-<h2 id="mcp-commands">MCP commands<a class="headerlink" href="#mcp-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-mcp-serve">pm mcp serve<a class="headerlink" href="#pm-mcp-serve" title="Permanent link">&para;</a></h3>
-<p>Start the MCP server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="gp">$ </span>pm<span class="w"> </span>mcp<span class="w"> </span>serve<span class="w"> </span>--token<span class="w"> </span>&lt;token&gt;
-</code></pre></div>
-<h3 id="pm-mcp-token">pm mcp token<a class="headerlink" href="#pm-mcp-token" title="Permanent link">&para;</a></h3>
-<p>Generate a new MCP access token with selected permission scopes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="gp">$ </span>pm<span class="w"> </span>mcp<span class="w"> </span>token
-</code></pre></div>
-<h3 id="pm-mcp-config">pm mcp config<a class="headerlink" href="#pm-mcp-config" title="Permanent link">&para;</a></h3>
-<p>Display a copy-pasteable MCP client configuration snippet.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="gp">$ </span>pm<span class="w"> </span>mcp<span class="w"> </span>config
-</code></pre></div>
-<h2 id="plugin-commands">Plugin commands<a class="headerlink" href="#plugin-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-plugins-add">pm plugins add<a class="headerlink" href="#pm-plugins-add" title="Permanent link">&para;</a></h3>
-<p>Install a plugin from the marketplace.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="gp">$ </span>pm<span class="w"> </span>plugins<span class="w"> </span>add<span class="w"> </span>&lt;name&gt;
-</code></pre></div>
-<h3 id="pm-plugins-local">pm plugins local<a class="headerlink" href="#pm-plugins-local" title="Permanent link">&para;</a></h3>
-<p>Load a plugin from a local directory.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="gp">$ </span>pm<span class="w"> </span>plugins<span class="w"> </span><span class="nb">local</span><span class="w"> </span>&lt;path&gt;
-</code></pre></div>
-<h3 id="pm-plugins-list">pm plugins list<a class="headerlink" href="#pm-plugins-list" title="Permanent link">&para;</a></h3>
-<p>List installed plugins.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="gp">$ </span>pm<span class="w"> </span>plugins<span class="w"> </span>list
-</code></pre></div>
-<h3 id="pm-plugins-remove">pm plugins remove<a class="headerlink" href="#pm-plugins-remove" title="Permanent link">&para;</a></h3>
-<p>Uninstall a plugin.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="gp">$ </span>pm<span class="w"> </span>plugins<span class="w"> </span>remove<span class="w"> </span>&lt;name&gt;
-</code></pre></div>
-<h2 id="import-export-commands">Import / Export commands<a class="headerlink" href="#import-export-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-import">pm import<a class="headerlink" href="#pm-import" title="Permanent link">&para;</a></h3>
-<p>Import entries from an external file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="gp">$ </span>pm<span class="w"> </span>import<span class="w"> </span>&lt;path&gt;
-</code></pre></div>
-<h3 id="pm-export">pm export<a class="headerlink" href="#pm-export" title="Permanent link">&para;</a></h3>
-<p>Export vault entries.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="gp">$ </span>pm<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>&lt;format&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>--encrypted<span class="o">]</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Flag</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>--format</code></td>
-<td style="text-align: left;">Output format: <code>json</code> or <code>csv</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>--encrypted</code></td>
-<td style="text-align: left;">Export as an encrypted APM archive</td>
-</tr>
-</tbody>
-</table>
-<h2 id="utility-commands">Utility commands<a class="headerlink" href="#utility-commands" title="Permanent link">&para;</a></h2>
-<h3 id="pm-setup">pm setup<a class="headerlink" href="#pm-setup" title="Permanent link">&para;</a></h3>
-<p>Launch the interactive first-time setup wizard.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="gp">$ </span>pm<span class="w"> </span>setup
-</code></pre></div>
-<h3 id="pm-audit">pm audit<a class="headerlink" href="#pm-audit" title="Permanent link">&para;</a></h3>
-<p>View the tamper-evident audit log.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="gp">$ </span>pm<span class="w"> </span>audit
-</code></pre></div>
-<h3 id="pm-version">pm version<a class="headerlink" href="#pm-version" title="Permanent link">&para;</a></h3>
-<p>Display the installed APM version.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="gp">$ </span>pm<span class="w"> </span>version
-</code></pre></div>
-<h3 id="pm-help">pm help<a class="headerlink" href="#pm-help" title="Permanent link">&para;</a></h3>
-<p>Display help for any command.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="gp">$ </span>pm<span class="w"> </span><span class="nb">help</span><span class="w"> </span><span class="o">[</span>command<span class="o">]</span>
-</code></pre></div>
+<h1 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
+<p>This reference lists the primary <code>pm</code> commands and explains what they do. For flags, run <code>pm &lt;command&gt; --help</code>.</p>
+<h2 id="core-lifecycle">Core lifecycle<a class="headerlink" href="#core-lifecycle" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm init</code> initializes a new vault.</li>
+<li><code>pm unlock</code> starts a session and unlocks daemon state.</li>
+<li><code>pm lock</code> ends a session and wipes decrypted data.</li>
+</ul>
+<h2 id="entry-operations">Entry operations<a class="headerlink" href="#entry-operations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm add</code> adds an entry via an interactive flow.</li>
+<li><code>pm get [query]</code> searches the vault with fuzzy matching.</li>
+<li><code>pm edit [id]</code> edits an existing entry.</li>
+<li><code>pm del [id]</code> deletes an entry.</li>
+<li><code>pm gen</code> generates passwords.</li>
+</ul>
+<h2 id="spaces">Spaces<a class="headerlink" href="#spaces" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm space list</code> lists spaces.</li>
+<li><code>pm space create &lt;name&gt;</code> creates a space.</li>
+<li><code>pm space switch &lt;name&gt;</code> switches active space.</li>
+<li><code>pm space remove &lt;name&gt;</code> removes a space.</li>
+</ul>
+<h2 id="notes-and-vocabulary">Notes and vocabulary<a class="headerlink" href="#notes-and-vocabulary" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm vocab enable|disable|status</code> toggles indexing.</li>
+<li><code>pm vocab</code> lists words and aliases.</li>
+<li><code>pm vocab alias</code> creates or updates aliases.</li>
+<li><code>pm vocab alias-list</code> lists aliases.</li>
+<li><code>pm vocab alias-remove &lt;alias&gt;</code> removes an alias.</li>
+<li><code>pm vocab rank &lt;word&gt; &lt;delta&gt;</code> adjusts ranking.</li>
+<li><code>pm vocab remove &lt;word&gt;</code> deletes a word.</li>
+<li><code>pm vocab reindex</code> rebuilds the vocabulary.</li>
+</ul>
+<h2 id="totp">TOTP<a class="headerlink" href="#totp" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm totp</code> opens the interactive list.</li>
+<li><code>pm totp &lt;entry&gt;</code> copies a specific code.</li>
+<li><code>pm autocomplete link-totp</code> links a TOTP entry to a domain.</li>
+</ul>
+<h2 id="autofill-and-autocomplete">Autofill and autocomplete<a class="headerlink" href="#autofill-and-autocomplete" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm autofill start|stop|status|list-profiles</code> controls the Windows daemon.</li>
+<li><code>pm autocomplete enable|disable</code> controls autostart registration.</li>
+<li><code>pm autocomplete start|stop</code> manually starts or stops the daemon.</li>
+<li><code>pm autocomplete status</code> shows daemon state and autostart status.</li>
+<li><code>pm autocomplete window enable|disable|status</code> controls popup hints.</li>
+</ul>
+<h2 id="cloud-sync">Cloud sync<a class="headerlink" href="#cloud-sync" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm cloud init</code> configures provider credentials.</li>
+<li><code>pm cloud sync</code> uploads or downloads the vault blob.</li>
+<li><code>pm cloud autosync</code> runs periodic sync loops.</li>
+<li><code>pm cloud get</code> downloads remote vault blob.</li>
+<li><code>pm cloud reset</code> clears sync configuration.</li>
+</ul>
+<h2 id="plugins">Plugins<a class="headerlink" href="#plugins" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm plugins market</code> lists marketplace plugins.</li>
+<li><code>pm plugins install &lt;name&gt;</code> installs a plugin.</li>
+<li><code>pm plugins installed</code> lists local plugins.</li>
+<li><code>pm plugins push &lt;name&gt;</code> publishes a plugin.</li>
+<li><code>pm plugins access</code> shows permission overrides.</li>
+<li><code>pm plugins access &lt;plugin&gt; &lt;permission&gt; on|off</code> toggles a permission.</li>
+</ul>
+<h2 id="mcp">MCP<a class="headerlink" href="#mcp" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm mcp token</code> generates a token.</li>
+<li><code>pm mcp serve</code> starts the server.</li>
+<li><code>pm mcp config</code> outputs config hints.</li>
+</ul>
+<h2 id="utility">Utility<a class="headerlink" href="#utility" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm info</code> shows version and environment.</li>
+<li><code>pm health</code> runs health checks.</li>
+<li><code>pm trust</code> shows trust/risk scoring.</li>
+<li><code>pm update</code> updates the binary.</li>
+</ul>
 
 
 

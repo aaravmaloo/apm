@@ -12,31 +12,31 @@
         <meta name="author" content="Aarav Maloo">
       
       
-        <link rel="canonical" href="https://aaravmaloo.github.io/apm/guides/plugins/">
+        <link rel="canonical" href="https://aaravmaloo.github.io/apm/autofill_windows/">
       
       
-        <link rel="prev" href="../sessions/">
+        <link rel="prev" href="../guides/apmignore/">
       
       
-        <link rel="next" href="../mcp-integration/">
+        <link rel="next" href="../guides/totp/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
-        <title>Using plugins - APM Documentation</title>
+        <title>Autofill on Windows - APM Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#plugins-guidennmanifest-plugins-with-runtime-permission-controls-use-pm-plugins-access-to-manage-pacs" class="md-skip">
+        <a href="#apm-autofill-on-windows" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
+    <a href=".." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Using plugins
+              Autofill on Windows
             
           </span>
         </div>
@@ -237,7 +237,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -258,7 +258,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -280,7 +280,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+        <a href="../guides/" class="md-tabs__link">
           
   
   
@@ -300,7 +300,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../concepts/" class="md-tabs__link">
+        <a href="../concepts/" class="md-tabs__link">
           
   
   
@@ -320,7 +320,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../reference/" class="md-tabs__link">
+        <a href="../reference/" class="md-tabs__link">
           
   
   
@@ -340,7 +340,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../team/" class="md-tabs__link">
+        <a href="../team/" class="md-tabs__link">
           
   
   
@@ -374,7 +374,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="APM Documentation" class="md-nav__button md-logo" aria-label="APM Documentation" data-md-component="logo">
+    <a href=".." title="APM Documentation" class="md-nav__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -404,7 +404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -485,7 +485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -513,7 +513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -541,7 +541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/first-steps/" class="md-nav__link">
+      <a href="../getting-started/first-steps/" class="md-nav__link">
         
   
   
@@ -569,7 +569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/features/" class="md-nav__link">
+      <a href="../getting-started/features/" class="md-nav__link">
         
   
   
@@ -597,7 +597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/help/" class="md-nav__link">
+      <a href="../getting-started/help/" class="md-nav__link">
         
   
   
@@ -689,7 +689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../guides/" class="md-nav__link">
         
   
   
@@ -717,7 +717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vault-management/" class="md-nav__link">
+      <a href="../guides/vault-management/" class="md-nav__link">
         
   
   
@@ -745,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cloud-sync/" class="md-nav__link">
+      <a href="../guides/cloud-sync/" class="md-nav__link">
         
   
   
@@ -773,7 +773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../apmignore/" class="md-nav__link">
+      <a href="../guides/apmignore/" class="md-nav__link">
         
   
   
@@ -781,90 +781,6 @@
     
   
     Using .apmignore
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../autofill_windows/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Autofill on Windows
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../totp/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Generating TOTP codes
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../sessions/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Managing sessions
   
 
     
@@ -894,7 +810,184 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autofill on Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#command-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hotkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hotkey
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#totp-linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TOTP linking
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/totp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generating TOTP codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/sessions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Managing sessions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/plugins/" class="md-nav__link">
         
   
   
@@ -910,7 +1003,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -923,7 +1015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp-integration/" class="md-nav__link">
+      <a href="../guides/mcp-integration/" class="md-nav__link">
         
   
   
@@ -951,7 +1043,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../team-edition/" class="md-nav__link">
+      <a href="../guides/team-edition/" class="md-nav__link">
         
   
   
@@ -979,7 +1071,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../import-export/" class="md-nav__link">
+      <a href="../guides/import-export/" class="md-nav__link">
         
   
   
@@ -1068,7 +1160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+      <a href="../concepts/" class="md-nav__link">
         
   
   
@@ -1096,7 +1188,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/architecture/" class="md-nav__link">
+      <a href="../concepts/architecture/" class="md-nav__link">
         
   
   
@@ -1124,7 +1216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/encryption/" class="md-nav__link">
+      <a href="../concepts/encryption/" class="md-nav__link">
         
   
   
@@ -1152,7 +1244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/vault-format/" class="md-nav__link">
+      <a href="../concepts/vault-format/" class="md-nav__link">
         
   
   
@@ -1180,7 +1272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/secret-types/" class="md-nav__link">
+      <a href="../concepts/secret-types/" class="md-nav__link">
         
   
   
@@ -1208,7 +1300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/security-profiles/" class="md-nav__link">
+      <a href="../concepts/security-profiles/" class="md-nav__link">
         
   
   
@@ -1236,7 +1328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/policy-engine/" class="md-nav__link">
+      <a href="../concepts/policy-engine/" class="md-nav__link">
         
   
   
@@ -1264,7 +1356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/sessions/" class="md-nav__link">
+      <a href="../concepts/sessions/" class="md-nav__link">
         
   
   
@@ -1292,7 +1384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/cloud-sync/" class="md-nav__link">
+      <a href="../concepts/cloud-sync/" class="md-nav__link">
         
   
   
@@ -1320,7 +1412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/plugins/" class="md-nav__link">
+      <a href="../concepts/plugins/" class="md-nav__link">
         
   
   
@@ -1348,7 +1440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/mcp/" class="md-nav__link">
+      <a href="../concepts/mcp/" class="md-nav__link">
         
   
   
@@ -1376,7 +1468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/recovery/" class="md-nav__link">
+      <a href="../concepts/recovery/" class="md-nav__link">
         
   
   
@@ -1465,7 +1557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../reference/" class="md-nav__link">
         
   
   
@@ -1493,7 +1585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../reference/cli/" class="md-nav__link">
         
   
   
@@ -1521,7 +1613,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/apmignore/" class="md-nav__link">
+      <a href="../reference/apmignore/" class="md-nav__link">
         
   
   
@@ -1549,7 +1641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/storage/" class="md-nav__link">
+      <a href="../reference/storage/" class="md-nav__link">
         
   
   
@@ -1577,7 +1669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/environment-variables/" class="md-nav__link">
+      <a href="../reference/environment-variables/" class="md-nav__link">
         
   
   
@@ -1605,7 +1697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/plugin-api/" class="md-nav__link">
+      <a href="../reference/plugin-api/" class="md-nav__link">
         
   
   
@@ -1633,7 +1725,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp-tools/" class="md-nav__link">
+      <a href="../reference/mcp-tools/" class="md-nav__link">
         
   
   
@@ -1661,7 +1753,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/policies/" class="md-nav__link">
+      <a href="../reference/policies/" class="md-nav__link">
         
   
   
@@ -1750,7 +1842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
+      <a href="../team/" class="md-nav__link">
         
   
   
@@ -1778,7 +1870,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../team/rbac/" class="md-nav__link">
+      <a href="../team/rbac/" class="md-nav__link">
         
   
   
@@ -1806,7 +1898,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../team/departments/" class="md-nav__link">
+      <a href="../team/departments/" class="md-nav__link">
         
   
   
@@ -1834,7 +1926,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../team/approvals/" class="md-nav__link">
+      <a href="../team/approvals/" class="md-nav__link">
         
   
   
@@ -1882,6 +1974,69 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#command-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hotkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hotkey
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#totp-linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TOTP linking
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1900,7 +2055,35 @@
   
 
 
-<h1 id="plugins-guidennmanifest-plugins-with-runtime-permission-controls-use-pm-plugins-access-to-manage-pacs">Plugins Guide\n\nManifest plugins with runtime permission controls. Use pm plugins access to manage PACs.<a class="headerlink" href="#plugins-guidennmanifest-plugins-with-runtime-permission-controls-use-pm-plugins-access-to-manage-pacs" title="Permanent link">&para;</a></h1>
+<h1 id="apm-autofill-on-windows">APM Autofill on Windows<a class="headerlink" href="#apm-autofill-on-windows" title="Permanent link">&para;</a></h1>
+<p>APM autofill on Windows is daemon-based and works system-wide without a browser extension.</p>
+<h2 id="command-model">Command model<a class="headerlink" href="#command-model" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm autofill start|stop|status|list-profiles</code></li>
+<li><code>pm autocomplete enable</code> registers daemon autostart on login and starts now</li>
+<li><code>pm autocomplete start|stop</code> manual daemon control</li>
+<li><code>pm autocomplete window enable|disable|status</code> toggles popup hints</li>
+<li><code>pm unlock</code> unlocks both the CLI session and autofill daemon vault state</li>
+<li><code>pm lock</code> locks both the CLI session and autofill daemon vault state</li>
+<li><code>pm autocomplete link-totp</code> links an existing TOTP entry to a domain</li>
+</ul>
+<h2 id="hotkey">Hotkey<a class="headerlink" href="#hotkey" title="Permanent link">&para;</a></h2>
+<p>Default hotkey: <code>CTRL+SHIFT+L</code>. You can override it when starting the daemon.</p>
+<h2 id="runtime-behavior">Runtime behavior<a class="headerlink" href="#runtime-behavior" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The daemon watches the active window context.</li>
+<li>If a credential-like form is detected, it shows a popup hint.</li>
+<li>On hotkey press, it resolves a match and injects the sequence.</li>
+<li>The clipboard is not used for core typing.</li>
+</ul>
+<h2 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Vault starts locked and rejects requests until unlocked.</li>
+<li>Decrypted data is held in memory only.</li>
+<li>Daemon IPC is loopback + bearer-token protected.</li>
+</ul>
+<h2 id="totp-linking">TOTP linking<a class="headerlink" href="#totp-linking" title="Permanent link">&para;</a></h2>
+<p>Use <code>pm autocomplete link-totp</code> to bind a TOTP entry to a domain. This helps the engine select the correct OTP when multiple TOTP entries exist.</p>
 
 
 
@@ -1958,10 +2141,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
