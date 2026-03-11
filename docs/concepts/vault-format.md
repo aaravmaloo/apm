@@ -15,7 +15,7 @@ The vault payload is a structured object encrypted as one unit. Key groups inclu
 - policy state (`active_policy`)
 - cloud metadata (provider ids/tokens encrypted inside vault)
 - audit/history records
-- autocomplete data (`autocomplete_enabled`, `vocab_compressed`)
+- autocomplete data (`autocomplete_enabled`, `autocomplete_window_disabled`, `vocab_compressed`)
 - TOTP metadata (`totp_order`, `totp_domain_links`)
 - plugin access controls (`plugin_permission_overrides`)
 
