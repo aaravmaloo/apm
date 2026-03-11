@@ -1,36 +1,202 @@
 # Architecture
 
-APM is layered to separate CLI interaction, domain logic, and integrations.
+APM is structured as a **four-layer architecture** that separates concerns between user interaction, domain logic, external integrations, and extensibility.
 
-## Layers
+---
 
-1. CLI layer in `main.go` provides the user-facing command tree.
-2. Domain layer in `src/` implements vault, entries, crypto, policy, and sync.
-3. Integration layer contains cloud providers, autofill daemon, and MCP server.
-4. Extension layer supports manifest-based plugins.
+## Layer Diagram
 
-## Vault flow
+```mermaid
+graph TB
+    subgraph CLI["Layer 1: CLI"]
+        A[main.go — Cobra command tree]
+    end
 
-- Encrypted vault bytes are loaded from disk.
-- Argon2id derives encryption and authentication keys.
-- AES-GCM decrypts the vault payload.
-- Operations run in memory within a session.
-- The vault is re-encrypted and persisted on save.
+    subgraph Domain["Layer 2: Domain"]
+        B[vault.go — Vault & Entries]
+        C[session.go — Sessions]
+        D[security.go — Profiles & Alerts]
+        E[policy.go — Policy Engine]
+        F[trust.go — Trust Scoring]
+        G[health.go — Health Dashboard]
+        H[audit.go — Audit Log]
+        I[anomaly.go — Anomaly Detection]
+        J[vocab.go — Vocabulary Engine]
+        K[portability.go — Import/Export]
+        L[apmignore.go — Ignore Rules]
+        M[brute.go — Brute Force Test]
+        N[recovery_*.go — Recovery Subsystem]
+        O[ephemeral_session.go — Delegated Sessions]
+    end
 
-## Autofill subsystem
+    subgraph Integration["Layer 3: Integration"]
+        P[cloud.go — GDrive/GitHub/Dropbox]
+        Q[mcp.go — MCP Server]
+        R[autofill/ — Windows Daemon]
+    end
 
-- Windows daemon runs locally on loopback.
-- Active window context is captured and analyzed.
-- Popup hints notify users when matches exist.
-- Hotkey triggers sequence injection.
+    subgraph Extension["Layer 4: Extension"]
+        S[plugins/engine.go — Step Executor]
+        T[plugins/manifest.go — Manifest & Permissions]
+        U[plugins/definitions.go — Command Definitions]
+        V[cloud_plugins.go — Marketplace]
+    end
 
-## Notes vocabulary subsystem
+    CLI --> Domain
+    CLI --> Integration
+    CLI --> Extension
+    Integration --> Domain
+    Extension --> Domain
+```
 
-- Vocabulary is stored in `Vault.VocabCompressed`.
-- Indexing runs on note changes if enabled.
-- Alias and ranking influence suggestion output.
+---
 
-## Plugin subsystem
+## Layer 1: CLI
 
-- `plugin.json` declares metadata, permissions, commands, and hooks.
-- Runtime permission overrides are enforced for every step.
+**File:** `main.go` (~3,600 lines)
+
+The CLI layer uses [Cobra](https://github.com/spf13/cobra) to define the entire command tree. It handles:
+
+- User input parsing and validation
+- Interactive prompts (password input, menus, confirmations)
+- Output formatting (colored terminal output via `fatih/color`)
+- Delegation to domain and integration layers
+
+### Key Design Decisions
+
+- **Single binary** — All commands live in one file for straightforward distribution
+- **Interactive by default** — Most commands use interactive prompts rather than requiring flags
+- **Explicit session checks** — Every sensitive command verifies an active session before proceeding
+
+---
+
+## Layer 2: Domain
+
+**Directory:** `src/`
+
+The domain layer contains all business logic. It operates entirely in memory after vault decryption:
+
+| File                   | Responsibility                                   |
+| :--------------------- | :----------------------------------------------- |
+| `vault.go`             | Vault struct, entry types, encrypt/decrypt logic |
+| `session.go`           | Shell-scoped session management                  |
+| `ephemeral_session.go` | Delegated sessions with host/PID/agent binding   |
+| `security.go`          | Profile management, alerts, email masking        |
+| `policy.go`            | YAML policy loading and enforcement              |
+| `trust.go`             | Per-secret trust scoring (telemetry + risk)      |
+| `health.go`            | Vault health scoring algorithm                   |
+| `audit.go`             | Tamper-evident audit logging                     |
+| `anomaly.go`           | Unusual activity time detection                  |
+| `vocab.go`             | Note vocabulary with aliases and scoring         |
+| `portability.go`       | JSON, CSV, TXT import/export                     |
+| `apmignore.go`         | Ignore rule parsing and filtering                |
+| `brute.go`             | Brute-force test engine                          |
+| `recovery_passkey.go`  | WebAuthn passkey recovery                        |
+| `quorum_recovery.go`   | Shamir secret sharing (quorum recovery)          |
+| `recovery_codes.go`    | One-time recovery codes                          |
+
+---
+
+## Layer 3: Integration
+
+| Component  | File(s)         | Protocol            | Purpose                     |
+| :--------- | :-------------- | :------------------ | :-------------------------- |
+| Cloud Sync | `cloud.go`      | REST / OAuth2 / PAT | Multi-provider vault sync   |
+| MCP Server | `mcp.go`        | stdio (JSON-RPC)    | AI assistant vault access   |
+| Autofill   | `autofill/*.go` | HTTP (loopback)     | Windows keystroke injection |
+
+### Cloud Provider Architecture
+
+Each cloud provider follows the same interface:
+
+1. **Init** → Configure OAuth/PAT credentials
+2. **Sync** → Upload encrypted vault blob
+3. **Get** → Download remote vault blob
+4. **Reset** → Clear provider configuration
+
+Credentials are stored encrypted inside the vault itself.
+
+### MCP Server Architecture
+
+The MCP server is spawned as a subprocess by AI clients. It:
+
+1. Accepts stdio transport
+2. Validates bearer tokens against the vault's token store
+3. Routes tool calls to domain layer (vault read/write)
+4. Enforces permission scope checks per tool
+5. Manages transaction state for write operations
+
+### Autofill Architecture
+
+The autofill daemon is a local HTTP server that:
+
+1. Listens on a random port on loopback
+2. Stores a shared bearer token for IPC
+3. Captures active window context via Windows APIs
+4. Matches credentials against vault profiles
+5. Injects keystrokes via `SendInput` (Windows)
+
+---
+
+## Layer 4: Extension
+
+| Component   | File(s)                  | Purpose                           |
+| :---------- | :----------------------- | :-------------------------------- |
+| Engine      | `plugins/engine.go`      | Executes plugin step pipelines    |
+| Manifest    | `plugins/manifest.go`    | Validates plugin.json schemas     |
+| Definitions | `plugins/definitions.go` | Built-in step command definitions |
+| Marketplace | `cloud_plugins.go`       | Cloud-backed plugin distribution  |
+
+---
+
+## Data Flow: Vault Unlock → Save
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Session
+    participant Vault
+
+    User->>CLI: pm unlock
+    CLI->>Vault: Load encrypted bytes from disk
+    Vault->>Vault: Parse header (magic, version, profile, salt)
+    Vault->>Vault: Derive 96 bytes via Argon2id(password, salt)
+    Note over Vault: key[0:32] = encryption key<br/>key[32:64] = auth key<br/>key[64:96] = validator
+    Vault->>Vault: Verify HMAC-SHA256(auth_key, metadata)
+    Vault->>Vault: Decrypt AES-256-GCM(enc_key, ciphertext)
+    Vault->>Vault: Verify validator matches stored validator
+    Vault-->>CLI: Decrypted Vault struct
+    CLI->>Session: Create session file
+    CLI-->>User: "Vault unlocked"
+
+    Note over User: ... user performs operations ...
+
+    User->>CLI: pm add (adds entry to in-memory vault)
+    CLI->>Vault: Generate new salt
+    Vault->>Vault: Derive keys from password + new salt
+    Vault->>Vault: Serialize vault to JSON
+    Vault->>Vault: Encrypt with AES-256-GCM(enc_key, json)
+    Vault->>Vault: Compute HMAC-SHA256(auth_key, metadata)
+    Vault->>Vault: Write header + ciphertext + HMAC to disk
+    Vault-->>CLI: Save complete
+```
+
+---
+
+## Security Boundaries
+
+| Boundary         | Inside                          | Outside                  |
+| :--------------- | :------------------------------ | :----------------------- |
+| Vault encryption | All entry data, credentials     | Master password, keys    |
+| Session boundary | Decrypted vault (in memory)     | Persisted data (on disk) |
+| Cloud boundary   | Encrypted blob (APMVAULT)       | Plaintext entries        |
+| MCP boundary     | Permitted data (per scope)      | Unauthorized data        |
+| Plugin boundary  | Permitted operations (per perm) | Unauthorized operations  |
+
+---
+
+## Next Steps
+
+- **[Encryption](encryption.md)** — Detailed cryptographic design
+- **[Vault Format](vault-format.md)** — Binary format specification
