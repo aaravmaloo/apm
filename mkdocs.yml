@@ -72,6 +72,7 @@ nav:
     - Managing your vault: guides/vault-management.md
     - Cloud synchronization: guides/cloud-sync.md
     - Using .apmignore: guides/apmignore.md
+    - Autofill on Windows: autofill_windows.md
     - Generating TOTP codes: guides/totp.md
     - Managing sessions: guides/sessions.md
     - Using plugins: guides/plugins.md
