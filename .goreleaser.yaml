@@ -1,5 +1,7 @@
 version: 2
 project_name: apm
+release:
+  tag_template: "v10.0.0"
 
 before:
   hooks:
@@ -21,7 +23,7 @@ builds:
 
 archives:
   - format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_v10.0.0_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
