@@ -267,6 +267,26 @@ func ensureAutofillDaemonRunning(vaultPath, hotkey string) error {
 	return errors.New("daemon did not become ready")
 }
 
+func EnsureAutofillDaemonRunning(vaultPath, hotkey string) error {
+	return ensureAutofillDaemonRunning(vaultPath, hotkey)
+}
+
+func StopAutofillDaemon() error {
+	client, err := autofill.NewClientFromState()
+	if err != nil {
+		_ = autofill.ClearDaemonState()
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := client.Stop(ctx); err != nil {
+		_ = autofill.ClearDaemonState()
+		return err
+	}
+	return nil
+}
+
 func UnlockDaemonWithPassword(vaultPath, password string, timeout, inactivity time.Duration, hotkey string) error {
 	if strings.TrimSpace(hotkey) == "" {
 		hotkey = "CTRL+SHIFT+L"
