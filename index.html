@@ -48,10 +48,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="stylesheets/custom.css">
     
     <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -69,7 +71,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -90,7 +92,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -125,31 +129,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -178,6 +158,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -217,14 +202,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -281,6 +262,8 @@
         <a href="guides/" class="md-tabs__link">
           
   
+  
+    
   
   Guides
 
@@ -302,6 +285,8 @@
           
   
   
+    
+  
   Concepts
 
         </a>
@@ -321,6 +306,8 @@
         <a href="reference/" class="md-tabs__link">
           
   
+  
+    
   
   Reference
 
@@ -342,6 +329,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -353,7 +342,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -462,10 +457,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-apm-is" class="md-nav__link">
+  <a href="#why-apm" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What APM is
+        Why APM?
       
     </span>
   </a>
@@ -473,10 +468,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#one-line-install" class="md-nav__link">
+  <a href="#quick-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        One-line install
+        Quick Install
       
     </span>
   </a>
@@ -495,88 +490,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vault-lifecycle-and-sessions" class="md-nav__link">
+  <a href="#how-the-documentation-is-organized" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault lifecycle and sessions
+        How the Documentation Is Organized
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#entry-model-and-secret-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Entry model and secret types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes-and-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes and vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#spaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Spaces
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#totp-and-otp-linking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TOTP and OTP linking
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#autofill-daemon-on-windows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Autofill daemon on Windows
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud sync
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud sync">
+    <nav class="md-nav" aria-label="How the Documentation Is Organized">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#apmignore" class="md-nav__link">
+  <a href="#getting-started" class="md-nav__link">
     <span class="md-ellipsis">
       
-        .apmignore
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#team" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Team
       
     </span>
   </a>
@@ -589,10 +562,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#auth-and-recovery" class="md-nav__link">
+  <a href="#threat-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auth and recovery
+        Threat Model
       
     </span>
   </a>
@@ -600,43 +573,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugins-and-pacs" class="md-nav__link">
+  <a href="#contact-support" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plugins and PACs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#policies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Policies
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-look-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to look next
+        Contact &amp; Support
       
     </span>
   </a>
@@ -659,6 +599,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -676,8 +630,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -691,8 +646,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -705,32 +666,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -860,6 +795,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -877,8 +838,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -892,8 +854,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -906,32 +874,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1229,6 +1171,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1246,8 +1216,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="concepts/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1261,8 +1232,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1275,32 +1252,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1626,6 +1577,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1643,8 +1614,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1658,8 +1630,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1672,32 +1650,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1911,6 +1863,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1928,8 +1892,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1943,8 +1908,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1957,32 +1928,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -2103,10 +2048,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-apm-is" class="md-nav__link">
+  <a href="#why-apm" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What APM is
+        Why APM?
       
     </span>
   </a>
@@ -2114,10 +2059,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#one-line-install" class="md-nav__link">
+  <a href="#quick-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        One-line install
+        Quick Install
       
     </span>
   </a>
@@ -2136,88 +2081,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vault-lifecycle-and-sessions" class="md-nav__link">
+  <a href="#how-the-documentation-is-organized" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault lifecycle and sessions
+        How the Documentation Is Organized
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#entry-model-and-secret-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Entry model and secret types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes-and-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes and vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#spaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Spaces
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#totp-and-otp-linking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TOTP and OTP linking
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#autofill-daemon-on-windows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Autofill daemon on Windows
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cloud-sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cloud sync
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Cloud sync">
+    <nav class="md-nav" aria-label="How the Documentation Is Organized">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#apmignore" class="md-nav__link">
+  <a href="#getting-started" class="md-nav__link">
     <span class="md-ellipsis">
       
-        .apmignore
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#team" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Team
       
     </span>
   </a>
@@ -2230,10 +2153,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#auth-and-recovery" class="md-nav__link">
+  <a href="#threat-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Auth and recovery
+        Threat Model
       
     </span>
   </a>
@@ -2241,43 +2164,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugins-and-pacs" class="md-nav__link">
+  <a href="#contact-support" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plugins and PACs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#policies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Policies
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-look-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to look next
+        Contact &amp; Support
       
     </span>
   </a>
@@ -2295,6 +2185,14 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2305,136 +2203,169 @@
 
 
 <h1 id="apm-documentation">APM Documentation<a class="headerlink" href="#apm-documentation" title="Permanent link">&para;</a></h1>
-<p>APM is a zero-knowledge, Go-based CLI password manager with multi-type secret storage, cloud sync, TOTP, system autofill, notes vocabulary, plugins, and MCP tooling. This page is the comprehensive reference and user guide for the entire system. It covers how to install, how to operate the CLI day-to-day, and how the internals behave so you can make safe operational decisions.</p>
-<h2 id="what-apm-is">What APM is<a class="headerlink" href="#what-apm-is" title="Permanent link">&para;</a></h2>
-<p>APM is a local-first vault with encrypted-at-rest storage and explicit session-based unlock behavior. You do not “stay logged in” in the background. You open a session, perform work, and lock the vault. Optional features like autofill or MCP integrate with that session boundary rather than bypassing it.</p>
-<p>The platform has three major user personas:</p>
+<p><strong>APM</strong> (Advanced Password Manager) is a professional-grade, zero-knowledge command-line password manager built in Go. It provides encrypted-at-rest vault storage, multi-cloud synchronization, AI-agent integration via MCP, a Windows autofill daemon, a manifest-based plugin system, and organizational team support — all driven from a single CLI binary.</p>
+<hr />
+<h2 id="why-apm">Why APM?<a class="headerlink" href="#why-apm" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Personal users who want a secure CLI vault with automation and notes.</li>
-<li>Power users who want cloud sync, plugins, and policy enforcement.</li>
-<li>Developers who want to integrate APM into tooling via MCP or plugins.</li>
+<li><strong>Zero-Knowledge Architecture</strong> — Your master password never leaves your machine. The vault is encrypted with Argon2id + AES-256-GCM and protected by HMAC-SHA256 integrity signatures.</li>
+<li><strong>25+ Secret Types</strong> — Passwords, TOTP, API keys, SSH keys, certificates, banking, medical records, legal contracts, documents with file attachments, and more — each with a structured schema.</li>
+<li><strong>Multi-Cloud Sync</strong> — Native support for Google Drive, GitHub, and Dropbox. Your vault is uploaded as an encrypted blob; providers never see plaintext.</li>
+<li><strong>AI-Agent Integration</strong> — Built-in MCP (Model Context Protocol) server lets AI assistants like Claude, Cursor, and Windsurf read and manage vault entries with permission-scoped, token-based access.</li>
+<li><strong>Windows Autofill</strong> — A local daemon that detects credential forms and injects keystrokes via hotkey — no browser extension required.</li>
+<li><strong>Plugin Ecosystem</strong> — Manifest-based plugins with 100+ granular permissions, a marketplace, and hook-based lifecycle integration.</li>
+<li><strong>Team Edition</strong> — Multi-user credential sharing with RBAC, departments, and approval workflows.</li>
 </ul>
-<h2 id="one-line-install">One-line install<a class="headerlink" href="#one-line-install" title="Permanent link">&para;</a></h2>
-<p>macOS and Linux:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="go">curl -sSL https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh | bash</span>
-</code></pre></div>
-<p>Windows PowerShell:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="n">-Command</span> <span class="s2">&quot;iwr https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.ps1 -UseBasicParsing | iex&quot;</span>
-</code></pre></div>
+<hr />
+<h2 id="quick-install">Quick Install<a class="headerlink" href="#quick-install" title="Permanent link">&para;</a></h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">macOS / Linux</label><label for="__tabbed_1_2">Windows PowerShell</label><label for="__tabbed_1_3">Build from Source</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-sSL<span class="w"> </span>https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">Set-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="n">-Scope</span> <span class="k">Process</span> <span class="n">-Force</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">iwr </span><span class="n">https</span><span class="p">://</span><span class="n">raw</span><span class="p">.</span><span class="n">githubusercontent</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">aaravmaloo</span><span class="p">/</span><span class="n">apm</span><span class="p">/</span><span class="n">master</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">install</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-UseBasicParsing</span> <span class="p">|</span> <span class="nb">iex</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaravmaloo/apm.git
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>apm
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span>pm<span class="w"> </span>main.go
+</span></code></pre></div>
+</div>
+</div>
+</div>
+<p>For full installation details, see <a href="getting-started/installation/">Installation</a>.</p>
+<hr />
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Initialize a vault with <code>pm init</code> and set a strong master password.</li>
-<li>Unlock the vault with <code>pm unlock</code> and confirm you are in an active session.</li>
-<li>Add entries with <code>pm add</code> and find them with <code>pm get</code>.</li>
-<li>Lock the vault with <code>pm lock</code> when you are done.</li>
-<li>If you are on Windows, start the autofill daemon with <code>pm autofill start</code> and use <code>CTRL+SHIFT+L</code> in login contexts.</li>
-<li>If you use cloud sync, configure with <code>pm cloud init</code> and run <code>pm cloud sync</code>.</li>
-</ol>
-<h2 id="vault-lifecycle-and-sessions">Vault lifecycle and sessions<a class="headerlink" href="#vault-lifecycle-and-sessions" title="Permanent link">&para;</a></h2>
-<p>APM uses explicit sessions to gate access to decrypted data. This is a security boundary and also a mental model:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 1. Initialize a new vault (choose a security profile)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pm<span class="w"> </span>init
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># 2. Unlock the vault to start a session</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>pm<span class="w"> </span>unlock
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># 3. Add your first entry</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>pm<span class="w"> </span>add
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># 4. Search and retrieve entries</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>pm<span class="w"> </span>get<span class="w"> </span>github
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># 5. Generate a strong password</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>pm<span class="w"> </span>gen
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># 6. Lock when done</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>pm<span class="w"> </span>lock
+</span></code></pre></div>
+<p>For a detailed walkthrough, see <a href="getting-started/first-steps/">First Steps</a>.</p>
+<hr />
+<h2 id="how-the-documentation-is-organized">How the Documentation Is Organized<a class="headerlink" href="#how-the-documentation-is-organized" title="Permanent link">&para;</a></h2>
+<h3 id="getting-started"><a href="getting-started/">Getting Started</a><a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h3>
+<p>Installation, first steps, and a feature overview to get productive quickly.</p>
+<h3 id="guides"><a href="guides/">Guides</a><a class="headerlink" href="#guides" title="Permanent link">&para;</a></h3>
+<p>Practical how-to guides for day-to-day tasks:</p>
 <ul>
-<li>The vault is encrypted at rest on disk.</li>
-<li><code>pm unlock</code> decrypts it in memory and starts a session.</li>
-<li>All sensitive commands require an active session.</li>
-<li><code>pm lock</code> ends the session and wipes in-memory secrets.</li>
-<li>Session timeouts and inactivity timeouts auto-lock to reduce exposure.</li>
+<li><a href="guides/vault-management/">Managing your vault</a> — Adding, searching, editing, and organizing entries</li>
+<li><a href="guides/cloud-sync/">Cloud synchronization</a> — Setting up GDrive, GitHub, and Dropbox sync</li>
+<li><a href="guides/apmignore/">Using .apmignore</a> — Controlling what gets uploaded to cloud providers</li>
+<li><a href="autofill_windows/">Autofill on Windows</a> — The autofill daemon and hotkey injection</li>
+<li><a href="guides/totp/">Generating TOTP codes</a> — 2FA management and autofill linking</li>
+<li><a href="guides/sessions/">Managing sessions</a> — Unlock, lock, ephemeral sessions, and delegation</li>
+<li><a href="guides/plugins/">Using plugins</a> — Installing, managing, and creating plugins</li>
+<li><a href="guides/mcp-integration/">MCP integration</a> — Connecting AI assistants to your vault</li>
+<li><a href="guides/team-edition/">Team edition</a> — Organizational credential sharing</li>
+<li><a href="guides/import-export/">Importing and exporting</a> — JSON, CSV, and TXT import/export</li>
 </ul>
-<p>This model also applies to the autofill daemon and MCP server. They do not operate unless the vault is unlocked or unless you provide a delegated session token.</p>
-<h2 id="entry-model-and-secret-types">Entry model and secret types<a class="headerlink" href="#entry-model-and-secret-types" title="Permanent link">&para;</a></h2>
-<p>APM supports a broad range of entry types so that you can keep sensitive data in one encrypted vault. Common categories include passwords, TOTP secrets, secure notes, tokens, API keys, SSH keys, Wi-Fi credentials, certificates, recovery codes, and documents. Each entry type has a structured schema and validated fields rather than untyped blobs, which allows APM to provide safer UI workflows and stronger automation.</p>
-<p>The <code>pm add</code> command walks you through the available entry types. <code>pm get</code> is a fuzzy search interface with quicklook for notes and photos, and a safe-by-default display mode that hides sensitive values unless explicitly requested.</p>
-<h2 id="notes-and-vocabulary">Notes and vocabulary<a class="headerlink" href="#notes-and-vocabulary" title="Permanent link">&para;</a></h2>
-<p>Secure notes in APM are not just text blobs. When vocabulary indexing is enabled, APM builds a compressed vocabulary from notes and uses it to offer autocomplete suggestions, alias normalization, and ranking. This makes note writing faster and more consistent over time.</p>
-<p>Key commands:</p>
+<h3 id="concepts"><a href="concepts/">Concepts</a><a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h3>
+<p>Deep technical explanations of how APM works:</p>
 <ul>
-<li><code>pm vocab enable|disable|status</code> controls whether vocabulary indexing is active.</li>
-<li><code>pm vocab</code> lists words and alias state.</li>
-<li><code>pm vocab alias</code> creates or updates an alias so terms normalize during writing.</li>
-<li><code>pm vocab rank</code> adjusts ranking to promote frequently used terms.</li>
-<li><code>pm vocab reindex</code> rebuilds the vocabulary from current notes.</li>
+<li><a href="concepts/architecture/">Architecture</a> — The four-layer design</li>
+<li><a href="concepts/encryption/">Encryption</a> — Argon2id, AES-256-GCM, HMAC-SHA256</li>
+<li><a href="concepts/vault-format/">Vault format</a> — The V4 binary format specification</li>
+<li><a href="concepts/secret-types/">Secret types</a> — All 25+ structured entry types</li>
+<li><a href="concepts/security-profiles/">Security profiles</a> — Standard, Hardened, Paranoid, Legacy</li>
+<li><a href="concepts/policy-engine/">Policy engine</a> — YAML-based password and rotation policies</li>
+<li><a href="concepts/sessions/">Sessions</a> — Shell-scoped and ephemeral delegated sessions</li>
+<li><a href="concepts/cloud-sync/">Cloud synchronization</a> — Provider comparison and sync mechanics</li>
+<li><a href="concepts/plugins/">Plugins</a> — Plugin architecture and permission model</li>
+<li><a href="concepts/mcp/">MCP server</a> — Model Context Protocol server internals</li>
+<li><a href="concepts/recovery/">Recovery</a> — Multi-factor recovery, quorum shares, passkeys</li>
 </ul>
-<p>The vocabulary is stored inside the encrypted vault in a compressed form. You can strip it from cloud uploads with <code>.apmignore</code> if you want to reduce metadata exposure.</p>
-<h2 id="spaces">Spaces<a class="headerlink" href="#spaces" title="Permanent link">&para;</a></h2>
-<p>Spaces provide a lightweight organization layer so you can separate Work, Personal, or Project-specific entries. Commands such as <code>pm space create</code>, <code>pm space list</code>, and <code>pm space switch</code> let you segment vault content without splitting into multiple vault files. <code>.apmignore</code> can filter whole spaces during cloud sync.</p>
-<h2 id="totp-and-otp-linking">TOTP and OTP linking<a class="headerlink" href="#totp-and-otp-linking" title="Permanent link">&para;</a></h2>
-<p>APM supports time-based one-time passwords for 2FA.</p>
+<h3 id="reference"><a href="reference/">Reference</a><a class="headerlink" href="#reference" title="Permanent link">&para;</a></h3>
+<p>Precise technical specifications:</p>
 <ul>
-<li><code>pm totp</code> opens an interactive list with copy and ordering controls.</li>
-<li><code>pm totp &lt;entry&gt;</code> copies a specific code directly.</li>
+<li><a href="reference/cli/">CLI reference</a> — Every command, subcommand, and flag</li>
+<li><a href="reference/apmignore/">.apmignore reference</a> — Format specification</li>
+<li><a href="reference/storage/">Storage reference</a> — File locations and data layout</li>
+<li><a href="reference/environment-variables/">Environment variables</a> — All supported env vars</li>
+<li><a href="reference/plugin-api/">Plugin API</a> — Manifest schema and permissions catalog</li>
+<li><a href="reference/mcp-tools/">MCP tools</a> — Tool schemas and permission requirements</li>
+<li><a href="reference/policies/">Policies</a> — YAML policy schema and examples</li>
 </ul>
-<p>Autofill-aware OTP flows are supported by linking a TOTP entry to a domain. Use <code>pm autocomplete link-totp</code> so the autofill engine can select the correct OTP for a website or desktop app.</p>
-<h2 id="autofill-daemon-on-windows">Autofill daemon on Windows<a class="headerlink" href="#autofill-daemon-on-windows" title="Permanent link">&para;</a></h2>
-<p>APM autofill is implemented as a local Windows daemon. It runs without a browser extension and listens for a global hotkey, defaulting to <code>CTRL+SHIFT+L</code>.</p>
-<p>Core behaviors:</p>
+<h3 id="team"><a href="team/">Team</a><a class="headerlink" href="#team" title="Permanent link">&para;</a></h3>
+<p>Team edition documentation for organizational deployments:</p>
 <ul>
-<li>The daemon watches active window context and detects credential-like forms.</li>
-<li>It surfaces transient popup hints indicating a possible match or a detection event.</li>
-<li>When the hotkey is pressed, it resolves the best match and injects keystrokes.</li>
-<li>It never uses the clipboard for core typing flows.</li>
-<li>It rejects requests if the vault is locked.</li>
+<li><a href="team/rbac/">RBAC and roles</a></li>
+<li><a href="team/departments/">Departments</a></li>
+<li><a href="team/approvals/">Approval workflows</a></li>
 </ul>
-<p>Daemon control:</p>
+<hr />
+<h2 id="threat-model">Threat Model<a class="headerlink" href="#threat-model" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Vector</th>
+<th style="text-align: left;">Status</th>
+<th style="text-align: left;">Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Offline Brute-Force</td>
+<td style="text-align: left;">Protected</td>
+<td style="text-align: left;">Argon2id high-cost derivation (up to 512 MB, 6 iterations)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Vault Tampering</td>
+<td style="text-align: left;">Protected</td>
+<td style="text-align: left;">HMAC-SHA256 integrity signature across all metadata</td>
+</tr>
+<tr>
+<td style="text-align: left;">Credential Theft</td>
+<td style="text-align: left;">Protected</td>
+<td style="text-align: left;">Cloud tokens are encrypted inside the vault</td>
+</tr>
+<tr>
+<td style="text-align: left;">Identity Spoofing</td>
+<td style="text-align: left;">Protected</td>
+<td style="text-align: left;">Multi-factor recovery (Email → Recovery Key → OTP → Optional 2nd factor)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Session Hijacking</td>
+<td style="text-align: left;">Protected</td>
+<td style="text-align: left;">Shell-scoped sessions (<code>APM_SESSION_ID</code>) and inactivity timeouts</td>
+</tr>
+<tr>
+<td style="text-align: left;">Weak Passwords</td>
+<td style="text-align: left;">Controlled</td>
+<td style="text-align: left;">Enforceable password policies via YAML Policy Engine</td>
+</tr>
+<tr>
+<td style="text-align: left;">Compromised Host</td>
+<td style="text-align: left;">Not Protected</td>
+<td style="text-align: left;">Outside security boundary (keyloggers, malware)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="contact-support">Contact &amp; Support<a class="headerlink" href="#contact-support" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>pm autofill start|stop|status|list-profiles</code> manages the daemon.</li>
-<li><code>pm autocomplete enable</code> registers autostart on login and starts the daemon.</li>
-<li><code>pm autocomplete start|stop</code> handles manual lifecycle control.</li>
-<li><code>pm autocomplete window enable|disable|status</code> toggles popup hints.</li>
+<li><strong>Primary Maintainer</strong>: Aarav Maloo</li>
+<li><strong>Security Alerts</strong>: aaravmaloo06@gmail.com</li>
+<li><strong>GitHub Issues</strong>: <a href="https://github.com/aaravmaloo/apm/issues">aaravmaloo/apm/issues</a></li>
 </ul>
-<p>The daemon uses loopback IPC and bearer-token state to keep local communications protected.</p>
-<h2 id="cloud-sync">Cloud sync<a class="headerlink" href="#cloud-sync" title="Permanent link">&para;</a></h2>
-<p>APM syncs encrypted vault blobs to supported providers. Your master password never leaves the machine, and the providers never see plaintext. The upload is an encrypted file, optionally filtered via <code>.apmignore</code>.</p>
-<p>Typical flow:</p>
-<ol>
-<li><code>pm cloud init</code> to configure provider credentials.</li>
-<li><code>pm cloud sync</code> to upload or download as needed.</li>
-<li><code>pm cloud autosync</code> to run periodic sync loops.</li>
-</ol>
-<h3 id="apmignore">.apmignore<a class="headerlink" href="#apmignore" title="Permanent link">&para;</a></h3>
-<p><code>.apmignore</code> is read before upload and can remove entries from the payload. It supports:</p>
-<ul>
-<li>Space-level ignores.</li>
-<li>Entry-level ignores with <code>space:type:name</code> patterns.</li>
-<li>Provider-specific ignores using <code>provider:space:type:name</code>.</li>
-<li>Vocabulary stripping with <code>ignore:vocab</code>.</li>
-</ul>
-<p>This lets you maintain local-only data while still using cloud backups for the rest of your vault.</p>
-<h2 id="auth-and-recovery">Auth and recovery<a class="headerlink" href="#auth-and-recovery" title="Permanent link">&para;</a></h2>
-<p>APM recovery is designed for zero-knowledge environments. A recovery flow can verify identity without exposing secret data to a server.</p>
-<p>Key elements:</p>
-<ul>
-<li>Email verification tokens are time-limited and stored hashed.</li>
-<li>A recovery key gates access to the Data Encryption Key (DEK).</li>
-<li>Optional recovery factors such as passkeys or recovery codes add safety.</li>
-<li>A recovery attempt re-encrypts the vault with a new master password.</li>
-</ul>
-<p>If you do not configure a recovery key, losing the master password means the vault cannot be recovered. This is an intentional property of the zero-knowledge design.</p>
-<h2 id="plugins-and-pacs">Plugins and PACs<a class="headerlink" href="#plugins-and-pacs" title="Permanent link">&para;</a></h2>
-<p>APM plugins are manifest-based (<code>plugin.json</code>). Each plugin declares required permissions and commands it exposes. Runtime permission overrides are enforced by the engine and stored in the vault so policy travels with your data.</p>
-<p>Relevant commands:</p>
-<ul>
-<li><code>pm plugins market</code>, <code>pm plugins install</code>, <code>pm plugins installed</code></li>
-<li><code>pm plugins access</code> to view permissions</li>
-<li><code>pm plugins access &lt;plugin&gt; &lt;permission&gt; on|off</code> to toggle overrides</li>
-</ul>
-<p>Treat plugins as executable code. The permission model is designed to reduce blast radius if a plugin should not access certain capabilities.</p>
-<h2 id="mcp-server">MCP server<a class="headerlink" href="#mcp-server" title="Permanent link">&para;</a></h2>
-<p>APM exposes a Model Context Protocol server for AI assistants and automation. MCP access is token-scoped and permissioned, and it requires an active session.</p>
-<ul>
-<li><code>pm mcp token</code> creates a token with specified permissions.</li>
-<li><code>pm mcp serve</code> starts the server.</li>
-<li><code>pm mcp config</code> helps with client configuration.</li>
-</ul>
-<p>Write tools use transaction guardrails, requiring explicit commit steps for modifications.</p>
-<h2 id="policies">Policies<a class="headerlink" href="#policies" title="Permanent link">&para;</a></h2>
-<p>Policies are YAML files that enforce password complexity and compliance requirements. They are loaded with <code>pm policy load</code> and applied at entry creation time.</p>
-<h2 id="where-to-look-next">Where to look next<a class="headerlink" href="#where-to-look-next" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Getting Started for install and first workflows.</li>
-<li>Guides for cloud sync, sessions, plugins, and MCP.</li>
-<li>Concepts for architecture, encryption, recovery, and vault format.</li>
-<li>Reference for exact CLI command definitions.</li>
-<li>Plugin API for developer reference.</li>
-</ul>
+<hr />
+<p><em>APM is open-source software licensed under the <a href="https://github.com/aaravmaloo/apm/blob/master/LICENSE">MIT License</a>. Copyright © 2025–2026 Aarav Maloo.</em></p>
 
 
 
@@ -2488,11 +2419,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="assets/javascripts/bundle.79ae519e.min.js"></script>

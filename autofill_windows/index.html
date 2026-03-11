@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../stylesheets/custom.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -284,6 +265,8 @@
           
   
   
+    
+  
   Guides
 
         </a>
@@ -303,6 +286,8 @@
         <a href="../concepts/" class="md-tabs__link">
           
   
+  
+    
   
   Concepts
 
@@ -324,6 +309,8 @@
           
   
   
+    
+  
   Reference
 
         </a>
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -635,6 +625,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -653,8 +669,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -668,8 +685,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
@@ -682,32 +705,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -861,10 +858,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#command-model" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Command model
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-autofill-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable Autofill (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlocking-the-daemon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unlocking the Daemon
       
     </span>
   </a>
@@ -883,10 +941,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#runtime-behavior" class="md-nav__link">
+  <a href="#autofill-profiles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Runtime behavior
+        Autofill Profiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fill-sequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fill Sequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#popup-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Popup Hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#totp-linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TOTP Linking
       
     </span>
   </a>
@@ -897,7 +1005,7 @@
   <a href="#security-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security model
+        Security Model
       
     </span>
   </a>
@@ -905,10 +1013,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#totp-linking" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOTP linking
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daemon-wont-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daemon won't start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hotkey-doesnt-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hotkey doesn't work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-match-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No match found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -1107,6 +1265,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1124,8 +1310,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../concepts/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1139,8 +1326,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1153,32 +1346,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1504,6 +1671,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1521,8 +1708,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1536,8 +1724,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1550,32 +1744,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1789,6 +1957,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1806,8 +1986,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1821,8 +2002,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1835,32 +2022,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1981,10 +2142,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#command-model" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Command model
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-autofill-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enable Autofill (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unlocking-the-daemon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unlocking the Daemon
       
     </span>
   </a>
@@ -2003,10 +2225,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#runtime-behavior" class="md-nav__link">
+  <a href="#autofill-profiles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Runtime behavior
+        Autofill Profiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fill-sequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fill Sequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#popup-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Popup Hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#totp-linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TOTP Linking
       
     </span>
   </a>
@@ -2017,7 +2289,7 @@
   <a href="#security-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security model
+        Security Model
       
     </span>
   </a>
@@ -2025,10 +2297,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#totp-linking" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOTP linking
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daemon-wont-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daemon won't start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hotkey-doesnt-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hotkey doesn't work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-match-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No match found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -2046,6 +2368,54 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href=".." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../guides/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Guides
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2056,34 +2426,253 @@
 
 
 <h1 id="apm-autofill-on-windows">APM Autofill on Windows<a class="headerlink" href="#apm-autofill-on-windows" title="Permanent link">&para;</a></h1>
-<p>APM autofill on Windows is daemon-based and works system-wide without a browser extension.</p>
-<h2 id="command-model">Command model<a class="headerlink" href="#command-model" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>pm autofill start|stop|status|list-profiles</code></li>
-<li><code>pm autocomplete enable</code> registers daemon autostart on login and starts now</li>
-<li><code>pm autocomplete start|stop</code> manual daemon control</li>
-<li><code>pm autocomplete window enable|disable|status</code> toggles popup hints</li>
-<li><code>pm unlock</code> unlocks both the CLI session and autofill daemon vault state</li>
-<li><code>pm lock</code> locks both the CLI session and autofill daemon vault state</li>
-<li><code>pm autocomplete link-totp</code> links an existing TOTP entry to a domain</li>
-</ul>
+<p>APM autofill is a <strong>Windows-only daemon</strong> that provides system-wide credential injection without a browser extension. It detects active window context, matches credentials from your vault, and injects keystrokes via a global hotkey.</p>
+<hr />
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph LR
+    A[User presses Ctrl+Shift+L] --&gt; B[Hotkey Listener]
+    B --&gt; C[Context Capture]
+    C --&gt; D[Window Title + Process + Focused Field]
+    D --&gt; E[Profile Matcher]
+    E --&gt; F{Matches?}
+    F --&gt;|Single| G[Inject Sequence]
+    F --&gt;|Multiple| H[Show Candidates]
+    F --&gt;|None| I[Show Notification]
+    H --&gt; G</code></pre>
+<p>The daemon is a local HTTP server running on a loopback address with bearer-token authentication. It captures active window context using Windows UI Automation APIs and matches against autofill profiles derived from your vault entries.</p>
+<hr />
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
+<h3 id="enable-autofill-recommended">Enable Autofill (Recommended)<a class="headerlink" href="#enable-autofill-recommended" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span><span class="nb">enable</span>
+</span></code></pre></div>
+<p>This does two things:</p>
+<ol>
+<li><strong>Registers autostart</strong> — The daemon launches automatically when you log in</li>
+<li><strong>Starts the daemon</strong> — Begins running immediately</li>
+</ol>
+<h3 id="manual-control">Manual Control<a class="headerlink" href="#manual-control" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>start<span class="w">    </span><span class="c1"># Start the daemon manually</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>stop<span class="w">     </span><span class="c1"># Stop the daemon</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>status<span class="w">   </span><span class="c1"># Check daemon state + autostart status</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>disable<span class="w">  </span><span class="c1"># Remove autostart registration</span>
+</span></code></pre></div>
+<h3 id="alternative-commands">Alternative Commands<a class="headerlink" href="#alternative-commands" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pm<span class="w"> </span>autofill<span class="w"> </span>start<span class="w">        </span><span class="c1"># Start with default settings</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pm<span class="w"> </span>autofill<span class="w"> </span>stop<span class="w">         </span><span class="c1"># Stop the daemon</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pm<span class="w"> </span>autofill<span class="w"> </span>status<span class="w">       </span><span class="c1"># Show daemon status</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>pm<span class="w"> </span>autofill<span class="w"> </span>list-profiles<span class="w">  </span><span class="c1"># Show all autofill profiles</span>
+</span></code></pre></div>
+<hr />
+<h2 id="unlocking-the-daemon">Unlocking the Daemon<a class="headerlink" href="#unlocking-the-daemon" title="Permanent link">&para;</a></h2>
+<p>The daemon starts in a <strong>locked state</strong> and rejects all fill requests until unlocked:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pm<span class="w"> </span>unlock
+</span></code></pre></div>
+<p>This unlocks both the CLI session <strong>and</strong> the autofill daemon. The daemon decrypts the vault in memory and holds it for the session duration.</p>
+<p>To lock:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>lock
+</span></code></pre></div>
+<p>This locks both the CLI session and wipes the daemon's in-memory vault data.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The daemon holds decrypted data in memory while unlocked. Always lock when stepping away from your machine.</p>
+</div>
+<hr />
 <h2 id="hotkey">Hotkey<a class="headerlink" href="#hotkey" title="Permanent link">&para;</a></h2>
-<p>Default hotkey: <code>CTRL+SHIFT+L</code>. You can override it when starting the daemon.</p>
-<h2 id="runtime-behavior">Runtime behavior<a class="headerlink" href="#runtime-behavior" title="Permanent link">&para;</a></h2>
+<p><strong>Default:</strong> <span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-shift">Shift</kbd><span>+</span><kbd class="key-l">L</kbd></span></p>
+<p>You can customize the hotkey when starting the daemon:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pm<span class="w"> </span>autofill<span class="w"> </span>start<span class="w"> </span>--hotkey<span class="w"> </span><span class="s2">&quot;ctrl+alt+p&quot;</span>
+</span></code></pre></div>
+<p>When pressed, the daemon:</p>
+<ol>
+<li>Captures the current window context (title, process name, focused field)</li>
+<li>Searches for matching autofill profiles</li>
+<li>If a single match is found, injects the keystroke sequence</li>
+<li>If multiple matches are found, shows a selection notification</li>
+</ol>
+<hr />
+<h2 id="autofill-profiles">Autofill Profiles<a class="headerlink" href="#autofill-profiles" title="Permanent link">&para;</a></h2>
+<p>Profiles are derived from your vault's password entries. Each profile maps a credential to context matchers:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Field</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>service</code></td>
+<td style="text-align: left;">Display name (from vault account name)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>domain</code></td>
+<td style="text-align: left;">Primary domain for browser matching</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>domains</code></td>
+<td style="text-align: left;">Additional domains</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>entry_account</code></td>
+<td style="text-align: left;">Vault entry account name</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>entry_username</code></td>
+<td style="text-align: left;">Username to inject</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>totp_account</code></td>
+<td style="text-align: left;">Linked TOTP entry for 2FA</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>process_names</code></td>
+<td style="text-align: left;">Process name matchers (e.g., <code>chrome.exe</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>window_contains</code></td>
+<td style="text-align: left;">Window title substring matchers</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>sequence</code></td>
+<td style="text-align: left;">Custom injection sequence template</td>
+</tr>
+</tbody>
+</table>
+<p>View all profiles:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pm<span class="w"> </span>autofill<span class="w"> </span>list-profiles
+</span></code></pre></div>
+<hr />
+<h2 id="fill-sequences">Fill Sequences<a class="headerlink" href="#fill-sequences" title="Permanent link">&para;</a></h2>
+<p>The default injection sequence is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>{USERNAME}{TAB}{PASSWORD}{ENTER}
+</span></code></pre></div>
+<p>This types the username, presses Tab to move to the password field, types the password, and presses Enter.</p>
+<p>You can customize sequences per profile. Available tokens:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Token</th>
+<th style="text-align: left;">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>{USERNAME}</code></td>
+<td style="text-align: left;">Types the username</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>{PASSWORD}</code></td>
+<td style="text-align: left;">Types the password</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>{TOTP}</code></td>
+<td style="text-align: left;">Types the linked TOTP code</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>{TAB}</code></td>
+<td style="text-align: left;">Presses the Tab key</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>{ENTER}</code></td>
+<td style="text-align: left;">Presses Enter</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>{DELAY:N}</code></td>
+<td style="text-align: left;">Waits N milliseconds</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="context-detection">Context Detection<a class="headerlink" href="#context-detection" title="Permanent link">&para;</a></h2>
+<p>The daemon uses multiple signals to detect credential-like contexts:</p>
+<ol>
+<li><strong>Window title</strong> — Checks for keywords like "login", "sign in", "password", "credentials"</li>
+<li><strong>Process name</strong> — Identifies browsers and common applications</li>
+<li><strong>Focused field</strong> — Uses UI Automation to detect password-type input fields</li>
+<li><strong>Domain extraction</strong> — Parses browser window titles for URLs</li>
+</ol>
+<h3 id="popup-hints">Popup Hints<a class="headerlink" href="#popup-hints" title="Permanent link">&para;</a></h3>
+<p>When the daemon detects a credential-like context (even without a hotkey press), it can show a <strong>popup notification</strong> suggesting that a match is available.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>window<span class="w"> </span><span class="nb">enable</span><span class="w">   </span><span class="c1"># Enable popup hints</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>window<span class="w"> </span>disable<span class="w">  </span><span class="c1"># Disable popup hints</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>window<span class="w"> </span>status<span class="w">   </span><span class="c1"># Check hint status</span>
+</span></code></pre></div>
+<hr />
+<h2 id="totp-linking">TOTP Linking<a class="headerlink" href="#totp-linking" title="Permanent link">&para;</a></h2>
+<p>Link an existing TOTP entry to a domain so autofill can include the 2FA code:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span>link-totp
+</span></code></pre></div>
+<p>This interactive command lets you:</p>
+<ol>
+<li>Select a TOTP entry from your vault</li>
+<li>Specify the domain or service it belongs to</li>
+<li>APM then includes the TOTP code in fill requests for that domain</li>
+</ol>
+<hr />
+<h2 id="security-model">Security Model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Property</th>
+<th style="text-align: left;">Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Network scope</strong></td>
+<td style="text-align: left;">Loopback only (127.0.0.1)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Authentication</strong></td>
+<td style="text-align: left;">Bearer token generated at startup</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Vault state</strong></td>
+<td style="text-align: left;">Held in memory only; wiped on lock/stop</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Clipboard</strong></td>
+<td style="text-align: left;">Not used for core typing flows</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Session timeout</strong></td>
+<td style="text-align: left;">Configurable expiry + inactivity lockout</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>IPC</strong></td>
+<td style="text-align: left;">Local HTTP on random port, token-protected</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">No Clipboard</p>
+<p>APM autofill injects keystrokes directly without using the clipboard. This prevents clipboard-monitoring malware from intercepting your credentials. The clipboard is only used when you explicitly copy via <code>pm get</code> or the <span class="keys"><kbd class="key-c">C</kbd></span> key in the interactive browser.</p>
+</div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="daemon-wont-start">Daemon won't start<a class="headerlink" href="#daemon-wont-start" title="Permanent link">&para;</a></h3>
 <ul>
-<li>The daemon watches the active window context.</li>
-<li>If a credential-like form is detected, it shows a popup hint.</li>
-<li>On hotkey press, it resolves a match and injects the sequence.</li>
-<li>The clipboard is not used for core typing.</li>
+<li>Check if another instance is already running: <code>pm autofill status</code></li>
+<li>Ensure no other application is using the daemon's port</li>
 </ul>
-<h2 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
+<h3 id="hotkey-doesnt-work">Hotkey doesn't work<a class="headerlink" href="#hotkey-doesnt-work" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Vault starts locked and rejects requests until unlocked.</li>
-<li>Decrypted data is held in memory only.</li>
-<li>Daemon IPC is loopback + bearer-token protected.</li>
+<li>Make sure the daemon is running and unlocked</li>
+<li>Check if another application has claimed the same hotkey combination</li>
+<li>Try a different hotkey: <code>pm autofill start --hotkey "ctrl+alt+p"</code></li>
 </ul>
-<h2 id="totp-linking">TOTP linking<a class="headerlink" href="#totp-linking" title="Permanent link">&para;</a></h2>
-<p>Use <code>pm autocomplete link-totp</code> to bind a TOTP entry to a domain. This helps the engine select the correct OTP when multiple TOTP entries exist.</p>
+<h3 id="no-match-found">No match found<a class="headerlink" href="#no-match-found" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Verify the entry exists in your vault: <code>pm get [service]</code></li>
+<li>Check profiles: <code>pm autofill list-profiles</code></li>
+<li>Ensure the window title or domain matches a profile's matchers</li>
+</ul>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../guides/totp/">TOTP Guide</a></strong> — Managing 2FA codes</li>
+<li><strong><a href="../guides/sessions/">Sessions</a></strong> — Session lifecycle and the daemon</li>
+</ul>
 
 
 
@@ -2137,11 +2726,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>

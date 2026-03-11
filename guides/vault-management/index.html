@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -80,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#managing-your-vaultnncovers-spaces-entry-lifecycle-and-safe-daily-use-see-the-main-index-for-the-full-vault-model" class="md-skip">
+        <a href="#managing-your-vault" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -284,6 +265,8 @@
           
   
   
+    
+  
   Guides
 
         </a>
@@ -303,6 +286,8 @@
         <a href="../../concepts/" class="md-tabs__link">
           
   
+  
+    
   
   Concepts
 
@@ -324,6 +309,8 @@
           
   
   
+    
+  
   Reference
 
         </a>
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -635,6 +625,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -653,8 +669,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -668,8 +685,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
@@ -682,32 +705,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -726,6 +723,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Managing your vault
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -742,6 +757,341 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Entries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding Entries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interactive-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Add
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-to-a-specific-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding to a Specific Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching-and-retrieving-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching and Retrieving Entries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Searching and Retrieving Entries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fuzzy-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fuzzy Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interactive-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clipboard-expiry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipboard Expiry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safe-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safe Display
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#editing-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deleting-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organizing-with-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organizing with Spaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Organizing with Spaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-and-managing-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating and Managing Spaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-spaces-affect-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Spaces Affect Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generating-passwords" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generating Passwords
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes-and-the-vocabulary-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes and the Vocabulary Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notes and the Vocabulary Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-notes-with-autocomplete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing Notes with Autocomplete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-the-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing the Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-vocabulary-storage-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Vocabulary Storage Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vault-health-and-trust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Health and Trust
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vault Health and Trust">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust-scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust Scores
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cryptographic-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cryptographic Information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1015,6 +1365,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1032,8 +1410,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../concepts/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1047,8 +1426,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1061,32 +1446,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1412,6 +1771,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1429,8 +1808,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1444,8 +1824,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1458,32 +1844,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1697,6 +2057,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1714,8 +2086,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1729,8 +2102,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1743,32 +2122,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1882,6 +2235,330 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Entries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding Entries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interactive-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Add
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-to-a-specific-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding to a Specific Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching-and-retrieving-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching and Retrieving Entries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Searching and Retrieving Entries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fuzzy-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fuzzy Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interactive-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clipboard-expiry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipboard Expiry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safe-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safe Display
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#editing-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deleting-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organizing-with-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organizing with Spaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Organizing with Spaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-and-managing-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating and Managing Spaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-spaces-affect-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Spaces Affect Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generating-passwords" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generating Passwords
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes-and-the-vocabulary-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes and the Vocabulary Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notes and the Vocabulary Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enabling-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-notes-with-autocomplete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing Notes with Autocomplete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-the-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing the Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-vocabulary-storage-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Vocabulary Storage Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vault-health-and-trust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Health and Trust
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Vault Health and Trust">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust-scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust Scores
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cryptographic-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cryptographic Information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1890,6 +2567,54 @@
           
           
             <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Guides
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -1900,7 +2625,275 @@
   
 
 
-<h1 id="managing-your-vaultnncovers-spaces-entry-lifecycle-and-safe-daily-use-see-the-main-index-for-the-full-vault-model">Managing Your Vault\n\nCovers spaces, entry lifecycle, and safe daily use. See the main index for the full vault model.<a class="headerlink" href="#managing-your-vaultnncovers-spaces-entry-lifecycle-and-safe-daily-use-see-the-main-index-for-the-full-vault-model" title="Permanent link">&para;</a></h1>
+<h1 id="managing-your-vault">Managing Your Vault<a class="headerlink" href="#managing-your-vault" title="Permanent link">&para;</a></h1>
+<p>This guide covers the day-to-day operations of working with your APM vault — adding entries, searching, editing, organizing with spaces, and using the vocabulary engine for notes.</p>
+<hr />
+<h2 id="adding-entries">Adding Entries<a class="headerlink" href="#adding-entries" title="Permanent link">&para;</a></h2>
+<h3 id="interactive-add">Interactive Add<a class="headerlink" href="#interactive-add" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pm<span class="w"> </span>add
+</span></code></pre></div>
+<p>This opens an interactive menu showing all 25+ supported secret types. Select a type, then fill in the structured fields. Each type has a specific schema — for example, an SSH Config entry asks for alias, host, user, port, key path, and fingerprint.</p>
+<h3 id="adding-to-a-specific-space">Adding to a Specific Space<a class="headerlink" href="#adding-to-a-specific-space" title="Permanent link">&para;</a></h3>
+<p>If you have spaces configured, entries inherit the currently active space. Switch spaces before adding:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pm<span class="w"> </span>space<span class="w"> </span>switch<span class="w"> </span>Work
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pm<span class="w"> </span>add<span class="w">    </span><span class="c1"># This entry will be in the &quot;Work&quot; space</span>
+</span></code></pre></div>
+<h3 id="field-validation">Field Validation<a class="headerlink" href="#field-validation" title="Permanent link">&para;</a></h3>
+<p>APM validates fields as you enter them. If you have a <strong>password policy</strong> loaded, new passwords are validated against the policy's requirements (minimum length, uppercase, numbers, symbols).</p>
+<hr />
+<h2 id="searching-and-retrieving-entries">Searching and Retrieving Entries<a class="headerlink" href="#searching-and-retrieving-entries" title="Permanent link">&para;</a></h2>
+<h3 id="fuzzy-search">Fuzzy Search<a class="headerlink" href="#fuzzy-search" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pm<span class="w"> </span>get<span class="w"> </span><span class="o">[</span>query<span class="o">]</span>
+</span></code></pre></div>
+<p>APM performs fuzzy search across <strong>all entry types</strong> simultaneously — matching against account names, usernames, service names, labels, and other identifiers. Results are ranked by match quality.</p>
+<div class="admonition example">
+<p class="admonition-title">Search Examples</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github<span class="w">        </span><span class="c1"># Find GitHub credentials</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pm<span class="w"> </span>get<span class="w"> </span>aws<span class="w">           </span><span class="c1"># Find AWS cloud credentials, API keys, etc.</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>pm<span class="w"> </span>get<span class="w"> </span><span class="s2">&quot;john doe&quot;</span><span class="w">    </span><span class="c1"># Find contacts named John Doe</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>pm<span class="w"> </span>get<span class="w"> </span>wifi<span class="w">          </span><span class="c1"># Find Wi-Fi passwords</span>
+</span></code></pre></div>
+</div>
+<h3 id="interactive-browser">Interactive Browser<a class="headerlink" href="#interactive-browser" title="Permanent link">&para;</a></h3>
+<p>When results are returned, APM enters an interactive browser mode. Keyboard controls:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Key</th>
+<th style="text-align: left;">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-enter">Enter</kbd></span></td>
+<td style="text-align: left;">View full entry details</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-c">C</kbd></span></td>
+<td style="text-align: left;">Copy password/secret to clipboard</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-e">E</kbd></span></td>
+<td style="text-align: left;">Edit this entry</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-d">D</kbd></span></td>
+<td style="text-align: left;">Delete this entry</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-s">S</kbd></span></td>
+<td style="text-align: left;">Toggle show/hide sensitive fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-q">Q</kbd></span></td>
+<td style="text-align: left;">Quicklook (preview notes, render photos)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-m">M</kbd></span></td>
+<td style="text-align: left;">View metadata (timestamps, trust score)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="keys"><kbd class="key-escape">Esc</kbd></span></td>
+<td style="text-align: left;">Exit the browser</td>
+</tr>
+</tbody>
+</table>
+<h3 id="clipboard-expiry">Clipboard Expiry<a class="headerlink" href="#clipboard-expiry" title="Permanent link">&para;</a></h3>
+<p>When you copy a secret to the clipboard, APM automatically clears it after a short timeout to prevent accidental exposure.</p>
+<h3 id="safe-display">Safe Display<a class="headerlink" href="#safe-display" title="Permanent link">&para;</a></h3>
+<p>Sensitive fields are <strong>hidden by default</strong> in search results. To reveal them:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github<span class="w"> </span>--show-pass
+</span></code></pre></div>
+<p>Or press <span class="keys"><kbd class="key-s">S</kbd></span> in the interactive view.</p>
+<hr />
+<h2 id="editing-entries">Editing Entries<a class="headerlink" href="#editing-entries" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pm<span class="w"> </span>edit<span class="w"> </span><span class="o">[</span>name<span class="o">]</span>
+</span></code></pre></div>
+<p>This opens an interactive editor for the matched entry. Each field is presented with its current value, and you can press <span class="keys"><kbd class="key-enter">Enter</kbd></span> to keep it or type a new value.</p>
+<p>All edits are tracked by the <strong>secret telemetry</strong> system — recording who modified the entry, when, and via what context (user or AI).</p>
+<hr />
+<h2 id="deleting-entries">Deleting Entries<a class="headerlink" href="#deleting-entries" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pm<span class="w"> </span>del<span class="w"> </span><span class="o">[</span>name<span class="o">]</span>
+</span></code></pre></div>
+<p>APM prompts for confirmation before permanent deletion. The deletion event is recorded in the audit log.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Deletion is permanent. There is no trash or undo. If you need to preserve deleted entries, export your vault first.</p>
+</div>
+<hr />
+<h2 id="organizing-with-spaces">Organizing with Spaces<a class="headerlink" href="#organizing-with-spaces" title="Permanent link">&para;</a></h2>
+<p>Spaces provide logical segmentation within a single vault file. They're useful for separating work credentials from personal ones, or organizing by project.</p>
+<h3 id="creating-and-managing-spaces">Creating and Managing Spaces<a class="headerlink" href="#creating-and-managing-spaces" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Create a new space</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pm<span class="w"> </span>space<span class="w"> </span>create<span class="w"> </span>DevOps
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># List all spaces</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>pm<span class="w"> </span>space<span class="w"> </span>list
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Switch to a space</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>pm<span class="w"> </span>space<span class="w"> </span>switch<span class="w"> </span>DevOps
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># See the currently active space</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>pm<span class="w"> </span>space<span class="w"> </span>current
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># Remove a space (entries in it are moved to default)</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>pm<span class="w"> </span>space<span class="w"> </span>remove<span class="w"> </span>DevOps
+</span></code></pre></div>
+<h3 id="how-spaces-affect-operations">How Spaces Affect Operations<a class="headerlink" href="#how-spaces-affect-operations" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Adding</strong> — New entries inherit the active space</li>
+<li><strong>Searching</strong> — <code>pm get</code> searches within the active space by default</li>
+<li><strong>Cloud sync</strong> — Spaces can be excluded via <code>.apmignore</code></li>
+<li><strong>TOTP</strong> — TOTP entries are space-aware</li>
+</ul>
+<hr />
+<h2 id="generating-passwords">Generating Passwords<a class="headerlink" href="#generating-passwords" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>gen
+</span></code></pre></div>
+<p>APM generates a high-entropy password using cryptographically secure randomness. The generated password is displayed and automatically copied to your clipboard.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Generate a password first with <code>pm gen</code>, then paste it when <code>pm add</code> asks for the password field.</p>
+</div>
+<hr />
+<h2 id="notes-and-the-vocabulary-engine">Notes and the Vocabulary Engine<a class="headerlink" href="#notes-and-the-vocabulary-engine" title="Permanent link">&para;</a></h2>
+<p>Secure notes in APM are more than text blobs. The <strong>vocabulary engine</strong> builds a compressed index from your notes and provides autocomplete functionality.</p>
+<h3 id="enabling-vocabulary">Enabling Vocabulary<a class="headerlink" href="#enabling-vocabulary" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">enable</span><span class="w">     </span><span class="c1"># Turn on vocabulary indexing</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pm<span class="w"> </span>vocab<span class="w"> </span>disable<span class="w">    </span><span class="c1"># Turn it off</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>pm<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">     </span><span class="c1"># Check if it&#39;s active</span>
+</span></code></pre></div>
+<h3 id="writing-notes-with-autocomplete">Writing Notes with Autocomplete<a class="headerlink" href="#writing-notes-with-autocomplete" title="Permanent link">&para;</a></h3>
+<p>When adding or editing a secure note, APM offers autocomplete suggestions based on your vocabulary. Suggestions are ranked by frequency and user feedback (accepted suggestions increase a word's score; dismissed ones decrease it).</p>
+<h3 id="managing-the-vocabulary">Managing the Vocabulary<a class="headerlink" href="#managing-the-vocabulary" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># List all indexed words with scores</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>pm<span class="w"> </span>vocab
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Create an alias (normalizes terms)</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>k8s<span class="w"> </span>kubernetes
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>tf<span class="w"> </span>terraform
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># List all aliases</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>pm<span class="w"> </span>vocab<span class="w"> </span>alias-list
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1"># Remove an alias</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>pm<span class="w"> </span>vocab<span class="w"> </span>alias-remove<span class="w"> </span>k8s
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="c1"># Adjust word ranking manually</span>
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>pm<span class="w"> </span>vocab<span class="w"> </span>rank<span class="w"> </span>deploy<span class="w"> </span>+5<span class="w">    </span><span class="c1"># Boost &quot;deploy&quot;</span>
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>pm<span class="w"> </span>vocab<span class="w"> </span>rank<span class="w"> </span>temp<span class="w"> </span>-3<span class="w">      </span><span class="c1"># Demote &quot;temp&quot;</span>
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="c1"># Remove a word from the index</span>
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>pm<span class="w"> </span>vocab<span class="w"> </span>remove<span class="w"> </span>obsolete_term
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="c1"># Rebuild the entire vocabulary from current notes</span>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>pm<span class="w"> </span>vocab<span class="w"> </span>reindex
+</span></code></pre></div>
+<h3 id="how-vocabulary-storage-works">How Vocabulary Storage Works<a class="headerlink" href="#how-vocabulary-storage-works" title="Permanent link">&para;</a></h3>
+<p>The vocabulary is stored as a <strong>gzip-compressed JSON</strong> blob inside the encrypted vault (<code>Vault.VocabCompressed</code>). This means:</p>
+<ul>
+<li>It's encrypted at rest alongside all other vault data</li>
+<li>It can be stripped from cloud uploads using <code>ignore:vocab</code> in <code>.apmignore</code></li>
+<li>It's rebuilt from notes content during reindexing</li>
+</ul>
+<hr />
+<h2 id="vault-health-and-trust">Vault Health and Trust<a class="headerlink" href="#vault-health-and-trust" title="Permanent link">&para;</a></h2>
+<h3 id="health-dashboard">Health Dashboard<a class="headerlink" href="#health-dashboard" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pm<span class="w"> </span>health
+</span></code></pre></div>
+<p>Produces a numeric score (0–100) based on:</p>
+<ul>
+<li><strong>Encryption profile</strong> — Hardened/Paranoid profiles earn bonus points; Legacy loses points</li>
+<li><strong>Alert configuration</strong> — Enabled alerts earn points</li>
+<li><strong>Weak secrets</strong> — Passwords shorter than 8 characters are penalized</li>
+<li><strong>High-risk secrets</strong> — Trust scores below 55 (high risk) or 35 (critical) add penalties</li>
+</ul>
+<h3 id="trust-scores">Trust Scores<a class="headerlink" href="#trust-scores" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pm<span class="w"> </span>trust
+</span></code></pre></div>
+<p>Every secret gets a trust score based on:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Factor</th>
+<th style="text-align: left;">Penalty</th>
+<th style="text-align: left;">Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Marked as exposed</td>
+<td style="text-align: left;">−45</td>
+<td style="text-align: left;">Any</td>
+</tr>
+<tr>
+<td style="text-align: left;">No rotation &gt; 365 days</td>
+<td style="text-align: left;">−35</td>
+<td style="text-align: left;">Last rotation too old</td>
+</tr>
+<tr>
+<td style="text-align: left;">No rotation &gt; 180 days</td>
+<td style="text-align: left;">−20</td>
+<td style="text-align: left;">Last rotation aging</td>
+</tr>
+<tr>
+<td style="text-align: left;">No rotation &gt; 90 days</td>
+<td style="text-align: left;">−10</td>
+<td style="text-align: left;">Last rotation recent</td>
+</tr>
+<tr>
+<td style="text-align: left;">Access count &gt; 200</td>
+<td style="text-align: left;">−20</td>
+<td style="text-align: left;">High frequency</td>
+</tr>
+<tr>
+<td style="text-align: left;">Access count &gt; 75</td>
+<td style="text-align: left;">−10</td>
+<td style="text-align: left;">Elevated frequency</td>
+</tr>
+<tr>
+<td style="text-align: left;">Privilege: critical</td>
+<td style="text-align: left;">−15</td>
+<td style="text-align: left;">Root/admin secrets</td>
+</tr>
+<tr>
+<td style="text-align: left;">Privilege: elevated</td>
+<td style="text-align: left;">−8</td>
+<td style="text-align: left;">Elevated access</td>
+</tr>
+</tbody>
+</table>
+<p>Risk levels: <strong>Low</strong> (≥80), <strong>Medium</strong> (≥55), <strong>High</strong> (≥35), <strong>Critical</strong> (&lt;35)</p>
+<hr />
+<h2 id="audit-log">Audit Log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pm<span class="w"> </span>audit
+</span></code></pre></div>
+<p>Every vault interaction is logged with:</p>
+<ul>
+<li><strong>Timestamp</strong> — When the action occurred</li>
+<li><strong>Action</strong> — What was done (e.g., <code>ENTRY_ADDED</code>, <code>VAULT_UNLOCKED</code>, <code>CLOUD_SYNCED</code>)</li>
+<li><strong>User</strong> — System username</li>
+<li><strong>Hostname</strong> — Machine name</li>
+</ul>
+<p>The audit log is stored outside the vault at <code>~/.config/apm/audit.json</code> and is append-only.</p>
+<hr />
+<h2 id="cryptographic-information">Cryptographic Information<a class="headerlink" href="#cryptographic-information" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>pm<span class="w"> </span>cinfo
+</span></code></pre></div>
+<p>Displays the active cryptographic parameters:</p>
+<ul>
+<li>Profile name and Argon2id parameters</li>
+<li>Nonce sizes</li>
+<li>Vault format version</li>
+<li>Whether recovery is configured</li>
+</ul>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../cloud-sync/">Cloud Synchronization</a></strong> — Sync your vault across devices</li>
+<li><strong><a href="../sessions/">Sessions</a></strong> — Advanced session management</li>
+<li><strong><a href="../../reference/cli/">CLI Reference</a></strong> — Every command in detail</li>
+</ul>
 
 
 
@@ -1954,11 +2947,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

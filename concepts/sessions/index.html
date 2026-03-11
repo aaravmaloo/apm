@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -80,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#sessionsnnsessions-are-time-bounded-unlock-windows-for-vault-access-and-automation" class="md-skip">
+        <a href="#sessions" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -281,6 +262,8 @@
         <a href="../../guides/" class="md-tabs__link">
           
   
+  
+    
   
   Guides
 
@@ -304,6 +287,8 @@
           
   
   
+    
+  
   Concepts
 
         </a>
@@ -323,6 +308,8 @@
         <a href="../../reference/" class="md-tabs__link">
           
   
+  
+    
   
   Reference
 
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -633,6 +623,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -650,8 +666,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -665,8 +682,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -679,32 +702,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1004,6 +1001,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1022,8 +1047,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1037,8 +1063,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
@@ -1051,32 +1083,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1263,6 +1269,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sessions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1279,6 +1303,202 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#session-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-scoped-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell-Scoped Sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shell-Scoped Sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-they-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How They Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Scoping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-file-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session File Location
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ephemeral-delegated-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ephemeral Delegated Sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ephemeral Delegated Sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issuing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issuing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-ephemeral-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing Ephemeral Sessions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-interaction-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Interaction Matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1412,6 +1632,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1429,8 +1669,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1444,8 +1685,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1458,32 +1705,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1697,6 +1918,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1714,8 +1947,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1729,8 +1963,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1743,32 +1983,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1882,6 +2096,191 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#session-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shell-scoped-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell-Scoped Sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Shell-Scoped Sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-they-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How They Work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Scoping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-file-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session File Location
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ephemeral-delegated-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ephemeral Delegated Sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ephemeral Delegated Sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issuing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issuing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Store
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#managing-ephemeral-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Managing Ephemeral Sessions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-interaction-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Interaction Matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1890,6 +2289,54 @@
           
           
             <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Concepts
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -1900,7 +2347,242 @@
   
 
 
-<h1 id="sessionsnnsessions-are-time-bounded-unlock-windows-for-vault-access-and-automation">Sessions\n\nSessions are time-bounded unlock windows for vault access and automation.<a class="headerlink" href="#sessionsnnsessions-are-time-bounded-unlock-windows-for-vault-access-and-automation" title="Permanent link">&para;</a></h1>
+<h1 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h1>
+<p>Sessions in APM are <strong>time-bounded unlock windows</strong> that control when decrypted vault data is accessible. They form the primary security boundary between encrypted-at-rest vault storage and in-memory access.</p>
+<hr />
+<h2 id="session-model">Session Model<a class="headerlink" href="#session-model" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TB
+    subgraph "Shell-Scoped Sessions"
+        A[pm unlock] --&gt; B[Session File Created]
+        B --&gt; C{Check on every command}
+        C --&gt;|Valid| D[Execute Command]
+        C --&gt;|Expired| E[Reject — re-unlock needed]
+        C --&gt;|Inactive| F[Auto-lock]
+    end
+
+    subgraph "Ephemeral Sessions"
+        G[pm session issue] --&gt; H[Ephemeral Token Created]
+        H --&gt; I{Validate bindings}
+        I --&gt;|Match| J[Delegated Access]
+        I --&gt;|Mismatch| K[Reject]
+    end</code></pre>
+<hr />
+<h2 id="shell-scoped-sessions">Shell-Scoped Sessions<a class="headerlink" href="#shell-scoped-sessions" title="Permanent link">&para;</a></h2>
+<h3 id="how-they-work">How They Work<a class="headerlink" href="#how-they-work" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><code>pm unlock</code> decrypts the vault and creates a <strong>session file</strong> containing:</p>
+<ul>
+<li>Session ID</li>
+<li>Unlock timestamp</li>
+<li>Expiry timestamp</li>
+<li>Inactivity timeout</li>
+<li>Read-only flag</li>
+<li>Hashed master password (for re-verification on sensitive operations)</li>
+</ul>
+</li>
+<li>
+<p>Every sensitive command checks the session file before proceeding</p>
+</li>
+<li>Sessions auto-expire after the configured duration or inactivity timeout</li>
+<li><code>pm lock</code> immediately destroys the session file and wipes memory</li>
+</ol>
+<h3 id="session-scoping">Session Scoping<a class="headerlink" href="#session-scoping" title="Permanent link">&para;</a></h3>
+<p>By default, APM uses a single global session file. To run independent sessions per terminal:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">APM_SESSION_ID</span><span class="o">=</span><span class="s2">&quot;terminal_1&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pm<span class="w"> </span>unlock<span class="w">  </span><span class="c1"># Creates session file specific to this shell</span>
+</span></code></pre></div>
+<p>Different values of <code>APM_SESSION_ID</code> produce separate session files, so multiple terminals can have independent lock/unlock states.</p>
+<h3 id="session-file-location">Session File Location<a class="headerlink" href="#session-file-location" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$TEMP/pm_session_global.json          # Global (no APM_SESSION_ID)
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>$TEMP/pm_session_{SESSION_ID}.json    # Scoped
+</span></code></pre></div>
+<h3 id="session-parameters">Session Parameters<a class="headerlink" href="#session-parameters" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Session duration</td>
+<td style="text-align: left;">30 min</td>
+<td style="text-align: left;">Maximum session lifetime</td>
+</tr>
+<tr>
+<td style="text-align: left;">Inactivity timeout</td>
+<td style="text-align: left;">10 min</td>
+<td style="text-align: left;">Auto-lock after idle time</td>
+</tr>
+<tr>
+<td style="text-align: left;">Read-only mode</td>
+<td style="text-align: left;">false</td>
+<td style="text-align: left;">Prevents all write operations</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ephemeral-delegated-sessions">Ephemeral Delegated Sessions<a class="headerlink" href="#ephemeral-delegated-sessions" title="Permanent link">&para;</a></h2>
+<p>Ephemeral sessions are short-lived tokens for <strong>delegating vault access</strong> to external processes without sharing the master password.</p>
+<h3 id="use-cases">Use Cases<a class="headerlink" href="#use-cases" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CI/CD pipelines</strong> — Grant temporary read access for credential retrieval</li>
+<li><strong>MCP server</strong> — Provide an AI agent with scoped vault access</li>
+<li><strong>Pair programming</strong> — Share temporary access with a teammate</li>
+</ul>
+<h3 id="issuing">Issuing<a class="headerlink" href="#issuing" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pm<span class="w"> </span>session<span class="w"> </span>issue<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--label<span class="w"> </span><span class="s2">&quot;CI Build&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--scope<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--ttl<span class="w"> </span>15m<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--bind-host<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--bind-pid<span class="w"> </span><span class="m">12345</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>--agent<span class="w"> </span><span class="s2">&quot;github-actions&quot;</span>
+</span></code></pre></div>
+<h3 id="security-bindings">Security Bindings<a class="headerlink" href="#security-bindings" title="Permanent link">&para;</a></h3>
+<p>Ephemeral sessions support three binding types:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Binding</th>
+<th style="text-align: left;">Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Host</strong></td>
+<td style="text-align: left;">SHA-256(hostname + username) must match</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>PID</strong></td>
+<td style="text-align: left;">Calling process ID must match the bound PID</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Agent</strong></td>
+<td style="text-align: left;"><code>APM_ACTOR</code> env variable must match the bound agent</td>
+</tr>
+</tbody>
+</table>
+<p>If any bound property doesn't match at validation time, the session is rejected.</p>
+<h3 id="lifecycle">Lifecycle<a class="headerlink" href="#lifecycle" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Admin
+    participant APM
+    participant Delegate
+
+    Admin-&gt;&gt;APM: pm session issue --ttl 15m
+    APM--&gt;&gt;Admin: eps_TOKEN_ID
+    Admin-&gt;&gt;Delegate: Pass TOKEN_ID
+    Delegate-&gt;&gt;APM: APM_EPHEMERAL_ID=eps_TOKEN_ID pm get
+    APM-&gt;&gt;APM: Validate bindings + expiry
+    APM--&gt;&gt;Delegate: Entry data (if valid)
+    Note over APM: After 15 minutes...
+    Delegate-&gt;&gt;APM: APM_EPHEMERAL_ID=eps_TOKEN_ID pm get
+    APM--&gt;&gt;Delegate: Session expired</code></pre>
+<h3 id="session-store">Session Store<a class="headerlink" href="#session-store" title="Permanent link">&para;</a></h3>
+<p>Ephemeral sessions are stored in a JSON file:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$TEMP/.apm_ephemeral_sessions.json
+</span></code></pre></div>
+<p>The store tracks all issued sessions with their bindings, creation times, expiry, and revocation status.</p>
+<h3 id="managing-ephemeral-sessions">Managing Ephemeral Sessions<a class="headerlink" href="#managing-ephemeral-sessions" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>session<span class="w"> </span>list<span class="w">      </span><span class="c1"># List all active sessions</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pm<span class="w"> </span>session<span class="w"> </span>revoke<span class="w"> </span>ID<span class="w"> </span><span class="c1"># Revoke a specific session</span>
+</span></code></pre></div>
+<hr />
+<h2 id="session-interaction-matrix">Session Interaction Matrix<a class="headerlink" href="#session-interaction-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: center;">Requires Session</th>
+<th style="text-align: center;">Read-Only OK</th>
+<th style="text-align: center;">Ephemeral OK</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>pm get</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm add</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm edit</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm del</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm totp</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm cloud sync</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm health</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm trust</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm audit</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pm info</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: left;">Autofill daemon</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;">MCP server</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">Per token</td>
+<td style="text-align: center;">✅</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../../guides/sessions/">Sessions Guide</a></strong> — Practical how-to guide</li>
+<li><strong><a href="../../guides/mcp-integration/">MCP Integration</a></strong> — Using ephemeral sessions with AI agents</li>
+</ul>
 
 
 
@@ -1954,11 +2636,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

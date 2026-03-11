@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -281,6 +262,8 @@
         <a href="../../guides/" class="md-tabs__link">
           
   
+  
+    
   
   Guides
 
@@ -304,6 +287,8 @@
           
   
   
+    
+  
   Concepts
 
         </a>
@@ -323,6 +308,8 @@
         <a href="../../reference/" class="md-tabs__link">
           
   
+  
+    
   
   Reference
 
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -633,6 +623,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -650,8 +666,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -665,8 +682,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -679,32 +702,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1004,6 +1001,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1022,8 +1047,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1037,8 +1063,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
@@ -1051,32 +1083,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1426,10 +1432,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#flow" class="md-nav__link">
+  <a href="#recovery-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Flow
+        Recovery Architecture
       
     </span>
   </a>
@@ -1437,10 +1443,282 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#recovery-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovery Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-1-email-otp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 1: Email OTP
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 1: Email OTP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#otp-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTP Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-2-recovery-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 2: Recovery Key
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 2: Recovery Key">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xor-obfuscation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        XOR Obfuscation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-3-quorum-recovery-shamir-secret-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 3: Quorum Recovery (Shamir Secret Sharing)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 3: Quorum Recovery (Shamir Secret Sharing)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mathematics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mathematics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-4-webauthn-passkeys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 4: WebAuthn Passkeys
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 4: WebAuthn Passkeys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-5-one-time-recovery-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 5: One-Time Recovery Codes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 5: One-Time Recovery Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
         Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Level
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zero-knowledge-guarantee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zero-Knowledge Guarantee
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -1471,6 +1749,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1488,8 +1786,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1503,8 +1802,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1517,32 +1822,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1756,6 +2035,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1773,8 +2064,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1788,8 +2080,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1802,32 +2100,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1948,10 +2220,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#flow" class="md-nav__link">
+  <a href="#recovery-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Flow
+        Recovery Architecture
       
     </span>
   </a>
@@ -1959,10 +2231,282 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#recovery-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovery Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-1-email-otp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 1: Email OTP
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 1: Email OTP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#otp-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTP Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-2-recovery-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 2: Recovery Key
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 2: Recovery Key">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xor-obfuscation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        XOR Obfuscation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-3-quorum-recovery-shamir-secret-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 3: Quorum Recovery (Shamir Secret Sharing)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 3: Quorum Recovery (Shamir Secret Sharing)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mathematics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mathematics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-4-webauthn-passkeys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 4: WebAuthn Passkeys
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 4: WebAuthn Passkeys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factor-5-one-time-recovery-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factor 5: One-Time Recovery Codes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Factor 5: One-Time Recovery Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
         Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Level
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zero-knowledge-guarantee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zero-Knowledge Guarantee
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -1980,6 +2524,54 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Concepts
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -1990,20 +2582,212 @@
 
 
 <h1 id="recovery">Recovery<a class="headerlink" href="#recovery" title="Permanent link">&para;</a></h1>
-<p>APM recovery is designed for zero-knowledge environments. It enables vault recovery without disclosing secrets to any server.</p>
-<h2 id="flow">Flow<a class="headerlink" href="#flow" title="Permanent link">&para;</a></h2>
+<p>APM provides a multi-layered recovery system that enables vault access restoration without compromising zero-knowledge guarantees. Your master password is never stored or transmitted — recovery works by unlocking a <strong>Data Encryption Key (DEK) slot</strong> through verified identity.</p>
+<hr />
+<h2 id="recovery-architecture">Recovery Architecture<a class="headerlink" href="#recovery-architecture" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TB
+    subgraph "Identity Verification"
+        A[Email OTP — 6-digit code]
+        B[Recovery Key]
+        C[Quorum Shares — Shamir SSS]
+        D[WebAuthn Passkey]
+        E[One-Time Recovery Codes]
+    end
+
+    subgraph "DEK Recovery"
+        F[DEK Slot Decryption]
+        G[Vault Decryption]
+        H[New Master Password]
+        I[Re-Encryption]
+    end
+
+    A --&gt; F
+    B --&gt; F
+    C --&gt; F
+    D --&gt; F
+    E --&gt; F
+    F --&gt; G
+    G --&gt; H
+    H --&gt; I</code></pre>
+<hr />
+<h2 id="recovery-flow">Recovery Flow<a class="headerlink" href="#recovery-flow" title="Permanent link">&para;</a></h2>
+<p>The standard recovery flow uses <strong>multi-step identity verification</strong>:</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant User
+    participant APM
+    participant Email
+
+    User-&gt;&gt;APM: pm auth recover
+    APM-&gt;&gt;Email: Send 6-digit OTP
+    Email--&gt;&gt;User: OTP arrives
+    User-&gt;&gt;APM: Enter OTP
+    APM-&gt;&gt;APM: Verify OTP hash
+    User-&gt;&gt;APM: Enter Recovery Key
+    APM-&gt;&gt;APM: Derive key via Argon2id
+    APM-&gt;&gt;APM: Decrypt DEK slot
+    APM-&gt;&gt;APM: Decrypt vault with DEK
+    User-&gt;&gt;APM: Set new master password
+    APM-&gt;&gt;APM: Re-encrypt vault with new password
+    APM--&gt;&gt;User: Recovery complete</code></pre>
+<hr />
+<h2 id="factor-1-email-otp">Factor 1: Email OTP<a class="headerlink" href="#factor-1-email-otp" title="Permanent link">&para;</a></h2>
+<h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>email<span class="w"> </span>user@example.com
+</span></code></pre></div>
+<p>APM stores a <strong>hash</strong> of the email address in the vault — not the plaintext email. This preserves zero-knowledge while enabling OTP delivery.</p>
+<h3 id="otp-generation">OTP Generation<a class="headerlink" href="#otp-generation" title="Permanent link">&para;</a></h3>
+<p>During recovery, APM:</p>
 <ol>
-<li><code>pm auth recover</code> initiates recovery.</li>
-<li>An email verification token is sent and verified.</li>
-<li>A recovery key gates DEK unlock.</li>
-<li>Optional factors such as passkeys or recovery codes can be applied.</li>
-<li>The vault is re-encrypted with a new master password.</li>
+<li>Generates a 6-digit code using <code>crypto/rand</code></li>
+<li>Hashes the code with SHA-256 and stores it in the vault with an expiry timestamp</li>
+<li>Sends the code via SMTP (using <code>gopkg.in/gomail.v2</code>)</li>
+<li>Verifies the user's input against the stored hash</li>
 </ol>
-<h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Tokens expire quickly and are single-use. A failed verification increments the attempt counter; excessive failures may require cooldown.</p>
+</div>
+<hr />
+<h2 id="factor-2-recovery-key">Factor 2: Recovery Key<a class="headerlink" href="#factor-2-recovery-key" title="Permanent link">&para;</a></h2>
+<h3 id="setup_1">Setup<a class="headerlink" href="#setup_1" title="Permanent link">&para;</a></h3>
+<p>The recovery key is generated during vault initialization or via <code>pm auth</code> commands:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>recover<span class="w">  </span><span class="c1"># Initiates recovery setup</span>
+</span></code></pre></div>
+<h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
+<ol>
+<li>APM generates a <strong>32-byte recovery key</strong> using <code>crypto/rand</code></li>
+<li>The key is encoded as a human-readable hex string</li>
+<li>A <strong>DEK slot</strong> is created: the vault's encryption key is encrypted using a key derived from the recovery key via Argon2id</li>
+<li>The recovery key hash and salt are stored in the vault</li>
+<li>The recovery key itself is displayed once and must be stored securely by the user</li>
+</ol>
+<h3 id="xor-obfuscation">XOR Obfuscation<a class="headerlink" href="#xor-obfuscation" title="Permanent link">&para;</a></h3>
+<p>For additional protection during transport, recovery keys can be XOR-obfuscated with a random mask:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>obfuscated = recovery_key ⊕ random_mask
+</span></code></pre></div>
+<p>The mask is stored alongside the obfuscated key. De-obfuscation requires both components.</p>
+<h3 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h3>
+<p>During recovery:</p>
+<ol>
+<li>User provides the recovery key</li>
+<li>APM derives an encryption key from it using Argon2id with the stored salt</li>
+<li>Computes SHA-256 hash and compares against stored hash</li>
+<li>If valid, decrypts the DEK slot to obtain the vault encryption key</li>
+<li>Decrypts the vault using the recovered encryption key</li>
+</ol>
+<hr />
+<h2 id="factor-3-quorum-recovery-shamir-secret-sharing">Factor 3: Quorum Recovery (Shamir Secret Sharing)<a class="headerlink" href="#factor-3-quorum-recovery-shamir-secret-sharing" title="Permanent link">&para;</a></h2>
+<p>For high-security environments, APM supports <strong>Shamir's Secret Sharing</strong> to distribute the recovery key across multiple trustees.</p>
+<h3 id="setup_2">Setup<a class="headerlink" href="#setup_2" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>quorum-setup
+</span></code></pre></div>
+<p>You configure:</p>
 <ul>
-<li>Tokens are stored hashed and expire quickly.</li>
-<li>Recovery is single-use per attempt.</li>
-<li>The recovery key is required if configured.</li>
+<li><strong>Total shares</strong> (N) — How many shares to create</li>
+<li><strong>Threshold</strong> (K) — How many shares are needed to reconstruct</li>
+</ul>
+<p>For example, 5 shares with a threshold of 3 means any 3 of the 5 trustees can recover the key.</p>
+<h3 id="mathematics">Mathematics<a class="headerlink" href="#mathematics" title="Permanent link">&para;</a></h3>
+<p>Shamir's Secret Sharing uses polynomial interpolation over a finite field (GF(2^8)):</p>
+<ol>
+<li>The recovery key S is treated as a set of bytes</li>
+<li>A random polynomial P(x) of degree K−1 is generated with P(0) = S</li>
+<li>N points on the polynomial are computed: (1, P(1)), (2, P(2)), ..., (N, P(N))</li>
+<li>Each point is a share distributed to a trustee</li>
+</ol>
+<p>To reconstruct, any K shares are used with <strong>Lagrange interpolation</strong> to recover P(0) = S.</p>
+<h3 id="security-properties">Security Properties<a class="headerlink" href="#security-properties" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Any K−1 or fewer shares reveal <strong>zero information</strong> about the secret</li>
+<li>Each share is individually worthless</li>
+<li>Share hashes are stored in the vault for verification</li>
+</ul>
+<hr />
+<h2 id="factor-4-webauthn-passkeys">Factor 4: WebAuthn Passkeys<a class="headerlink" href="#factor-4-webauthn-passkeys" title="Permanent link">&para;</a></h2>
+<h3 id="setup_3">Setup<a class="headerlink" href="#setup_3" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>passkey<span class="w"> </span>register
+</span></code></pre></div>
+<p>APM starts a local WebAuthn ceremony:</p>
+<ol>
+<li>A browser opens for passkey registration</li>
+<li>The user authenticates with their platform authenticator (fingerprint, face, or security key)</li>
+<li>APM stores the credential public key and user handle in the vault</li>
+<li>The passkey can be used as an additional factor during recovery</li>
+</ol>
+<h3 id="verification_1">Verification<a class="headerlink" href="#verification_1" title="Permanent link">&para;</a></h3>
+<p>During recovery, APM starts a WebAuthn authentication ceremony. The user must prove possession of the private key corresponding to the stored credential.</p>
+<hr />
+<h2 id="factor-5-one-time-recovery-codes">Factor 5: One-Time Recovery Codes<a class="headerlink" href="#factor-5-one-time-recovery-codes" title="Permanent link">&para;</a></h2>
+<h3 id="generation">Generation<a class="headerlink" href="#generation" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>codes<span class="w"> </span>generate
+</span></code></pre></div>
+<p>APM generates a set of <strong>one-time use codes</strong> (typically 10):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ABC12-DEF34
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>GHI56-JKL78
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>MNO90-PQR12
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>...
+</span></code></pre></div>
+<h3 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Each code can be used <strong>exactly once</strong></li>
+<li>Codes are stored as SHA-256 hashes in the vault</li>
+<li>Used codes are marked and cannot be reused</li>
+<li>Codes never expire (but can be regenerated)</li>
+</ul>
+<hr />
+<h2 id="security-level">Security Level<a class="headerlink" href="#security-level" title="Permanent link">&para;</a></h2>
+<p>APM supports three security levels that control which recovery factors are required:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>level<span class="w"> </span><span class="o">[</span><span class="m">1</span>-3<span class="o">]</span>
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Level</th>
+<th style="text-align: left;">Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Email OTP only</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Email OTP + Recovery Key</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">Email OTP + Recovery Key + Additional factor</td>
+</tr>
+</tbody>
+</table>
+<p>Higher levels require more verification steps but provide stronger assurance against unauthorized recovery.</p>
+<hr />
+<h2 id="alerts">Alerts<a class="headerlink" href="#alerts" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>auth<span class="w"> </span>alerts
+</span></code></pre></div>
+<p>Enables email alerts for security-sensitive events:</p>
+<ul>
+<li>Recovery attempts</li>
+<li>Failed login attempts</li>
+<li>Vault re-encryption</li>
+<li>Profile changes</li>
+</ul>
+<hr />
+<h2 id="zero-knowledge-guarantee">Zero-Knowledge Guarantee<a class="headerlink" href="#zero-knowledge-guarantee" title="Permanent link">&para;</a></h2>
+<p>Throughout the entire recovery process:</p>
+<ul>
+<li>The master password is <strong>never transmitted</strong> or stored</li>
+<li>Email OTP tokens are <strong>hashed</strong> before storage</li>
+<li>Recovery keys are <strong>never stored</strong> on any server</li>
+<li>Quorum shares reveal nothing individually</li>
+<li>Passkey private keys never leave the authenticator</li>
+</ul>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../encryption/">Encryption</a></strong> — DEK slot encryption details</li>
+<li><strong><a href="../../guides/sessions/">Sessions Guide</a></strong> — Post-recovery session management</li>
 </ul>
 
 
@@ -2058,11 +2842,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

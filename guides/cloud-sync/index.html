@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -80,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cloud-synchronizationnnencrypted-sync-with-provider-configuration-and-apmignore-filtering-see-the-main-index-for-the-full-sync-flow" class="md-skip">
+        <a href="#cloud-synchronization" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -284,6 +265,8 @@
           
   
   
+    
+  
   Guides
 
         </a>
@@ -303,6 +286,8 @@
         <a href="../../concepts/" class="md-tabs__link">
           
   
+  
+    
   
   Concepts
 
@@ -324,6 +309,8 @@
           
   
   
+    
+  
   Reference
 
         </a>
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -635,6 +625,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -653,8 +669,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -668,8 +685,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
@@ -682,32 +705,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -754,6 +751,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud synchronization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -770,6 +785,291 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initial-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Initial Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#google-drive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google Drive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dropbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dropbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-providers-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All Providers At Once
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syncing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syncing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syncing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#downloading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Downloading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-specific-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider-Specific Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resetting-cloud-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resetting Cloud Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieval-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieval Keys
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrieval Keys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata-consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Guarantees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-apmignore-with-cloud-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using .apmignore with Cloud Sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conflict-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conflict Resolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#oauth-token-expired" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "OAuth token expired"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vault-not-found-on-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Vault not found on provider"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hmac-verification-failed-after-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "HMAC verification failed after download"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1015,6 +1315,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1032,8 +1360,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../concepts/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1047,8 +1376,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1061,32 +1396,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1412,6 +1721,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1429,8 +1758,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1444,8 +1774,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1458,32 +1794,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1697,6 +2007,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1714,8 +2036,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1729,8 +2052,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1743,32 +2072,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1882,6 +2185,280 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initial-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Initial Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#google-drive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google Drive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dropbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dropbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-providers-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All Providers At Once
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syncing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syncing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syncing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#downloading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Downloading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-specific-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider-Specific Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resetting-cloud-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resetting Cloud Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieval-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieval Keys
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrieval Keys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metadata-consent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metadata Consent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Guarantees
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-apmignore-with-cloud-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using .apmignore with Cloud Sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conflict-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conflict Resolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#oauth-token-expired" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "OAuth token expired"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vault-not-found-on-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Vault not found on provider"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hmac-verification-failed-after-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "HMAC verification failed after download"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1890,6 +2467,54 @@
           
           
             <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Guides
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -1900,7 +2525,178 @@
   
 
 
-<h1 id="cloud-synchronizationnnencrypted-sync-with-provider-configuration-and-apmignore-filtering-see-the-main-index-for-the-full-sync-flow">Cloud Synchronization\n\nEncrypted sync with provider configuration and .apmignore filtering. See the main index for the full sync flow.<a class="headerlink" href="#cloud-synchronizationnnencrypted-sync-with-provider-configuration-and-apmignore-filtering-see-the-main-index-for-the-full-sync-flow" title="Permanent link">&para;</a></h1>
+<h1 id="cloud-synchronization">Cloud Synchronization<a class="headerlink" href="#cloud-synchronization" title="Permanent link">&para;</a></h1>
+<p>APM syncs your encrypted vault to cloud providers so you can access credentials across all your trusted devices. Your master password <strong>never leaves your machine</strong> — only encrypted vault blobs are uploaded.</p>
+<hr />
+<h2 id="supported-providers">Supported Providers<a class="headerlink" href="#supported-providers" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">Google Drive</th>
+<th style="text-align: left;">GitHub</th>
+<th style="text-align: left;">Dropbox</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Authentication</strong></td>
+<td style="text-align: left;">OAuth2 (PKCE)</td>
+<td style="text-align: left;">Personal Access Token</td>
+<td style="text-align: left;">OAuth2 (PKCE)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Storage Location</strong></td>
+<td style="text-align: left;">Application Data Folder</td>
+<td style="text-align: left;">Private Repository</td>
+<td style="text-align: left;">Application Folder</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Setup Speed</strong></td>
+<td style="text-align: left;">Instant (browser OAuth)</td>
+<td style="text-align: left;">Manual (token + repo)</td>
+<td style="text-align: left;">Instant (browser OAuth)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Privacy</strong></td>
+<td style="text-align: left;">High (isolated from files)</td>
+<td style="text-align: left;">Exceptional (git history)</td>
+<td style="text-align: left;">High (isolated from files)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Version History</strong></td>
+<td style="text-align: left;">Limited (native)</td>
+<td style="text-align: left;">Comprehensive (git commits)</td>
+<td style="text-align: left;">Limited (native)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Best For</strong></td>
+<td style="text-align: left;">Mobile, fast sync</td>
+<td style="text-align: left;">Developers, power users</td>
+<td style="text-align: left;">Cross-platform</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="initial-setup">Initial Setup<a class="headerlink" href="#initial-setup" title="Permanent link">&para;</a></h2>
+<h3 id="google-drive">Google Drive<a class="headerlink" href="#google-drive" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>gdrive
+</span></code></pre></div>
+<p>This opens your browser for Google OAuth consent. APM uses the <strong>Application Data</strong> folder, which is isolated from your regular Drive files — you won't see the vault blob in your Drive UI.</p>
+<h3 id="github">GitHub<a class="headerlink" href="#github" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>github
+</span></code></pre></div>
+<p>You'll need to provide:</p>
+<ol>
+<li>A <strong>Personal Access Token</strong> (PAT) with <code>repo</code> scope</li>
+<li>A <strong>private repository</strong> name (e.g., <code>my-vault-backup</code>)</li>
+</ol>
+<p>GitHub sync stores the vault as a file in the repo, giving you comprehensive version history via git commits.</p>
+<h3 id="dropbox">Dropbox<a class="headerlink" href="#dropbox" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>dropbox
+</span></code></pre></div>
+<p>This opens your browser for Dropbox OAuth consent. APM uses the <strong>Application folder</strong>, isolated from your regular Dropbox files.</p>
+<h3 id="all-providers-at-once">All Providers At Once<a class="headerlink" href="#all-providers-at-once" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>all
+</span></code></pre></div>
+<p>Initializes Google Drive, GitHub, and Dropbox in sequence.</p>
+<hr />
+<h2 id="syncing">Syncing<a class="headerlink" href="#syncing" title="Permanent link">&para;</a></h2>
+<h3 id="manual-sync">Manual Sync<a class="headerlink" href="#manual-sync" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>sync
+</span></code></pre></div>
+<p>This uploads your current vault to all configured providers. The vault is filtered through <code>.apmignore</code> before encryption and upload.</p>
+<h3 id="downloading">Downloading<a class="headerlink" href="#downloading" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>get
+</span></code></pre></div>
+<p>Downloads the remote vault blob. You'll be prompted to choose how to handle it:</p>
+<ol>
+<li><strong>Overwrite local</strong> — Replace your local vault with the remote one</li>
+<li><strong>Keep local + conflict copy</strong> — Save the remote vault as a separate file</li>
+<li><strong>Cancel</strong> — Abort the download</li>
+</ol>
+<h3 id="auto-sync">Auto-Sync<a class="headerlink" href="#auto-sync" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>autosync
+</span></code></pre></div>
+<p>Runs periodic sync loops in the foreground. Useful for keeping vaults synchronized across active machines.</p>
+<h3 id="provider-specific-sync">Provider-Specific Sync<a class="headerlink" href="#provider-specific-sync" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>sync<span class="w"> </span>gdrive
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pm<span class="w"> </span>cloud<span class="w"> </span>sync<span class="w"> </span>github
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>pm<span class="w"> </span>cloud<span class="w"> </span>sync<span class="w"> </span>dropbox
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>pm<span class="w"> </span>cloud<span class="w"> </span>get<span class="w"> </span>gdrive
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>pm<span class="w"> </span>cloud<span class="w"> </span>get<span class="w"> </span>github
+</span></code></pre></div>
+<h3 id="resetting-cloud-configuration">Resetting Cloud Configuration<a class="headerlink" href="#resetting-cloud-configuration" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>reset
+</span></code></pre></div>
+<p>Clears all cloud provider credentials and configuration from the vault.</p>
+<hr />
+<h2 id="retrieval-keys">Retrieval Keys<a class="headerlink" href="#retrieval-keys" title="Permanent link">&para;</a></h2>
+<p>When you first upload your vault, APM generates a <strong>retrieval key</strong> — a unique identifier that can be used to locate your vault on the provider. This is useful when setting up on a new device.</p>
+<h3 id="metadata-consent">Metadata Consent<a class="headerlink" href="#metadata-consent" title="Permanent link">&para;</a></h3>
+<p>For Google Drive and Dropbox, APM can store a <strong>one-way hash</strong> of your retrieval key in provider metadata. This enables vault lookup by key hash. You'll be asked for explicit consent:</p>
+<ul>
+<li><strong>If you consent</strong>: The vault can be found using the retrieval key hash</li>
+<li><strong>If you decline</strong>: The vault is identified by its provider-specific ID (Drive file ID, Dropbox path) instead</li>
+</ul>
+<p>This ensures no identifying information is stored without your permission.</p>
+<hr />
+<h2 id="security-guarantees">Security Guarantees<a class="headerlink" href="#security-guarantees" title="Permanent link">&para;</a></h2>
+<div class="admonition success">
+<p class="admonition-title">What Is Uploaded</p>
+<p>The cloud receives an <strong>encrypted binary blob</strong> — the same <code>APMVAULT</code> format stored on disk. It includes:</p>
+<ul>
+<li>Encrypted vault data (AES-256-GCM)</li>
+<li>HMAC-SHA256 integrity signature</li>
+<li>Salt and profile metadata (in the unencrypted header)</li>
+</ul>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">What Is Never Uploaded</p>
+<ul>
+<li>Your master password</li>
+<li>Plaintext entries</li>
+<li>Decrypted vault contents</li>
+<li>Session data</li>
+</ul>
+</div>
+<hr />
+<h2 id="using-apmignore-with-cloud-sync">Using .apmignore with Cloud Sync<a class="headerlink" href="#using-apmignore-with-cloud-sync" title="Permanent link">&para;</a></h2>
+<p>The <code>.apmignore</code> file is processed <strong>before</strong> encryption and upload. You can:</p>
+<ul>
+<li>Exclude entire spaces</li>
+<li>Exclude specific entries by <code>space:type:name</code> pattern</li>
+<li>Use provider-specific rules</li>
+<li>Strip vocabulary data</li>
+</ul>
+<p>See the <a href="../apmignore/">.apmignore Guide</a> for full details.</p>
+<hr />
+<h2 id="conflict-resolution">Conflict Resolution<a class="headerlink" href="#conflict-resolution" title="Permanent link">&para;</a></h2>
+<p>When <code>pm cloud get</code> finds that the remote vault differs from your local vault:</p>
+<ol>
+<li><strong>Overwrite local</strong> — The remote vault replaces your local vault entirely</li>
+<li><strong>Keep local + save conflict copy</strong> — The remote vault is saved alongside your vault as a timestamped copy</li>
+<li><strong>Cancel</strong> — No changes are made</li>
+</ol>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Conflict handling is <strong>whole-vault only</strong>. APM does not perform entry-level merge. This is intentional — merging encrypted data safely requires entry-level conflict detection, which could leak metadata about vault contents.</p>
+</div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="oauth-token-expired">"OAuth token expired"<a class="headerlink" href="#oauth-token-expired" title="Permanent link">&para;</a></h3>
+<p>Re-run <code>pm cloud init [provider]</code> to re-authenticate.</p>
+<h3 id="vault-not-found-on-provider">"Vault not found on provider"<a class="headerlink" href="#vault-not-found-on-provider" title="Permanent link">&para;</a></h3>
+<p>Either the vault was never uploaded, or the retrieval key/file ID has changed. Try uploading again with <code>pm cloud sync</code>.</p>
+<h3 id="hmac-verification-failed-after-download">"HMAC verification failed after download"<a class="headerlink" href="#hmac-verification-failed-after-download" title="Permanent link">&para;</a></h3>
+<p>The downloaded vault may have been corrupted during transfer. Try downloading again. If the problem persists, the remote vault may have been tampered with.</p>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../apmignore/">Using .apmignore</a></strong> — Filter what gets uploaded</li>
+<li><strong><a href="../sessions/">Sessions</a></strong> — Session management for sync workflows</li>
+<li><strong><a href="../../concepts/cloud-sync/">Cloud Sync Concepts</a></strong> — Deep technical details</li>
+</ul>
 
 
 
@@ -1954,11 +2750,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -80,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#plugin-apinnpluginjson-defines-metadata-permissions-commands-and-hooks-permissions-enforced-at-runtime" class="md-skip">
+        <a href="#plugin-api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -282,6 +263,8 @@
           
   
   
+    
+  
   Guides
 
         </a>
@@ -301,6 +284,8 @@
         <a href="../../concepts/" class="md-tabs__link">
           
   
+  
+    
   
   Concepts
 
@@ -324,6 +309,8 @@
           
   
   
+    
+  
   Reference
 
         </a>
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -633,6 +623,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -650,8 +666,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -665,8 +682,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -679,32 +702,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1002,6 +999,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1019,8 +1044,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../concepts/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1034,8 +1060,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1048,32 +1080,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1401,6 +1407,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1419,8 +1445,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1434,8 +1461,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
@@ -1448,32 +1481,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1604,6 +1611,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1620,6 +1645,324 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#manifest-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manifest Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manifest Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#field-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-permission-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Permission Catalog
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complete Permission Catalog">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vault-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vault-item-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Item Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vault-field-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Field Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cryptography-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cryptography Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-management-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Management Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ui-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-session-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User &amp; Session Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-ml-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI / ML Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#iot-hardware-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IoT / Hardware Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wildcard-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variable-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Substitution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hook-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hook System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hook System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hook-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hook Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-permission-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Permission Overrides
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1697,6 +2040,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1714,8 +2069,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1729,8 +2085,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1743,32 +2105,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1882,6 +2218,313 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#manifest-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manifest Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manifest Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#field-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-permission-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Permission Catalog
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complete Permission Catalog">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vault-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vault-item-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Item Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vault-field-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vault Field Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cryptography-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cryptography Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-management-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Management Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ui-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-session-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User &amp; Session Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-ml-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI / ML Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#iot-hardware-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IoT / Hardware Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wildcard-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variable-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Substitution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hook-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hook System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hook System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hook-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hook Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#available-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-permission-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Permission Overrides
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1890,6 +2533,54 @@
           
           
             <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Reference
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -1900,7 +2591,1005 @@
   
 
 
-<h1 id="plugin-apinnpluginjson-defines-metadata-permissions-commands-and-hooks-permissions-enforced-at-runtime">Plugin API\n\nplugin.json defines metadata, permissions, commands, and hooks. Permissions enforced at runtime.<a class="headerlink" href="#plugin-apinnpluginjson-defines-metadata-permissions-commands-and-hooks-permissions-enforced-at-runtime" title="Permanent link">&para;</a></h1>
+<h1 id="plugin-api-reference">Plugin API Reference<a class="headerlink" href="#plugin-api-reference" title="Permanent link">&para;</a></h1>
+<p>Complete reference for the APM plugin system — manifest schema, permission catalog, step commands, and hook system.</p>
+<hr />
+<h2 id="manifest-schema">Manifest Schema<a class="headerlink" href="#manifest-schema" title="Permanent link">&para;</a></h2>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (required)&quot;</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (required, semver)&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">&quot;permissions_required&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string[]&quot;</span><span class="p">],</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">&quot;allowed_file_types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string[]&quot;</span><span class="p">],</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">&quot;commands&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string[]&quot;</span><span class="p">],</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="nt">&quot;hooks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string[]&quot;</span><span class="p">]</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="field-rules">Field Rules<a class="headerlink" href="#field-rules" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Field</th>
+<th style="text-align: center;">Required</th>
+<th style="text-align: left;">Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>name</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: left;">Non-empty string</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>version</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: left;">Semantic versioning (<code>X.Y.Z[-prerelease]</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>description</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Free text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>author</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Free text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>permissions_required</code></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: left;">Only known permissions or <code>category.*</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>allowed_file_types</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">File extensions with leading dot</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>commands</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Command name strings</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>hooks</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;"><code>pre:command</code> or <code>post:command</code> patterns</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="complete-permission-catalog">Complete Permission Catalog<a class="headerlink" href="#complete-permission-catalog" title="Permanent link">&para;</a></h2>
+<h3 id="vault-permissions">Vault Permissions<a class="headerlink" href="#vault-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>vault.read</code></td>
+<td style="text-align: left;">Read vault entries and metadata</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.write</code></td>
+<td style="text-align: left;">Write/modify vault entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.delete</code></td>
+<td style="text-align: left;">Delete vault entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.import</code></td>
+<td style="text-align: left;">Import data into the vault</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.export</code></td>
+<td style="text-align: left;">Export data from the vault</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.backup</code></td>
+<td style="text-align: left;">Create vault backups</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.restore</code></td>
+<td style="text-align: left;">Restore from vault backups</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.history</code></td>
+<td style="text-align: left;">Access vault modification history</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.lock</code></td>
+<td style="text-align: left;">Lock the vault</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.unlock</code></td>
+<td style="text-align: left;">Unlock the vault</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.sync</code></td>
+<td style="text-align: left;">Trigger cloud synchronization</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vault-item-permissions">Vault Item Permissions<a class="headerlink" href="#vault-item-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>vault.item.create</code></td>
+<td style="text-align: left;">Create new vault entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.read</code></td>
+<td style="text-align: left;">Read existing entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.update</code></td>
+<td style="text-align: left;">Update existing entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.delete</code></td>
+<td style="text-align: left;">Delete entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.move</code></td>
+<td style="text-align: left;">Move entries between spaces</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.copy</code></td>
+<td style="text-align: left;">Copy entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.share</code></td>
+<td style="text-align: left;">Share entries (team edition)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vault-field-permissions">Vault Field Permissions<a class="headerlink" href="#vault-field-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.password.read</code></td>
+<td style="text-align: left;">Read password fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.password.write</code></td>
+<td style="text-align: left;">Write password fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.username.read</code></td>
+<td style="text-align: left;">Read username fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.username.write</code></td>
+<td style="text-align: left;">Write username fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.url.read</code></td>
+<td style="text-align: left;">Read URL fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.url.write</code></td>
+<td style="text-align: left;">Write URL fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.notes.read</code></td>
+<td style="text-align: left;">Read note content</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.notes.write</code></td>
+<td style="text-align: left;">Write note content</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.totp.read</code></td>
+<td style="text-align: left;">Read TOTP secrets</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.totp.write</code></td>
+<td style="text-align: left;">Write TOTP secrets</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.tags.read</code></td>
+<td style="text-align: left;">Read entry tags</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.tags.write</code></td>
+<td style="text-align: left;">Write entry tags</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.metadata.read</code></td>
+<td style="text-align: left;">Read entry metadata</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.metadata.write</code></td>
+<td style="text-align: left;">Write entry metadata</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.custom.read</code></td>
+<td style="text-align: left;">Read custom fields</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.item.field.custom.write</code></td>
+<td style="text-align: left;">Write custom fields</td>
+</tr>
+</tbody>
+</table>
+<h3 id="network-permissions">Network Permissions<a class="headerlink" href="#network-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>network.outbound</code></td>
+<td style="text-align: left;">General outbound network access</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.inbound</code></td>
+<td style="text-align: left;">Accept inbound connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.http</code></td>
+<td style="text-align: left;">HTTP requests</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.https</code></td>
+<td style="text-align: left;">HTTPS requests</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.ftp</code></td>
+<td style="text-align: left;">FTP connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.sftp</code></td>
+<td style="text-align: left;">SFTP connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.ssh</code></td>
+<td style="text-align: left;">SSH connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.ws</code></td>
+<td style="text-align: left;">WebSocket connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.wss</code></td>
+<td style="text-align: left;">Secure WebSocket connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.tcp</code></td>
+<td style="text-align: left;">Raw TCP connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.udp</code></td>
+<td style="text-align: left;">UDP connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.icmp</code></td>
+<td style="text-align: left;">ICMP (ping)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.proxy</code></td>
+<td style="text-align: left;">Proxy connections</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.dns</code></td>
+<td style="text-align: left;">DNS queries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.api.rest</code></td>
+<td style="text-align: left;">REST API calls</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>network.api.grpc</code></td>
+<td style="text-align: left;">gRPC API calls</td>
+</tr>
+</tbody>
+</table>
+<h3 id="system-permissions">System Permissions<a class="headerlink" href="#system-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>system.read</code></td>
+<td style="text-align: left;">Read system information</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.write</code></td>
+<td style="text-align: left;">Write system files</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.exec</code></td>
+<td style="text-align: left;">Execute system commands</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.env.read</code></td>
+<td style="text-align: left;">Read environment variables</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.env.write</code></td>
+<td style="text-align: left;">Set environment variables</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.process.read</code></td>
+<td style="text-align: left;">Read process information</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.process.write</code></td>
+<td style="text-align: left;">Modify processes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.process.kill</code></td>
+<td style="text-align: left;">Kill processes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.clipboard.read</code></td>
+<td style="text-align: left;">Read from clipboard</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.clipboard.write</code></td>
+<td style="text-align: left;">Write to clipboard</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.notification</code></td>
+<td style="text-align: left;">Show system notifications</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.audio.record</code></td>
+<td style="text-align: left;">Record audio</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.audio.play</code></td>
+<td style="text-align: left;">Play audio</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.camera</code></td>
+<td style="text-align: left;">Access camera</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.location</code></td>
+<td style="text-align: left;">Access location services</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.power</code></td>
+<td style="text-align: left;">Control power state</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.usb.read</code></td>
+<td style="text-align: left;">Read USB devices</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.usb.write</code></td>
+<td style="text-align: left;">Write to USB devices</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.bluetooth</code></td>
+<td style="text-align: left;">Access Bluetooth</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system.wifi</code></td>
+<td style="text-align: left;">Access Wi-Fi interfaces</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cryptography-permissions">Cryptography Permissions<a class="headerlink" href="#cryptography-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>crypto.use</code></td>
+<td style="text-align: left;">General cryptography access</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.hash</code></td>
+<td style="text-align: left;">Compute hashes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.random</code></td>
+<td style="text-align: left;">Generate random data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.encrypt</code></td>
+<td style="text-align: left;">Encrypt data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.decrypt</code></td>
+<td style="text-align: left;">Decrypt data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.sign</code></td>
+<td style="text-align: left;">Create digital signatures</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.verify</code></td>
+<td style="text-align: left;">Verify digital signatures</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.key.generate</code></td>
+<td style="text-align: left;">Generate cryptographic keys</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.key.store</code></td>
+<td style="text-align: left;">Store keys</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.key.load</code></td>
+<td style="text-align: left;">Load stored keys</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.key.delete</code></td>
+<td style="text-align: left;">Delete stored keys</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.cert.generate</code></td>
+<td style="text-align: left;">Generate certificates</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.cert.validate</code></td>
+<td style="text-align: left;">Validate certificates</td>
+</tr>
+</tbody>
+</table>
+<h3 id="file-storage">File Storage<a class="headerlink" href="#file-storage" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>file.storage</code></td>
+<td style="text-align: left;">Read and write files (limited to allowed types)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="plugin-management-permissions">Plugin Management Permissions<a class="headerlink" href="#plugin-management-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>plugin.list</code></td>
+<td style="text-align: left;">List installed plugins</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plugin.install</code></td>
+<td style="text-align: left;">Install plugins</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plugin.uninstall</code></td>
+<td style="text-align: left;">Remove plugins</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plugin.update</code></td>
+<td style="text-align: left;">Update plugins</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plugin.config.read</code></td>
+<td style="text-align: left;">Read plugin configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plugin.config.write</code></td>
+<td style="text-align: left;">Write plugin configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plugin.reload</code></td>
+<td style="text-align: left;">Reload plugin state</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ui-permissions">UI Permissions<a class="headerlink" href="#ui-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>ui.prompt</code></td>
+<td style="text-align: left;">Show user prompts</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.alert</code></td>
+<td style="text-align: left;">Show alert dialogs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.confirm</code></td>
+<td style="text-align: left;">Show confirmation dialogs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.toast</code></td>
+<td style="text-align: left;">Show toast notifications</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.dialog</code></td>
+<td style="text-align: left;">Show custom dialogs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.window.open</code></td>
+<td style="text-align: left;">Open windows</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.window.close</code></td>
+<td style="text-align: left;">Close windows</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.window.maximize</code></td>
+<td style="text-align: left;">Maximize windows</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.window.minimize</code></td>
+<td style="text-align: left;">Minimize windows</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.menu.add</code></td>
+<td style="text-align: left;">Add menu items</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.menu.remove</code></td>
+<td style="text-align: left;">Remove menu items</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.theme.set</code></td>
+<td style="text-align: left;">Change UI theme</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ui.font.set</code></td>
+<td style="text-align: left;">Change UI font</td>
+</tr>
+</tbody>
+</table>
+<h3 id="user-session-permissions">User &amp; Session Permissions<a class="headerlink" href="#user-session-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>user.read</code></td>
+<td style="text-align: left;">Read user information</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.write</code></td>
+<td style="text-align: left;">Modify user information</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.auth</code></td>
+<td style="text-align: left;">Trigger authentication</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.session.read</code></td>
+<td style="text-align: left;">Read session data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.session.write</code></td>
+<td style="text-align: left;">Modify session data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.profile.read</code></td>
+<td style="text-align: left;">Read user profile</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.profile.write</code></td>
+<td style="text-align: left;">Modify user profile</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>user.biometric</code></td>
+<td style="text-align: left;">Access biometric authentication</td>
+</tr>
+</tbody>
+</table>
+<h3 id="audit-permissions">Audit Permissions<a class="headerlink" href="#audit-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>audit.read</code></td>
+<td style="text-align: left;">Read audit data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit.write</code></td>
+<td style="text-align: left;">Write audit entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit.log.read</code></td>
+<td style="text-align: left;">Read audit logs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit.log.write</code></td>
+<td style="text-align: left;">Write to audit logs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit.alert.read</code></td>
+<td style="text-align: left;">Read audit alerts</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit.report</code></td>
+<td style="text-align: left;">Generate audit reports</td>
+</tr>
+</tbody>
+</table>
+<h3 id="database-permissions">Database Permissions<a class="headerlink" href="#database-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>db.read</code></td>
+<td style="text-align: left;">Read internal database</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db.write</code></td>
+<td style="text-align: left;">Write to internal database</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db.query</code></td>
+<td style="text-align: left;">Execute database queries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db.schema.read</code></td>
+<td style="text-align: left;">Read database schema</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>db.schema.write</code></td>
+<td style="text-align: left;">Modify database schema</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai-ml-permissions">AI / ML Permissions<a class="headerlink" href="#ai-ml-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>ai.model.load</code></td>
+<td style="text-align: left;">Load ML models</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ai.predict</code></td>
+<td style="text-align: left;">Run model predictions</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ai.train</code></td>
+<td style="text-align: left;">Train models</td>
+</tr>
+</tbody>
+</table>
+<h3 id="iot-hardware-permissions">IoT / Hardware Permissions<a class="headerlink" href="#iot-hardware-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>iot.scan</code></td>
+<td style="text-align: left;">Scan for IoT devices</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>iot.connect</code></td>
+<td style="text-align: left;">Connect to IoT devices</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>iot.control</code></td>
+<td style="text-align: left;">Control IoT devices</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cloud-permissions">Cloud Permissions<a class="headerlink" href="#cloud-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>cloud.sync</code></td>
+<td style="text-align: left;">Trigger cloud sync</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cloud.backup</code></td>
+<td style="text-align: left;">Create cloud backups</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cloud.restore</code></td>
+<td style="text-align: left;">Restore from cloud</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cloud.config.read</code></td>
+<td style="text-align: left;">Read cloud configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>cloud.config.write</code></td>
+<td style="text-align: left;">Modify cloud configuration</td>
+</tr>
+</tbody>
+</table>
+<h3 id="wildcard-permissions">Wildcard Permissions<a class="headerlink" href="#wildcard-permissions" title="Permanent link">&para;</a></h3>
+<p>Use <code>category.*</code> syntax for group-level access:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">&quot;permissions_required&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;vault.*&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;network.*&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;system.*&quot;</span><span class="p">]</span>
+</span></code></pre></div>
+<hr />
+<h2 id="step-commands">Step Commands<a class="headerlink" href="#step-commands" title="Permanent link">&para;</a></h2>
+<p>The step executor supports these built-in commands:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Required Permission</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>vault.list</code></td>
+<td style="text-align: left;"><code>vault.read</code></td>
+<td style="text-align: left;">List vault entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.get</code></td>
+<td style="text-align: left;"><code>vault.read</code></td>
+<td style="text-align: left;">Get a specific entry</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.add</code></td>
+<td style="text-align: left;"><code>vault.write</code></td>
+<td style="text-align: left;">Add a new entry</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.edit</code></td>
+<td style="text-align: left;"><code>vault.write</code></td>
+<td style="text-align: left;">Edit an existing entry</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.delete</code></td>
+<td style="text-align: left;"><code>vault.delete</code></td>
+<td style="text-align: left;">Delete an entry</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vault.search</code></td>
+<td style="text-align: left;"><code>vault.read</code></td>
+<td style="text-align: left;">Search entries</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>file.read</code></td>
+<td style="text-align: left;"><code>file.storage</code></td>
+<td style="text-align: left;">Read a file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>file.write</code></td>
+<td style="text-align: left;"><code>file.storage</code></td>
+<td style="text-align: left;">Write a file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>file.delete</code></td>
+<td style="text-align: left;"><code>file.storage</code></td>
+<td style="text-align: left;">Delete a file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>file.list</code></td>
+<td style="text-align: left;"><code>file.storage</code></td>
+<td style="text-align: left;">List files</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>exec</code></td>
+<td style="text-align: left;"><code>system.exec</code></td>
+<td style="text-align: left;">Execute shell command</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http.get</code></td>
+<td style="text-align: left;"><code>network.http</code></td>
+<td style="text-align: left;">HTTP GET request</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http.post</code></td>
+<td style="text-align: left;"><code>network.http</code></td>
+<td style="text-align: left;">HTTP POST request</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>http.download</code></td>
+<td style="text-align: left;"><code>network.http</code></td>
+<td style="text-align: left;">Download a file</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.hash</code></td>
+<td style="text-align: left;"><code>crypto.hash</code></td>
+<td style="text-align: left;">Compute SHA-256 hash</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>crypto.random</code></td>
+<td style="text-align: left;"><code>crypto.random</code></td>
+<td style="text-align: left;">Generate random bytes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>set</code></td>
+<td style="text-align: left;">(none)</td>
+<td style="text-align: left;">Set a variable</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>print</code></td>
+<td style="text-align: left;">(none)</td>
+<td style="text-align: left;">Output text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>prompt</code></td>
+<td style="text-align: left;"><code>ui.prompt</code></td>
+<td style="text-align: left;">Ask user for input</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>confirm</code></td>
+<td style="text-align: left;"><code>ui.confirm</code></td>
+<td style="text-align: left;">Ask yes/no question</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>toast</code></td>
+<td style="text-align: left;"><code>ui.toast</code></td>
+<td style="text-align: left;">Show notification</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>clipboard</code></td>
+<td style="text-align: left;"><code>system.clipboard.*</code></td>
+<td style="text-align: left;">Copy to clipboard</td>
+</tr>
+</tbody>
+</table>
+<h3 id="variable-substitution">Variable Substitution<a class="headerlink" href="#variable-substitution" title="Permanent link">&para;</a></h3>
+<p>Steps can reference variables from previous steps:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>${variable_name}    → Value of the variable
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>${output.0}         → First line of previous step output
+</span></code></pre></div>
+<hr />
+<h2 id="hook-system">Hook System<a class="headerlink" href="#hook-system" title="Permanent link">&para;</a></h2>
+<h3 id="hook-patterns">Hook Patterns<a class="headerlink" href="#hook-patterns" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pre:&lt;command&gt;   — Fires before the command executes
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>post:&lt;command&gt;  — Fires after the command completes
+</span></code></pre></div>
+<h3 id="available-hooks">Available Hooks<a class="headerlink" href="#available-hooks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Hook</th>
+<th style="text-align: left;">Fires When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>pre:add</code></td>
+<td style="text-align: left;">Before an entry is added</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:add</code></td>
+<td style="text-align: left;">After an entry is added</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:edit</code></td>
+<td style="text-align: left;">Before an entry is edited</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:edit</code></td>
+<td style="text-align: left;">After an entry is edited</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:delete</code></td>
+<td style="text-align: left;">Before an entry is deleted</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:delete</code></td>
+<td style="text-align: left;">After an entry is deleted</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:sync</code></td>
+<td style="text-align: left;">Before cloud sync</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:sync</code></td>
+<td style="text-align: left;">After cloud sync</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:unlock</code></td>
+<td style="text-align: left;">Before vault unlock</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:unlock</code></td>
+<td style="text-align: left;">After vault unlock</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:lock</code></td>
+<td style="text-align: left;">Before vault lock</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:lock</code></td>
+<td style="text-align: left;">After vault lock</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:export</code></td>
+<td style="text-align: left;">Before export</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:export</code></td>
+<td style="text-align: left;">After export</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pre:import</code></td>
+<td style="text-align: left;">Before import</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>post:import</code></td>
+<td style="text-align: left;">After import</td>
+</tr>
+</tbody>
+</table>
+<p>If a <code>pre:</code> hook returns an error, the associated command is aborted.</p>
+<hr />
+<h2 id="runtime-permission-overrides">Runtime Permission Overrides<a class="headerlink" href="#runtime-permission-overrides" title="Permanent link">&para;</a></h2>
+<p>Users can override plugin permissions after installation:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Interactive toggle list (space key to select/deselect)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pm<span class="w"> </span>plugins<span class="w"> </span>access
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Direct toggle</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pm<span class="w"> </span>plugins<span class="w"> </span>access<span class="w"> </span>&lt;plugin&gt;<span class="w"> </span>&lt;permission&gt;<span class="w"> </span>on<span class="p">|</span>off
+</span></code></pre></div>
+<p>Overrides are stored inside the encrypted vault under <code>plugin_permission_overrides</code> and synced across devices.</p>
+<p>The effective permissions for a plugin are:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>effective = declared_permissions ∩ user_overrides
+</span></code></pre></div>
+<p>If a user disables a permission, the plugin cannot use it regardless of what the manifest declares.</p>
 
 
 
@@ -1954,11 +3643,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

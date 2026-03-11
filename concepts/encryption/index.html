@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -281,6 +262,8 @@
         <a href="../../guides/" class="md-tabs__link">
           
   
+  
+    
   
   Guides
 
@@ -304,6 +287,8 @@
           
   
   
+    
+  
   Concepts
 
         </a>
@@ -323,6 +308,8 @@
         <a href="../../reference/" class="md-tabs__link">
           
   
+  
+    
   
   Reference
 
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -633,6 +623,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -650,8 +666,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -665,8 +682,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -679,32 +702,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1004,6 +1001,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1022,8 +1047,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1037,8 +1063,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
@@ -1051,32 +1083,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1177,7 +1183,135 @@
   <a href="#key-derivation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key derivation
+        Key Derivation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Derivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#argon2id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Argon2id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-three-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Three Keys?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#argon2id-parameters-by-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Argon2id Parameters by Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#encryption_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Encryption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Encryption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aes-256-gcm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AES-256-GCM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nonce-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nonce Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#double-layer-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Double-Layer Integrity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Double-Layer Integrity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layer-1-gcm-authentication-tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 1: GCM Authentication Tag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-2-hmac-sha256-signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 2: HMAC-SHA256 Signature
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#password-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password Validation
       
     </span>
   </a>
@@ -1185,10 +1319,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#encryption-and-integrity" class="md-nav__link">
+  <a href="#data-encryption-key-dek-slot" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Encryption and integrity
+        Data Encryption Key (DEK) Slot
       
     </span>
   </a>
@@ -1196,10 +1330,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recovery-design" class="md-nav__link">
+  <a href="#data-encryption-standalone" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recovery design
+        Data Encryption (Standalone)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cryptographic-flow-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cryptographic Flow Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -1482,6 +1638,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1499,8 +1675,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1514,8 +1691,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1528,32 +1711,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1767,6 +1924,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1784,8 +1953,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1799,8 +1969,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1813,32 +1989,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1962,7 +2112,135 @@
   <a href="#key-derivation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key derivation
+        Key Derivation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Derivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#argon2id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Argon2id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-three-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Three Keys?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#argon2id-parameters-by-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Argon2id Parameters by Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#encryption_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Encryption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Encryption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aes-256-gcm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AES-256-GCM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nonce-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nonce Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#double-layer-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Double-Layer Integrity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Double-Layer Integrity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layer-1-gcm-authentication-tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 1: GCM Authentication Tag
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-2-hmac-sha256-signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 2: HMAC-SHA256 Signature
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#password-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password Validation
       
     </span>
   </a>
@@ -1970,10 +2248,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#encryption-and-integrity" class="md-nav__link">
+  <a href="#data-encryption-key-dek-slot" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Encryption and integrity
+        Data Encryption Key (DEK) Slot
       
     </span>
   </a>
@@ -1981,10 +2259,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#recovery-design" class="md-nav__link">
+  <a href="#data-encryption-standalone" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Recovery design
+        Data Encryption (Standalone)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cryptographic-flow-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cryptographic Flow Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -2002,6 +2302,54 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Concepts
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2012,13 +2360,183 @@
 
 
 <h1 id="encryption">Encryption<a class="headerlink" href="#encryption" title="Permanent link">&para;</a></h1>
-<p>APM uses a zero-knowledge model with encrypted-at-rest storage and authenticated encryption.</p>
-<h2 id="key-derivation">Key derivation<a class="headerlink" href="#key-derivation" title="Permanent link">&para;</a></h2>
-<p>Argon2id derives encryption and authentication keys from the master password. This is memory-hard and slows GPU attacks.</p>
-<h2 id="encryption-and-integrity">Encryption and integrity<a class="headerlink" href="#encryption-and-integrity" title="Permanent link">&para;</a></h2>
-<p>Vault data is encrypted with AES-GCM. Integrity is enforced with HMAC signatures over vault metadata to detect tampering.</p>
-<h2 id="recovery-design">Recovery design<a class="headerlink" href="#recovery-design" title="Permanent link">&para;</a></h2>
-<p>Recovery uses verified identity steps and a recovery key that gates DEK access. Optional recovery factors add extra assurance without breaking zero-knowledge guarantees.</p>
+<p>APM uses a <strong>zero-knowledge model</strong> with encrypted-at-rest storage and authenticated encryption. Your master password never leaves your machine — it's used locally to derive multiple cryptographic keys that protect every aspect of the vault.</p>
+<hr />
+<h2 id="key-derivation">Key Derivation<a class="headerlink" href="#key-derivation" title="Permanent link">&para;</a></h2>
+<h3 id="argon2id">Argon2id<a class="headerlink" href="#argon2id" title="Permanent link">&para;</a></h3>
+<p>APM uses <strong>Argon2id</strong> — the winner of the Password Hashing Competition — to derive encryption keys from your master password:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>master_password + salt → Argon2id → 96 bytes of key material
+</span></code></pre></div>
+<p>The 96-byte output is split into three distinct keys:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Bytes</th>
+<th style="text-align: left;">Key Name</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">0–31</td>
+<td style="text-align: left;"><strong>Encryption Key</strong></td>
+<td style="text-align: left;">AES-256-GCM encryption/decryption</td>
+</tr>
+<tr>
+<td style="text-align: left;">32–63</td>
+<td style="text-align: left;"><strong>Auth Key</strong></td>
+<td style="text-align: left;">HMAC-SHA256 integrity verification</td>
+</tr>
+<tr>
+<td style="text-align: left;">64–95</td>
+<td style="text-align: left;"><strong>Validator Key</strong></td>
+<td style="text-align: left;">Password correctness check before full decrypt</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-three-keys">Why Three Keys?<a class="headerlink" href="#why-three-keys" title="Permanent link">&para;</a></h3>
+<p>A single Argon2id invocation produces all three keys, but each serves a distinct security purpose:</p>
+<ol>
+<li><strong>Encryption Key</strong> — Used only for AES-GCM encrypt/decrypt. Never exposed or stored.</li>
+<li><strong>Auth Key</strong> — Used to compute an HMAC signature over vault metadata. Verifies that the vault hasn't been tampered with before attempting decryption.</li>
+<li><strong>Validator Key</strong> — A hash of this key is stored in the vault header. APM checks it immediately after key derivation to confirm the correct password was entered, before attempting the expensive decryption step.</li>
+</ol>
+<h3 id="argon2id-parameters-by-profile">Argon2id Parameters by Profile<a class="headerlink" href="#argon2id-parameters-by-profile" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Profile</th>
+<th style="text-align: left;">Memory Cost</th>
+<th style="text-align: left;">Time Cost</th>
+<th style="text-align: left;">Parallelism</th>
+<th style="text-align: left;">Salt Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Standard</strong></td>
+<td style="text-align: left;">64 MB</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">16 bytes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Hardened</strong></td>
+<td style="text-align: left;">256 MB</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">16 bytes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Paranoid</strong></td>
+<td style="text-align: left;">512 MB</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">16 bytes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Legacy</strong></td>
+<td style="text-align: left;">PBKDF2</td>
+<td style="text-align: left;">600,000</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">16 bytes</td>
+</tr>
+</tbody>
+</table>
+<p>Each profile makes a deliberate trade-off between performance and brute-force resistance:</p>
+<ul>
+<li><strong>Standard</strong> is suitable for most machines and resists commodity GPU attacks</li>
+<li><strong>Hardened</strong> pushes memory requirements high enough to make ASIC/FPGA attacks impractical</li>
+<li><strong>Paranoid</strong> is designed for servers and high-security environments</li>
+<li><strong>Legacy</strong> uses PBKDF2 for backward compatibility only</li>
+</ul>
+<hr />
+<h2 id="encryption_1">Encryption<a class="headerlink" href="#encryption_1" title="Permanent link">&para;</a></h2>
+<h3 id="aes-256-gcm">AES-256-GCM<a class="headerlink" href="#aes-256-gcm" title="Permanent link">&para;</a></h3>
+<p>APM encrypts the serialized vault JSON with <strong>AES-256 in Galois/Counter Mode</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>encryption_key + nonce + plaintext_json → AES-256-GCM → ciphertext
+</span></code></pre></div>
+<p>GCM provides:</p>
+<ul>
+<li><strong>Confidentiality</strong> — The ciphertext reveals nothing about the plaintext</li>
+<li><strong>Integrity</strong> — Built-in authentication tag detects any modification</li>
+<li><strong>Non-malleability</strong> — Attackers cannot produce valid ciphertext without the key</li>
+</ul>
+<h3 id="nonce-handling">Nonce Handling<a class="headerlink" href="#nonce-handling" title="Permanent link">&para;</a></h3>
+<p>A fresh <strong>random nonce</strong> is generated for every save operation. The nonce is prepended to the ciphertext and is not secret — its purpose is to ensure that encrypting the same vault twice produces different ciphertext.</p>
+<div class="admonition info">
+<p class="admonition-title">Nonce Reuse Protection</p>
+<p>AES-GCM's security guarantee depends on never reusing a nonce with the same key. Since APM generates a <strong>new salt</strong> (and thus new keys) on every save, nonce reuse is inherently prevented — even if the random nonce generator produced the same value, the key would be different.</p>
+</div>
+<hr />
+<h2 id="double-layer-integrity">Double-Layer Integrity<a class="headerlink" href="#double-layer-integrity" title="Permanent link">&para;</a></h2>
+<p>APM provides <strong>two independent integrity checks</strong>:</p>
+<h3 id="layer-1-gcm-authentication-tag">Layer 1: GCM Authentication Tag<a class="headerlink" href="#layer-1-gcm-authentication-tag" title="Permanent link">&para;</a></h3>
+<p>AES-GCM includes a 16-byte authentication tag that's verified during decryption. If any byte of the ciphertext is modified, decryption fails immediately.</p>
+<h3 id="layer-2-hmac-sha256-signature">Layer 2: HMAC-SHA256 Signature<a class="headerlink" href="#layer-2-hmac-sha256-signature" title="Permanent link">&para;</a></h3>
+<p>An HMAC-SHA256 signature is computed over vault metadata using the 32-byte authentication key:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>auth_key + vault_metadata → HMAC-SHA256 → 32-byte signature
+</span></code></pre></div>
+<p>This signature is stored in the vault file and verified <strong>before</strong> decryption. It provides:</p>
+<ul>
+<li><strong>Pre-decryption tamper detection</strong> — APM detects modification before attempting the expensive decrypt step</li>
+<li><strong>Metadata protection</strong> — Covers the vault header, profile, and salt information that are stored unencrypted</li>
+</ul>
+<hr />
+<h2 id="password-validation">Password Validation<a class="headerlink" href="#password-validation" title="Permanent link">&para;</a></h2>
+<p>Before decrypting the vault, APM performs a <strong>fast password check</strong>:</p>
+<ol>
+<li>Derive the validator key (bytes 64–95 of Argon2id output)</li>
+<li>Hash the validator key with SHA-256</li>
+<li>Compare against the stored validator hash in the vault header</li>
+</ol>
+<p>This catches wrong passwords in milliseconds rather than waiting for a full GCM decryption failure. It's a UX optimization — not a security boundary (GCM still validates independently).</p>
+<hr />
+<h2 id="data-encryption-key-dek-slot">Data Encryption Key (DEK) Slot<a class="headerlink" href="#data-encryption-key-dek-slot" title="Permanent link">&para;</a></h2>
+<p>For account recovery, APM supports a <strong>DEK slot</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>master_password → Argon2id → encryption_key → encrypts vault
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>recovery_key   → Argon2id → recovery_enc_key → encrypts DEK_slot(encryption_key)
+</span></code></pre></div>
+<p>The DEK slot stores the vault's encryption key, encrypted under the recovery key. This allows vault re-encryption during recovery without ever exposing the original master password:</p>
+<ol>
+<li>User provides recovery key</li>
+<li>APM decrypts the DEK slot to obtain the encryption key</li>
+<li>Vault is decrypted using the recovered encryption key</li>
+<li>User sets a new master password</li>
+<li>Vault is re-encrypted with new keys</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Zero-Knowledge Preserved</p>
+<p>The recovery key never needs to be stored on any server. It's generated locally and must be stored securely by the user.</p>
+</div>
+<hr />
+<h2 id="data-encryption-standalone">Data Encryption (Standalone)<a class="headerlink" href="#data-encryption-standalone" title="Permanent link">&para;</a></h2>
+<p>APM provides standalone <code>EncryptData</code> and <code>DecryptData</code> functions for encrypting arbitrary data (used internally for export encryption, cloud token storage, etc.):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>password + data → Argon2id(password, random_salt) → AES-256-GCM(key, data) → encrypted_blob
+</span></code></pre></div>
+<p>The output format: <code>salt (16 bytes) + nonce (12 bytes) + ciphertext</code></p>
+<hr />
+<h2 id="cryptographic-flow-summary">Cryptographic Flow Summary<a class="headerlink" href="#cryptographic-flow-summary" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TD
+    MP[Master Password] --&gt; KDF[Argon2id with Salt]
+    KDF --&gt; EK[Encryption Key — 32 bytes]
+    KDF --&gt; AK[Auth Key — 32 bytes]
+    KDF --&gt; VK[Validator Key — 32 bytes]
+
+    EK --&gt; GCM[AES-256-GCM Encrypt/Decrypt]
+    AK --&gt; HMAC[HMAC-SHA256 Verify/Sign]
+    VK --&gt; VALID[Password Validation Check]
+
+    GCM --&gt; VAULT[Encrypted Vault Data]
+    HMAC --&gt; SIG[Integrity Signature]
+    VALID --&gt; CHECK[Fast Wrong-Password Detection]</code></pre>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../vault-format/">Vault Format</a></strong> — How these components are laid out in the binary file</li>
+<li><strong><a href="../security-profiles/">Security Profiles</a></strong> — Profile parameters and auto-detection</li>
+<li><strong><a href="../recovery/">Recovery</a></strong> — How DEK recovery works in practice</li>
+</ul>
 
 
 
@@ -2072,11 +2590,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

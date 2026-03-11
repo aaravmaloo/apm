@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -262,6 +241,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -281,6 +262,8 @@
         <a href="../../guides/" class="md-tabs__link">
           
   
+  
+    
   
   Guides
 
@@ -304,6 +287,8 @@
           
   
   
+    
+  
   Concepts
 
         </a>
@@ -323,6 +308,8 @@
         <a href="../../reference/" class="md-tabs__link">
           
   
+  
+    
   
   Reference
 
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -432,6 +427,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -449,8 +458,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -464,8 +474,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
@@ -478,32 +494,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -633,6 +623,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -650,8 +666,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -665,8 +682,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -679,32 +702,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1004,6 +1001,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1022,8 +1047,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1037,8 +1063,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
@@ -1051,32 +1083,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1146,10 +1152,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#layers" class="md-nav__link">
+  <a href="#layer-diagram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Layers
+        Layer Diagram
       
     </span>
   </a>
@@ -1157,10 +1163,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vault-flow" class="md-nav__link">
+  <a href="#layer-1-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault flow
+        Layer 1: CLI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layer 1: CLI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Design Decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-2-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 2: Domain
       
     </span>
   </a>
@@ -1168,10 +1202,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#autofill-subsystem" class="md-nav__link">
+  <a href="#layer-3-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Autofill subsystem
+        Layer 3: Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layer 3: Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Provider Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-server-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Server Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autofill-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autofill Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-4-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 4: Extension
       
     </span>
   </a>
@@ -1179,10 +1263,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes-vocabulary-subsystem" class="md-nav__link">
+  <a href="#data-flow-vault-unlock-save" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Notes vocabulary subsystem
+        Data Flow: Vault Unlock → Save
       
     </span>
   </a>
@@ -1190,10 +1274,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugin-subsystem" class="md-nav__link">
+  <a href="#security-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plugin subsystem
+        Security Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -1504,6 +1599,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1521,8 +1636,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1536,8 +1652,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1550,32 +1672,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1789,6 +1885,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1806,8 +1914,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1821,8 +1930,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1835,32 +1950,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1981,10 +2070,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#layers" class="md-nav__link">
+  <a href="#layer-diagram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Layers
+        Layer Diagram
       
     </span>
   </a>
@@ -1992,10 +2081,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vault-flow" class="md-nav__link">
+  <a href="#layer-1-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault flow
+        Layer 1: CLI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layer 1: CLI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Design Decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-2-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 2: Domain
       
     </span>
   </a>
@@ -2003,10 +2120,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#autofill-subsystem" class="md-nav__link">
+  <a href="#layer-3-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Autofill subsystem
+        Layer 3: Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layer 3: Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloud-provider-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Provider Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-server-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Server Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autofill-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Autofill Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-4-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 4: Extension
       
     </span>
   </a>
@@ -2014,10 +2181,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes-vocabulary-subsystem" class="md-nav__link">
+  <a href="#data-flow-vault-unlock-save" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Notes vocabulary subsystem
+        Data Flow: Vault Unlock → Save
       
     </span>
   </a>
@@ -2025,10 +2192,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugin-subsystem" class="md-nav__link">
+  <a href="#security-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Plugin subsystem
+        Security Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -2046,6 +2224,54 @@
           
             <div class="md-content" data-md-component="content">
               
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Concepts
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2056,39 +2282,308 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<p>APM is layered to separate CLI interaction, domain logic, and integrations.</p>
-<h2 id="layers">Layers<a class="headerlink" href="#layers" title="Permanent link">&para;</a></h2>
+<p>APM is structured as a <strong>four-layer architecture</strong> that separates concerns between user interaction, domain logic, external integrations, and extensibility.</p>
+<hr />
+<h2 id="layer-diagram">Layer Diagram<a class="headerlink" href="#layer-diagram" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TB
+    subgraph CLI["Layer 1: CLI"]
+        A[main.go — Cobra command tree]
+    end
+
+    subgraph Domain["Layer 2: Domain"]
+        B[vault.go — Vault &amp; Entries]
+        C[session.go — Sessions]
+        D[security.go — Profiles &amp; Alerts]
+        E[policy.go — Policy Engine]
+        F[trust.go — Trust Scoring]
+        G[health.go — Health Dashboard]
+        H[audit.go — Audit Log]
+        I[anomaly.go — Anomaly Detection]
+        J[vocab.go — Vocabulary Engine]
+        K[portability.go — Import/Export]
+        L[apmignore.go — Ignore Rules]
+        M[brute.go — Brute Force Test]
+        N[recovery_*.go — Recovery Subsystem]
+        O[ephemeral_session.go — Delegated Sessions]
+    end
+
+    subgraph Integration["Layer 3: Integration"]
+        P[cloud.go — GDrive/GitHub/Dropbox]
+        Q[mcp.go — MCP Server]
+        R[autofill/ — Windows Daemon]
+    end
+
+    subgraph Extension["Layer 4: Extension"]
+        S[plugins/engine.go — Step Executor]
+        T[plugins/manifest.go — Manifest &amp; Permissions]
+        U[plugins/definitions.go — Command Definitions]
+        V[cloud_plugins.go — Marketplace]
+    end
+
+    CLI --&gt; Domain
+    CLI --&gt; Integration
+    CLI --&gt; Extension
+    Integration --&gt; Domain
+    Extension --&gt; Domain</code></pre>
+<hr />
+<h2 id="layer-1-cli">Layer 1: CLI<a class="headerlink" href="#layer-1-cli" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>main.go</code> (~3,600 lines)</p>
+<p>The CLI layer uses <a href="https://github.com/spf13/cobra">Cobra</a> to define the entire command tree. It handles:</p>
+<ul>
+<li>User input parsing and validation</li>
+<li>Interactive prompts (password input, menus, confirmations)</li>
+<li>Output formatting (colored terminal output via <code>fatih/color</code>)</li>
+<li>Delegation to domain and integration layers</li>
+</ul>
+<h3 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Single binary</strong> — All commands live in one file for straightforward distribution</li>
+<li><strong>Interactive by default</strong> — Most commands use interactive prompts rather than requiring flags</li>
+<li><strong>Explicit session checks</strong> — Every sensitive command verifies an active session before proceeding</li>
+</ul>
+<hr />
+<h2 id="layer-2-domain">Layer 2: Domain<a class="headerlink" href="#layer-2-domain" title="Permanent link">&para;</a></h2>
+<p><strong>Directory:</strong> <code>src/</code></p>
+<p>The domain layer contains all business logic. It operates entirely in memory after vault decryption:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">File</th>
+<th style="text-align: left;">Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>vault.go</code></td>
+<td style="text-align: left;">Vault struct, entry types, encrypt/decrypt logic</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>session.go</code></td>
+<td style="text-align: left;">Shell-scoped session management</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ephemeral_session.go</code></td>
+<td style="text-align: left;">Delegated sessions with host/PID/agent binding</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>security.go</code></td>
+<td style="text-align: left;">Profile management, alerts, email masking</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>policy.go</code></td>
+<td style="text-align: left;">YAML policy loading and enforcement</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>trust.go</code></td>
+<td style="text-align: left;">Per-secret trust scoring (telemetry + risk)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>health.go</code></td>
+<td style="text-align: left;">Vault health scoring algorithm</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>audit.go</code></td>
+<td style="text-align: left;">Tamper-evident audit logging</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>anomaly.go</code></td>
+<td style="text-align: left;">Unusual activity time detection</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>vocab.go</code></td>
+<td style="text-align: left;">Note vocabulary with aliases and scoring</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>portability.go</code></td>
+<td style="text-align: left;">JSON, CSV, TXT import/export</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>apmignore.go</code></td>
+<td style="text-align: left;">Ignore rule parsing and filtering</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>brute.go</code></td>
+<td style="text-align: left;">Brute-force test engine</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>recovery_passkey.go</code></td>
+<td style="text-align: left;">WebAuthn passkey recovery</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>quorum_recovery.go</code></td>
+<td style="text-align: left;">Shamir secret sharing (quorum recovery)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>recovery_codes.go</code></td>
+<td style="text-align: left;">One-time recovery codes</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="layer-3-integration">Layer 3: Integration<a class="headerlink" href="#layer-3-integration" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Component</th>
+<th style="text-align: left;">File(s)</th>
+<th style="text-align: left;">Protocol</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Cloud Sync</td>
+<td style="text-align: left;"><code>cloud.go</code></td>
+<td style="text-align: left;">REST / OAuth2 / PAT</td>
+<td style="text-align: left;">Multi-provider vault sync</td>
+</tr>
+<tr>
+<td style="text-align: left;">MCP Server</td>
+<td style="text-align: left;"><code>mcp.go</code></td>
+<td style="text-align: left;">stdio (JSON-RPC)</td>
+<td style="text-align: left;">AI assistant vault access</td>
+</tr>
+<tr>
+<td style="text-align: left;">Autofill</td>
+<td style="text-align: left;"><code>autofill/*.go</code></td>
+<td style="text-align: left;">HTTP (loopback)</td>
+<td style="text-align: left;">Windows keystroke injection</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cloud-provider-architecture">Cloud Provider Architecture<a class="headerlink" href="#cloud-provider-architecture" title="Permanent link">&para;</a></h3>
+<p>Each cloud provider follows the same interface:</p>
 <ol>
-<li>CLI layer in <code>main.go</code> provides the user-facing command tree.</li>
-<li>Domain layer in <code>src/</code> implements vault, entries, crypto, policy, and sync.</li>
-<li>Integration layer contains cloud providers, autofill daemon, and MCP server.</li>
-<li>Extension layer supports manifest-based plugins.</li>
+<li><strong>Init</strong> → Configure OAuth/PAT credentials</li>
+<li><strong>Sync</strong> → Upload encrypted vault blob</li>
+<li><strong>Get</strong> → Download remote vault blob</li>
+<li><strong>Reset</strong> → Clear provider configuration</li>
 </ol>
-<h2 id="vault-flow">Vault flow<a class="headerlink" href="#vault-flow" title="Permanent link">&para;</a></h2>
+<p>Credentials are stored encrypted inside the vault itself.</p>
+<h3 id="mcp-server-architecture">MCP Server Architecture<a class="headerlink" href="#mcp-server-architecture" title="Permanent link">&para;</a></h3>
+<p>The MCP server is spawned as a subprocess by AI clients. It:</p>
+<ol>
+<li>Accepts stdio transport</li>
+<li>Validates bearer tokens against the vault's token store</li>
+<li>Routes tool calls to domain layer (vault read/write)</li>
+<li>Enforces permission scope checks per tool</li>
+<li>Manages transaction state for write operations</li>
+</ol>
+<h3 id="autofill-architecture">Autofill Architecture<a class="headerlink" href="#autofill-architecture" title="Permanent link">&para;</a></h3>
+<p>The autofill daemon is a local HTTP server that:</p>
+<ol>
+<li>Listens on a random port on loopback</li>
+<li>Stores a shared bearer token for IPC</li>
+<li>Captures active window context via Windows APIs</li>
+<li>Matches credentials against vault profiles</li>
+<li>Injects keystrokes via <code>SendInput</code> (Windows)</li>
+</ol>
+<hr />
+<h2 id="layer-4-extension">Layer 4: Extension<a class="headerlink" href="#layer-4-extension" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Component</th>
+<th style="text-align: left;">File(s)</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Engine</td>
+<td style="text-align: left;"><code>plugins/engine.go</code></td>
+<td style="text-align: left;">Executes plugin step pipelines</td>
+</tr>
+<tr>
+<td style="text-align: left;">Manifest</td>
+<td style="text-align: left;"><code>plugins/manifest.go</code></td>
+<td style="text-align: left;">Validates plugin.json schemas</td>
+</tr>
+<tr>
+<td style="text-align: left;">Definitions</td>
+<td style="text-align: left;"><code>plugins/definitions.go</code></td>
+<td style="text-align: left;">Built-in step command definitions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Marketplace</td>
+<td style="text-align: left;"><code>cloud_plugins.go</code></td>
+<td style="text-align: left;">Cloud-backed plugin distribution</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="data-flow-vault-unlock-save">Data Flow: Vault Unlock → Save<a class="headerlink" href="#data-flow-vault-unlock-save" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>sequenceDiagram
+    participant User
+    participant CLI
+    participant Session
+    participant Vault
+
+    User-&gt;&gt;CLI: pm unlock
+    CLI-&gt;&gt;Vault: Load encrypted bytes from disk
+    Vault-&gt;&gt;Vault: Parse header (magic, version, profile, salt)
+    Vault-&gt;&gt;Vault: Derive 96 bytes via Argon2id(password, salt)
+    Note over Vault: key[0:32] = encryption key&lt;br/&gt;key[32:64] = auth key&lt;br/&gt;key[64:96] = validator
+    Vault-&gt;&gt;Vault: Verify HMAC-SHA256(auth_key, metadata)
+    Vault-&gt;&gt;Vault: Decrypt AES-256-GCM(enc_key, ciphertext)
+    Vault-&gt;&gt;Vault: Verify validator matches stored validator
+    Vault--&gt;&gt;CLI: Decrypted Vault struct
+    CLI-&gt;&gt;Session: Create session file
+    CLI--&gt;&gt;User: "Vault unlocked"
+
+    Note over User: ... user performs operations ...
+
+    User-&gt;&gt;CLI: pm add (adds entry to in-memory vault)
+    CLI-&gt;&gt;Vault: Generate new salt
+    Vault-&gt;&gt;Vault: Derive keys from password + new salt
+    Vault-&gt;&gt;Vault: Serialize vault to JSON
+    Vault-&gt;&gt;Vault: Encrypt with AES-256-GCM(enc_key, json)
+    Vault-&gt;&gt;Vault: Compute HMAC-SHA256(auth_key, metadata)
+    Vault-&gt;&gt;Vault: Write header + ciphertext + HMAC to disk
+    Vault--&gt;&gt;CLI: Save complete</code></pre>
+<hr />
+<h2 id="security-boundaries">Security Boundaries<a class="headerlink" href="#security-boundaries" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Boundary</th>
+<th style="text-align: left;">Inside</th>
+<th style="text-align: left;">Outside</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Vault encryption</td>
+<td style="text-align: left;">All entry data, credentials</td>
+<td style="text-align: left;">Master password, keys</td>
+</tr>
+<tr>
+<td style="text-align: left;">Session boundary</td>
+<td style="text-align: left;">Decrypted vault (in memory)</td>
+<td style="text-align: left;">Persisted data (on disk)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Cloud boundary</td>
+<td style="text-align: left;">Encrypted blob (APMVAULT)</td>
+<td style="text-align: left;">Plaintext entries</td>
+</tr>
+<tr>
+<td style="text-align: left;">MCP boundary</td>
+<td style="text-align: left;">Permitted data (per scope)</td>
+<td style="text-align: left;">Unauthorized data</td>
+</tr>
+<tr>
+<td style="text-align: left;">Plugin boundary</td>
+<td style="text-align: left;">Permitted operations (per perm)</td>
+<td style="text-align: left;">Unauthorized operations</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Encrypted vault bytes are loaded from disk.</li>
-<li>Argon2id derives encryption and authentication keys.</li>
-<li>AES-GCM decrypts the vault payload.</li>
-<li>Operations run in memory within a session.</li>
-<li>The vault is re-encrypted and persisted on save.</li>
-</ul>
-<h2 id="autofill-subsystem">Autofill subsystem<a class="headerlink" href="#autofill-subsystem" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Windows daemon runs locally on loopback.</li>
-<li>Active window context is captured and analyzed.</li>
-<li>Popup hints notify users when matches exist.</li>
-<li>Hotkey triggers sequence injection.</li>
-</ul>
-<h2 id="notes-vocabulary-subsystem">Notes vocabulary subsystem<a class="headerlink" href="#notes-vocabulary-subsystem" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Vocabulary is stored in <code>Vault.VocabCompressed</code>.</li>
-<li>Indexing runs on note changes if enabled.</li>
-<li>Alias and ranking influence suggestion output.</li>
-</ul>
-<h2 id="plugin-subsystem">Plugin subsystem<a class="headerlink" href="#plugin-subsystem" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>plugin.json</code> declares metadata, permissions, commands, and hooks.</li>
-<li>Runtime permission overrides are enforced for every step.</li>
+<li><strong><a href="../encryption/">Encryption</a></strong> — Detailed cryptographic design</li>
+<li><strong><a href="../vault-format/">Vault Format</a></strong> — Binary format specification</li>
 </ul>
 
 
@@ -2143,11 +2638,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

@@ -1,0 +1,375 @@
+/* ============================================
+   APM Documentation — Clerk-Style Dark Theme
+   Ultra-modern, minimalist, high-contrast dark
+   ============================================ */
+
+:root {
+    --md-primary-fg-color: #ffffff;
+    --md-primary-bg-color: #0a0a0a;
+    --md-accent-fg-color: #ffffff;
+
+    --clerk-bg: #0a0a0a;
+    --clerk-surface: #111111;
+    --clerk-surface-hover: #161616;
+    --clerk-border: rgba(255, 255, 255, 0.08);
+    --clerk-border-hover: rgba(255, 255, 255, 0.15);
+    --clerk-text-main: #ededed;
+    --clerk-text-muted: #a1a1aa;
+
+    --apm-transition: 0.2s ease;
+}
+
+[data-md-color-scheme="slate"] {
+    --md-default-bg-color: var(--clerk-bg);
+    --md-default-fg-color: var(--clerk-text-main);
+    --md-default-fg-color--light: var(--clerk-text-muted);
+    --md-code-bg-color: var(--clerk-surface);
+    --md-typeset-color: var(--clerk-text-main);
+    --md-typeset-a-color: #ffffff;
+}
+
+/* ---------- App Layout & Header ---------- */
+body,
+[data-md-color-scheme="slate"] body {
+    background-color: var(--clerk-bg);
+}
+
+.md-header {
+    background: var(--clerk-bg) !important;
+    border-bottom: 1px solid var(--clerk-border);
+    box-shadow: none !important;
+}
+
+.md-header__title {
+    font-weight: 600;
+    color: #fff !important;
+    letter-spacing: -0.2px;
+}
+
+.md-tabs {
+    background-color: var(--clerk-bg) !important;
+    border-bottom: 1px solid var(--clerk-border);
+}
+
+/* ---------- Typography & Headings ---------- */
+.md-content h1 {
+    font-weight: 800;
+    color: #fff;
+    border-bottom: none;
+    font-size: 2.3em;
+    letter-spacing: -0.8px;
+    margin-bottom: 0.8em;
+    background: none;
+    -webkit-text-fill-color: initial;
+}
+
+.md-content h2 {
+    font-weight: 700;
+    color: #fff;
+    border-bottom: none;
+    margin-top: 1.5em;
+    font-size: 1.4em;
+    letter-spacing: -0.4px;
+}
+
+.md-content h3 {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1.15em;
+}
+
+.md-typeset a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--clerk-border);
+    transition: all var(--apm-transition);
+    color: #fff;
+}
+
+.md-typeset a:hover {
+    border-bottom-color: #fff;
+    text-shadow: none;
+}
+
+/* Override header nav links and branding */
+.md-header__button {
+    color: var(--clerk-text-muted) !important;
+}
+
+.md-header__button:hover {
+    color: #fff !important;
+}
+
+/* ---------- Navigation & Sidebars ---------- */
+.md-nav__title {
+    font-weight: 600;
+    color: #fff !important;
+}
+
+.md-nav__link {
+    color: var(--clerk-text-muted) !important;
+    font-size: 0.85rem;
+    transition: color var(--apm-transition), background var(--apm-transition);
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.md-nav__link:hover {
+    color: #fff !important;
+    background-color: var(--clerk-surface-hover);
+}
+
+.md-nav__link--active {
+    color: #fff !important;
+    font-weight: 500;
+    background-color: var(--clerk-surface);
+    border-left: none;
+}
+
+/* Right TOC (Billing Management in Clerk screenshot) */
+.md-sidebar--secondary .md-nav__title {
+    color: var(--clerk-text-muted) !important;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.md-sidebar--secondary .md-nav__link {
+    font-size: 0.8rem;
+    border-left: 1px solid var(--clerk-border);
+    border-radius: 0;
+    padding-left: 14px;
+    background: transparent !important;
+}
+
+.md-sidebar--secondary .md-nav__link:hover {
+    border-left-color: var(--clerk-border-hover);
+    color: #fff !important;
+}
+
+.md-sidebar--secondary .md-nav__link--active {
+    border-left-color: #fff;
+    color: #fff !important;
+    font-weight: 500;
+}
+
+/* ---------- Code Blocks ---------- */
+.md-typeset pre {
+    background-color: var(--clerk-surface) !important;
+    border: 1px solid var(--clerk-border);
+    border-radius: 8px;
+    box-shadow: none;
+    margin: 1.5em 0;
+}
+
+.md-typeset pre:hover {
+    box-shadow: none;
+    transform: none;
+    border-color: var(--clerk-border-hover);
+}
+
+.md-typeset code {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: #d4d4d8;
+    padding: 0.2em 0.4em;
+    font-size: 0.85em;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.md-typeset pre code {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+}
+
+/* ---------- Tables ---------- */
+.md-typeset table:not([class]) {
+    border-radius: 8px;
+    border: 1px solid var(--clerk-border);
+    box-shadow: none;
+    background-color: var(--clerk-bg);
+}
+
+.md-typeset table:not([class]) thead {
+    background-color: var(--clerk-surface);
+    border-bottom: 1px solid var(--clerk-border);
+}
+
+.md-typeset table:not([class]) thead th {
+    color: #fff !important;
+    font-weight: 500;
+}
+
+.md-typeset table:not([class]) tbody tr {
+    border-bottom: 1px solid var(--clerk-border);
+    transition: background-color var(--apm-transition);
+}
+
+.md-typeset table:not([class]) tbody tr:hover {
+    background-color: var(--clerk-surface) !important;
+}
+
+.md-typeset table:not([class]) td,
+.md-typeset table:not([class]) th {
+    border: none !important;
+}
+
+/* ---------- Admonitions (Warning boxes) ---------- */
+.md-typeset .admonition,
+.md-typeset details {
+    background-color: transparent !important;
+    border: 1px solid var(--clerk-border);
+    border-left: 3px solid var(--clerk-text-muted);
+    border-radius: 8px !important;
+    box-shadow: none;
+    margin: 1.5em 0;
+}
+
+.md-typeset .admonition-title {
+    background-color: transparent !important;
+    border-bottom: none;
+    font-weight: 600;
+    padding-bottom: 0;
+}
+
+.md-typeset .admonition:hover,
+.md-typeset details:hover {
+    box-shadow: none;
+    transform: none;
+    border-color: var(--clerk-border-hover);
+}
+
+/* Clerk orange warning style */
+.md-typeset .admonition.warning {
+    border-left-color: #f5a623;
+}
+
+.md-typeset .admonition.warning .admonition-title {
+    color: #f5a623;
+}
+
+/* ---------- Feature Cards (Clerk Home Style) ---------- */
+.md-typeset .apm-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 2em 0;
+}
+
+.md-typeset .apm-feature-card {
+    background-color: var(--clerk-surface);
+    border: 1px solid var(--clerk-border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all var(--apm-transition);
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.md-typeset .apm-feature-card::before {
+    display: none !important;
+    /* eradicate old gradient */
+}
+
+.md-typeset .apm-feature-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--clerk-border-hover);
+    background-color: var(--clerk-surface-hover);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.md-typeset .apm-feature-card h3 {
+    margin: 16px 0 8px 0;
+    font-size: 1.05em;
+    font-weight: 600;
+    border: none;
+    padding: 0;
+}
+
+.md-typeset .apm-feature-card p {
+    color: var(--clerk-text-muted);
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Clerk style icon wrapper */
+.md-typeset .apm-feature-card .icon-wrapper {
+    width: 44px;
+    height: 44px;
+    background-color: transparent;
+    border: 1px solid var(--clerk-border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--clerk-text-muted);
+}
+
+/* ---------- Search Bar ---------- */
+.md-search__input {
+    background-color: var(--clerk-surface) !important;
+    border: 1px solid var(--clerk-border) !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    padding-left: 40px !important;
+}
+
+.md-search__input:focus {
+    background-color: var(--clerk-surface-hover) !important;
+    border-color: var(--clerk-text-muted) !important;
+    box-shadow: none !important;
+}
+
+/* ---------- Footer ---------- */
+.md-footer {
+    background: var(--clerk-bg) !important;
+    border-top: 1px solid var(--clerk-border);
+    box-shadow: none !important;
+}
+
+.md-footer__inner {
+    color: var(--clerk-text-muted);
+}
+
+.md-footer-nav__link {
+    transition: background var(--apm-transition);
+}
+
+.md-footer-nav__link:hover {
+    background-color: var(--clerk-surface-hover) !important;
+}
+
+/* ---------- Scrollbar Styling ---------- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--clerk-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: #3f3f46;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+}
+
+/* ---------- Overrides ---------- */
+.md-typeset hr {
+    border-bottom: 1px solid var(--clerk-border);
+    background: none;
+}
+
+.md-typeset .agm-badge {
+    background: var(--clerk-surface);
+    border: 1px solid var(--clerk-border);
+    color: #fff;
+}

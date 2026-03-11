@@ -50,10 +50,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/custom.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -71,7 +73,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -80,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#first-stepsnninitialize-with-pm-init-unlock-with-pm-unlock-add-entries-with-pm-add-and-lock-with-pm-lock-see-the-main-index-for-the-full-workflow-and-safety-model" class="md-skip">
+        <a href="#first-steps" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="APM Documentation" class="md-header__button md-logo" aria-label="APM Documentation" data-md-component="logo">
       
@@ -127,31 +131,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
-    
-      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="white"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
     
   
 </form>
@@ -180,6 +160,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -219,14 +204,8 @@
     
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -264,6 +243,8 @@
           
   
   
+    
+  
   Getting Started
 
         </a>
@@ -283,6 +264,8 @@
         <a href="../../guides/" class="md-tabs__link">
           
   
+  
+    
   
   Guides
 
@@ -304,6 +287,8 @@
           
   
   
+    
+  
   Concepts
 
         </a>
@@ -323,6 +308,8 @@
         <a href="../../reference/" class="md-tabs__link">
           
   
+  
+    
   
   Reference
 
@@ -344,6 +331,8 @@
           
   
   
+    
+  
   Team
 
         </a>
@@ -355,7 +344,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -434,6 +429,20 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -452,8 +461,9 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -467,8 +477,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
@@ -481,32 +497,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started\n\nThis section covers installation and first workflows. See the main index for comprehensive coverage of sessions, notes, autofill, and cloud sync.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -553,6 +543,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First steps
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -569,6 +577,135 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-initialize-your-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Initialize Your Vault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-unlock-your-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Unlock Your Vault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-add-your-first-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Your First Entry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-search-and-retrieve-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Search and Retrieve Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-set-up-totp-two-factor-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Set Up TOTP (Two-Factor Authentication)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-lock-your-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Lock Your Vault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-set-up-cloud-sync-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Set Up Cloud Sync (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-enable-autofill-windows-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Enable Autofill (Windows Only)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference Card
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -646,6 +783,32 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -663,8 +826,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../guides/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -678,8 +842,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
@@ -692,32 +862,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guides\n\nTask-focused guides for common workflows. See the main index for the complete system overview.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1015,6 +1159,34 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1032,8 +1204,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../concepts/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1047,8 +1220,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1061,32 +1240,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts\n\nArchitecture, encryption, recovery, and system internals. See the main index for a complete narrative.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1412,6 +1565,26 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1429,8 +1602,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1444,8 +1618,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
@@ -1458,32 +1638,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Reference\n\nCommand surfaces, config files, and data formats. Use this section for exact syntax.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1697,6 +1851,18 @@
   
     
     
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
     
     
       
@@ -1714,8 +1880,9 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../../team/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
@@ -1729,8 +1896,14 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
@@ -1743,32 +1916,6 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../team/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Team Edition\n\nOrg workflows with departments, roles, and approval gates.
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -1882,6 +2029,124 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-initialize-your-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Initialize Your Vault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-unlock-your-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Unlock Your Vault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-add-your-first-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Your First Entry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-search-and-retrieve-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Search and Retrieve Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-set-up-totp-two-factor-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Set Up TOTP (Two-Factor Authentication)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-lock-your-vault" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Lock Your Vault
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-set-up-cloud-sync-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Set Up Cloud Sync (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-enable-autofill-windows-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Enable Autofill (Windows Only)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference Card
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1890,6 +2155,54 @@
           
           
             <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
               
               <article class="md-content__inner md-typeset">
                 
@@ -1900,7 +2213,272 @@
   
 
 
-<h1 id="first-stepsnninitialize-with-pm-init-unlock-with-pm-unlock-add-entries-with-pm-add-and-lock-with-pm-lock-see-the-main-index-for-the-full-workflow-and-safety-model">First Steps\n\nInitialize with pm init, unlock with pm unlock, add entries with pm add, and lock with pm lock. See the main index for the full workflow and safety model.<a class="headerlink" href="#first-stepsnninitialize-with-pm-init-unlock-with-pm-unlock-add-entries-with-pm-add-and-lock-with-pm-lock-see-the-main-index-for-the-full-workflow-and-safety-model" title="Permanent link">&para;</a></h1>
+<h1 id="first-steps">First Steps<a class="headerlink" href="#first-steps" title="Permanent link">&para;</a></h1>
+<p>This walkthrough takes you from a fresh install to a fully operational encrypted vault in under five minutes. By the end you'll know how to create, search, and manage secrets with APM.</p>
+<hr />
+<h2 id="step-1-initialize-your-vault">Step 1: Initialize Your Vault<a class="headerlink" href="#step-1-initialize-your-vault" title="Permanent link">&para;</a></h2>
+<p>Run the <code>init</code> command to create a new encrypted vault file:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pm<span class="w"> </span>init
+</span></code></pre></div>
+<p>You'll be prompted for:</p>
+<ol>
+<li>
+<p><strong>Master Password</strong> — Choose a strong passphrase (12+ characters recommended). This password is <strong>never stored</strong> — it's used to derive encryption keys via Argon2id.</p>
+</li>
+<li>
+<p><strong>Security Profile</strong> — APM detects your system hardware and recommends a profile:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Profile</th>
+<th style="text-align: left;">Memory</th>
+<th style="text-align: left;">Iterations</th>
+<th style="text-align: left;">Parallelism</th>
+<th style="text-align: left;">Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Standard</strong></td>
+<td style="text-align: left;">64 MB</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">Most systems</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Hardened</strong></td>
+<td style="text-align: left;">256 MB</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">≥8 GB RAM, ≥4 cores</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Paranoid</strong></td>
+<td style="text-align: left;">512 MB</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">≥16 GB RAM, ≥8 cores</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Legacy</strong></td>
+<td style="text-align: left;">PBKDF2</td>
+<td style="text-align: left;">600k</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Compatibility only</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>Recovery Email</strong> (optional) — Enables account recovery if you forget your master password.</p>
+</li>
+</ol>
+<div class="admonition success">
+<p class="admonition-title">What just happened?</p>
+<p>APM created an encrypted vault file (default: <code>vault.dat</code> in the current directory). The file uses the <strong>Vault V4 format</strong> — an <code>APMVAULT</code> header followed by encrypted JSON, protected by AES-256-GCM and HMAC-SHA256.</p>
+</div>
+<hr />
+<h2 id="step-2-unlock-your-vault">Step 2: Unlock Your Vault<a class="headerlink" href="#step-2-unlock-your-vault" title="Permanent link">&para;</a></h2>
+<p>APM uses <strong>explicit sessions</strong> — the vault is encrypted at rest and must be unlocked before any sensitive operation:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pm<span class="w"> </span>unlock
+</span></code></pre></div>
+<p>You'll enter your master password and choose:</p>
+<ul>
+<li><strong>Session duration</strong> (default: 30 minutes)</li>
+<li><strong>Inactivity timeout</strong> (default: 10 minutes)</li>
+<li><strong>Read-only mode</strong> (optional — prevents writes)</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">How Sessions Work</p>
+<p><code>pm unlock</code> decrypts the vault in memory and creates a session file tied to your terminal. All sensitive commands check for an active session. The session auto-expires after the configured duration or inactivity timeout.</p>
+<p>Sessions are <strong>shell-scoped</strong> — each terminal can have its own independent session via the <code>APM_SESSION_ID</code> environment variable.</p>
+</div>
+<hr />
+<h2 id="step-3-add-your-first-entry">Step 3: Add Your First Entry<a class="headerlink" href="#step-3-add-your-first-entry" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pm<span class="w"> </span>add
+</span></code></pre></div>
+<p>APM presents an interactive menu of <strong>25+ secret types</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a> 1. Password          8. API Key         15. CI/CD Secret
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a> 2. TOTP              9. Token           16. Secure Note
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a> 3. Government ID    10. SSH Key         17. Recovery Codes
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a> 4. Medical Record   11. SSH Config      18. Certificate
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a> 5. Travel Info      12. Cloud Creds     19. Banking
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a> 6. Contact          13. Kubernetes      20. Document
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a> 7. Wi-Fi            14. Docker          21. Software License
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>                                         22. Legal Contract
+</span></code></pre></div>
+<p>Select a type and fill in the structured fields. For example, adding a password:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Type: 1 (Password)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Account: github.com
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Username: aarav
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Password: ********** (hidden input)
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Space: Work (optional)
+</span></code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Password Generation</p>
+<p>Use <code>pm gen</code> to generate a high-entropy password before adding it:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pm<span class="w"> </span>gen
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># Output: K$7mP!2qX#9nL@4vR  (copied to clipboard)</span>
+</span></code></pre></div>
+</div>
+<hr />
+<h2 id="step-4-search-and-retrieve-entries">Step 4: Search and Retrieve Entries<a class="headerlink" href="#step-4-search-and-retrieve-entries" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github
+</span></code></pre></div>
+<p>APM uses <strong>fuzzy search</strong> to find matching entries across all types. Results are displayed in an interactive browser where you can:</p>
+<ul>
+<li>Press <span class="keys"><kbd class="key-enter">Enter</kbd></span> to view full details</li>
+<li>Press <span class="keys"><kbd class="key-c">C</kbd></span> to copy the password to clipboard</li>
+<li>Press <span class="keys"><kbd class="key-e">E</kbd></span> to edit the entry</li>
+<li>Press <span class="keys"><kbd class="key-d">D</kbd></span> to delete the entry</li>
+<li>Press <span class="keys"><kbd class="key-q">Q</kbd></span> for quicklook (preview notes, photos)</li>
+<li>Press <span class="keys"><kbd class="key-m">M</kbd></span> to view metadata (created, last accessed, trust score)</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Safe by Default</p>
+<p>Sensitive fields like passwords are <strong>hidden by default</strong>. Use the <code>--show-pass</code> flag or press <span class="keys"><kbd class="key-s">S</kbd></span> in the interactive view to reveal them:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github<span class="w"> </span>--show-pass
+</span></code></pre></div>
+</div>
+<hr />
+<h2 id="step-5-set-up-totp-two-factor-authentication">Step 5: Set Up TOTP (Two-Factor Authentication)<a class="headerlink" href="#step-5-set-up-totp-two-factor-authentication" title="Permanent link">&para;</a></h2>
+<p>Add a TOTP entry with <code>pm add</code>, then access your 2FA codes:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Interactive TOTP list with live countdown</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pm<span class="w"> </span>totp
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Copy a specific code directly</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>pm<span class="w"> </span>totp<span class="w"> </span>github
+</span></code></pre></div>
+<p>The interactive TOTP view shows live codes with countdown timers and supports drag-to-reorder for your most-used accounts.</p>
+<hr />
+<h2 id="step-6-lock-your-vault">Step 6: Lock Your Vault<a class="headerlink" href="#step-6-lock-your-vault" title="Permanent link">&para;</a></h2>
+<p>When you're done working, lock the vault to wipe all decrypted data from memory:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pm<span class="w"> </span>lock
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Always lock your vault when stepping away. While sessions auto-expire, explicitly locking is the safest practice.</p>
+</div>
+<hr />
+<h2 id="step-7-set-up-cloud-sync-optional">Step 7: Set Up Cloud Sync (Optional)<a class="headerlink" href="#step-7-set-up-cloud-sync-optional" title="Permanent link">&para;</a></h2>
+<p>Sync your encrypted vault across devices using any supported provider:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Google Drive</label><label for="__tabbed_1_2">GitHub</label><label for="__tabbed_1_3">Dropbox</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>gdrive
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Opens browser for OAuth consent</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>github
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Enter your Personal Access Token and repo name</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>init<span class="w"> </span>dropbox
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Opens browser for OAuth consent</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
+<p>Then sync:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pm<span class="w"> </span>cloud<span class="w"> </span>sync
+</span></code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Your master password <strong>never leaves your machine</strong>. Only the encrypted vault blob is uploaded. Cloud providers cannot see your entries.</p>
+</div>
+<hr />
+<h2 id="step-8-enable-autofill-windows-only">Step 8: Enable Autofill (Windows Only)<a class="headerlink" href="#step-8-enable-autofill-windows-only" title="Permanent link">&para;</a></h2>
+<p>If you're on Windows, start the autofill daemon:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>pm<span class="w"> </span>autocomplete<span class="w"> </span><span class="nb">enable</span><span class="w">   </span><span class="c1"># Register autostart + start daemon</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>pm<span class="w"> </span>unlock<span class="w">                </span><span class="c1"># Unlock the daemon&#39;s vault state</span>
+</span></code></pre></div>
+<p>Now press <span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-shift">Shift</kbd><span>+</span><kbd class="key-l">L</kbd></span> on any login form and APM will detect the context and inject your credentials — no browser extension needed.</p>
+<hr />
+<h2 id="quick-reference-card">Quick Reference Card<a class="headerlink" href="#quick-reference-card" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Task</th>
+<th style="text-align: left;">Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Initialize vault</td>
+<td style="text-align: left;"><code>pm init</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Unlock vault</td>
+<td style="text-align: left;"><code>pm unlock</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Lock vault</td>
+<td style="text-align: left;"><code>pm lock</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Add an entry</td>
+<td style="text-align: left;"><code>pm add</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Search entries</td>
+<td style="text-align: left;"><code>pm get [query]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Edit an entry</td>
+<td style="text-align: left;"><code>pm edit [name]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Delete an entry</td>
+<td style="text-align: left;"><code>pm del [name]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Generate password</td>
+<td style="text-align: left;"><code>pm gen</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">View TOTP codes</td>
+<td style="text-align: left;"><code>pm totp</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Sync to cloud</td>
+<td style="text-align: left;"><code>pm cloud sync</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Check vault health</td>
+<td style="text-align: left;"><code>pm health</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">View trust scores</td>
+<td style="text-align: left;"><code>pm trust</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">View audit log</td>
+<td style="text-align: left;"><code>pm audit</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">System info</td>
+<td style="text-align: left;"><code>pm info</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Crypto info</td>
+<td style="text-align: left;"><code>pm cinfo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Self-update</td>
+<td style="text-align: left;"><code>pm update</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../features/">Features</a></strong> — Explore everything APM can do</li>
+<li><strong><a href="../../guides/vault-management/">Vault Management</a></strong> — Deep dive into entries, spaces, and vocabulary</li>
+<li><strong><a href="../../guides/cloud-sync/">Cloud Sync</a></strong> — Set up multi-provider synchronization</li>
+<li><strong><a href="../../guides/sessions/">Sessions</a></strong> — Understand ephemeral and delegated sessions</li>
+</ul>
 
 
 
@@ -1954,11 +2532,13 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
