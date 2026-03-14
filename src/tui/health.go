@@ -36,7 +36,7 @@ func RenderAudit(vault *src.Vault) string {
 	if len(vault.History) == 0 {
 		s += "No audit logs found.\n"
 	} else {
-		// Show last 15 logs
+
 		start := len(vault.History) - 15
 		if start < 0 {
 			start = 0

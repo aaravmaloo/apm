@@ -115,7 +115,7 @@ func ParseIgnoreConfig(content string) (IgnoreConfig, error) {
 			}
 			cfg.Misc[strings.ToLower(key)] = value
 		default:
-			// Unknown section is ignored for forward compatibility.
+
 		}
 	}
 	if err := scanner.Err(); err != nil {

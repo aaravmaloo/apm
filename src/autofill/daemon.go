@@ -116,7 +116,7 @@ func Run(opts RunOptions) error {
 	}
 
 	if err := daemon.systemEngine.Start(daemon.hotkey, daemon.handleHotkey); err != nil {
-		// Keep daemon operational even if global hotkey setup fails.
+
 		daemon.systemEngine = newSystemEngine()
 	}
 
@@ -400,8 +400,6 @@ func (d *Daemon) handleHotkey(ctx WindowContext) {
 		return
 	}
 
-	// Retry once with a fresh window snapshot. Some web OTP fields update focus
-	// asynchronously, so a second capture improves first-try reliability.
 	freshCtx, err := captureActiveWindowContext()
 	if err != nil {
 		return
@@ -418,8 +416,7 @@ func (d *Daemon) tryHandleHotkeyContext(requestContext RequestContext) bool {
 
 	resp, statusCode := d.resolveFill(req)
 	if statusCode == http.StatusOK && resp.Status == ResponseStatusMultiple && len(resp.Candidates) > 0 {
-		// Prefer the top ranked candidate for hotkey flows to avoid requiring
-		// manual re-trigger when several close matches exist.
+
 		req.SelectionID = resp.Candidates[0].ProfileID
 		resp, statusCode = d.resolveFill(req)
 	}
@@ -574,7 +571,6 @@ func contextSuggestsCredentialEntry(ctx RequestContext) bool {
 	focusedName := strings.ToLower(strings.TrimSpace(ctx.FocusedName))
 	signals := strings.TrimSpace(windowTitle + " " + focusedName)
 
-	// Suppress hints in common non-auth surfaces even if an account match exists.
 	if containsAny(signals, "inbox", "mailbox", "compose", "message list", "thread list", "chat", "channel", "timeline", "feed") &&
 		!containsAny(signals, "login", "log in", "sign in", "signin", "password", "otp", "2fa", "verification", "auth", "security code", "authenticator") {
 		return false

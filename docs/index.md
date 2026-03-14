@@ -11,6 +11,7 @@
 - **Multi-Cloud Sync** — Native support for Google Drive, GitHub, and Dropbox. Your vault is uploaded as an encrypted blob; providers never see plaintext.
 - **AI-Agent Integration** — Built-in MCP (Model Context Protocol) server lets AI assistants like Claude, Cursor, and Windsurf read and manage vault entries with permission-scoped, token-based access.
 - **Windows Autofill** — A local daemon that detects credential forms and injects keystrokes via hotkey — no browser extension required.
+- **Face ID Unlock (Optional)** — Biometric unlock powered by local face recognition. Available when built with the `faceid` build tag.
 - **Plugin Ecosystem** — Manifest-based plugins with 100+ granular permissions, a marketplace, and hook-based lifecycle integration.
 - **Team Edition** — Multi-user credential sharing with RBAC, departments, and approval workflows.
 

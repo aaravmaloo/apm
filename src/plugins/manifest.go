@@ -29,14 +29,13 @@ func (m *Manifest) Validate() error {
 	}
 
 	allowedPermissions := map[string]bool{
-		// Base
+
 		"vault.read":       true,
 		"vault.write":      true,
 		"file.storage":     true,
 		"crypto.use":       true,
 		"network.outbound": true,
 
-		// Vault
 		"vault.delete":  true,
 		"vault.import":  true,
 		"vault.export":  true,
@@ -47,7 +46,6 @@ func (m *Manifest) Validate() error {
 		"vault.unlock":  true,
 		"vault.sync":    true,
 
-		// Vault Items
 		"vault.item.create": true,
 		"vault.item.read":   true,
 		"vault.item.update": true,
@@ -56,7 +54,6 @@ func (m *Manifest) Validate() error {
 		"vault.item.copy":   true,
 		"vault.item.share":  true,
 
-		// Vault Fields
 		"vault.item.field.password.read":  true,
 		"vault.item.field.password.write": true,
 		"vault.item.field.username.read":  true,
@@ -74,7 +71,6 @@ func (m *Manifest) Validate() error {
 		"vault.item.field.custom.read":    true,
 		"vault.item.field.custom.write":   true,
 
-		// Network
 		"network.http":     true,
 		"network.https":    true,
 		"network.ftp":      true,
@@ -91,7 +87,6 @@ func (m *Manifest) Validate() error {
 		"network.api.rest": true,
 		"network.api.grpc": true,
 
-		// System
 		"system.read":            true,
 		"system.write":           true,
 		"system.exec":            true,
@@ -113,7 +108,6 @@ func (m *Manifest) Validate() error {
 		"system.bluetooth":       true,
 		"system.wifi":            true,
 
-		// Crypto
 		"crypto.hash":          true,
 		"crypto.random":        true,
 		"crypto.encrypt":       true,
@@ -127,7 +121,6 @@ func (m *Manifest) Validate() error {
 		"crypto.cert.generate": true,
 		"crypto.cert.validate": true,
 
-		// Plugin Management
 		"plugin.list":         true,
 		"plugin.install":      true,
 		"plugin.uninstall":    true,
@@ -136,7 +129,6 @@ func (m *Manifest) Validate() error {
 		"plugin.config.write": true,
 		"plugin.reload":       true,
 
-		// UI
 		"ui.prompt":          true,
 		"ui.alert":           true,
 		"ui.confirm":         true,
@@ -151,7 +143,6 @@ func (m *Manifest) Validate() error {
 		"ui.theme.set":       true,
 		"ui.font.set":        true,
 
-		// User
 		"user.read":          true,
 		"user.write":         true,
 		"user.auth":          true,
@@ -161,7 +152,6 @@ func (m *Manifest) Validate() error {
 		"user.profile.write": true,
 		"user.biometric":     true,
 
-		// Audit
 		"audit.read":       true,
 		"audit.write":      true,
 		"audit.log.read":   true,
@@ -169,24 +159,20 @@ func (m *Manifest) Validate() error {
 		"audit.alert.read": true,
 		"audit.report":     true,
 
-		// Database (Internal)
 		"db.read":         true,
 		"db.write":        true,
 		"db.query":        true,
 		"db.schema.read":  true,
 		"db.schema.write": true,
 
-		// AI / ML
 		"ai.model.load": true,
 		"ai.predict":    true,
 		"ai.train":      true,
 
-		// IoT / Hardware
 		"iot.scan":    true,
 		"iot.connect": true,
 		"iot.control": true,
 
-		// Cloud
 		"cloud.sync":         true,
 		"cloud.backup":       true,
 		"cloud.restore":      true,
@@ -198,7 +184,7 @@ func (m *Manifest) Validate() error {
 		if allowedPermissions[p] {
 			continue
 		}
-		// Allow wildcards (e.g. "vault.*")
+
 		if len(p) > 2 && p[len(p)-2:] == ".*" {
 			continue
 		}

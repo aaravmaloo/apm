@@ -186,6 +186,33 @@ A Windows-only autofill daemon that works **system-wide without a browser extens
 
 ---
 
+## :material-face-recognition: Face ID Unlock (Optional)
+
+Face ID provides biometric unlock using local face recognition. It is **optional** and only available when APM is built with the `faceid` build tag because it depends on native OpenCV and dlib libraries.
+
+```bash
+# Standard build (no Face ID)
+go build -o pm.exe
+
+# Face ID build
+go build -tags faceid -o pm.exe
+```
+
+Once built with `faceid`:
+
+```bash
+pm faceid enroll
+pm faceid status
+pm faceid test
+pm faceid remove
+```
+
+Notes:
+- Models are downloaded automatically to your user config directory under `apm/faceid/models`.
+- Enrollment metadata is stored next to the vault at `faceid/enrollment.json`.
+
+---
+
 ## :material-shield-check: Health, Trust & Audit
 
 ### Vault Health Dashboard

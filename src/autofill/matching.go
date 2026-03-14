@@ -130,8 +130,6 @@ func scoreSystemProfile(profile Profile, ctx RequestContext) (int, bool) {
 		score += 150
 	}
 
-	// If a profile has no explicit system match hints, keep it out of system
-	// autofill to avoid accidental cross-app typing.
 	if len(profile.ProcessNames) == 0 && len(profile.WindowContains) == 0 {
 		return 0, false
 	}

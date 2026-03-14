@@ -61,7 +61,6 @@ func SendAlert(vault *Vault, requiredLevel int, eventType, details string) {
 		return
 	}
 
-	// Default to level 1 for safety if not set
 	vLevel := vault.SecurityLevel
 	if vLevel < 1 {
 		vLevel = 1

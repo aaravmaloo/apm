@@ -152,8 +152,7 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 			continue
 		}
 		if typedEmail != "" {
-			// In typed-email mode we only autofill credentials tied to that exact
-			// username and skip standalone TOTP-only guesses.
+
 			continue
 		}
 
