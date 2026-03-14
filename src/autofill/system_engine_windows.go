@@ -136,8 +136,7 @@ func (w *windowsSystemEngine) pollHotkey() {
 }
 
 func (w *windowsSystemEngine) dispatchHotkey() {
-	// Wait for the hotkey combo to be released before handling callback so
-	// autofill typing doesn't run while Ctrl/Shift are still physically held.
+
 	deadline := time.Now().Add(500 * time.Millisecond)
 	for time.Now().Before(deadline) {
 		select {
