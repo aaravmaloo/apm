@@ -21,7 +21,6 @@ func AttemptUnlockWithSession(vaultPath string) (*UnlockResult, error) {
 		return nil, fmt.Errorf("vault not found")
 	}
 
-	// 1. Check Ephemeral Session
 	if ephID := strings.TrimSpace(os.Getenv("APM_EPHEMERAL_ID")); ephID != "" {
 		eph, err := ValidateEphemeralSession(ephID, os.Getpid(), strings.TrimSpace(os.Getenv("APM_EPHEMERAL_AGENT")))
 		if err == nil {
@@ -40,7 +39,6 @@ func AttemptUnlockWithSession(vaultPath string) (*UnlockResult, error) {
 		}
 	}
 
-	// 2. Check Standard Session
 	if session, err := GetSession(); err == nil {
 		data, err := LoadVault(vaultPath)
 		if err == nil {
@@ -87,7 +85,7 @@ func UnlockWithPassword(vaultPath, password string) (*UnlockResult, error) {
 	}
 
 	if localFailures >= 6 {
-		// Return decoy vault if too many failures
+
 		TrackFailure()
 		CreateSession(password, 1*time.Hour, true, 15*time.Minute)
 		return &UnlockResult{
@@ -101,7 +99,7 @@ func UnlockWithPassword(vaultPath, password string) (*UnlockResult, error) {
 	vault, err := DecryptVault(data, password, 1)
 	if err != nil {
 		TrackFailure()
-		// Try to send alert if possible
+
 		if rec, err := GetVaultRecoveryInfo(data); err == nil && rec.AlertsEnabled && rec.AlertEmail != "" {
 			tempVault := &Vault{
 				AlertEmail:    rec.AlertEmail,
@@ -113,7 +111,6 @@ func UnlockWithPassword(vaultPath, password string) (*UnlockResult, error) {
 		return nil, err
 	}
 
-	// Success
 	ClearFailures()
 	vault.FailedAttempts = 0
 	vault.EmergencyMode = false
