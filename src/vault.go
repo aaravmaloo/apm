@@ -350,7 +350,7 @@ type Vault struct {
 	Spaces                    []string                   `json:"spaces"`
 	ActivePolicy              Policy                     `json:"active_policy,omitempty"`
 	PluginPermissionOverrides map[string]map[string]bool `json:"plugin_permission_overrides,omitempty"`
-	NeedsRepair               bool                       `json:"-"` // Internal flag for silent self-healing
+	NeedsRepair               bool                       `json:"-"`
 
 	CurrentProfileParams   *CryptoProfile             `json:"-"`
 	RecoveryEmail          string                     `json:"recovery_email,omitempty"`
@@ -576,9 +576,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 			if offset+rLen <= len(data) {
 				var rec RecoveryData
 				if err := json.Unmarshal(data[offset:offset+rLen], &rec); err == nil {
-					// Pre-populate some fields from header if needed
-					// These might be overwritten by encrypted payload later,
-					// but it's good for consistency and potentially pre-unlock checks
+
 				}
 			}
 			offset += rLen
