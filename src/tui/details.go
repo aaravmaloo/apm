@@ -23,7 +23,7 @@ func RenderDetails(res src.SearchResult) string {
 	case "TOTP":
 		e := res.Data.(src.TOTPEntry)
 		b.WriteString(fmt.Sprintf("Account: %s\n", e.Account))
-		// We could generate code here if we want real-time updates
+
 	case "Token":
 		e := res.Data.(src.TokenEntry)
 		b.WriteString(fmt.Sprintf("Name: %s\n", e.Name))
