@@ -20,11 +20,17 @@ try {
     $release = Invoke-RestMethod -Uri $LatestApi -Headers $headers
 
     $asset = $release.assets |
-        Where-Object { $_.name -match "_windows_${arch}\.zip$" } |
+        Where-Object { $_.name -match "^stable-.*-windows_${arch}\\.exe\\.zip$" } |
         Select-Object -First 1
 
     if (-not $asset) {
-        throw "Could not find a Windows ($arch) release asset in $LatestApi"
+        $asset = $release.assets |
+            Where-Object { $_.name -match "_windows_${arch}\\.zip$" } |
+            Select-Object -First 1
+    }
+
+    if (-not $asset) {
+        throw "Could not find a Windows ($arch) release asset in $LatestApi (expected stable-v*-windows_${arch}.exe.zip)"
     }
 
     $zipPath = Join-Path $tempRoot "apm.zip"

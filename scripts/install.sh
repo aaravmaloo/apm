@@ -18,6 +18,7 @@ need_cmd uname
 need_cmd mktemp
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+os_asset=""
 arch_raw="$(uname -m)"
 
 case "$arch_raw" in
@@ -31,9 +32,11 @@ esac
 
 case "$os" in
   darwin)
+    os_asset="mac"
     install_root="/usr/local/opt/${APP_NAME}"
     ;;
   linux)
+    os_asset="linux"
     install_root="/opt/${APP_NAME}"
     ;;
   *)
@@ -60,7 +63,7 @@ asset_url="$(
     | tr -d '\r' \
     | grep -Eo '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]+"' \
     | sed -E 's/^"browser_download_url"[[:space:]]*:[[:space:]]*"//; s/"$//' \
-    | grep -E "_${os}_${arch}\\.tar\\.gz$" \
+    | grep -E "stable-[^/]+-${os_asset}_${arch}\\.tar\\.gz$" \
     | head -n 1
 )"
 
@@ -72,7 +75,7 @@ version="$(
 )"
 
 if [ -z "$asset_url" ]; then
-  echo "error: could not find a ${os}/${arch} release asset at ${LATEST_API}" >&2
+  echo "error: could not find a ${os_asset}/${arch} release asset at ${LATEST_API}" >&2
   exit 1
 fi
 
