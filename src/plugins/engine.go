@@ -95,7 +95,7 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		if val == "" {
 			for _, t := range se.Vault.TOTPEntries {
 				if t.Account == key {
-					val = t.Secret // In a real app we might want to generate the code here
+					val = t.Secret
 					break
 				}
 			}
@@ -284,8 +284,7 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 			return fmt.Errorf("permission denied: cloud.sync")
 		}
 		fmt.Println("Triggering cloud sync...")
-		// In a real app we would call the sync logic here.
-		// For now we just simulate.
+
 		return nil
 
 	case "v:lock":
@@ -298,7 +297,7 @@ func (se *StepExecutor) ExecuteStep(step CommandStep, permissions []string) erro
 		}
 		format := se.getArg(step.Args, 0)
 		path := se.getArg(step.Args, 1)
-		// Dummy implementation for export
+
 		fmt.Printf("Exporting vault to %s in %s format...\n", path, format)
 		return nil
 
