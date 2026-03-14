@@ -29,6 +29,7 @@ import (
 	src "github.com/aaravmaloo/apm/src"
 	"github.com/aaravmaloo/apm/src/autofill"
 	"github.com/aaravmaloo/apm/src/autofillcmd"
+	"github.com/aaravmaloo/apm/src/faceid"
 	"github.com/aaravmaloo/apm/src/plugins"
 	"github.com/aaravmaloo/apm/src/tui"
 
@@ -2326,8 +2327,8 @@ func main() {
 		}
 		defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-		fmt.Print("\x1b[?25l")       // Hide cursor
-		defer fmt.Print("\x1b[?25h") // Show cursor
+		fmt.Print("\x1b[?25l")
+		defer fmt.Print("\x1b[?25h")
 
 		perms := append([]string{}, plugin.Definition.Permissions...)
 		sort.Strings(perms)
@@ -3305,7 +3306,6 @@ func main() {
 				counts[ns]++
 			}
 
-			// Ensure default is always in the list for display purposes
 			spacesToList := vault.Spaces
 			hasDefault := false
 			for _, s := range spacesToList {
@@ -3315,7 +3315,7 @@ func main() {
 				}
 			}
 			if !hasDefault {
-				// Prepend default
+
 				spacesToList = append([]string{"default"}, spacesToList...)
 			}
 
@@ -3395,7 +3395,13 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd)
+	faceidCmd := faceid.BuildFaceIDCmd(vaultPath, readPassword, func() string {
+		if cfgDir, err := os.UserConfigDir(); err == nil {
+			return filepath.Join(cfgDir, "apm", "faceid", "models")
+		}
+		return filepath.Join(filepath.Dir(vaultPath), "faceid", "models")
+	})
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd, faceidCmd)
 	autofillCmd, _ := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
 		VaultPath:    &vaultPath,
 		ReadPassword: readPassword,
@@ -3617,7 +3623,6 @@ func main() {
 	}
 	rootCmd.AddCommand(tuiCmd)
 
-	// Register plugin commands as top-level commands (e.g. "pm hello").
 	registerDynamicPluginCommands := func() {
 		existingNames := make(map[string]struct{})
 		for _, registered := range rootCmd.Commands() {
@@ -4190,9 +4195,9 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 		if n == 1 {
 			ch := key[0]
 			switch ch {
-			case 19: // Ctrl+S
+			case 19:
 				return string(buffer), nil
-			case 27: // Esc
+			case 27:
 				return "", fmt.Errorf("note edit cancelled")
 			case 127, 8:
 				deleteBeforeCursor()
@@ -4248,9 +4253,9 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 				cursor--
 			}
 		case strings.Contains(seq, "\x1b[A"):
-			// Cursor up reserved for future line navigation.
+
 		case strings.Contains(seq, "\x1b[B"):
-			// Cursor down reserved for future line navigation.
+
 		}
 	}
 }
@@ -4487,12 +4492,45 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 			return pass, src.GetDecoyVault(), true, nil
 		}
 
-		fmt.Printf("Master Password (attempt %d/3): ", i+1)
-		pass, err := readPassword()
-		if err != nil {
-			return "", nil, false, err
+		var pass string
+		var err error
+
+		vaultDir := filepath.Dir(vaultPath)
+		enrollment, _ := faceid.LoadEnrollment(vaultDir)
+
+		if enrollment != nil {
+			fmt.Printf("Master Password (attempt %d/3): \n", i+1)
+			modelsDir := filepath.Join(vaultDir, "faceid", "models")
+
+			profile, _, err := src.GetVaultParams(data)
+			profileName := "standard"
+			if err == nil {
+				profileName = profile.Name
+			}
+
+			method, p, err := faceid.RaceUnlock(enrollment, modelsDir, profileName)
+			if err == nil && p != "" {
+				pass = p
+				if method == "face" {
+					fmt.Println("  Unlocked via Face ID")
+				}
+			} else {
+
+				fmt.Printf("  Fallback to password: ")
+				pass, err = readPassword()
+				if err != nil {
+					return "", nil, false, err
+				}
+				fmt.Println()
+			}
+		} else {
+			fmt.Printf("Master Password (attempt %d/3): ", i+1)
+			pass, err = readPassword()
+			if err != nil {
+				return "", nil, false, err
+			}
+			fmt.Println()
 		}
-		fmt.Println()
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 		if err == nil {
@@ -4518,7 +4556,6 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		src.LogAccess("FAIL")
 		src.TrackFailure()
 
-		// Attempt to get recovery info to find alert email if vault is locked
 		if rec, err := src.GetVaultRecoveryInfo(data); err == nil && rec.AlertsEnabled && rec.AlertEmail != "" {
 			tempVault := &src.Vault{
 				AlertEmail:    rec.AlertEmail,
