@@ -4690,7 +4690,21 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		fmt.Println("--------------------------------------------------")
 
 		displayLimit := 20
-		for i := 0; i < len(results) && i < displayLimit; i++ {
+		start := 0
+		if len(results) > displayLimit {
+			if selectedIndex >= displayLimit {
+				start = selectedIndex - displayLimit + 1
+			}
+			maxStart := len(results) - displayLimit
+			if start > maxStart {
+				start = maxStart
+			}
+		}
+		end := len(results)
+		if end > start+displayLimit {
+			end = start + displayLimit
+		}
+		for i := start; i < end; i++ {
 			r := results[i]
 			key := fmt.Sprintf("%s:%s", r.Type, r.Identifier)
 			prefix := "  "
