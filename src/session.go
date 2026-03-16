@@ -1,13 +1,21 @@
 package apm
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
+)
+
+const (
+	sessionEnvelopeVersion = 1
+	sessionKeyFileName     = "session.key"
 )
 
 type Session struct {
@@ -16,6 +24,11 @@ type Session struct {
 	Expiry            time.Time     `json:"expiry"`
 	LastUsed          time.Time     `json:"last_used"`
 	InactivityTimeout time.Duration `json:"inactivity_timeout"`
+}
+
+type sessionEnvelope struct {
+	Version    int    `json:"version"`
+	Ciphertext string `json:"ciphertext"`
 }
 
 func getSessionFile() string {
@@ -45,7 +58,7 @@ func CreateSession(password string, duration time.Duration, readonly bool, inact
 		InactivityTimeout: inactivity,
 	}
 
-	data, err := json.Marshal(session)
+	data, err := encryptSessionData(session)
 	if err != nil {
 		return err
 	}
@@ -92,9 +105,10 @@ func GetSession() (*Session, error) {
 		return nil, err
 	}
 
-	var session Session
-	if err := json.Unmarshal(data, &session); err != nil {
-		return nil, err
+	session, _, err := decryptSessionData(data)
+	if err != nil {
+		_ = os.Remove(sessionFile)
+		return nil, errors.New("no active session")
 	}
 
 	now := time.Now()
@@ -109,12 +123,92 @@ func GetSession() (*Session, error) {
 	}
 
 	session.LastUsed = now
-	updatedData, _ := json.Marshal(session)
-	_ = os.WriteFile(sessionFile, updatedData, 0600)
+	if updatedData, err := encryptSessionData(session); err == nil {
+		_ = os.WriteFile(sessionFile, updatedData, 0600)
+	}
 
 	return &session, nil
 }
 
 func KillSession() error {
 	return os.Remove(getSessionFile())
+}
+
+func encryptSessionData(session Session) ([]byte, error) {
+	plain, err := json.Marshal(session)
+	if err != nil {
+		return nil, err
+	}
+	key, err := getSessionKey()
+	if err != nil {
+		return nil, err
+	}
+	encrypted, err := EncryptData(plain, key)
+	if err != nil {
+		return nil, err
+	}
+	env := sessionEnvelope{
+		Version:    sessionEnvelopeVersion,
+		Ciphertext: base64.StdEncoding.EncodeToString(encrypted),
+	}
+	return json.Marshal(env)
+}
+
+func decryptSessionData(data []byte) (Session, bool, error) {
+	var env sessionEnvelope
+	if err := json.Unmarshal(data, &env); err == nil && env.Version == sessionEnvelopeVersion && strings.TrimSpace(env.Ciphertext) != "" {
+		blob, err := base64.StdEncoding.DecodeString(env.Ciphertext)
+		if err != nil {
+			return Session{}, true, err
+		}
+		key, err := getSessionKey()
+		if err != nil {
+			return Session{}, true, err
+		}
+		plain, err := DecryptData(blob, key)
+		if err != nil {
+			return Session{}, true, err
+		}
+		var session Session
+		if err := json.Unmarshal(plain, &session); err != nil {
+			return Session{}, true, err
+		}
+		return session, true, nil
+	}
+
+	var session Session
+	if err := json.Unmarshal(data, &session); err != nil {
+		return Session{}, false, err
+	}
+	return session, false, nil
+}
+
+func getSessionKey() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	apmDir := filepath.Join(configDir, "apm")
+	if err := os.MkdirAll(apmDir, 0700); err != nil {
+		return "", err
+	}
+	keyPath := filepath.Join(apmDir, sessionKeyFileName)
+	if raw, err := os.ReadFile(keyPath); err == nil {
+		key := strings.TrimSpace(string(raw))
+		if key != "" {
+			if decoded, err := base64.StdEncoding.DecodeString(key); err == nil && len(decoded) == 32 {
+				return key, nil
+			}
+		}
+	}
+
+	secret := make([]byte, 32)
+	if _, err := rand.Read(secret); err != nil {
+		return "", err
+	}
+	key := base64.StdEncoding.EncodeToString(secret)
+	if err := os.WriteFile(keyPath, []byte(key), 0600); err != nil {
+		return "", err
+	}
+	return key, nil
 }
