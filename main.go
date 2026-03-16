@@ -26,6 +26,7 @@ import (
 
 	"context"
 
+	injectcmd "github.com/aaravmaloo/apm/cmd"
 	src "github.com/aaravmaloo/apm/src"
 	"github.com/aaravmaloo/apm/src/autofill"
 	"github.com/aaravmaloo/apm/src/autofillcmd"
@@ -34,6 +35,7 @@ import (
 	"github.com/aaravmaloo/apm/src/tui"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/atotto/clipboard"
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
@@ -3401,7 +3403,7 @@ func main() {
 		}
 		return filepath.Join(filepath.Dir(vaultPath), "faceid", "models")
 	})
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd, faceidCmd)
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd, faceidCmd, injectcmd.BuildInjectCmd(src_unlockVault))
 	autofillCmd, _ := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
 		VaultPath:    &vaultPath,
 		ReadPassword: readPassword,
@@ -4042,6 +4044,7 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 	buffer := []rune(initial)
 	cursor := len(buffer)
 	dismissedSuggestion := ""
+	statusMsg := ""
 
 	type suggestionState struct {
 		prefix string
@@ -4122,8 +4125,11 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 	render := func(s suggestionState) {
 		fmt.Print("\033[H\033[2J")
 		fmt.Printf("APM Note Editor - %s\n", title)
-		fmt.Println("Ctrl+S save | Esc cancel | Right accept suggestion | Left dismiss suggestion")
+		fmt.Println("Ctrl+S save | Ctrl+V paste | Esc cancel | Right accept suggestion | Left dismiss suggestion")
 		fmt.Println("Auto: autocorrect, bracket pair (), alias replacement on space")
+		if statusMsg != "" {
+			fmt.Println(statusMsg)
+		}
 		fmt.Println("--------------------------------------------------------------")
 
 		ghostSuffix := ""
@@ -4197,11 +4203,27 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 			switch ch {
 			case 19:
 				return string(buffer), nil
+			case 22:
+				clip, err := clipboard.ReadAll()
+				if err != nil {
+					statusMsg = fmt.Sprintf("Clipboard read failed: %v", err)
+					break
+				}
+				if strings.TrimSpace(clip) == "" {
+					statusMsg = "Clipboard is empty"
+					break
+				}
+				clip = strings.ReplaceAll(clip, "\r\n", "\n")
+				clip = strings.ReplaceAll(clip, "\r", "\n")
+				insertRunes([]rune(clip))
+				dismissedSuggestion = ""
+				statusMsg = fmt.Sprintf("Pasted %d chars from clipboard", len([]rune(clip)))
 			case 27:
 				return "", fmt.Errorf("note edit cancelled")
 			case 127, 8:
 				deleteBeforeCursor()
 				dismissedSuggestion = ""
+				statusMsg = ""
 			case '\r', '\n':
 				if cursor < len(buffer) && isNoteWordRune(buffer[cursor]) {
 					for cursor < len(buffer) && isNoteWordRune(buffer[cursor]) {
@@ -4210,24 +4232,29 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 				}
 				insertRunes([]rune{'\n'})
 				dismissedSuggestion = ""
+				statusMsg = ""
 			case ' ':
 				applyWordTransforms()
 				insertRunes([]rune{' '})
 				dismissedSuggestion = ""
+				statusMsg = ""
 			case '(':
 				insertRunes([]rune{'(', ')'})
 				cursor--
 				dismissedSuggestion = ""
+				statusMsg = ""
 			case ')':
 				if cursor < len(buffer) && buffer[cursor] == ')' {
 					cursor++
 				} else {
 					insertRunes([]rune{')'})
 				}
+				statusMsg = ""
 			default:
 				if ch >= 32 && ch <= 126 {
 					insertRunes([]rune{rune(ch)})
 					dismissedSuggestion = ""
+					statusMsg = ""
 				}
 			}
 			continue
@@ -4245,6 +4272,7 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 			} else if cursor < len(buffer) {
 				cursor++
 			}
+			statusMsg = ""
 		case strings.Contains(seq, "\x1b[D"):
 			if s.word != "" {
 				_ = vault.RecordNoteSuggestionFeedback(s.word, false)
@@ -4252,9 +4280,12 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 			} else if cursor > 0 {
 				cursor--
 			}
+			statusMsg = ""
 		case strings.Contains(seq, "\x1b[A"):
+			statusMsg = ""
 
 		case strings.Contains(seq, "\x1b[B"):
+			statusMsg = ""
 
 		}
 	}
