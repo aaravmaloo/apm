@@ -148,8 +148,7 @@ pm session revoke ID # Revoke a specific session
 | :-------------- | :--------------: | :----------: | :----------: |
 | `pm get`        |        ✅         |      ✅       |      ✅       |
 | `pm add`        |        ✅         |      ❌       |      ❌       |
-| `pm edit`       |        ✅         |      ❌       |      ❌       |
-| `pm del`        |        ✅         |      ❌       |      ❌       |
+| `pm get` edit/delete actions | ✅ | ❌ | ❌ |
 | `pm totp`       |        ✅         |      ✅       |      ✅       |
 | `pm cloud sync` |        ✅         |      ❌       |      ❌       |
 | `pm health`     |        ✅         |      ✅       |      ✅       |

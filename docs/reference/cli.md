@@ -71,26 +71,6 @@ Returns an interactive browser with keyboard controls for viewing, copying, edit
 
 ---
 
-### `pm edit [name]`
-
-Edit an existing entry.
-
-```bash
-pm edit github
-```
-
-Opens an interactive editor showing current field values.
-
----
-
-### `pm del [name]`
-
-Delete an entry after confirmation.
-
-```bash
-pm del github
-```
-
 ---
 
 ### `pm gen`

@@ -210,8 +210,8 @@ Now press ++ctrl+shift+l++ on any login form and APM will detect the context and
 | Lock vault         | `pm lock`        |
 | Add an entry       | `pm add`         |
 | Search entries     | `pm get [query]` |
-| Edit an entry      | `pm edit [name]` |
-| Delete an entry    | `pm del [name]`  |
+| Edit an entry      | `pm get [query]` then press `e` |
+| Delete an entry    | `pm get [query]` then press `d` |
 | Generate password  | `pm gen`         |
 | View TOTP codes    | `pm totp`        |
 | Sync to cloud      | `pm cloud sync`  |

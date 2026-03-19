@@ -146,7 +146,7 @@ Revoked and expired sessions are automatically cleaned up.
 | :-------------- | :------------------------------------------- |
 | `pm add`        | Active write session (not read-only)         |
 | `pm get`        | Active session (any type)                    |
-| `pm edit/del`   | Active write session                         |
+| `pm get` edit/delete actions | Active write session              |
 | `pm cloud sync` | Active session                               |
 | Autofill daemon | Follows CLI session unlock/lock state        |
 | MCP server      | Requires active session or ephemeral session |

@@ -78,25 +78,20 @@ Or press ++s++ in the interactive view.
 
 ---
 
-## Editing Entries
+## Editing and Deleting Entries
+
+Entry mutation happens from the interactive `pm get` browser.
 
 ```bash
-pm edit [name]
+pm get github
 ```
 
-This opens an interactive editor for the matched entry. Each field is presented with its current value, and you can press ++enter++ to keep it or type a new value.
+From the results view:
 
-All edits are tracked by the **secret telemetry** system — recording who modified the entry, when, and via what context (user or AI).
+- Press ++e++ to edit the selected entry
+- Press ++d++ to delete the selected entry
 
----
-
-## Deleting Entries
-
-```bash
-pm del [name]
-```
-
-APM prompts for confirmation before permanent deletion. The deletion event is recorded in the audit log.
+Edits are tracked by the **secret telemetry** system, recording who modified the entry, when, and via what context. Deletions are recorded in the audit log.
 
 !!! warning
     Deletion is permanent. There is no trash or undo. If you need to preserve deleted entries, export your vault first.

@@ -56,7 +56,7 @@ The `password_policy` section enforces complexity requirements:
 | `require_numbers`   | `bool` | false   | Must contain digit             |
 | `require_symbols`   | `bool` | false   | Must contain special character |
 
-When a policy is active, APM validates new passwords during `pm add` and `pm edit`:
+When a policy is active, APM validates new passwords during `pm add` and during entry edits performed from the interactive `pm get` browser:
 
 - **Pass** — Password meets all requirements
 - **Fail** — APM shows which requirements are not met and asks for a new password
