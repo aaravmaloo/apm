@@ -77,6 +77,7 @@ func TestChangeProfileAndConfigureAlerts(t *testing.T) {
 	AddCustomProfile(CryptoProfile{
 		Name:        profileName,
 		KDF:         "argon2id",
+		Cipher:      CipherAESGCM,
 		Time:        1,
 		Memory:      8 * 1024,
 		Parallelism: 1,
