@@ -40,6 +40,14 @@ func RenderSettings(vault *src.Vault) string {
 	}
 	s += fmt.Sprintf("Active Space:   %s\n", vault.CurrentSpace)
 	s += fmt.Sprintf("Profile:        %s\n", vault.Profile)
+	if vault.CurrentProfileParams != nil {
+		switch src.NormalizeCipherName(vault.CurrentProfileParams.Cipher) {
+		case src.CipherXChaCha20Poly1305:
+			s += "Cipher:         XChaCha20-Poly1305\n"
+		default:
+			s += "Cipher:         AES-256-GCM\n"
+		}
+	}
 
 	s += "\n" + GrayStyle.Render("Settings are editable directly in this TUI.")
 
