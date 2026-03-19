@@ -1080,7 +1080,7 @@ func main() {
 			fmt.Printf("  Time:    %d\n", p.Time)
 			fmt.Printf("  Memory:  %d KB\n", p.Memory/1024)
 			fmt.Printf("  Threads: %d\n", p.Parallelism)
-			fmt.Println("Cipher:    AES-256-GCM")
+			fmt.Printf("Cipher:    %s\n", displayCipherName(p.Cipher))
 			fmt.Printf("  Nonce:   %d bytes\n", p.NonceLen)
 			fmt.Printf("  Salt:    %d bytes\n", p.SaltLen)
 			fmt.Println("Integrity: HMAC-SHA256 (Encrypt-then-MAC)")
@@ -2612,6 +2612,12 @@ func main() {
 				color.Green("Assigned profile: %s", selectedProfile)
 
 				profileParams := src.GetProfile(selectedProfile)
+				if !nonInteractive {
+					profileParams.Cipher = readCipherWithDefault("Encryption method", profileParams.Cipher)
+					if profileParams.Cipher == src.CipherXChaCha20Poly1305 {
+						profileParams.NonceLen = 24
+					}
+				}
 				vault = &src.Vault{
 					Profile:              selectedProfile,
 					CurrentProfileParams: &profileParams,
@@ -2986,12 +2992,14 @@ func main() {
 				}
 				fmt.Printf("%s %s  | KDF: %s, Time: %d, Memory: %d MB, Threads: %d, Salt: %d, Nonce: %d\n",
 					currentMark, name, p.KDF, p.Time, p.Memory/1024, p.Parallelism, p.SaltLen, p.NonceLen)
+				fmt.Printf("    Cipher: %s\n", displayCipherName(p.Cipher))
 			}
 
 			if vault.CurrentProfileParams != nil && !isBuiltinProfileName(current) {
 				p := *vault.CurrentProfileParams
 				fmt.Printf("* %s (custom active) | KDF: %s, Time: %d, Memory: %d MB, Threads: %d, Salt: %d, Nonce: %d\n",
 					p.Name, p.KDF, p.Time, p.Memory/1024, p.Parallelism, p.SaltLen, p.NonceLen)
+				fmt.Printf("    Cipher: %s\n", displayCipherName(p.Cipher))
 			}
 		},
 	}
@@ -3014,6 +3022,7 @@ func main() {
 			fmt.Printf("Memory:      %d MB\n", p.Memory/1024)
 			fmt.Printf("Time:        %d\n", p.Time)
 			fmt.Printf("Parallelism: %d\n", p.Parallelism)
+			fmt.Printf("Cipher:      %s\n", displayCipherName(p.Cipher))
 			fmt.Printf("SaltLen:     %d\n", p.SaltLen)
 			fmt.Printf("NonceLen:    %d\n", p.NonceLen)
 		},
@@ -3052,8 +3061,12 @@ func main() {
 			memMB := readUint32WithDefault("Memory (MB)", base.Memory/1024)
 			t := readUint32WithDefault("Time (iterations)", base.Time)
 			par := readUint8WithDefault("Parallelism (threads)", base.Parallelism)
+			cipherName := readCipherWithDefault("Encryption method", base.Cipher)
 			saltLen := readIntWithDefault("Salt length (bytes)", base.SaltLen)
 			nonceLen := readIntWithDefault("Nonce length (bytes)", base.NonceLen)
+			if cipherName == src.CipherXChaCha20Poly1305 {
+				nonceLen = 24
+			}
 
 			if memMB == 0 || t == 0 || par == 0 || saltLen <= 0 || nonceLen <= 0 {
 				color.Red("Invalid values provided. Memory/time/parallelism must be > 0 and lengths must be positive.")
@@ -3063,6 +3076,7 @@ func main() {
 			customProfile := src.CryptoProfile{
 				Name:        chosenName,
 				KDF:         "argon2id",
+				Cipher:      cipherName,
 				Memory:      memMB * 1024,
 				Time:        t,
 				Parallelism: par,
@@ -3152,20 +3166,33 @@ func main() {
 				_, _ = fmt.Sscanf(saltLenStr, "%d", &saltLen)
 			}
 
-			fmt.Println("\n[5] Nonce Length (IV Size)")
-			fmt.Println("Explanation: A 'Number used ONCE' for the AES-GCM encryption process.")
+			fmt.Println("\n[5] Encryption Method")
+			fmt.Println("Explanation: The AEAD cipher used for vault payload and DEK slot encryption.")
+			fmt.Println("Options: aes-gcm or xchacha20-poly1305.")
+			cipherName := readCipherWithDefault("Encryption method", src.CipherAESGCM)
+
+			fmt.Println("\n[6] Nonce Length (IV Size)")
+			fmt.Println("Explanation: A 'Number used ONCE' for the selected AEAD encryption process.")
 			fmt.Println("Security: Ensures that the same data encrypted twice looks different.")
-			fmt.Println("Tip: 12 bytes is standard for AES-GCM. 24 bytes is used for XChaCha20 (not yet supported) or special cases.")
-			fmt.Print("Nonce Length (Bytes) [12]: ")
+			fmt.Println("Tip: 12 bytes is standard for AES-GCM. XChaCha20-Poly1305 requires 24 bytes.")
+			defaultNonce := 12
+			if cipherName == src.CipherXChaCha20Poly1305 {
+				defaultNonce = 24
+			}
+			fmt.Printf("Nonce Length (Bytes) [%d]: ", defaultNonce)
 			nonceLenStr := readInput()
-			nonceLen := 12
+			nonceLen := defaultNonce
 			if nonceLenStr != "" {
 				_, _ = fmt.Sscanf(nonceLenStr, "%d", &nonceLen)
+			}
+			if cipherName == src.CipherXChaCha20Poly1305 {
+				nonceLen = 24
 			}
 
 			customProfile := src.CryptoProfile{
 				Name:        args[0],
 				KDF:         "argon2id",
+				Cipher:      cipherName,
 				Memory:      mem * 1024,
 				Time:        t,
 				Parallelism: p,
@@ -3911,7 +3938,7 @@ func chooseProfileForInit() string {
 
 func activeProfileForVault(vault *src.Vault) src.CryptoProfile {
 	if vault.CurrentProfileParams != nil {
-		p := *vault.CurrentProfileParams
+		p := src.NormalizeCryptoProfile(*vault.CurrentProfileParams)
 		if p.Name == "" {
 			if vault.Profile != "" {
 				p.Name = vault.Profile
@@ -3933,15 +3960,39 @@ func activeProfileForVault(vault *src.Vault) src.CryptoProfile {
 	if p.Name == "" {
 		p.Name = name
 	}
-	if p.KDF == "" {
-		p.KDF = "argon2id"
-	}
-	return p
+	return src.NormalizeCryptoProfile(p)
 }
 
 func isBuiltinProfileName(name string) bool {
 	_, ok := src.Profiles[strings.ToLower(strings.TrimSpace(name))]
 	return ok
+}
+
+func displayCipherName(cipherName string) string {
+	switch src.NormalizeCipherName(cipherName) {
+	case src.CipherXChaCha20Poly1305:
+		return "XChaCha20-Poly1305"
+	default:
+		return "AES-256-GCM"
+	}
+}
+
+func readCipherWithDefault(label, defaultVal string) string {
+	defaultVal = src.NormalizeCipherName(defaultVal)
+	if defaultVal == "" {
+		defaultVal = src.CipherAESGCM
+	}
+	fmt.Printf("%s [%s]: ", label, defaultVal)
+	raw := strings.TrimSpace(readInput())
+	if raw == "" {
+		return defaultVal
+	}
+	parsed := src.NormalizeCipherName(raw)
+	if parsed == "" {
+		color.Yellow("Unknown encryption method '%s'. Keeping %s.", raw, defaultVal)
+		return defaultVal
+	}
+	return parsed
 }
 
 func readUint32WithDefault(label string, defaultVal uint32) uint32 {
