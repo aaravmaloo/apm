@@ -10,9 +10,9 @@ APM packs a professional-grade feature set into a single CLI binary. This page p
 
 Your master password is **never stored** anywhere. APM derives three separate 32-byte keys (encryption, authentication, and validation) from your password using **Argon2id** — the winner of the Password Hashing Competition.
 
-### AES-256-GCM Encryption
+### Dual AEAD Encryption
 
-All vault data is encrypted with **AES-256 in Galois/Counter Mode**, providing both confidentiality and integrity. Each save generates a unique nonce to prevent replay attacks.
+Vaults can use **AES-256-GCM** or **XChaCha20-Poly1305** for authenticated encryption. The active cipher is stored in the profile metadata, and each save generates a fresh nonce for the selected method.
 
 ### Double-Layer Integrity
 
@@ -27,7 +27,7 @@ Beyond GCM's built-in authentication, APM adds an **HMAC-SHA256 signature** comp
 | **Paranoid** | 512 MB        | 6          | 4           | Servers (≥16 GB RAM)     |
 | **Legacy**   | PBKDF2        | 600,000    | 1           | Backward compatibility   |
 
-APM auto-detects your system's CPU cores and RAM to recommend the optimal profile during `pm init`.
+APM auto-detects your system's CPU cores and RAM to recommend the optimal profile during `pm setup`.
 
 ### Brute-Force Testing
 

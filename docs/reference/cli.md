@@ -6,23 +6,16 @@ Complete reference for every `pm` command. For flags and options, run `pm <comma
 
 ## Vault Lifecycle
 
-### `pm init`
+### `pm setup`
 
-Initialize a new encrypted vault file.
-
-```bash
-pm init
-```
-
-Prompts for master password, security profile, and optional recovery email. Creates `vault.dat` in the current directory.
-
-**Variant:**
+Run the guided setup flow for a new or existing vault.
 
 ```bash
-pm init all
+pm setup
+pm setup --non-interactive
 ```
 
-Initializes vault + cloud setup (all providers) in one flow.
+`pm setup` creates the vault directory structure, initializes a vault if none exists, recommends a profile based on detected hardware, asks for the encryption method for new vaults, then walks through spaces, plugins, and cloud sync.
 
 ---
 
@@ -343,6 +336,44 @@ Revoke an ephemeral session.
 
 ---
 
+## Shell Injection
+
+### `pm inject`
+
+Inject one or more vault entries into the current shell session as environment variables.
+
+```bash
+pm inject --inject github,aws-prod
+```
+
+If `--inject` is omitted, APM searches for a `.apminject` file from the current directory upward.
+
+Use shell evaluation so the exports apply to the current shell:
+
+```bash
+eval "$(pm inject --inject github)"
+```
+
+On PowerShell:
+
+```powershell
+pm inject --inject github | Invoke-Expression
+```
+
+### `pm inject kill`
+
+Remove the injected variables for the active inject session.
+
+```bash
+eval "$(pm inject kill)"
+```
+
+### `pm inject setup-shell`
+
+Install an `inject()` shell helper into the detected shell config so you can use `inject ...` directly without typing `eval` every time.
+
+---
+
 ## Authentication & Recovery
 
 ### `pm auth email [address]`
@@ -447,11 +478,21 @@ Toggle a specific permission.
 
 ### `pm profile`
 
-Interactive profile management for changing encryption parameters.
+Profile management namespace for changing encryption parameters.
+
+```bash
+pm profile list
+pm profile current
+pm profile set hardened
+pm profile edit
+pm profile create custom-x
+```
+
+Built-in profile changes use `pm profile set`. Custom tuning, including the encryption method, is available through `pm profile edit` and `pm profile create`.
 
 ### `pm cinfo`
 
-Display cryptographic information (profile, parameters, vault version).
+Display cryptographic information including profile, cipher, nonce size, and vault version.
 
 ---
 

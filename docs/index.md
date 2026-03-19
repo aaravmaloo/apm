@@ -6,7 +6,7 @@
 
 ## Why APM?
 
-- **Zero-Knowledge Architecture** — Your master password never leaves your machine. The vault is encrypted with Argon2id + AES-256-GCM and protected by HMAC-SHA256 integrity signatures.
+- **Zero-Knowledge Architecture** — Your master password never leaves your machine. The vault is encrypted with Argon2id plus an AEAD cipher (`AES-256-GCM` or `XChaCha20-Poly1305`) and protected by HMAC-SHA256 integrity signatures.
 - **25+ Secret Types** — Passwords, TOTP, API keys, SSH keys, certificates, banking, medical records, legal contracts, documents with file attachments, and more — each with a structured schema.
 - **Multi-Cloud Sync** — Native support for Google Drive, GitHub, and Dropbox. Your vault is uploaded as an encrypted blob; providers never see plaintext.
 - **AI-Agent Integration** — Built-in MCP (Model Context Protocol) server lets AI assistants like Claude, Cursor, and Windsurf read and manage vault entries with permission-scoped, token-based access.
@@ -47,8 +47,8 @@ For full installation details, see [Installation](getting-started/installation.m
 ## Quickstart
 
 ```bash
-# 1. Initialize a new vault (choose a security profile)
-pm init
+# 1. Run the guided setup flow
+pm setup
 
 # 2. Unlock the vault to start a session
 pm unlock
@@ -96,7 +96,7 @@ Practical how-to guides for day-to-day tasks:
 Deep technical explanations of how APM works:
 
 - [Architecture](concepts/architecture.md) — The four-layer design
-- [Encryption](concepts/encryption.md) — Argon2id, AES-256-GCM, HMAC-SHA256
+- [Encryption](concepts/encryption.md) — Argon2id, AES-GCM, XChaCha20-Poly1305, HMAC-SHA256
 - [Vault format](concepts/vault-format.md) — The V4 binary format specification
 - [Secret types](concepts/secret-types.md) — All 25+ structured entry types
 - [Security profiles](concepts/security-profiles.md) — Standard, Hardened, Paranoid, Legacy

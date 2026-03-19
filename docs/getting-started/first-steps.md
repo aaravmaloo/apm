@@ -4,12 +4,12 @@ This walkthrough takes you from a fresh install to a fully operational encrypted
 
 ---
 
-## Step 1: Initialize Your Vault
+## Step 1: Run Setup
 
-Run the `init` command to create a new encrypted vault file:
+Run the `setup` command to create and configure your vault:
 
 ```bash
-pm init
+pm setup
 ```
 
 You'll be prompted for:
@@ -25,10 +25,17 @@ You'll be prompted for:
     | **Paranoid** | 512 MB | 6          | 4           | ≥16 GB RAM, ≥8 cores |
     | **Legacy**   | PBKDF2 | 600k       | 1           | Compatibility only   |
 
-3. **Recovery Email** (optional) — Enables account recovery if you forget your master password.
+3. **Encryption Method** — For new vaults, APM asks which AEAD cipher to use:
+
+    | Method                  | Notes                                           |
+    | :---------------------- | :---------------------------------------------- |
+    | **aes-gcm**             | Default compatibility-oriented choice           |
+    | **xchacha20-poly1305**  | Requires a 24-byte nonce; selectable in setup   |
+
+4. **Optional setup tasks** — Spaces, plugins, and cloud sync can all be configured in the same guided flow.
 
 !!! success "What just happened?"
-    APM created an encrypted vault file (default: `vault.dat` in the current directory). The file uses the **Vault V4 format** — an `APMVAULT` header followed by encrypted JSON, protected by AES-256-GCM and HMAC-SHA256.
+    APM created an encrypted vault file (default: `vault.dat` beside the binary unless `APM_VAULT_PATH` is set). The file uses the **Vault V4 format** — an `APMVAULT` header followed by encrypted JSON, protected by the selected AEAD cipher and HMAC-SHA256.
 
 ---
 
@@ -198,7 +205,7 @@ Now press ++ctrl+shift+l++ on any login form and APM will detect the context and
 
 | Task               | Command          |
 | :----------------- | :--------------- |
-| Initialize vault   | `pm init`        |
+| Run setup          | `pm setup`       |
 | Unlock vault       | `pm unlock`      |
 | Lock vault         | `pm lock`        |
 | Add an entry       | `pm add`         |

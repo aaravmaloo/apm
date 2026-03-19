@@ -114,7 +114,7 @@ Shows the organizational vault health status, including security scoring and vul
 The Team Edition uses the same cryptographic primitives as the personal edition:
 
 - **Argon2id** for key derivation
-- **AES-256-GCM** for encryption
+- **AEAD vault encryption** aligned with the personal edition's cryptographic model
 - **HMAC-SHA256** for integrity verification
 
 ### Key Differences

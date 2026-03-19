@@ -50,6 +50,7 @@ pm cinfo
 This shows:
 
 - Active encryption profile
+- Active cipher
 - Argon2id parameters (memory, time, parallelism)
 - Nonce size
 - Vault format version

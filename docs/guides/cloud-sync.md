@@ -128,7 +128,7 @@ This ensures no identifying information is stored without your permission.
 !!! success "What Is Uploaded"
     The cloud receives an **encrypted binary blob** — the same `APMVAULT` format stored on disk. It includes:
 
-    - Encrypted vault data (AES-256-GCM)
+    - Encrypted vault data (using the vault's configured AEAD cipher)
     - HMAC-SHA256 integrity signature
     - Salt and profile metadata (in the unencrypted header)
 

@@ -19,7 +19,7 @@ APM is a professional-grade, zero-knowledge command-line interface (CLI) for man
 - [Table of Contents](#table-of-contents)
 - [1. Security Architecture](#1-security-architecture)
   - [1.1 Key Derivation: Argon2id](#11-key-derivation-argon2id)
-  - [1.2 Authenticated Encryption: AES-256-GCM](#12-authenticated-encryption-aes-256-gcm)
+  - [1.2 Authenticated Encryption: AES-256-GCM and XChaCha20-Poly1305](#12-authenticated-encryption-aes-256-gcm-and-xchacha20-poly1305)
   - [1.3 Secure Recovery \& Identity Verification](#13-secure-recovery--identity-verification)
   - [1.4 Threat Model Summary](#14-threat-model-summary)
 - [2. Core Technical Specifications](#2-core-technical-specifications)
@@ -58,9 +58,9 @@ The master password is never stored. Keys are derived using **Argon2id**, the wi
 - **Memory-Hard**: Resistant to GPU/ASIC cracking by requiring significant RAM (Default: 64MB, configurable up to 512MB).
 - **Three-Layer Derivation**: Derives 96 bytes of key material, split into distinct 32-byte keys for Encryption, Authentication, and internal Validation.
 
-### 1.2 Authenticated Encryption: AES-256-GCM
-Confidentiality and integrity are provided by **AES-256** in **GCM (Galois/Counter Mode)**.
-- **Authenticated Encryption**: GCM ensures data hasn't been modified.
+### 1.2 Authenticated Encryption: AES-256-GCM and XChaCha20-Poly1305
+Confidentiality and integrity are provided by a profile-selected AEAD cipher: **AES-256-GCM** or **XChaCha20-Poly1305**.
+- **Authenticated Encryption**: The active AEAD ensures data hasn't been modified.
 - **Double-Layer Integrity**: Extra protection with an HMAC-SHA256 signature over the entire vault file, derived from the master password.
 - **Vault V4 Format**: Includes an unencrypted (but signed) metadata header for identity verification and recovery coordination.
 - **Nonce Integrity**: Every save operation generates a unique nonce to prevent replay attacks and pattern analysis.
@@ -89,7 +89,7 @@ APM features a robust recovery engine designed for zero-knowledge environments.
 ## 2. Core Technical Specifications
 
 ### 2.1 Performance Profiles
-Users can select from pre-defined encryption profiles via `pm profile set` to balance security and latency.
+Users can select from pre-defined encryption profiles via `pm profile set` to balance security and latency, and custom profiles can also change the encryption method.
 
 | Profile  | Memory     | Time | Parallelism | Nonce Size |
 | -------- | ---------- | ---- | ----------- | ---------- |
@@ -108,7 +108,7 @@ The personal edition focuses on local-first security and privacy with native mul
 
 | Command     | Category   | Description                                                            |
 | :---------- | :--------- | :--------------------------------------------------------------------- |
-| `init`      | Lifecycle  | Initializes a new zero-knowledge encrypted vault.                      |
+| `setup`     | Lifecycle  | Guided setup for vault creation, profile selection, spaces, plugins, and cloud sync. |
 | `add`       | Mutation   | Interactive menu to store any of the 22 supported secret types.        |
 | `get [q]`   | Retrieval  | Fuzzy search and display entry details. Use `--show-pass` for secrets. |
 | `edit [n]`  | Mutation   | Interactive modification of existing entry metadata.                   |
@@ -252,7 +252,7 @@ Install layout used by the scripts:
 git clone https://github.com/aaravmaloo/apm.git
 cd apm
 go build -o pm.exe main.go
-./pm.exe init
+./pm.exe setup
 ```
 
 ### 9.3 Build Requirements

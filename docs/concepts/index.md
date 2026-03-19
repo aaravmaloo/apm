@@ -18,7 +18,7 @@ The four-layer design of APM: CLI layer, domain layer, integration layer, and ex
 
 ### [Encryption](encryption.md)
 
-Argon2id key derivation, AES-256-GCM encryption, HMAC-SHA256 integrity, nonce handling, and the DEK recovery slot.
+Argon2id key derivation, AES-GCM and XChaCha20-Poly1305 support, HMAC-SHA256 integrity, nonce handling, and the DEK recovery slot.
 
 </div>
 

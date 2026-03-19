@@ -101,7 +101,7 @@ This ensures no identifying information is stored without explicit user approval
 The uploaded blob is the **exact same APMVAULT format** stored on disk:
 
 - `APMVAULT` header (magic, version, profile, salt, validator)
-- AES-256-GCM encrypted payload
+- AEAD-encrypted payload (`aes-gcm` or `xchacha20-poly1305`, depending on the vault profile)
 - HMAC-SHA256 integrity signature
 
 ### What's Not Uploaded

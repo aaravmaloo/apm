@@ -18,7 +18,7 @@ The 96-byte output is split into three distinct keys:
 
 | Bytes | Key Name           | Purpose                                        |
 | :---- | :----------------- | :--------------------------------------------- |
-| 0–31  | **Encryption Key** | AES-256-GCM encryption/decryption              |
+| 0–31  | **Encryption Key** | Vault payload and DEK-slot AEAD encryption     |
 | 32–63 | **Auth Key**       | HMAC-SHA256 integrity verification             |
 | 64–95 | **Validator Key**  | Password correctness check before full decrypt |
 
@@ -26,7 +26,7 @@ The 96-byte output is split into three distinct keys:
 
 A single Argon2id invocation produces all three keys, but each serves a distinct security purpose:
 
-1. **Encryption Key** — Used only for AES-GCM encrypt/decrypt. Never exposed or stored.
+1. **Encryption Key** — Used only for the selected AEAD encrypt/decrypt path. Never exposed or stored.
 2. **Auth Key** — Used to compute an HMAC signature over vault metadata. Verifies that the vault hasn't been tampered with before attempting decryption.
 3. **Validator Key** — A hash of this key is stored in the vault header. APM checks it immediately after key derivation to confirm the correct password was entered, before attempting the expensive decryption step.
 
@@ -35,8 +35,8 @@ A single Argon2id invocation produces all three keys, but each serves a distinct
 | Profile      | Memory Cost | Time Cost | Parallelism | Salt Size |
 | :----------- | :---------- | :-------- | :---------- | :-------- |
 | **Standard** | 64 MB       | 3         | 2           | 16 bytes  |
-| **Hardened** | 256 MB      | 5         | 4           | 16 bytes  |
-| **Paranoid** | 512 MB      | 6         | 4           | 16 bytes  |
+| **Hardened** | 256 MB      | 5         | 4           | 32 bytes  |
+| **Paranoid** | 512 MB      | 6         | 4           | 32 bytes  |
 | **Legacy**   | PBKDF2      | 600,000   | 1           | 16 bytes  |
 
 Each profile makes a deliberate trade-off between performance and brute-force resistance:
@@ -50,15 +50,27 @@ Each profile makes a deliberate trade-off between performance and brute-force re
 
 ## Encryption
 
+### AEAD Cipher Selection
+
+APM encrypts the serialized vault JSON with an AEAD cipher selected by the active profile. Built-in profiles currently default to `aes-gcm`, and custom profiles can switch to `xchacha20-poly1305`.
+
 ### AES-256-GCM
 
-APM encrypts the serialized vault JSON with **AES-256 in Galois/Counter Mode**:
+`aes-gcm` is the default compatibility path:
 
 ```
 encryption_key + nonce + plaintext_json → AES-256-GCM → ciphertext
 ```
 
-GCM provides:
+### XChaCha20-Poly1305
+
+`xchacha20-poly1305` is also supported for vault payloads and DEK slots:
+
+```
+encryption_key + nonce(24 bytes) + plaintext_json → XChaCha20-Poly1305 → ciphertext
+```
+
+Both modes provide:
 
 - **Confidentiality** — The ciphertext reveals nothing about the plaintext
 - **Integrity** — Built-in authentication tag detects any modification
@@ -66,10 +78,10 @@ GCM provides:
 
 ### Nonce Handling
 
-A fresh **random nonce** is generated for every save operation. The nonce is prepended to the ciphertext and is not secret — its purpose is to ensure that encrypting the same vault twice produces different ciphertext.
+A fresh **random nonce** is generated for every save operation. The nonce is stored in the vault header area and is not secret — its purpose is to ensure that encrypting the same vault twice produces different ciphertext.
 
 !!! info "Nonce Reuse Protection"
-    AES-GCM's security guarantee depends on never reusing a nonce with the same key. Since APM generates a **new salt** (and thus new keys) on every save, nonce reuse is inherently prevented — even if the random nonce generator produced the same value, the key would be different.
+    APM rotates both the salt and the nonce on every save. That means the derived keys change each time, and the selected AEAD also gets a fresh nonce for the new ciphertext.
 
 ---
 
@@ -77,9 +89,9 @@ A fresh **random nonce** is generated for every save operation. The nonce is pre
 
 APM provides **two independent integrity checks**:
 
-### Layer 1: GCM Authentication Tag
+### Layer 1: AEAD Authentication Tag
 
-AES-GCM includes a 16-byte authentication tag that's verified during decryption. If any byte of the ciphertext is modified, decryption fails immediately.
+Both supported AEAD modes include an authentication tag that's verified during decryption. If any byte of the ciphertext is modified, decryption fails immediately.
 
 ### Layer 2: HMAC-SHA256 Signature
 
@@ -102,7 +114,7 @@ Before decrypting the vault, APM performs a **fast password check**:
 
 1. Derive the validator key (bytes 64–95 of Argon2id output)
 2. Hash the validator key with SHA-256
-3. Compare against the stored validator hash in the vault header
+3. Compare against the stored validator bytes in the vault header
 
 This catches wrong passwords in milliseconds rather than waiting for a full GCM decryption failure. It's a UX optimization — not a security boundary (GCM still validates independently).
 
@@ -151,7 +163,7 @@ graph TD
     KDF --> AK[Auth Key — 32 bytes]
     KDF --> VK[Validator Key — 32 bytes]
 
-    EK --> GCM[AES-256-GCM Encrypt/Decrypt]
+    EK --> GCM[AEAD Encrypt/Decrypt]
     AK --> HMAC[HMAC-SHA256 Verify/Sign]
     VK --> VALID[Password Validation Check]
 

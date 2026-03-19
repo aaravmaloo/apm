@@ -14,7 +14,7 @@ APM Team Edition (`pm-team`) extends the personal password manager for organizat
 
 ## Overview
 
-The Team Edition shares the same cryptographic foundation as the personal edition (Argon2id + AES-256-GCM + HMAC-SHA256) but adds an organizational layer:
+The Team Edition shares the same cryptographic foundation as the personal edition (Argon2id + AEAD vault encryption + HMAC-SHA256) but adds an organizational layer:
 
 | Feature          | Personal (`pm`)   | Team (`pm-team`)             |
 | :--------------- | :---------------- | :--------------------------- |

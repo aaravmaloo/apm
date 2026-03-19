@@ -164,7 +164,7 @@ sequenceDiagram
     Vault->>Vault: Derive 96 bytes via Argon2id(password, salt)
     Note over Vault: key[0:32] = encryption key<br/>key[32:64] = auth key<br/>key[64:96] = validator
     Vault->>Vault: Verify HMAC-SHA256(auth_key, metadata)
-    Vault->>Vault: Decrypt AES-256-GCM(enc_key, ciphertext)
+    Vault->>Vault: Decrypt AEAD(enc_key, ciphertext)
     Vault->>Vault: Verify validator matches stored validator
     Vault-->>CLI: Decrypted Vault struct
     CLI->>Session: Create session file
@@ -176,7 +176,7 @@ sequenceDiagram
     CLI->>Vault: Generate new salt
     Vault->>Vault: Derive keys from password + new salt
     Vault->>Vault: Serialize vault to JSON
-    Vault->>Vault: Encrypt with AES-256-GCM(enc_key, json)
+    Vault->>Vault: Encrypt with AEAD(enc_key, json)
     Vault->>Vault: Compute HMAC-SHA256(auth_key, metadata)
     Vault->>Vault: Write header + ciphertext + HMAC to disk
     Vault-->>CLI: Save complete

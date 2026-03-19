@@ -71,8 +71,8 @@ go build -o pm main.go
 # Verify the build
 ./pm info
 
-# Initialize your first vault
-./pm init
+# Run the guided setup flow
+./pm setup
 ```
 
 !!! tip
@@ -144,4 +144,4 @@ pm update --force
 
 ## Next Steps
 
-Once installed, proceed to [First Steps](first-steps.md) to initialize your vault and start managing secrets.
+Once installed, proceed to [First Steps](first-steps.md) to run setup and start managing secrets.

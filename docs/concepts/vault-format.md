@@ -19,47 +19,62 @@ This 8-byte signature identifies the file as an APM vault and enables format det
 ## V4 Binary Layout
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ Offset  │ Size     │ Field                           │
-├──────────────────────────────────────────────────────┤
-│ 0       │ 8 bytes  │ Magic: "APMVAULT"               │
-│ 8       │ 1 byte   │ Version: 0x04                   │
-│ 9       │ 1 byte   │ Profile ID (0-3)                │
-│ 10      │ 16 bytes │ Argon2 Salt                     │
-│ 26      │ 32 bytes │ Validator Hash (SHA-256)         │
-│ 58      │ N bytes  │ Encrypted Payload (AES-GCM)     │
-│ 58+N    │ 32 bytes │ HMAC-SHA256 Signature            │
-└──────────────────────────────────────────────────────┘
+APMVAULT
+version (1 byte)
+profile_len (2 bytes)
+profile_json (variable)
+recovery_len (2 bytes)
+recovery_json (variable)
+salt (profile-defined length)
+validator (32 bytes)
+nonce (profile-defined length)
+master_slot (32 bytes + AEAD tag)
+ciphertext (variable)
+hmac_sha256 (32 bytes)
 ```
 
 ### Header Fields
 
-| Field              | Size     | Description                                                            |
-| :----------------- | :------- | :--------------------------------------------------------------------- |
-| **Magic**          | 8 bytes  | Fixed `APMVAULT` ASCII string                                          |
-| **Version**        | 1 byte   | Format version (currently `4`)                                         |
-| **Profile ID**     | 1 byte   | Security profile: `0`=Standard, `1`=Hardened, `2`=Paranoid, `3`=Legacy |
-| **Salt**           | 16 bytes | Random salt for Argon2id key derivation                                |
-| **Validator Hash** | 32 bytes | SHA-256 hash of the validator key (for password check)                 |
+| Field             | Size       | Description                                                                 |
+| :---------------- | :--------- | :-------------------------------------------------------------------------- |
+| **Magic**         | 8 bytes    | Fixed `APMVAULT` ASCII string                                               |
+| **Version**       | 1 byte     | Format version (currently `4`)                                              |
+| **Profile JSON**  | Variable   | Serialized `CryptoProfile`, including KDF, salt length, nonce length, cipher |
+| **Recovery JSON** | Variable   | Unencrypted recovery metadata used for recovery and alert coordination       |
+| **Salt**          | Variable   | Random salt for key derivation, sized by the active profile                 |
+| **Validator**     | 32 bytes   | Validator bytes used for fast wrong-password detection                      |
+| **Nonce**         | Variable   | AEAD nonce for the vault payload                                            |
+| **Master Slot**   | 48 bytes   | Encrypted DEK slot for V4 vaults (32-byte DEK + AEAD tag)                   |
+| **Ciphertext**    | Variable   | AEAD-encrypted vault payload                                                |
+| **HMAC**          | 32 bytes   | HMAC-SHA256 over the entire unsigned payload                                |
+
+### Profile Metadata
+
+The profile block is JSON, not a numeric profile ID. That allows APM to persist:
+
+- KDF selection
+- Time, memory, and parallelism
+- Salt length
+- Nonce length
+- Encryption method (`aes-gcm` or `xchacha20-poly1305`)
+
+Older vaults that do not store a cipher are treated as `aes-gcm` when loaded.
 
 ### Encrypted Payload
 
-The payload starts at offset 58 and contains:
-
-```
-nonce (12 bytes) + ciphertext (variable) + GCM tag (16 bytes)
-```
-
-The **nonce** is prepended to the ciphertext. AES-256-GCM's authentication tag is appended by the Go `crypto/aes` library automatically.
+The payload uses the AEAD defined by the profile metadata. The nonce is stored separately before the master slot and ciphertext.
 
 ### HMAC Signature
 
 The final 32 bytes are an **HMAC-SHA256 signature** computed using the authentication key over:
 
 - Version byte
-- Profile ID byte
+- Profile JSON block
+- Recovery metadata block
 - Salt
-- Validator hash
+- Validator bytes
+- Nonce
+- Master slot
 - Entire encrypted payload
 
 This provides **pre-decryption tamper detection**.
@@ -136,8 +151,8 @@ The decrypted JSON payload contains the full `Vault` struct:
 | :------ | :------------------------------------------------------------------------- |
 | V1      | Simple AES-CBC encryption                                                  |
 | V2      | Added HMAC integrity                                                       |
-| V3      | Migrated to AES-GCM, added Argon2id profiles                               |
-| **V4**  | Added `APMVAULT` magic, validator hash, recovery metadata, new entry types |
+| V3      | Migrated to AES-GCM, added Argon2id profiles                                |
+| **V4**  | Added `APMVAULT` magic, JSON profile metadata, recovery metadata, DEK slot  |
 
 ---
 

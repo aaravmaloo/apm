@@ -26,11 +26,15 @@ Practical how-to guides for every major APM workflow. Each guide is task-oriente
 
 - **[Generating TOTP Codes](totp.md)** — 2FA management, interactive TOTP list, ordering, and autofill linking
 
+- **[Injecting Secrets Into Your Shell](inject.md)** — Using `pm inject`, `.apminject`, session teardown, and shell helpers
+
 ---
 
 ## Platform Integration
 
 - **[Autofill on Windows](../autofill_windows.md)** — The autofill daemon, hotkey configuration, context detection, and fill sequences
+
+- **[Face ID](faceid.md)** — Building with `faceid`, enrolling, testing, and fallback behavior
 
 - **[MCP Integration](mcp-integration.md)** — Connecting AI assistants to your vault via the Model Context Protocol server
 

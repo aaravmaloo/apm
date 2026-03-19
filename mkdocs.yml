@@ -90,6 +90,7 @@ nav:
     - Cloud synchronization: guides/cloud-sync.md
     - Using .apmignore: guides/apmignore.md
     - Autofill on Windows: autofill_windows.md
+    - Injecting secrets into your shell: guides/inject.md
     - Face ID: guides/faceid.md
     - Generating TOTP codes: guides/totp.md
     - Managing sessions: guides/sessions.md
