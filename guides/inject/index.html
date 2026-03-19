@@ -12,13 +12,13 @@
         <meta name="author" content="Aarav Maloo">
       
       
-        <link rel="canonical" href="https://aaravmaloo.github.io/apm/guides/vault-management/">
+        <link rel="canonical" href="https://aaravmaloo.github.io/apm/guides/inject/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../../autofill_windows/">
       
       
-        <link rel="next" href="../cloud-sync/">
+        <link rel="next" href="../faceid/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Managing your vault - APM Documentation</title>
+        <title>Injecting secrets into your shell - APM Documentation</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#managing-your-vault" class="md-skip">
+        <a href="#injecting-secrets-into-your-shell" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Managing your vault
+              Injecting secrets into your shell
             
           </span>
         </div>
@@ -761,37 +761,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Managing your vault
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../vault-management/" class="md-nav__link">
         
   
   
@@ -807,331 +780,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#adding-entries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding Entries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding Entries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#interactive-add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Interactive Add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adding-to-a-specific-space" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding to a Specific Space
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#field-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Field Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#searching-and-retrieving-entries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Searching and Retrieving Entries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Searching and Retrieving Entries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fuzzy-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fuzzy Search
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#interactive-browser" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Interactive Browser
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#clipboard-expiry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Clipboard Expiry
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#safe-display" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Safe Display
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#editing-and-deleting-entries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Editing and Deleting Entries
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#organizing-with-spaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Organizing with Spaces
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Organizing with Spaces">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#creating-and-managing-spaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating and Managing Spaces
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-spaces-affect-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Spaces Affect Operations
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#generating-passwords" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generating Passwords
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes-and-the-vocabulary-engine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes and the Vocabulary Engine
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Notes and the Vocabulary Engine">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#writing-notes-with-autocomplete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Writing Notes with Autocomplete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#managing-the-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Managing the Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-vocabulary-storage-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Vocabulary Storage Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vault-health-and-trust" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vault Health and Trust
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Vault Health and Trust">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#health-dashboard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Health Dashboard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trust-scores" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trust Scores
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#audit-log" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Audit Log
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cryptographic-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cryptographic Information
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1225,10 +873,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../inject/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Injecting secrets into your shell
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1244,6 +919,264 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bash-zsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bash / Zsh
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fish
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#powershell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PowerShell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selecting-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting Entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apminject-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .apminject Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=".apminject Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simple-list-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simple List Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrapped-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wrapped Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-variable-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Variable Names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommended-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        setup-shell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-apminject-file-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No .apminject file found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unknown-shell-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unknown shell warning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#powershell-does-not-persist-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PowerShell does not persist variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-session-is-already-active" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A session is already active
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2337,22 +2270,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#adding-entries" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding Entries
+        How It Works
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Adding Entries">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#interactive-add" class="md-nav__link">
+  <a href="#bash-zsh" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Interactive Add
+        Bash / Zsh
       
     </span>
   </a>
@@ -2360,10 +2304,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#adding-to-a-specific-space" class="md-nav__link">
+  <a href="#fish" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding to a Specific Space
+        Fish
       
     </span>
   </a>
@@ -2371,10 +2315,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#field-validation" class="md-nav__link">
+  <a href="#powershell" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Field Validation
+        PowerShell
       
     </span>
   </a>
@@ -2387,22 +2331,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#searching-and-retrieving-entries" class="md-nav__link">
+  <a href="#selecting-entries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Searching and Retrieving Entries
+        Selecting Entries
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Searching and Retrieving Entries">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apminject-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .apminject Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=".apminject Files">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fuzzy-search" class="md-nav__link">
+  <a href="#simple-list-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fuzzy Search
+        Simple List Format
       
     </span>
   </a>
@@ -2410,10 +2365,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#interactive-browser" class="md-nav__link">
+  <a href="#wrapped-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Interactive Browser
+        Wrapped Format
       
     </span>
   </a>
@@ -2421,21 +2376,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#clipboard-expiry" class="md-nav__link">
+  <a href="#custom-variable-names" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Clipboard Expiry
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#safe-display" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Safe Display
+        Custom Variable Names
       
     </span>
   </a>
@@ -2448,10 +2392,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#editing-and-deleting-entries" class="md-nav__link">
+  <a href="#recommended-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Editing and Deleting Entries
+        Recommended Workflow
       
     </span>
   </a>
@@ -2459,22 +2403,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#organizing-with-spaces" class="md-nav__link">
+  <a href="#setup-shell" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Organizing with Spaces
+        setup-shell
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Organizing with Spaces">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#session-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#creating-and-managing-spaces" class="md-nav__link">
+  <a href="#no-apminject-file-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating and Managing Spaces
+        No .apminject file found
       
     </span>
   </a>
@@ -2482,10 +2459,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-spaces-affect-operations" class="md-nav__link">
+  <a href="#unknown-shell-warning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How Spaces Affect Operations
+        Unknown shell warning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#powershell-does-not-persist-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PowerShell does not persist variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-session-is-already-active" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A session is already active
       
     </span>
   </a>
@@ -2498,143 +2497,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#generating-passwords" class="md-nav__link">
+  <a href="#related-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Generating Passwords
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes-and-the-vocabulary-engine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes and the Vocabulary Engine
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Notes and the Vocabulary Engine">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#writing-notes-with-autocomplete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Writing Notes with Autocomplete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#managing-the-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Managing the Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-vocabulary-storage-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Vocabulary Storage Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vault-health-and-trust" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vault Health and Trust
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Vault Health and Trust">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#health-dashboard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Health Dashboard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trust-scores" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trust Scores
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#audit-log" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Audit Log
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cryptographic-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cryptographic Information
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
+        Related Commands
       
     </span>
   </a>
@@ -2709,274 +2575,164 @@
   
 
 
-<h1 id="managing-your-vault">Managing Your Vault<a class="headerlink" href="#managing-your-vault" title="Permanent link">&para;</a></h1>
-<p>This guide covers the day-to-day operations of working with your APM vault — adding entries, searching, editing, organizing with spaces, and using the vocabulary engine for notes.</p>
+<h1 id="injecting-secrets-into-your-shell">Injecting Secrets Into Your Shell<a class="headerlink" href="#injecting-secrets-into-your-shell" title="Permanent link">&para;</a></h1>
+<p><code>pm inject</code> exports vault data into the <strong>current shell session</strong> as environment variables. It is meant for short-lived developer workflows such as local app startup, CI smoke testing, and ad hoc scripting where a process expects secrets through env vars.</p>
+<p>Unlike <code>pm get</code>, <code>pm inject</code> does not print the secret values directly for you to copy. It emits shell-specific export commands, and you evaluate those commands in your shell.</p>
 <hr />
-<h2 id="adding-entries">Adding Entries<a class="headerlink" href="#adding-entries" title="Permanent link">&para;</a></h2>
-<h3 id="interactive-add">Interactive Add<a class="headerlink" href="#interactive-add" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pm<span class="w"> </span>add
-</span></code></pre></div>
-<p>This opens an interactive menu showing all 25+ supported secret types. Select a type, then fill in the structured fields. Each type has a specific schema — for example, an SSH Config entry asks for alias, host, user, port, key path, and fingerprint.</p>
-<h3 id="adding-to-a-specific-space">Adding to a Specific Space<a class="headerlink" href="#adding-to-a-specific-space" title="Permanent link">&para;</a></h3>
-<p>If you have spaces configured, entries inherit the currently active space. Switch spaces before adding:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pm<span class="w"> </span>space<span class="w"> </span>switch<span class="w"> </span>Work
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pm<span class="w"> </span>add<span class="w">    </span><span class="c1"># This entry will be in the &quot;Work&quot; space</span>
-</span></code></pre></div>
-<h3 id="field-validation">Field Validation<a class="headerlink" href="#field-validation" title="Permanent link">&para;</a></h3>
-<p>APM validates fields as you enter them. If you have a <strong>password policy</strong> loaded, new passwords are validated against the policy's requirements (minimum length, uppercase, numbers, symbols).</p>
+<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<p><code>pm inject</code>:</p>
+<ol>
+<li>Unlocks the vault using your normal APM flow</li>
+<li>Resolves one or more vault entries by name</li>
+<li>Converts those entries into environment variables</li>
+<li>Stores a small local inject-session record so the variables can be removed later with <code>pm inject kill</code></li>
+</ol>
+<p>The command supports <code>bash</code>, <code>zsh</code>, <code>fish</code>, and <code>PowerShell</code>.</p>
 <hr />
-<h2 id="searching-and-retrieving-entries">Searching and Retrieving Entries<a class="headerlink" href="#searching-and-retrieving-entries" title="Permanent link">&para;</a></h2>
-<h3 id="fuzzy-search">Fuzzy Search<a class="headerlink" href="#fuzzy-search" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pm<span class="w"> </span>get<span class="w"> </span><span class="o">[</span>query<span class="o">]</span>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="bash-zsh">Bash / Zsh<a class="headerlink" href="#bash-zsh" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pm<span class="w"> </span>inject<span class="w"> </span>--inject<span class="w"> </span>github<span class="k">)</span><span class="s2">&quot;</span>
 </span></code></pre></div>
-<p>APM performs fuzzy search across <strong>all entry types</strong> simultaneously — matching against account names, usernames, service names, labels, and other identifiers. Results are ranked by match quality.</p>
-<div class="admonition example">
-<p class="admonition-title">Search Examples</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github<span class="w">        </span><span class="c1"># Find GitHub credentials</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pm<span class="w"> </span>get<span class="w"> </span>aws<span class="w">           </span><span class="c1"># Find AWS cloud credentials, API keys, etc.</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>pm<span class="w"> </span>get<span class="w"> </span><span class="s2">&quot;john doe&quot;</span><span class="w">    </span><span class="c1"># Find contacts named John Doe</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>pm<span class="w"> </span>get<span class="w"> </span>wifi<span class="w">          </span><span class="c1"># Find Wi-Fi passwords</span>
+<h3 id="fish">Fish<a class="headerlink" href="#fish" title="Permanent link">&para;</a></h3>
+<div class="language-fish highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">eval</span> <span class="o">(</span>pm inject --inject github<span class="o">)</span>
 </span></code></pre></div>
-</div>
-<h3 id="interactive-browser">Interactive Browser<a class="headerlink" href="#interactive-browser" title="Permanent link">&para;</a></h3>
-<p>When results are returned, APM enters an interactive browser mode. Keyboard controls:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Key</th>
-<th style="text-align: left;">Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-enter">Enter</kbd></span></td>
-<td style="text-align: left;">View full entry details</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-c">C</kbd></span></td>
-<td style="text-align: left;">Copy password/secret to clipboard</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-e">E</kbd></span></td>
-<td style="text-align: left;">Edit this entry</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-d">D</kbd></span></td>
-<td style="text-align: left;">Delete this entry</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-s">S</kbd></span></td>
-<td style="text-align: left;">Toggle show/hide sensitive fields</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-q">Q</kbd></span></td>
-<td style="text-align: left;">Quicklook (preview notes, render photos)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-m">M</kbd></span></td>
-<td style="text-align: left;">View metadata (timestamps, trust score)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><span class="keys"><kbd class="key-escape">Esc</kbd></span></td>
-<td style="text-align: left;">Exit the browser</td>
-</tr>
-</tbody>
-</table>
-<h3 id="clipboard-expiry">Clipboard Expiry<a class="headerlink" href="#clipboard-expiry" title="Permanent link">&para;</a></h3>
-<p>When you copy a secret to the clipboard, APM automatically clears it after a short timeout to prevent accidental exposure.</p>
-<h3 id="safe-display">Safe Display<a class="headerlink" href="#safe-display" title="Permanent link">&para;</a></h3>
-<p>Sensitive fields are <strong>hidden by default</strong> in search results. To reveal them:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github<span class="w"> </span>--show-pass
+<h3 id="powershell">PowerShell<a class="headerlink" href="#powershell" title="Permanent link">&para;</a></h3>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">pm</span> <span class="n">inject</span> <span class="p">-</span><span class="n">-inject</span> <span class="n">github</span> <span class="p">|</span> <span class="nb">Invoke-Expression</span>
 </span></code></pre></div>
-<p>Or press <span class="keys"><kbd class="key-s">S</kbd></span> in the interactive view.</p>
+<p>After the command runs, the entry becomes an environment variable in the current shell.</p>
+<p>For a password entry named <code>github</code>, the default variable name is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>GITHUB
+</span></code></pre></div>
 <hr />
-<h2 id="editing-and-deleting-entries">Editing and Deleting Entries<a class="headerlink" href="#editing-and-deleting-entries" title="Permanent link">&para;</a></h2>
-<p>Entry mutation happens from the interactive <code>pm get</code> browser.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pm<span class="w"> </span>get<span class="w"> </span>github
+<h2 id="selecting-entries">Selecting Entries<a class="headerlink" href="#selecting-entries" title="Permanent link">&para;</a></h2>
+<p>You can inject explicit entry names:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pm<span class="w"> </span>inject<span class="w"> </span>--inject<span class="w"> </span>github,aws-prod,openai-token
 </span></code></pre></div>
-<p>From the results view:</p>
+<p>Entry lookup is by vault item name in the active space. If any requested entry is missing, the command fails rather than partially injecting.</p>
+<p>Supported entry sources include:</p>
 <ul>
-<li>Press <span class="keys"><kbd class="key-e">E</kbd></span> to edit the selected entry</li>
-<li>Press <span class="keys"><kbd class="key-d">D</kbd></span> to delete the selected entry</li>
-</ul>
-<p>Edits are tracked by the <strong>secret telemetry</strong> system, recording who modified the entry, when, and via what context. Deletions are recorded in the audit log.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Deletion is permanent. There is no trash or undo. If you need to preserve deleted entries, export your vault first.</p>
-</div>
-<hr />
-<h2 id="organizing-with-spaces">Organizing with Spaces<a class="headerlink" href="#organizing-with-spaces" title="Permanent link">&para;</a></h2>
-<p>Spaces provide logical segmentation within a single vault file. They're useful for separating work credentials from personal ones, or organizing by project.</p>
-<h3 id="creating-and-managing-spaces">Creating and Managing Spaces<a class="headerlink" href="#creating-and-managing-spaces" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Create a new space</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>pm<span class="w"> </span>space<span class="w"> </span>create<span class="w"> </span>DevOps
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># List all spaces</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>pm<span class="w"> </span>space<span class="w"> </span>list
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Switch to a space</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>pm<span class="w"> </span>space<span class="w"> </span>switch<span class="w"> </span>DevOps
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># See the currently active space</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>pm<span class="w"> </span>space<span class="w"> </span>current
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># Remove a space (entries in it are moved to default)</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>pm<span class="w"> </span>space<span class="w"> </span>remove<span class="w"> </span>DevOps
-</span></code></pre></div>
-<h3 id="how-spaces-affect-operations">How Spaces Affect Operations<a class="headerlink" href="#how-spaces-affect-operations" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Adding</strong> — New entries inherit the active space</li>
-<li><strong>Searching</strong> — <code>pm get</code> searches within the active space by default</li>
-<li><strong>Cloud sync</strong> — Spaces can be excluded via <code>.apmignore</code></li>
-<li><strong>TOTP</strong> — TOTP entries are space-aware</li>
+<li>Password entries</li>
+<li>TOTP entries</li>
+<li>Tokens</li>
+<li>Secure notes</li>
+<li>API keys</li>
+<li>SSH keys</li>
+<li>Wi-Fi passwords</li>
+<li>Recovery codes</li>
+<li>Certificates</li>
+<li>Cloud credential secret keys</li>
+<li>Docker registry tokens</li>
+<li>SSH config private keys</li>
 </ul>
 <hr />
-<h2 id="generating-passwords">Generating Passwords<a class="headerlink" href="#generating-passwords" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pm<span class="w"> </span>gen
+<h2 id="apminject-files"><code>.apminject</code> Files<a class="headerlink" href="#apminject-files" title="Permanent link">&para;</a></h2>
+<p>If you omit <code>--inject</code>, APM searches upward from the current directory for a <code>.apminject</code> file.</p>
+<p>This lets you keep project-local injection rules in the repo or workspace root.</p>
+<h3 id="simple-list-format">Simple List Format<a class="headerlink" href="#simple-list-format" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">github</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws-prod</span>
 </span></code></pre></div>
-<p>APM generates a high-entropy password using cryptographically secure randomness. The generated password is displayed and automatically copied to your clipboard.</p>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p>Generate a password first with <code>pm gen</code>, then paste it when <code>pm add</code> asks for the password field.</p>
-</div>
-<hr />
-<h2 id="notes-and-the-vocabulary-engine">Notes and the Vocabulary Engine<a class="headerlink" href="#notes-and-the-vocabulary-engine" title="Permanent link">&para;</a></h2>
-<p>Secure notes in APM are more than text blobs. The <strong>vocabulary engine</strong> builds a compressed index from your notes and provides autocomplete functionality.</p>
-<h3 id="enabling-vocabulary">Enabling Vocabulary<a class="headerlink" href="#enabling-vocabulary" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">enable</span><span class="w">     </span><span class="c1"># Turn on vocabulary indexing</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pm<span class="w"> </span>vocab<span class="w"> </span>disable<span class="w">    </span><span class="c1"># Turn it off</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pm<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">     </span><span class="c1"># Check if it&#39;s active</span>
+<h3 id="wrapped-format">Wrapped Format<a class="headerlink" href="#wrapped-format" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">inject</span><span class="p">:</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">github</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws-prod</span>
 </span></code></pre></div>
-<h3 id="writing-notes-with-autocomplete">Writing Notes with Autocomplete<a class="headerlink" href="#writing-notes-with-autocomplete" title="Permanent link">&para;</a></h3>
-<p>When adding or editing a secure note, APM offers autocomplete suggestions based on your vocabulary. Suggestions are ranked by frequency and user feedback (accepted suggestions increase a word's score; dismissed ones decrease it).</p>
-<h3 id="managing-the-vocabulary">Managing the Vocabulary<a class="headerlink" href="#managing-the-vocabulary" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># List all indexed words with scores</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pm<span class="w"> </span>vocab
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Create an alias (normalizes terms)</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>k8s<span class="w"> </span>kubernetes
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>tf<span class="w"> </span>terraform
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># List all aliases</span>
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>pm<span class="w"> </span>vocab<span class="w"> </span>alias-list
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># Remove an alias</span>
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>pm<span class="w"> </span>vocab<span class="w"> </span>alias-remove<span class="w"> </span>k8s
-</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
-</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="c1"># Adjust word ranking manually</span>
-</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>pm<span class="w"> </span>vocab<span class="w"> </span>rank<span class="w"> </span>deploy<span class="w"> </span>+5<span class="w">    </span><span class="c1"># Boost &quot;deploy&quot;</span>
-</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>pm<span class="w"> </span>vocab<span class="w"> </span>rank<span class="w"> </span>temp<span class="w"> </span>-3<span class="w">      </span><span class="c1"># Demote &quot;temp&quot;</span>
-</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
-</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="c1"># Remove a word from the index</span>
-</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>pm<span class="w"> </span>vocab<span class="w"> </span>remove<span class="w"> </span>obsolete_term
-</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>
-</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="c1"># Rebuild the entire vocabulary from current notes</span>
-</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>pm<span class="w"> </span>vocab<span class="w"> </span>reindex
+<p>You can also use <code>entries:</code> instead of <code>inject:</code>.</p>
+<h3 id="custom-variable-names">Custom Variable Names<a class="headerlink" href="#custom-variable-names" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">inject</span><span class="p">:</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">github</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">as</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GITHUB_TOKEN</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">entry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws-prod</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">as</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS_SECRET_ACCESS_KEY</span>
 </span></code></pre></div>
-<h3 id="how-vocabulary-storage-works">How Vocabulary Storage Works<a class="headerlink" href="#how-vocabulary-storage-works" title="Permanent link">&para;</a></h3>
-<p>The vocabulary is stored as a <strong>gzip-compressed JSON</strong> blob inside the encrypted vault (<code>Vault.VocabCompressed</code>). This means:</p>
+<p>If <code>as</code> is omitted, APM derives a variable name automatically by uppercasing the entry name and replacing separators with underscores.</p>
+<p>Examples:</p>
 <ul>
-<li>It's encrypted at rest alongside all other vault data</li>
-<li>It can be stripped from cloud uploads using <code>ignore:vocab</code> in <code>.apmignore</code></li>
-<li>It's rebuilt from notes content during reindexing</li>
+<li><code>github</code> -&gt; <code>GITHUB</code></li>
+<li><code>aws-prod</code> -&gt; <code>AWS_PROD</code></li>
+<li><code>openai token</code> -&gt; <code>OPENAI_TOKEN</code></li>
 </ul>
 <hr />
-<h2 id="vault-health-and-trust">Vault Health and Trust<a class="headerlink" href="#vault-health-and-trust" title="Permanent link">&para;</a></h2>
-<h3 id="health-dashboard">Health Dashboard<a class="headerlink" href="#health-dashboard" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pm<span class="w"> </span>health
+<h2 id="recommended-workflow">Recommended Workflow<a class="headerlink" href="#recommended-workflow" title="Permanent link">&para;</a></h2>
+<p>For one-off usage:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pm<span class="w"> </span>inject<span class="w"> </span>--inject<span class="w"> </span>github<span class="k">)</span><span class="s2">&quot;</span>
 </span></code></pre></div>
-<p>Produces a numeric score (0–100) based on:</p>
-<ul>
-<li><strong>Encryption profile</strong> — Hardened/Paranoid profiles earn bonus points; Legacy loses points</li>
-<li><strong>Alert configuration</strong> — Enabled alerts earn points</li>
-<li><strong>Weak secrets</strong> — Passwords shorter than 8 characters are penalized</li>
-<li><strong>High-risk secrets</strong> — Trust scores below 55 (high risk) or 35 (critical) add penalties</li>
-</ul>
-<h3 id="trust-scores">Trust Scores<a class="headerlink" href="#trust-scores" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pm<span class="w"> </span>trust
+<p>For project usage with a checked-in <code>.apminject</code> file:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pm<span class="w"> </span>inject<span class="k">)</span><span class="s2">&quot;</span>
 </span></code></pre></div>
-<p>Every secret gets a trust score based on:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Factor</th>
-<th style="text-align: left;">Penalty</th>
-<th style="text-align: left;">Threshold</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">Marked as exposed</td>
-<td style="text-align: left;">−45</td>
-<td style="text-align: left;">Any</td>
-</tr>
-<tr>
-<td style="text-align: left;">No rotation &gt; 365 days</td>
-<td style="text-align: left;">−35</td>
-<td style="text-align: left;">Last rotation too old</td>
-</tr>
-<tr>
-<td style="text-align: left;">No rotation &gt; 180 days</td>
-<td style="text-align: left;">−20</td>
-<td style="text-align: left;">Last rotation aging</td>
-</tr>
-<tr>
-<td style="text-align: left;">No rotation &gt; 90 days</td>
-<td style="text-align: left;">−10</td>
-<td style="text-align: left;">Last rotation recent</td>
-</tr>
-<tr>
-<td style="text-align: left;">Access count &gt; 200</td>
-<td style="text-align: left;">−20</td>
-<td style="text-align: left;">High frequency</td>
-</tr>
-<tr>
-<td style="text-align: left;">Access count &gt; 75</td>
-<td style="text-align: left;">−10</td>
-<td style="text-align: left;">Elevated frequency</td>
-</tr>
-<tr>
-<td style="text-align: left;">Privilege: critical</td>
-<td style="text-align: left;">−15</td>
-<td style="text-align: left;">Root/admin secrets</td>
-</tr>
-<tr>
-<td style="text-align: left;">Privilege: elevated</td>
-<td style="text-align: left;">−8</td>
-<td style="text-align: left;">Elevated access</td>
-</tr>
-</tbody>
-</table>
-<p>Risk levels: <strong>Low</strong> (≥80), <strong>Medium</strong> (≥55), <strong>High</strong> (≥35), <strong>Critical</strong> (&lt;35)</p>
+<p>When you are done:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pm<span class="w"> </span>inject<span class="w"> </span><span class="nb">kill</span><span class="k">)</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>On PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">pm</span> <span class="n">inject</span> <span class="nb">kill </span><span class="p">|</span> <span class="nb">Invoke-Expression</span>
+</span></code></pre></div>
+<p><code>pm inject kill</code> removes the injected variables and clears the tracked inject session.</p>
 <hr />
-<h2 id="audit-log">Audit Log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pm<span class="w"> </span>audit
+<h2 id="setup-shell"><code>setup-shell</code><a class="headerlink" href="#setup-shell" title="Permanent link">&para;</a></h2>
+<p>APM can install a small shell helper so you do not have to type <code>eval</code> manually every time:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pm<span class="w"> </span>inject<span class="w"> </span>setup-shell
 </span></code></pre></div>
-<p>Every vault interaction is logged with:</p>
+<p>This adds an <code>inject()</code> helper to the detected shell config:</p>
 <ul>
-<li><strong>Timestamp</strong> — When the action occurred</li>
-<li><strong>Action</strong> — What was done (e.g., <code>ENTRY_ADDED</code>, <code>VAULT_UNLOCKED</code>, <code>CLOUD_SYNCED</code>)</li>
-<li><strong>User</strong> — System username</li>
-<li><strong>Hostname</strong> — Machine name</li>
+<li><code>~/.bashrc</code> for Bash</li>
+<li><code>~/.zshrc</code> for Zsh</li>
+<li><code>~/.config/fish/config.fish</code> for Fish</li>
+<li><code>$PROFILE</code> for PowerShell</li>
 </ul>
-<p>The audit log is stored outside the vault at <code>~/.config/apm/audit.json</code> and is append-only.</p>
-<hr />
-<h2 id="cryptographic-information">Cryptographic Information<a class="headerlink" href="#cryptographic-information" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pm<span class="w"> </span>cinfo
+<p>After reloading your shell config, you can run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>inject<span class="w"> </span>--inject<span class="w"> </span>github
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>inject
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>inject<span class="w"> </span><span class="nb">kill</span>
 </span></code></pre></div>
-<p>Displays the active cryptographic parameters:</p>
-<ul>
-<li>Profile name and Argon2id parameters</li>
-<li>Nonce sizes</li>
-<li>Vault format version</li>
-<li>Whether recovery is configured</li>
-</ul>
 <hr />
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<h2 id="session-behavior">Session Behavior<a class="headerlink" href="#session-behavior" title="Permanent link">&para;</a></h2>
+<p>APM tracks one active inject session at a time. If a session is already active, <code>pm inject</code> will stop and ask you to run <code>pm inject kill</code> first.</p>
+<p>The session record stores:</p>
 <ul>
-<li><strong><a href="../cloud-sync/">Cloud Synchronization</a></strong> — Sync your vault across devices</li>
-<li><strong><a href="../sessions/">Sessions</a></strong> — Advanced session management</li>
-<li><strong><a href="../../reference/cli/">CLI Reference</a></strong> — Every command in detail</li>
+<li>A generated session ID</li>
+<li>The injected variable names</li>
+<li>Injection time</li>
+<li>Parent shell PID</li>
+</ul>
+<p>By default, this record lives under your user config directory:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&lt;config&gt;/apm/inject_session
+</span></code></pre></div>
+<p>If <code>APM_DATA_DIR</code> is set, APM stores it there instead.</p>
+<hr />
+<h2 id="security-notes">Security Notes<a class="headerlink" href="#security-notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Injected secrets live in your shell environment until you remove them or close the shell.</li>
+<li>Child processes inherit those environment variables.</li>
+<li>Prefer a dedicated shell for sensitive injection workflows.</li>
+<li>Use <code>pm inject kill</code> immediately after the dependent process exits.</li>
+<li>Do not commit <code>.apminject</code> files that reveal sensitive internal naming unless that is acceptable for the repo.</li>
+</ul>
+<p><code>pm inject</code> is convenient, but environment variables are still a wider exposure surface than keeping secrets only inside the vault.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="no-apminject-file-found">No <code>.apminject</code> file found<a class="headerlink" href="#no-apminject-file-found" title="Permanent link">&para;</a></h3>
+<p>Use <code>--inject</code> explicitly, or create a <code>.apminject</code> file in the current directory or a parent directory.</p>
+<h3 id="unknown-shell-warning">Unknown shell warning<a class="headerlink" href="#unknown-shell-warning" title="Permanent link">&para;</a></h3>
+<p>APM falls back to Bash syntax if it cannot detect the shell from environment variables.</p>
+<h3 id="powershell-does-not-persist-variables">PowerShell does not persist variables<a class="headerlink" href="#powershell-does-not-persist-variables" title="Permanent link">&para;</a></h3>
+<p>Use:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">pm</span> <span class="n">inject</span> <span class="p">-</span><span class="n">-inject</span> <span class="n">github</span> <span class="p">|</span> <span class="nb">Invoke-Expression</span>
+</span></code></pre></div>
+<p>Without <code>Invoke-Expression</code>, you will only print the export script instead of applying it.</p>
+<h3 id="a-session-is-already-active">A session is already active<a class="headerlink" href="#a-session-is-already-active" title="Permanent link">&para;</a></h3>
+<p>Run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pm<span class="w"> </span>inject<span class="w"> </span><span class="nb">kill</span><span class="k">)</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>or on PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">pm</span> <span class="n">inject</span> <span class="nb">kill </span><span class="p">|</span> <span class="nb">Invoke-Expression</span>
+</span></code></pre></div>
+<hr />
+<h2 id="related-commands">Related Commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm unlock</code> — Start the vault session required for secret access</li>
+<li><code>pm get</code> — View or copy a secret interactively</li>
+<li><code>pm inject kill</code> — Wipe injected variables from the active shell</li>
+<li><code>pm inject setup-shell</code> — Install the <code>inject()</code> shell helper</li>
 </ul>
 
 
