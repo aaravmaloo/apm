@@ -12,6 +12,7 @@ func ChangeProfile(vault *Vault, newProfileName string, masterPassword string, v
 	if !ok {
 		return fmt.Errorf("unknown profile: %s", newProfileName)
 	}
+	profile = NormalizeCryptoProfile(profile)
 
 	vault.Profile = newProfileName
 	vault.CurrentProfileParams = &profile
