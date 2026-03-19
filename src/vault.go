@@ -15,6 +15,8 @@ import (
 	"math/big"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 const VaultHeader = "APMVAULT"
@@ -57,9 +59,28 @@ func GetVaultParams(data []byte) (CryptoProfile, int, error) {
 		if err := json.Unmarshal(pBytes, &p); err != nil {
 			return CryptoProfile{}, 0, err
 		}
-		return p, int(version), nil
+		return NormalizeCryptoProfile(p), int(version), nil
 	default:
 		return CryptoProfile{}, 0, fmt.Errorf("unsupported version: %d", version)
+	}
+}
+
+func newAEAD(key []byte, profile CryptoProfile) (cipher.AEAD, error) {
+	profile = NormalizeCryptoProfile(profile)
+	switch profile.Cipher {
+	case CipherAESGCM:
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return nil, err
+		}
+		return cipher.NewGCMWithNonceSize(block, profile.NonceLen)
+	case CipherXChaCha20Poly1305:
+		if profile.NonceLen != chacha20poly1305.NonceSizeX {
+			return nil, fmt.Errorf("xchacha20-poly1305 requires a %d-byte nonce", chacha20poly1305.NonceSizeX)
+		}
+		return chacha20poly1305.NewX(key)
+	default:
+		return nil, fmt.Errorf("unsupported cipher: %s", profile.Cipher)
 	}
 }
 
@@ -390,6 +411,8 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		}
 		profile = GetProfile(vault.Profile)
 	}
+	profile = NormalizeCryptoProfile(profile)
+	vault.CurrentProfileParams = &profile
 
 	salt, err := GenerateSalt(profile.SaltLen)
 	if err != nil {
@@ -413,19 +436,15 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 		return nil, err
 	}
 
-	dekBlock, err := aes.NewCipher(vault.DEK)
+	dekAEAD, err := newAEAD(vault.DEK, profile)
 	if err != nil {
 		return nil, err
 	}
-	dekGcm, err := cipher.NewGCMWithNonceSize(dekBlock, profile.NonceLen)
-	if err != nil {
-		return nil, err
-	}
-	nonce := make([]byte, dekGcm.NonceSize())
+	nonce := make([]byte, dekAEAD.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
-	ciphertext := dekGcm.Seal(nil, nonce, jsonData, nil)
+	ciphertext := dekAEAD.Seal(nil, nonce, jsonData, nil)
 
 	var payload []byte
 	payload = append(payload, []byte(VaultHeader)...)
@@ -494,16 +513,12 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, keys.Validator...)
 	payload = append(payload, nonce...)
 
-	block, err := aes.NewCipher(keys.EncryptionKey)
+	masterSlotAEAD, err := newAEAD(keys.EncryptionKey, profile)
 	if err != nil {
 		return nil, err
 	}
-	masterSlotGcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	mNonce := make([]byte, masterSlotGcm.NonceSize())
-	masterSlot := masterSlotGcm.Seal(nil, mNonce, vault.DEK, nil)
+	mNonce := make([]byte, masterSlotAEAD.NonceSize())
+	masterSlot := masterSlotAEAD.Seal(nil, mNonce, vault.DEK, nil)
 	payload = append(payload, masterSlot...)
 
 	payload = append(payload, ciphertext...)
@@ -535,9 +550,9 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 
 	switch version {
 	case 1:
-		profile = CryptoProfile{
+		profile = NormalizeCryptoProfile(CryptoProfile{
 			Name: "legacy_v1", KDF: "argon2id", Time: 3, Memory: 128 * 1024, Parallelism: 4, SaltLen: 16, NonceLen: 12,
-		}
+		})
 	case 2:
 		if offset >= len(data) {
 			return nil, errors.New("corrupted header")
@@ -566,6 +581,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		if err := json.Unmarshal(pBytes, &profile); err != nil {
 			return nil, fmt.Errorf("corrupted profile data: %v", err)
 		}
+		profile = NormalizeCryptoProfile(profile)
 
 		if version == 4 {
 			if offset+2 > len(data) {
@@ -627,14 +643,15 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	var dek []byte
 	if version == 4 {
 
-		masterSlotLen := 32 + 16
+		slotAEAD, err := newAEAD(keys.EncryptionKey, profile)
+		if err != nil {
+			return nil, err
+		}
+		masterSlotLen := 32 + slotAEAD.Overhead()
 		if offset+masterSlotLen <= len(data)-32 {
 			masterSlot := data[offset : offset+masterSlotLen]
-			block, _ := aes.NewCipher(keys.EncryptionKey)
-			gcm, _ := cipher.NewGCM(block)
-			mNonce := make([]byte, gcm.NonceSize())
-			var err error
-			dek, err = gcm.Open(nil, mNonce, masterSlot, nil)
+			mNonce := make([]byte, slotAEAD.NonceSize())
+			dek, err = slotAEAD.Open(nil, mNonce, masterSlot, nil)
 			if err == nil {
 				offset += masterSlotLen
 			} else {
@@ -649,7 +666,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 						break
 					}
 					trialSlot := data[i : i+masterSlotLen]
-					dek, err = gcm.Open(nil, mNonce, trialSlot, nil)
+					dek, err = slotAEAD.Open(nil, mNonce, trialSlot, nil)
 					if err == nil {
 						offset = i + masterSlotLen
 						found = true
@@ -674,11 +691,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		}
 	}
 
-	dekBlock, err := aes.NewCipher(dek)
-	if err != nil {
-		return nil, err
-	}
-	dekGcm, err := cipher.NewGCMWithNonceSize(dekBlock, profile.NonceLen)
+	dekAEAD, err := newAEAD(dek, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -695,7 +708,7 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 			break
 		}
 		trialCT := data[i : len(data)-32]
-		plaintext, err = dekGcm.Open(nil, nonce, trialCT, nil)
+		plaintext, err = dekAEAD.Open(nil, nonce, trialCT, nil)
 		if err == nil {
 			foundCT = true
 			if i != offset {
@@ -750,6 +763,7 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	if err := json.Unmarshal(pBytes, &profile); err != nil {
 		return nil, fmt.Errorf("corrupted profile in DEK decryption: %v", err)
 	}
+	profile = NormalizeCryptoProfile(profile)
 
 	if offset+2 > len(data) {
 		return nil, errors.New("corrupted header")
@@ -775,16 +789,17 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	if searchStart < 0 {
 		searchStart = 0
 	}
-	block, _ := aes.NewCipher(dek)
-	gcm, _ := cipher.NewGCMWithNonceSize(block, profile.NonceLen)
+	dekAEAD, err := newAEAD(dek, profile)
+	if err != nil {
+		return nil, err
+	}
 
 	for i := searchStart; i < offset+512; i++ {
 		if i >= len(data)-32 {
 			break
 		}
 		trialCT := data[i : len(data)-32]
-		var err error
-		plaintext, err = gcm.Open(nil, nonce, trialCT, nil)
+		plaintext, err = dekAEAD.Open(nil, nonce, trialCT, nil)
 		if err == nil {
 			found = true
 			if i != offset {
