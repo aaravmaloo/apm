@@ -23,6 +23,7 @@ const (
 type CryptoProfile struct {
 	Name        string
 	KDF         string
+	Cipher      string
 	Time        uint32
 	Memory      uint32
 	Parallelism uint8
@@ -30,10 +31,16 @@ type CryptoProfile struct {
 	NonceLen    int
 }
 
+const (
+	CipherAESGCM            = "aes-gcm"
+	CipherXChaCha20Poly1305 = "xchacha20-poly1305"
+)
+
 var (
 	ProfileStandard = CryptoProfile{
 		Name:        "standard",
 		KDF:         "argon2id",
+		Cipher:      CipherAESGCM,
 		Time:        3,
 		Memory:      64 * 1024,
 		Parallelism: 2,
@@ -43,6 +50,7 @@ var (
 	ProfileHardened = CryptoProfile{
 		Name:        "hardened",
 		KDF:         "argon2id",
+		Cipher:      CipherAESGCM,
 		Time:        5,
 		Memory:      256 * 1024,
 		Parallelism: 4,
@@ -52,6 +60,7 @@ var (
 	ProfileParanoid = CryptoProfile{
 		Name:        "paranoid",
 		KDF:         "argon2id",
+		Cipher:      CipherAESGCM,
 		Time:        6,
 		Memory:      512 * 1024,
 		Parallelism: 4,
@@ -61,6 +70,7 @@ var (
 	ProfileLegacy = CryptoProfile{
 		Name:        "legacy",
 		KDF:         "pbkdf2",
+		Cipher:      CipherAESGCM,
 		Time:        600000,
 		Memory:      0,
 		Parallelism: 1,
@@ -77,14 +87,43 @@ var Profiles = map[string]CryptoProfile{
 }
 
 func AddCustomProfile(p CryptoProfile) {
-	Profiles[p.Name] = p
+	Profiles[p.Name] = NormalizeCryptoProfile(p)
 }
 
 func GetProfile(name string) CryptoProfile {
 	if p, ok := Profiles[name]; ok {
-		return p
+		return NormalizeCryptoProfile(p)
 	}
-	return ProfileStandard
+	return NormalizeCryptoProfile(ProfileStandard)
+}
+
+func NormalizeCipherName(name string) string {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "", "aes", "aesgcm", "aes-gcm", "aes-256-gcm":
+		return CipherAESGCM
+	case "xchacha", "xchacha20", "xchacha20poly1305", "xchacha20-poly1305", "polychacha", "poly chcha":
+		return CipherXChaCha20Poly1305
+	default:
+		return ""
+	}
+}
+
+func NormalizeCryptoProfile(p CryptoProfile) CryptoProfile {
+	if p.KDF == "" {
+		p.KDF = "argon2id"
+	}
+	p.Cipher = NormalizeCipherName(p.Cipher)
+	if p.Cipher == "" {
+		p.Cipher = CipherAESGCM
+	}
+	if p.NonceLen <= 0 {
+		if p.Cipher == CipherXChaCha20Poly1305 {
+			p.NonceLen = 24
+		} else {
+			p.NonceLen = 12
+		}
+	}
+	return p
 }
 
 type Keys struct {
