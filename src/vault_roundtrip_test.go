@@ -2,6 +2,7 @@ package apm
 
 import (
 	"bytes"
+	"encoding/json"
 	"path/filepath"
 	"testing"
 )
@@ -64,6 +65,75 @@ func TestVaultDecryptWrongPasswordFails(t *testing.T) {
 
 	if _, err := DecryptVault(data, "WrongPass123!", 1); err == nil {
 		t.Fatal("expected decryption failure with wrong password")
+	}
+}
+
+func TestVaultEncryptDecryptRoundTripXChaCha(t *testing.T) {
+	masterPassword := "ValidPass123!"
+	profile := NormalizeCryptoProfile(CryptoProfile{
+		Name:        "xchacha-test",
+		KDF:         "argon2id",
+		Cipher:      CipherXChaCha20Poly1305,
+		Time:        1,
+		Memory:      8 * 1024,
+		Parallelism: 1,
+		SaltLen:     16,
+		NonceLen:    24,
+	})
+
+	v := &Vault{
+		Profile:              profile.Name,
+		CurrentProfileParams: &profile,
+		Spaces:               []string{"default"},
+	}
+	if err := v.AddEntry("mail", "alice", "topsecret"); err != nil {
+		t.Fatalf("AddEntry failed: %v", err)
+	}
+
+	data, err := EncryptVault(v, masterPassword)
+	if err != nil {
+		t.Fatalf("EncryptVault failed: %v", err)
+	}
+
+	roundTrip, err := DecryptVault(data, masterPassword, 1)
+	if err != nil {
+		t.Fatalf("DecryptVault failed: %v", err)
+	}
+	entry, ok := roundTrip.GetEntry("mail")
+	if !ok {
+		t.Fatal("expected entry to exist after xchacha decryption")
+	}
+	if entry.Password != "topsecret" {
+		t.Fatalf("unexpected password after xchacha decryption: %+v", entry)
+	}
+	if got := NormalizeCipherName(roundTrip.CurrentProfileParams.Cipher); got != CipherXChaCha20Poly1305 {
+		t.Fatalf("expected xchacha cipher, got %q", got)
+	}
+}
+
+func TestGetVaultParamsDefaultsCipherToAESGCM(t *testing.T) {
+	rawProfile := CryptoProfile{
+		Name:        "legacy-custom",
+		KDF:         "argon2id",
+		Time:        3,
+		Memory:      64 * 1024,
+		Parallelism: 2,
+		SaltLen:     16,
+		NonceLen:    12,
+	}
+	encoded, err := json.Marshal(rawProfile)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+	data := append([]byte(VaultHeader), byte(CurrentVersion), byte(len(encoded)>>8), byte(len(encoded)))
+	data = append(data, encoded...)
+
+	profile, _, err := GetVaultParams(data)
+	if err != nil {
+		t.Fatalf("GetVaultParams failed: %v", err)
+	}
+	if profile.Cipher != CipherAESGCM {
+		t.Fatalf("expected missing cipher to default to %q, got %q", CipherAESGCM, profile.Cipher)
 	}
 }
 
