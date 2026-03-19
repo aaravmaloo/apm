@@ -99,7 +99,12 @@ func (m *InfoModel) refresh() {
 	b.WriteString(fmt.Sprintf("  Time:    %d\n", profile.Time))
 	b.WriteString(fmt.Sprintf("  Memory:  %d KB\n", profile.Memory/1024))
 	b.WriteString(fmt.Sprintf("  Threads: %d\n", profile.Parallelism))
-	b.WriteString("Cipher:    AES-256-GCM\n")
+	switch src.NormalizeCipherName(profile.Cipher) {
+	case src.CipherXChaCha20Poly1305:
+		b.WriteString("Cipher:    XChaCha20-Poly1305\n")
+	default:
+		b.WriteString("Cipher:    AES-256-GCM\n")
+	}
 	b.WriteString(fmt.Sprintf("  Nonce:   %d bytes\n", profile.NonceLen))
 	b.WriteString(fmt.Sprintf("  Salt:    %d bytes\n", profile.SaltLen))
 	b.WriteString("Integrity: HMAC-SHA256 (Encrypt-then-MAC)\n")
