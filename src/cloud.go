@@ -46,6 +46,8 @@ type GoogleDriveManager struct {
 	Mode    string
 }
 
+// NewGoogleDriveManager expects a ready OAuth token because CI and CLI flows
+// handle the browser ceremony separately and persist the resulting token blob.
 func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (*GoogleDriveManager, error) {
 	if len(credsJSON) == 0 {
 		return nil, fmt.Errorf("cloud credentials missing")
@@ -75,6 +77,9 @@ func NewGoogleDriveManager(ctx context.Context, credsJSON []byte, tokenJSON []by
 	return &GoogleDriveManager{Service: srv, Mode: mode}, nil
 }
 
+// UploadVault stores the encrypted vault under a non-descriptive name and, in
+// public mode, exposes only the file object while relying on the retrieval key
+// hash as the lookup mechanism.
 func (cm *GoogleDriveManager) UploadVault(vaultPath string, customKey string) (string, error) {
 	f, err := os.Open(vaultPath)
 	if err != nil {
@@ -156,6 +161,8 @@ func ExtractFileID(input string) string {
 	return input
 }
 
+// ResolveKeyToID prefers the hashed retrieval-key metadata path, then checks
+// the legacy filename layout, and only finally treats the input as a direct ID.
 func (cm *GoogleDriveManager) ResolveKeyToID(key string) (string, error) {
 	parent := DriveFolderID
 	if cm.Mode == "self_hosted" {
@@ -284,7 +291,8 @@ func PerformDriveAuth(credsJSON []byte) ([]byte, error) {
 		}
 	}()
 
-	// Attempt to open browser
+	// Attempt to open a browser, but keep the terminal flow usable when the
+	// environment is headless or shell integration is unavailable.
 	var errOpen error
 	switch runtime.GOOS {
 	case "linux":
@@ -341,7 +349,8 @@ func GetDefaultToken() []byte {
 }
 
 func GetCloudProvider(providerName string, ctx context.Context, credsJSON []byte, tokenJSON []byte, mode string) (CloudProvider, error) {
-
+	// Centralize provider bootstrap here so CLI, TUI, and plugin-triggered cloud
+	// operations all inherit the same default credential/token resolution rules.
 	switch strings.ToLower(providerName) {
 	case "gdrive", "google":
 		if len(credsJSON) == 0 {

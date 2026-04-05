@@ -4586,6 +4586,9 @@ func copyToClipboard(text string) {
 	cmd.Run()
 }
 
+// src_unlockVault is the shared unlock entry point for CLI commands. It tries
+// reusable credentials first and only falls back to the interactive path when
+// no valid ephemeral or session-based unlock is available.
 func src_unlockVault() (string, *src.Vault, bool, error) {
 	if !src.VaultExists(vaultPath) {
 		return "", nil, false, fmt.Errorf("Vault not found. Run 'pm setup'.")
@@ -4612,6 +4615,8 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		data, err := src.LoadVault(vaultPath)
 		if err == nil {
 
+			// Repeated failures with a read-only session intentionally divert into
+			// the decoy vault rather than confirming the real vault is still usable.
 			if session.ReadOnly && localFailures >= 6 {
 				return session.MasterPassword, src.GetDecoyVault(), true, nil
 			}
@@ -4677,6 +4682,8 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		if enrollment != nil {
 			fmt.Printf("Master Password (attempt %d/3): \n", i+1)
+			// Keep the real unlock path aligned with `pm faceid test` so both
+			// commands resolve the same installed model location.
 			modelsDir := filepath.Join(vaultDir, "faceid", "models")
 			if cfgDir, cfgErr := os.UserConfigDir(); cfgErr == nil {
 				modelsDir = filepath.Join(cfgDir, "apm", "faceid", "models")
@@ -6537,6 +6544,8 @@ func handleDownloadedVault(data []byte, provider, githubToken, githubRepo string
 	color.Green("Vault retrieved and saved successfully.")
 }
 
+// resolveCloudDiffProvider prefers explicit CLI input, then falls back to the
+// most recently configured provider metadata already stored in the vault.
 func resolveCloudDiffProvider(vault *src.Vault, args []string) string {
 	if len(args) > 0 {
 		return strings.ToLower(strings.TrimSpace(args[0]))
@@ -6559,6 +6568,8 @@ func resolveCloudDiffProvider(vault *src.Vault, args []string) string {
 	return ""
 }
 
+// downloadConfiguredCloudVault hides provider-specific remote identifiers so
+// the diff command can treat GitHub, Drive, and Dropbox uniformly.
 func downloadConfiguredCloudVault(ctx context.Context, vault *src.Vault, masterPassword, provider string) ([]byte, error) {
 	cm, err := getCloudManagerEx(ctx, vault, masterPassword, provider)
 	if err != nil {
@@ -6595,6 +6606,8 @@ func printCloudDiffChanges(changes []src.VaultDiffChange) {
 	fmt.Println("Values are redacted; only identifiers and changed field names are shown.")
 }
 
+// parseCloudDiffSelection supports compact CLI ranges like "1,3-5" so the
+// merge flow stays terminal-friendly without a dedicated picker UI.
 func parseCloudDiffSelection(input string, max int) ([]int, error) {
 	if max <= 0 {
 		return nil, nil

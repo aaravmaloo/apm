@@ -36,6 +36,8 @@ func (cfg IgnoreConfig) IsEmpty() bool {
 	return len(cfg.Spaces) == 0 && len(cfg.Entries) == 0 && len(cfg.Vocab) == 0 && len(cfg.CloudSpecific) == 0 && len(cfg.Misc) == 0
 }
 
+// LoadIgnoreConfigForVault searches the working directory first and then the
+// vault directory so project-local ignore rules can override bare vault usage.
 func LoadIgnoreConfigForVault(vaultPath string) (IgnoreConfig, string, error) {
 	candidates := make([]string, 0, 2)
 	if wd, err := os.Getwd(); err == nil && wd != "" {
@@ -190,6 +192,9 @@ func (cfg IgnoreConfig) MiscIgnoreEnabled(name string) bool {
 	return false
 }
 
+// FilterVaultForProvider clones the vault header state and then prunes
+// provider-specific content slices so upload code can safely encrypt a reduced
+// view without mutating the caller's in-memory vault.
 func (cfg IgnoreConfig) FilterVaultForProvider(vault *Vault, provider string) *Vault {
 	if vault == nil {
 		return nil

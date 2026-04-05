@@ -30,6 +30,8 @@ type EphemeralSessionStore struct {
 	Sessions map[string]EphemeralSession `json:"sessions"`
 }
 
+// Ephemeral sessions live in the user config directory so short-lived unlock
+// material stays outside the vault blob and can be revoked independently.
 func getEphemeralSessionFile() string {
 	configDir, _ := os.UserConfigDir()
 	apmDir := filepath.Join(configDir, "apm")
@@ -47,6 +49,8 @@ func currentHostHash() string {
 	return hex.EncodeToString(h[:])
 }
 
+// loadEphemeralSessionStore also opportunistically prunes expired entries so
+// callers do not have to maintain a separate cleanup step.
 func loadEphemeralSessionStore() (*EphemeralSessionStore, error) {
 	path := getEphemeralSessionFile()
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -86,6 +90,8 @@ func saveEphemeralSessionStore(store *EphemeralSessionStore) error {
 	return os.WriteFile(getEphemeralSessionFile(), data, 0600)
 }
 
+// IssueEphemeralSession records a scoped unlock token that can optionally bind
+// to host, pid, and agent identity to reduce reuse outside the intended caller.
 func IssueEphemeralSession(masterPassword, label, scope, agent string, ttl time.Duration, bindHost bool, bindPID int) (EphemeralSession, error) {
 	if ttl <= 0 {
 		return EphemeralSession{}, fmt.Errorf("ttl must be greater than zero")
@@ -127,6 +133,8 @@ func IssueEphemeralSession(masterPassword, label, scope, agent string, ttl time.
 	return s, nil
 }
 
+// ValidateEphemeralSession enforces expiry and all requested bindings before
+// handing the stored master password back to the unlock path.
 func ValidateEphemeralSession(id string, currentPID int, currentAgent string) (*EphemeralSession, error) {
 	store, err := loadEphemeralSessionStore()
 	if err != nil {

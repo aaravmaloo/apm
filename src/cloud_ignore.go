@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// PrepareCloudUploadVaultPath applies .apmignore filtering by encrypting a
+// temporary provider-specific view of the vault, leaving the on-disk vault
+// untouched while upload logic works with the filtered copy.
 func PrepareCloudUploadVaultPath(vault *Vault, masterPassword, vaultPath, provider string) (string, func(), error) {
 	cleanup := func() {}
 

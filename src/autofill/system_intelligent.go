@@ -39,6 +39,8 @@ func resolveSystemIntelligentFill(vault *src.Vault, req FillRequest) (FillRespon
 	}
 
 	if req.SelectionID == "" && len(candidates) > 1 {
+		// Native-app matching is heuristic, so surface explicit choices when the
+		// ranking cannot confidently collapse to one credential.
 		out := make([]MatchCandidate, 0, len(candidates))
 		for _, c := range candidates {
 			out = append(out, MatchCandidate{
@@ -132,6 +134,8 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 
 		group := findMatchingTOTPGroup(entry.Account, totpByAccount, totpByDomain)
 		if group != nil {
+			// Pair password entries with their nearest TOTP record up front so the
+			// later fill path can decide sequence without another vault scan.
 			c.TOTPCount = group.Count
 			c.TOTPSecret = group.Secret
 			usedTOTPAccount[group.Account] = struct{}{}
@@ -152,7 +156,8 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 			continue
 		}
 		if typedEmail != "" {
-
+			// A typed email strongly implies the user wants a password identity, not
+			// a standalone OTP-only record.
 			continue
 		}
 
@@ -183,6 +188,8 @@ func buildIntelligentCandidates(vault *src.Vault, ctx RequestContext) []intellig
 	}
 
 	sort.SliceStable(out, func(i, j int) bool {
+		// Stable secondary ordering keeps repeated ranking runs deterministic when
+		// several candidates land on the same score.
 		if out[i].Score != out[j].Score {
 			return out[i].Score > out[j].Score
 		}
@@ -217,6 +224,8 @@ func buildTOTPIndexes(vault *src.Vault) (map[string]totpGroup, map[string]totpGr
 	}
 
 	for _, group := range byAccount {
+		// Build a domain index so OTP-only sites can still match when the account
+		// label differs from the visible app or window title.
 		if group.Domain == "" {
 			continue
 		}
@@ -234,6 +243,8 @@ func buildTOTPIndexes(vault *src.Vault) (map[string]totpGroup, map[string]totpGr
 	}
 
 	for domain, linkedAccount := range vault.TOTPDomainLinks {
+		// Explicit user links override inference when the vault carries better
+		// domain knowledge than the account label itself.
 		domain = normalizeDomain(domain)
 		if domain == "" {
 			continue
@@ -308,6 +319,8 @@ func scoreAccountContext(account, username string, ctx RequestContext, emailHint
 
 	score := 0
 
+	// Domain and window-title signals carry most of the ranking weight because
+	// desktop capture is noisier than browser-integrated autofill metadata.
 	accountDomain := inferDomain(accountLower)
 	if domain != "" && accountDomain != "" {
 		if accountDomain == domain || strings.HasSuffix(domain, "."+accountDomain) || strings.HasSuffix(accountDomain, "."+domain) {
@@ -363,6 +376,8 @@ func scoreAccountContext(account, username string, ctx RequestContext, emailHint
 	if len(emailHints) > 0 {
 		hintBoost := scoreEmailHint(usernameLower, accountLower, emailHints)
 		if hintBoost == 0 && score < 220 && !looksLikeOTPWindow(ctx.WindowTitle) {
+			// When the focused field already suggests a different identity, avoid
+			// weak title-only matches that would fill the wrong account.
 			return 0
 		}
 		score += hintBoost

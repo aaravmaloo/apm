@@ -73,6 +73,8 @@ func Run(opts RunOptions) error {
 	}
 
 	addr := listener.Addr().String()
+	// Publish the daemon endpoint through the state file before serving so CLI
+	// clients can discover the port chosen by the loopback listener.
 	state := daemonState{
 		PID:       os.Getpid(),
 		Addr:      "http://" + addr,
@@ -116,7 +118,7 @@ func Run(opts RunOptions) error {
 	}
 
 	if err := daemon.systemEngine.Start(daemon.hotkey, daemon.handleHotkey); err != nil {
-
+		// Keep the HTTP daemon alive even when native hotkey hooks are unavailable.
 		daemon.systemEngine = newSystemEngine()
 	}
 
@@ -133,6 +135,8 @@ func Run(opts RunOptions) error {
 
 func (d *Daemon) withAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// The daemon is loopback-only and bearer-token protected so a local browser
+		// tab cannot drive autofill without the companion client state.
 		if !isLoopbackRequest(r.RemoteAddr) {
 			writeError(w, http.StatusForbidden, "ForbiddenError")
 			return
@@ -237,6 +241,8 @@ func (d *Daemon) handleUnlock(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 
 	d.mu.Lock()
+	// Unlock stores a live vault in memory only for the bounded daemon session;
+	// file encryption stays unchanged on disk.
 	d.vault = vault
 	d.locked = false
 	d.popupDisabled = vault.AutocompleteWindowDisabled
@@ -327,6 +333,8 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 
 	matches := matchProfiles(profiles, req.Context)
 	if len(matches) == 0 && strings.EqualFold(strings.TrimSpace(req.Context.Kind), ContextSystem) {
+		// System contexts do not have DOM metadata, so fall back to the looser
+		// heuristic matcher built for desktop apps and native dialogs.
 		return resolveSystemIntelligentFill(d.vault, req)
 	}
 	if len(matches) == 0 {
@@ -338,6 +346,8 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 
 	if req.SelectionID == "" && len(matches) > 1 {
 		candidates := toCandidates(matches)
+		// Persist the candidate list so the client can resolve an explicit second
+		// step without recomputing on a different vault state.
 		d.pendingCandidates = candidates
 		return FillResponse{
 			Status:     ResponseStatusMultiple,
@@ -416,7 +426,8 @@ func (d *Daemon) tryHandleHotkeyContext(requestContext RequestContext) bool {
 
 	resp, statusCode := d.resolveFill(req)
 	if statusCode == http.StatusOK && resp.Status == ResponseStatusMultiple && len(resp.Candidates) > 0 {
-
+		// Hotkey autofill is a single gesture, so prefer the best-ranked candidate
+		// instead of stopping for an interactive selection prompt.
 		req.SelectionID = resp.Candidates[0].ProfileID
 		resp, statusCode = d.resolveFill(req)
 	}
@@ -473,6 +484,8 @@ func (d *Daemon) watchLockState() {
 				now := time.Now().UTC()
 				if (!d.unlockExpiresAt.IsZero() && now.After(d.unlockExpiresAt)) ||
 					(d.inactivityTimeout > 0 && now.Sub(d.lastActivity) > d.inactivityTimeout) {
+					// Expiry and inactivity both converge on the same lock path so the
+					// in-memory vault is cleared consistently.
 					d.lockVaultLocked()
 				}
 			}

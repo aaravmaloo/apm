@@ -22,6 +22,8 @@ type ExportData struct {
 }
 
 func ExportToJSON(vault *Vault, filename string, encryptPass string) error {
+	// Keep the export schema explicit so import/export can evolve independently
+	// from the on-disk vault format.
 	data := ExportData{
 		Entries:           vault.Entries,
 		TOTPEntries:       vault.TOTPEntries,
@@ -179,6 +181,8 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	}
 
 	var data ExportData
+	// Prefer the native export shape first before falling back to looser recovery
+	// of foreign JSON layouts below.
 	if err := json.Unmarshal(bytes, &data); err == nil && (len(data.Entries) > 0 || len(data.TOTPEntries) > 0 || len(data.SecureNotes) > 0 || len(data.APIKeys) > 0 || len(data.SSHKeys) > 0 || len(data.WiFiCredentials) > 0 || len(data.RecoveryCodeItems) > 0) {
 		for _, e := range data.Entries {
 			_ = vault.AddEntry(e.Account, e.Username, e.Password)
@@ -226,7 +230,8 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 				combined := append([]byte(saltStr), cipherBytes...)
 				decrypted, err := DecryptData(combined, decryptPass)
 				if err == nil {
-
+					// Some legacy exports wrap the actual payload one level deeper after
+					// a passphrase-based envelope.
 					var innerData ExportData
 					if err := json.Unmarshal(decrypted, &innerData); err == nil && (len(innerData.Entries) > 0 || len(innerData.TOTPEntries) > 0 || len(innerData.SecureNotes) > 0 || len(innerData.APIKeys) > 0 || len(innerData.SSHKeys) > 0 || len(innerData.WiFiCredentials) > 0 || len(innerData.RecoveryCodeItems) > 0) {
 						for _, e := range innerData.Entries {
@@ -268,7 +273,8 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	search = func(v interface{}) {
 		switch m := v.(type) {
 		case map[string]interface{}:
-
+			// Walk unknown JSON recursively and accept a small set of common field
+			// aliases so imports from other password managers degrade gracefully.
 			acc, _ := m["account"].(string)
 			if acc == "" {
 				acc, _ = m["account_name"].(string)
@@ -331,7 +337,8 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 	search(raw)
 
 	if !found {
-
+		// As a last resort, scan raw strings for embedded otpauth URIs since some
+		// exports only preserve QR payloads instead of structured fields.
 		content := string(bytes)
 		parts := strings.Split(content, "\"")
 		for _, s := range parts {
@@ -382,6 +389,8 @@ func ImportFromCSV(vault *Vault, filename string) error {
 
 	for _, record := range records {
 		if !headerChecked {
+			// Accept header-driven imports when present, but still tolerate
+			// positional CSV dumps below.
 			isHeader := false
 			for i, val := range record {
 				v := strings.ToLower(strings.TrimSpace(val))
@@ -451,6 +460,7 @@ func ImportFromTXT(vault *Vault, filename string) error {
 		}
 
 		if strings.HasPrefix(line, "otpauth://") {
+			// Plain-text imports sometimes only carry TOTP URIs copied from QR codes.
 			u, err := url.Parse(line)
 			if err != nil {
 				continue

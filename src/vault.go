@@ -398,6 +398,10 @@ func (v *Vault) Serialize(masterPassword string) ([]byte, error) {
 	return EncryptVault(v, masterPassword)
 }
 
+// EncryptVault writes the current vault format with a DEK-wrapped payload. The
+// master password protects the DEK slot and integrity metadata, while the DEK
+// itself encrypts the JSON body so future password changes do not require
+// re-encrypting individual vault items.
 func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	var profile CryptoProfile
 	if vault.CurrentProfileParams != nil {
@@ -460,7 +464,8 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	payload = append(payload, lenBytes...)
 	payload = append(payload, encProfile...)
 
-	// V4: Recovery Metadata (Unencrypted for verification)
+	// V4 keeps recovery metadata outside the encrypted payload so recovery
+	// checks can inspect state without first opening the vault body.
 	var rec RecoveryData
 	if vault.RecoveryEmail != "" {
 		h := sha256.Sum256([]byte(strings.ToLower(vault.RecoveryEmail)))
@@ -529,6 +534,8 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	return finalData, nil
 }
 
+// DecryptVault dispatches between the current header-based format and the
+// pre-header legacy layout that stored salt and ciphertext directly.
 func DecryptVault(data []byte, masterPassword string, costMultiplier int) (*Vault, error) {
 	if len(data) > len(VaultHeader) && string(data[:len(VaultHeader)]) == VaultHeader {
 		return decryptNewVault(data, masterPassword, costMultiplier)
@@ -541,6 +548,9 @@ func DecryptVault(data []byte, masterPassword string, costMultiplier int) (*Vaul
 	return decryptOldVault(ciphertext, masterPassword, salt)
 }
 
+// decryptNewVault is intentionally tolerant of partially shifted offsets. Older
+// experimental builds wrote V4 metadata in slightly different positions, so the
+// parser probes for the DEK slot and ciphertext when the canonical offsets fail.
 func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*Vault, error) {
 	offset := len(VaultHeader)
 	version := data[offset]
@@ -655,7 +665,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 			if err == nil {
 				offset += masterSlotLen
 			} else {
-
+				// Search nearby for legacy/shifted master slot placement before
+				// falling back to the password-derived key path.
 				found := false
 				searchStart := offset - 128
 				if searchStart < len(VaultHeader)+1 {
@@ -675,7 +686,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 					}
 				}
 				if !found {
-
+					// Older vaults may not have a wrapped DEK at all, in which case
+					// the password-derived key still decrypts the payload directly.
 					dek = keys.EncryptionKey
 
 				}
@@ -699,6 +711,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	var plaintext []byte
 	foundCT := false
 
+	// Probe a small window around the expected ciphertext start so vaults with
+	// shifted slot metadata can still be repaired instead of failing hard.
 	ctSearchStart := offset - 256
 	if ctSearchStart < len(VaultHeader)+1 {
 		ctSearchStart = len(VaultHeader) + 1
@@ -746,6 +760,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 	return &vault, nil
 }
 
+// DecryptVaultWithDEK is the recovery path once the caller already has a valid
+// data-encryption key and only needs to locate the payload in a V4 vault blob.
 func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	offset := len(VaultHeader)
 	version := data[offset]
@@ -781,8 +797,8 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 	nonce := data[offset : offset+profile.NonceLen]
 	offset += profile.NonceLen
 
-	// Search for Master Slot and Ciphertext
-	// Since we have the DEK, we can just skip the master slot and go to ciphertext.
+	// Since the caller already has the DEK, this path only needs to locate the
+	// payload boundaries, not validate the password-derived slot.
 	var plaintext []byte
 	found := false
 	searchStart := offset - 128
@@ -846,6 +862,9 @@ func UpdateMasterPassword(v *Vault, oldPass, newPass string) ([]byte, error) {
 	return EncryptVault(v, newPass)
 }
 
+// GetVaultRecoveryInfo first tries the canonical V4 recovery metadata location
+// and then falls back to a bounded scan so partially shifted headers remain
+// recoverable instead of becoming unrecoverable parsing failures.
 func GetVaultRecoveryInfo(data []byte) (RecoveryData, error) {
 	if len(data) < len(VaultHeader)+1 {
 		return RecoveryData{}, errors.New("invalid vault")

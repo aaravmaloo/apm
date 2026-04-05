@@ -37,6 +37,8 @@ type vaultCollection[T any] struct {
 	key      func(T) vaultDiffKey
 }
 
+// DiffVaultEntries compares vault content at the entry level so cloud merges
+// stay about "what item changed" instead of raw encrypted file differences.
 func DiffVaultEntries(local, remote *Vault) []VaultDiffChange {
 	if local == nil || remote == nil {
 		return nil
@@ -78,6 +80,8 @@ func DiffVaultEntries(local, remote *Vault) []VaultDiffChange {
 	return changes
 }
 
+// ApplyVaultDiffSelection replays selected remote changes into the local vault
+// using collection-aware replacements rather than whole-vault overwrite semantics.
 func ApplyVaultDiffSelection(local *Vault, changes []VaultDiffChange, selected []int) error {
 	if local == nil {
 		return fmt.Errorf("local vault is required")
@@ -215,6 +219,8 @@ func applyVaultDiffChange(local *Vault, change VaultDiffChange) (bool, error) {
 	}
 }
 
+// applyCollectionChange uses the collection key as the merge identity, which
+// lets modified entries replace in place while still preserving adds/removals.
 func applyCollectionChange[T any](local *Vault, change VaultDiffChange, cfg vaultCollection[T]) (bool, error) {
 	items := cfg.list(local)
 

@@ -86,6 +86,8 @@ func BuildMCPServerConfigWithToken(token string) map[string]interface{} {
 	}
 
 	if runtime.GOOS == "windows" {
+		// Windows MCP clients typically expect a shell entry point rather than
+		// invoking the binary directly.
 		return map[string]interface{}{
 			"command": "cmd",
 			"args":    []interface{}{"/c", exe, "mcp", "serve", "--token", token},
@@ -104,6 +106,8 @@ func FindMCPConfigFiles() []string {
 	var files []string
 	home, _ := os.UserHomeDir()
 
+	// Probe the common config locations used by supported MCP clients instead of
+	// forcing users to wire APM into each one manually.
 	paths := []string{
 		filepath.Join(os.Getenv("APPDATA"), "Claude", "mcp_config.json"),
 		filepath.Join(os.Getenv("APPDATA"), "Cursor", "mcp.json"),
@@ -138,6 +142,7 @@ func UpdateMCPConfigWithToken(filePath, token string) error {
 
 	mcpServers, ok := config["mcpServers"].(map[string]interface{})
 	if !ok {
+		// Some clients start from an empty or partially unrelated config file.
 		mcpServers = make(map[string]interface{})
 	}
 
@@ -201,6 +206,8 @@ func SaveMCPConfig(config *MCPAuthConfig) error {
 }
 
 func GenerateMCPToken(name string, permissions []string, expiryMinutes int) (string, error) {
+	// Tokens are stored by value so each issued credential keeps its own audit
+	// metadata even after the caller loses the plaintext string.
 	b := make([]byte, 24)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
@@ -284,6 +291,8 @@ func ensureMCPMutationAuthorized(tokenName, tool string, args json.RawMessage, p
 	_ = json.Unmarshal(args, &meta)
 
 	if strings.TrimSpace(meta.TxID) == "" {
+		// Mutating tools default to a preview-only phase until the caller
+		// explicitly binds the request to a pending transaction.
 		tx, err := CreateMCPTransaction(tokenName, tool, args, preview, 15*time.Minute)
 		if err != nil {
 			return false, "", "", err
@@ -333,6 +342,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 	mcpToken.UsageCount++
 	config.Tokens[token] = mcpToken
 	SaveMCPConfig(config)
+	// Expose the execution context to downstream audit and policy layers so MCP
+	// actions are attributable without special casing every call site.
 	_ = os.Setenv("APM_CONTEXT", "mcp")
 	_ = os.Setenv("APM_ACTOR", "AI")
 
@@ -403,6 +414,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		addSection := func(title string, items interface{}, nameField string) {
 			val := reflect.ValueOf(items)
 			if val.Kind() == reflect.Slice && val.Len() > 0 {
+				// The MCP schema spans many entry types, so reflection keeps this
+				// inventory view in sync without hand-writing one formatter per slice.
 				sb.WriteString(fmt.Sprintf("\n[%s]\n", title))
 				for i := 0; i < val.Len(); i++ {
 					item := val.Index(i)

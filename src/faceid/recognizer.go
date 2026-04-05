@@ -88,6 +88,9 @@ func (r *Recognizer) Enroll(numFrames int) ([]float32, [][]float32, error) {
 	return avg, templates, nil
 }
 
+// VerifyWithContext samples a short burst of live frames and only accepts
+// matches that stay coherent across nearby embeddings, which reduces the
+// one-good-frame/one-bad-frame behavior from weak cameras.
 func (r *Recognizer) Verify(stored [][]float32, securityProfile string) (bool, float32, error) {
 	return r.VerifyWithContext(context.Background(), stored, securityProfile, 24)
 }
@@ -141,6 +144,8 @@ func (r *Recognizer) VerifyWithContext(ctx context.Context, stored [][]float32, 
 				bestConfidence = conf
 			}
 
+			// A stable cluster of live embeddings is more reliable than any single
+			// frame when the camera is noisy or the user is moving slightly.
 			liveEmbeddings = append(liveEmbeddings, live)
 			stable := keepConsistentFloatEmbeddings(liveEmbeddings, verifyMaxSpread)
 			if len(stable) >= verifyMinClean {
@@ -252,6 +257,8 @@ func (r *Recognizer) enrollWithPreview(numFrames int) ([]face.Descriptor, error)
 	return embeddings, nil
 }
 
+// streamFrames pushes preprocessed variants so unlock can try a few image
+// qualities without re-reading the camera or re-decoding frames.
 func streamFrames(ctx context.Context, out chan<- capturedFrame, errCh chan<- error) {
 	webcam, err := gocv.OpenVideoCapture(0)
 	if err != nil {
@@ -627,10 +634,14 @@ func applyGamma(frame *gocv.Mat, gamma float64) {
 	adjusted.CopyTo(frame)
 }
 
+// Enrollment keeps the preview geometry intact so the face box and guidance
+// banner line up with what the user sees.
 func buildEnrollmentVariants(enhanced gocv.Mat) ([]frameVariant, error) {
 	return buildFrameVariants(enhanced, false)
 }
 
+// Verification is allowed to upscale because recognition quality matters more
+// than preview accuracy once the user is already trying to unlock.
 func buildVerificationVariants(enhanced gocv.Mat) ([]frameVariant, error) {
 	return buildFrameVariants(enhanced, true)
 }
@@ -676,6 +687,8 @@ func buildFrameVariants(enhanced gocv.Mat, allowUpscale bool) ([]frameVariant, e
 	return variants, nil
 }
 
+// Enrollment prefers the largest valid face in-frame so the stored template
+// is biased toward the clearest capture available in that burst.
 func (r *Recognizer) recognizeEnrollmentVariant(variants []frameVariant) (face.Descriptor, image.Rectangle, bool) {
 	bestArea := 0
 	var bestDescriptor face.Descriptor
@@ -698,6 +711,8 @@ func (r *Recognizer) recognizeEnrollmentVariant(variants []frameVariant) (face.D
 	return bestDescriptor, bestRect, bestArea > 0
 }
 
+// Unlock tries all prepared variants for the same frame and keeps the closest
+// descriptor against the stored templates instead of trusting one preprocess path.
 func (r *Recognizer) recognizeBestVariant(variants []frameVariant, stored [][]float32) ([]float32, int, int, float32, bool) {
 	bestDist := float32(1.0)
 	var bestEmbedding []float32
