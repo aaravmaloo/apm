@@ -119,7 +119,7 @@ func PlayFailureAnimation() {
 
 func clearAnimationArea(lines int) {
 	for i := 0; i < lines; i++ {
-		fmt.Printf(fmt.Sprintf(cursorUp, 1))
+		fmt.Print(fmt.Sprintf(cursorUp, 1))
 		fmt.Print(clearLine)
 	}
 }

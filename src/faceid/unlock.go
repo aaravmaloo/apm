@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
-	"time"
 
 	"golang.org/x/term"
 )
@@ -35,7 +33,7 @@ func RaceUnlock(enrollment *FaceIDEnrollment, modelsDir string, securityProfile 
 		}
 	}
 
-	fmt.Println("Looking for face... (press any key to type password)")
+	fmt.Println("Looking for face...")
 
 	rec, err := NewRecognizer(modelsDir)
 	if err != nil {
@@ -46,28 +44,7 @@ func RaceUnlock(enrollment *FaceIDEnrollment, modelsDir string, securityProfile 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var wantPassword int32
-	go func() {
-		ticker := time.NewTicker(20 * time.Millisecond)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if inputAvailable() {
-					atomic.StoreInt32(&wantPassword, 1)
-					cancel()
-					return
-				}
-			}
-		}
-	}()
-
-	matched, _, err := rec.VerifyWithContext(ctx, enrollment.Embedding, securityProfile, 6)
-	if atomic.LoadInt32(&wantPassword) == 1 {
-		return passwordOnlyUnlock()
-	}
+	matched, _, err := rec.VerifyWithContext(ctx, enrollment.verificationEmbeddings(), securityProfile, 24)
 	if err != nil || !matched {
 		return passwordOnlyUnlock()
 	}

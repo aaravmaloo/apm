@@ -12,11 +12,12 @@ import (
 var ErrNotCompiled = errors.New("apm was compiled without Face ID support")
 
 type FaceIDEnrollment struct {
-	Embedding           []float32 `json:"embedding"`
-	EncryptedMasterPass []byte    `json:"encrypted_master"`
-	EnrolledAt          time.Time `json:"enrolled_at"`
-	DeviceName          string    `json:"device_name"`
-	ModelVersion        string    `json:"model_version"`
+	Embedding           []float32   `json:"embedding"`
+	VerificationSamples [][]float32 `json:"verification_samples,omitempty"`
+	EncryptedMasterPass []byte      `json:"encrypted_master"`
+	EnrolledAt          time.Time   `json:"enrolled_at"`
+	DeviceName          string      `json:"device_name"`
+	ModelVersion        string      `json:"model_version"`
 }
 
 func LoadEnrollment(vaultDir string) (*FaceIDEnrollment, error) {

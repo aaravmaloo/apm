@@ -111,7 +111,7 @@ func BuildFaceIDCmd(vaultPath string, readPasswordFunc func() (string, error), g
 			defer rec.Close()
 
 			fmt.Println("Capturing face...")
-			matched, conf, err := rec.Verify(enrollment.Embedding, vault.Profile)
+			matched, conf, err := rec.Verify(enrollment.verificationEmbeddings(), vault.Profile)
 			if err != nil {
 				color.Red("Verification failed: %v", err)
 				return

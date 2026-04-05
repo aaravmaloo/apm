@@ -18,11 +18,12 @@ import (
 )
 
 type FaceIDEnrollment struct {
-	Embedding           []float32 `json:"embedding"`
-	EncryptedMasterPass []byte    `json:"encrypted_master"`
-	EnrolledAt          time.Time `json:"enrolled_at"`
-	DeviceName          string    `json:"device_name"`
-	ModelVersion        string    `json:"model_version"`
+	Embedding           []float32   `json:"embedding"`
+	VerificationSamples [][]float32 `json:"verification_samples,omitempty"`
+	EncryptedMasterPass []byte      `json:"encrypted_master"`
+	EnrolledAt          time.Time   `json:"enrolled_at"`
+	DeviceName          string      `json:"device_name"`
+	ModelVersion        string      `json:"model_version"`
 }
 
 func EnrollFace(masterPassword string, vaultDir string, modelsDir string, profile string) (*FaceIDEnrollment, error) {
@@ -40,7 +41,7 @@ func EnrollFace(masterPassword string, vaultDir string, modelsDir string, profil
 	defer rec.Close()
 
 	fmt.Println("  Capturing face frames...")
-	embedding, err := rec.Enroll(10)
+	embedding, verificationSamples, err := rec.Enroll(12)
 	if err != nil {
 		return nil, fmt.Errorf("enrollment failed: %w", err)
 	}
@@ -54,6 +55,7 @@ func EnrollFace(masterPassword string, vaultDir string, modelsDir string, profil
 
 	enrollment := &FaceIDEnrollment{
 		Embedding:           embedding,
+		VerificationSamples: verificationSamples,
 		EncryptedMasterPass: encryptedPass,
 		EnrolledAt:          time.Now(),
 		DeviceName:          hostname,
@@ -169,4 +171,17 @@ func wipeBytes(b []byte) {
 	for i := range b {
 		b[i] = 0
 	}
+}
+
+func (e *FaceIDEnrollment) verificationEmbeddings() [][]float32 {
+	if e == nil {
+		return nil
+	}
+	if len(e.VerificationSamples) > 0 {
+		return e.VerificationSamples
+	}
+	if len(e.Embedding) == 0 {
+		return nil
+	}
+	return [][]float32{e.Embedding}
 }
