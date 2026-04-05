@@ -437,7 +437,7 @@ func main() {
 				fmt.Println()
 				if pass == "" {
 					pass, _ = src.GeneratePassword(16)
-					fmt.Printf("Generated password: %s\n", pass)
+					fmt.Println("Generated password created and saved.")
 				}
 				if err := vault.AddEntry(acc, user, pass); err != nil {
 					color.Red("Error: %v\n", err)
