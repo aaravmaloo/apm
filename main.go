@@ -1841,6 +1841,101 @@ func main() {
 	cloudGetCmd.Flags().String("token", "", "Token for provider authentication")
 	cloudGetCmd.Flags().String("oauth2-token", "", "OAuth2 access token (alias of --token)")
 
+	var cloudDiffCmd = &cobra.Command{
+		Use:   "diff [gdrive|github|dropbox]",
+		Short: "Compare local vault with the latest cloud vault and optionally merge remote entry changes",
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPassword, vault, readonly, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			provider := resolveCloudDiffProvider(vault, args)
+			if provider == "" {
+				color.Red("No cloud provider specified or configured. Use 'pm cloud diff [gdrive|github|dropbox]'.")
+				return
+			}
+
+			data, err := downloadConfiguredCloudVault(context.Background(), vault, masterPassword, provider)
+			if err != nil {
+				color.Red("Cloud diff failed: %v", err)
+				return
+			}
+
+			remoteVault, err := src.DecryptVault(data, masterPassword, 1)
+			if err != nil {
+				color.Red("Failed to decrypt cloud vault with the current master password: %v", err)
+				return
+			}
+
+			changes := src.DiffVaultEntries(vault, remoteVault)
+			if len(changes) == 0 {
+				color.Green("No entry-level differences found between local and cloud vaults.")
+				return
+			}
+
+			printCloudDiffChanges(changes)
+			if readonly {
+				color.Yellow("Vault is READ-ONLY. Diff shown, but merge is disabled.")
+				return
+			}
+
+			fmt.Println()
+			fmt.Println("Choose merge mode:")
+			fmt.Println("1. Merge all remote changes")
+			fmt.Println("2. Select specific changes")
+			fmt.Println("3. Cancel")
+			fmt.Print("Selection (1/2/3): ")
+			choice := strings.TrimSpace(readInput())
+			if choice == "3" || choice == "" {
+				color.Yellow("Cloud diff closed. Local vault unchanged.")
+				return
+			}
+
+			var selected []int
+			switch choice {
+			case "1":
+				selected = make([]int, len(changes))
+				for i := range changes {
+					selected[i] = i
+				}
+			case "2":
+				fmt.Print("Enter change numbers to merge (e.g. 1,3-5 or all): ")
+				rawSelection := strings.TrimSpace(readInput())
+				selected, err = parseCloudDiffSelection(rawSelection, len(changes))
+				if err != nil {
+					color.Red("Invalid selection: %v", err)
+					return
+				}
+				if len(selected) == 0 {
+					color.Yellow("No changes selected. Local vault unchanged.")
+					return
+				}
+			default:
+				color.Yellow("Cloud diff cancelled. Local vault unchanged.")
+				return
+			}
+
+			if err := src.ApplyVaultDiffSelection(vault, changes, selected); err != nil {
+				color.Red("Failed to merge cloud diff: %v", err)
+				return
+			}
+
+			data, err = src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				color.Red("Failed to encrypt merged vault: %v", err)
+				return
+			}
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("Failed to save merged vault: %v", err)
+				return
+			}
+
+			color.Green("Merged %d cloud changes into the local vault.", len(selected))
+		},
+	}
+
 	var cloudDeleteCmd = &cobra.Command{
 		Use:   "delete [gdrive]",
 		Short: "Delete current vault from cloud",
@@ -1944,7 +2039,7 @@ func main() {
 	}
 
 	cloudInitCmd.Flags().StringP("key", "k", "", "Custom retrieval key")
-	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDeleteCmd, cloudResetCmd)
+	cloudCmd.AddCommand(cloudInitCmd, cloudSyncCmd, cloudAutoSyncCmd, cloudGetCmd, cloudDiffCmd, cloudDeleteCmd, cloudResetCmd)
 
 	var modeCmd = &cobra.Command{Use: "mode", Short: "Manage modes"}
 	modeCmd.AddCommand(unlockCmd, readonlyCmd, lockCmd, compromiseCmd)
@@ -4583,6 +4678,9 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		if enrollment != nil {
 			fmt.Printf("Master Password (attempt %d/3): \n", i+1)
 			modelsDir := filepath.Join(vaultDir, "faceid", "models")
+			if cfgDir, cfgErr := os.UserConfigDir(); cfgErr == nil {
+				modelsDir = filepath.Join(cfgDir, "apm", "faceid", "models")
+			}
 
 			profile, _, err := src.GetVaultParams(data)
 			profileName := "standard"
@@ -6437,6 +6535,136 @@ func handleDownloadedVault(data []byte, provider, githubToken, githubRepo string
 		return
 	}
 	color.Green("Vault retrieved and saved successfully.")
+}
+
+func resolveCloudDiffProvider(vault *src.Vault, args []string) string {
+	if len(args) > 0 {
+		return strings.ToLower(strings.TrimSpace(args[0]))
+	}
+	if vault == nil {
+		return ""
+	}
+	if strings.TrimSpace(vault.LastCloudProvider) != "" {
+		return strings.ToLower(strings.TrimSpace(vault.LastCloudProvider))
+	}
+	if strings.TrimSpace(vault.GitHubRepo) != "" && strings.TrimSpace(vault.GitHubToken) != "" {
+		return "github"
+	}
+	if strings.TrimSpace(vault.DropboxFileID) != "" && len(vault.DropboxToken) > 0 {
+		return "dropbox"
+	}
+	if strings.TrimSpace(vault.CloudFileID) != "" {
+		return "gdrive"
+	}
+	return ""
+}
+
+func downloadConfiguredCloudVault(ctx context.Context, vault *src.Vault, masterPassword, provider string) ([]byte, error) {
+	cm, err := getCloudManagerEx(ctx, vault, masterPassword, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	targetID := ""
+	switch provider {
+	case "github":
+		targetID = strings.TrimSpace(vault.GitHubRepo)
+	case "dropbox":
+		targetID = strings.TrimSpace(vault.DropboxFileID)
+	case "gdrive":
+		targetID = strings.TrimSpace(vault.CloudFileID)
+	default:
+		return nil, fmt.Errorf("unsupported cloud provider: %s", provider)
+	}
+
+	if targetID == "" {
+		return nil, fmt.Errorf("cloud target is not configured for provider %s", provider)
+	}
+
+	return cm.DownloadVault(targetID)
+}
+
+func printCloudDiffChanges(changes []src.VaultDiffChange) {
+	fmt.Printf("Cloud diff found %d change(s):\n", len(changes))
+	for i, change := range changes {
+		fmt.Printf("%2d. [%s] %s %q (space: %s)\n", i+1, strings.ToUpper(change.Kind), change.ItemType, change.Identifier, normalizedDiffSpace(change.Space))
+		if len(change.ChangedFields) > 0 {
+			fmt.Printf("    changed fields: %s\n", strings.Join(change.ChangedFields, ", "))
+		}
+	}
+	fmt.Println("Values are redacted; only identifiers and changed field names are shown.")
+}
+
+func parseCloudDiffSelection(input string, max int) ([]int, error) {
+	if max <= 0 {
+		return nil, nil
+	}
+
+	trimmed := strings.TrimSpace(strings.ToLower(input))
+	if trimmed == "" {
+		return nil, nil
+	}
+	if trimmed == "all" || trimmed == "*" {
+		out := make([]int, max)
+		for i := 0; i < max; i++ {
+			out[i] = i
+		}
+		return out, nil
+	}
+
+	selected := make(map[int]struct{})
+	parts := strings.Split(trimmed, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		if strings.Contains(part, "-") {
+			bounds := strings.SplitN(part, "-", 2)
+			if len(bounds) != 2 {
+				return nil, fmt.Errorf("bad range %q", part)
+			}
+			start, err := strconv.Atoi(strings.TrimSpace(bounds[0]))
+			if err != nil {
+				return nil, fmt.Errorf("bad range start %q", part)
+			}
+			end, err := strconv.Atoi(strings.TrimSpace(bounds[1]))
+			if err != nil {
+				return nil, fmt.Errorf("bad range end %q", part)
+			}
+			if start < 1 || end < 1 || start > max || end > max || start > end {
+				return nil, fmt.Errorf("range %q is out of bounds", part)
+			}
+			for i := start; i <= end; i++ {
+				selected[i-1] = struct{}{}
+			}
+			continue
+		}
+
+		value, err := strconv.Atoi(part)
+		if err != nil {
+			return nil, fmt.Errorf("bad selection %q", part)
+		}
+		if value < 1 || value > max {
+			return nil, fmt.Errorf("selection %d is out of bounds", value)
+		}
+		selected[value-1] = struct{}{}
+	}
+
+	out := make([]int, 0, len(selected))
+	for idx := range selected {
+		out = append(out, idx)
+	}
+	sort.Ints(out)
+	return out, nil
+}
+
+func normalizedDiffSpace(space string) string {
+	if strings.TrimSpace(space) == "" {
+		return "default"
+	}
+	return space
 }
 
 func deleteEntryByResult(v *src.Vault, res src.SearchResult) bool {
