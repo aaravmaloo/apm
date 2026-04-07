@@ -1,0 +1,107 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            faceid: true
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            faceid: true
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            faceid: true
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            faceid: true
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            faceid: false
+          - os: windows-latest
+            goos: windows
+            goarch: arm64
+            faceid: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - if: matrix.faceid == true && runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y libopencv-dev
+
+      - if: matrix.faceid == true && runner.os == 'macOS'
+        run: |
+          brew install opencv
+
+      - run: |
+          echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
+          echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+
+      - shell: bash
+        run: |
+          NAME="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
+
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            EXT=".exe"
+          else
+            EXT=""
+          fi
+
+          if [ "${{ matrix.faceid }}" = "true" ]; then
+            export CGO_ENABLED=1
+            TAGS="-tags faceid"
+          else
+            export CGO_ENABLED=0
+            TAGS=""
+          fi
+
+          go build $TAGS -ldflags="-s -w" -o "$NAME$EXT"
+
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            zip "$NAME.zip" "$NAME$EXT"
+            echo "ASSET=$NAME.zip" >> $GITHUB_ENV
+          else
+            tar -czf "$NAME.tar.gz" "$NAME$EXT"
+            echo "ASSET=$NAME.tar.gz" >> $GITHUB_ENV
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ASSET }}
+          path: ${{ env.ASSET }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
