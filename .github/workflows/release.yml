@@ -17,25 +17,13 @@ jobs:
             goos: linux
             goarch: amd64
             faceid: true
-          - os: ubuntu-latest
-            goos: linux
-            goarch: arm64
-            faceid: true
           - os: macos-latest
             goos: darwin
             goarch: amd64
             faceid: true
-          - os: macos-latest
-            goos: darwin
-            goarch: arm64
-            faceid: true
           - os: windows-latest
             goos: windows
             goarch: amd64
-            faceid: false
-          - os: windows-latest
-            goos: windows
-            goarch: arm64
             faceid: false
 
     runs-on: ${{ matrix.os }}
