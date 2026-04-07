@@ -1,13 +1,17 @@
 # Reference
 
-Precise technical specifications for APM internals. These pages are designed for looking up exact details, schemas, and parameters.
+This section is the factual lookup layer for the current repo state.
 
----
+- [CLI reference](cli.md)
+- [Storage reference](storage.md)
+- [Environment variables](environment-variables.md)
+- [Plugin API](plugin-api.md)
+- [MCP tools](mcp-tools.md)
+- [Policies](policies.md)
+- [`.apmignore`](apmignore.md)
 
-- **[CLI Reference](cli.md)** — Every command, subcommand, and flag
-- **[.apmignore Reference](apmignore.md)** — Complete format specification
-- **[Storage Reference](storage.md)** — File locations and data layout
-- **[Environment Variables](environment-variables.md)** — All supported environment variables
-- **[Plugin API](plugin-api.md)** — Manifest schema, permissions catalog, and step commands
-- **[MCP Tools](mcp-tools.md)** — Tool schemas and permission requirements
-- **[Policies](policies.md)** — YAML policy schema and examples
+## Scope
+
+- `pm` and `pm-team` are separate binaries.
+- The built-in `pm` command surface is already large and can grow further at runtime because plugins may register additional commands.
+- The reference pages should be read as describing the current repository implementation, not older releases or screenshots.

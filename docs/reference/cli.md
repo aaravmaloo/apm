@@ -1,549 +1,232 @@
 # CLI Reference
 
-Complete reference for every `pm` command. For flags and options, run `pm <command> --help`.
-
----
-
-## Vault Lifecycle
-
-### `pm setup`
-
-Run the guided setup flow for a new or existing vault.
-
-```bash
-pm setup
-pm setup --non-interactive
-```
-
-`pm setup` creates the vault directory structure, initializes a vault if none exists, recommends a profile based on detected hardware, asks for the encryption method for new vaults, then walks through spaces, plugins, and cloud sync.
-
----
-
-### `pm unlock`
-
-Start a session and decrypt the vault.
-
-```bash
-pm unlock
-```
-
-Prompts for master password, session duration, inactivity timeout, and optional read-only mode. Also unlocks the autofill daemon if running.
-
----
-
-### `pm lock`
-
-End the active session and wipe decrypted data.
-
-```bash
-pm lock
-```
-
-Destroys the session file and locks the autofill daemon.
-
----
-
-## Entry Operations
-
-### `pm add`
-
-Add a new entry via the interactive type selector.
-
-```bash
-pm add
-```
-
-Presents a menu of 25+ entry types. Each type has a structured form with validated fields. Entries inherit the active space.
-
----
-
-### `pm get [query]`
-
-Search the vault with fuzzy matching.
-
-```bash
-pm get github
-pm get "aws root"
-pm get --show-pass
-```
-
-Returns an interactive browser with keyboard controls for viewing, copying, editing, and deleting.
-
----
-
----
-
-### `pm gen`
-
-Generate a high-entropy password.
-
-```bash
-pm gen
-```
-
-Displays and copies the generated password to clipboard.
-
----
-
-## Spaces
-
-### `pm space create <name>`
-
-```bash
-pm space create Work
-```
-
-### `pm space list`
-
-```bash
-pm space list
-```
-
-### `pm space switch <name>`
-
-```bash
-pm space switch Work
-```
-
-### `pm space current`
-
-```bash
-pm space current
-```
-
-### `pm space remove <name>`
-
-```bash
-pm space remove Archive
-```
-
----
-
-## TOTP
-
-### `pm totp`
-
-Open the interactive TOTP list with live codes and countdown timers.
-
-```bash
-pm totp
-```
-
-### `pm totp <entry>`
-
-Copy a specific TOTP code.
-
-```bash
-pm totp github
-```
-
-### `pm autocomplete link-totp`
-
-Link a TOTP entry to a domain for autofill.
-
-```bash
-pm autocomplete link-totp
-```
-
----
-
-## Cloud Sync
-
-### `pm cloud init [provider]`
-
-Configure a cloud provider.
-
-```bash
-pm cloud init gdrive
-pm cloud init github
-pm cloud init dropbox
-pm cloud init all
-```
-
-### `pm cloud sync [provider]`
-
-Upload the vault to configured providers.
-
-```bash
-pm cloud sync
-pm cloud sync gdrive
-pm cloud sync github
-pm cloud sync dropbox
-```
-
-### `pm cloud get [provider]`
-
-Download the remote vault blob.
-
-```bash
-pm cloud get
-pm cloud get gdrive
-pm cloud get github
-```
-
-### `pm cloud autosync`
-
-Run periodic sync loops.
-
-```bash
-pm cloud autosync
-```
-
-### `pm cloud reset`
-
-Clear all cloud provider configuration.
-
-```bash
-pm cloud reset
-```
-
----
-
-## Notes & Vocabulary
-
-### `pm vocab enable|disable|status`
-
-Toggle vocabulary indexing.
-
-```bash
-pm vocab enable
-pm vocab disable
-pm vocab status
-```
-
-### `pm vocab`
-
-List all indexed words with scores.
-
-### `pm vocab alias <alias> <value>`
-
-Create or update an alias.
-
-```bash
-pm vocab alias k8s kubernetes
-```
-
-### `pm vocab alias-list`
-
-List all aliases.
-
-### `pm vocab alias-remove <alias>`
-
-Remove an alias.
-
-```bash
-pm vocab alias-remove k8s
-```
-
-### `pm vocab rank <word> <delta>`
-
-Adjust a word's ranking score.
-
-```bash
-pm vocab rank deploy +5
-pm vocab rank temp -3
-```
-
-### `pm vocab remove <word>`
-
-Remove a word from the vocabulary.
-
-```bash
-pm vocab remove obsolete
-```
-
-### `pm vocab reindex`
-
-Rebuild the vocabulary from current notes.
-
-```bash
-pm vocab reindex
-```
-
----
-
-## Autofill (Windows)
-
-### `pm autofill start|stop|status`
-
-```bash
-pm autofill start
-pm autofill start --hotkey "ctrl+alt+p"
-pm autofill stop
-pm autofill status
-```
-
-### `pm autofill list-profiles`
-
-List all autofill profiles derived from vault entries.
-
-### `pm autocomplete enable|disable`
-
-Register or remove autostart.
-
-```bash
-pm autocomplete enable
-pm autocomplete disable
-```
-
-### `pm autocomplete start|stop|status`
-
-Manual daemon control.
-
-### `pm autocomplete window enable|disable|status`
-
-Toggle popup hints.
-
----
-
-## Sessions
-
-### `pm session issue`
-
-Issue an ephemeral delegated session.
-
-```bash
-pm session issue --label "CI" --scope read --ttl 15m --bind-host
-```
-
-### `pm session list`
-
-List active ephemeral sessions.
-
-### `pm session revoke <id>`
-
-Revoke an ephemeral session.
-
----
-
-## Shell Injection
-
-### `pm inject`
-
-Inject one or more vault entries into the current shell session as environment variables.
-
-```bash
-pm inject --inject github,aws-prod
-```
-
-If `--inject` is omitted, APM searches for a `.apminject` file from the current directory upward.
-
-Use shell evaluation so the exports apply to the current shell:
-
-```bash
-eval "$(pm inject --inject github)"
-```
-
-On PowerShell:
-
-```powershell
-pm inject --inject github | Invoke-Expression
-```
-
-### `pm inject kill`
-
-Remove the injected variables for the active inject session.
-
-```bash
-eval "$(pm inject kill)"
-```
-
-### `pm inject setup-shell`
-
-Install an `inject()` shell helper into the detected shell config so you can use `inject ...` directly without typing `eval` every time.
-
----
-
-## Authentication & Recovery
-
-### `pm auth email [address]`
-
-Set recovery email.
-
-```bash
-pm auth email user@example.com
-```
-
-### `pm auth alerts`
-
-Toggle security alerts.
-
-### `pm auth level [1-3]`
-
-Set security level.
-
-```bash
-pm auth level 2
-```
-
-### `pm auth recover`
-
-Initiate account recovery.
-
-### `pm auth reset`
-
-Reset authentication configuration.
-
-### `pm auth change`
-
-Change master password.
-
----
-
-## MCP
-
-### `pm mcp token`
-
-Generate a new MCP token with permission scopes.
-
-### `pm mcp serve`
-
-Start the MCP server (spawned by AI clients).
-
-```bash
-pm mcp serve --token TOKEN
-```
-
-### `pm mcp list`
-
-List all MCP tokens.
-
-### `pm mcp revoke [name_or_token]`
-
-Revoke an MCP token.
-
-### `pm mcp config`
-
-Output configuration hints for known AI clients.
-
----
-
-## Plugins
-
-### `pm plugins market`
-
-Browse the plugin marketplace.
-
-### `pm plugins search <query>`
-
-Search the marketplace.
-
-### `pm plugins install <name>`
-
-Install a plugin from the marketplace.
-
-### `pm plugins installed`
-
-List locally installed plugins.
-
-### `pm plugins local <path>`
-
-Install a plugin from a local directory.
-
-### `pm plugins push <name>`
-
-Publish a plugin to the marketplace.
-
-### `pm plugins access`
-
-Show permission overrides for all plugins. Interactive space-key toggle list for enabling/disabling permissions.
-
-### `pm plugins access <plugin> <permission> on|off`
-
-Toggle a specific permission.
-
----
-
-## Security & Profiles
-
-### `pm profile`
-
-Profile management namespace for changing encryption parameters.
-
-```bash
-pm profile list
-pm profile current
-pm profile set hardened
-pm profile edit
-pm profile create custom-x
-```
-
-Built-in profile changes use `pm profile set`. Custom tuning, including the encryption method, is available through `pm profile edit` and `pm profile create`.
-
-### `pm cinfo`
-
-Display cryptographic information including profile, cipher, nonce size, and vault version.
-
----
-
-## Health & Trust
-
-### `pm health`
-
-Run vault health checks and display a score.
-
-### `pm trust`
-
-Show per-secret trust/risk scoring.
-
----
-
-## Audit
-
-### `pm audit`
-
-View the audit log.
-
----
-
-## Brute Force Testing
-
-### `pm brutetest [minutes]`
-
-Run a brute-force simulation against the vault.
-
-```bash
-pm brutetest 5
-```
-
----
-
-## Import & Export
-
-### `pm import <format> [file]`
-
-```bash
-pm import json backup.json
-pm import csv passwords.csv
-pm import txt vault.txt
-```
-
-### `pm export <format>`
-
-```bash
-pm export json
-pm export json --encrypt
-pm export csv
-pm export txt
-pm export txt --no-password
-```
-
----
-
-## Utility
-
-### `pm info`
-
-Display version and environment info.
-
-### `pm update`
-
-Self-update the binary.
-
-### `pm policy load <dir>`
-
-Load YAML policy files from a directory.
-
-```bash
-pm policy load ./policies/
-```
+This reference reflects the command trees defined in the current source.
+
+## Personal binary: `pm`
+
+### Core vault flow
+
+- `pm setup`
+- `pm unlock`
+- `pm readonly <mins>`
+- `pm lock`
+- `pm mode`
+- `pm cinfo`
+- `pm info`
+- `pm tui`
+
+### Entries and retrieval
+
+- `pm add [type]`
+- `pm get [query]`
+- `pm gen`
+- `pm totp [entry_name]`
+- `pm import <file>`
+- `pm export`
+
+`pm add` currently supports 25 types. `pm get` is the main interactive search and management flow.
+
+### Sessions
+
+- `pm session issue`
+- `pm session list`
+- `pm session revoke <id>`
+
+Ephemeral sessions can be bound to host, PID, and agent identity.
+
+### Recovery and auth
+
+- `pm auth email [address]`
+- `pm auth recover`
+- `pm auth reset`
+- `pm auth change`
+- `pm auth alerts`
+- `pm auth level [1-3]`
+- `pm auth quorum-setup`
+- `pm auth quorum-recover`
+- `pm auth passkey register`
+- `pm auth passkey verify`
+- `pm auth passkey disable`
+- `pm auth codes generate`
+- `pm auth codes status`
+
+### Profiles, spaces, and policy
+
+- `pm profile list`
+- `pm profile current`
+- `pm profile set <name>`
+- `pm profile edit [name]`
+- `pm profile create <name>`
+- `pm space create [name]`
+- `pm space switch [name]`
+- `pm space list`
+- `pm policy load [name]`
+- `pm policy show`
+- `pm policy clear`
+
+### Cloud
+
+- `pm cloud init [gdrive|github|dropbox|all]`
+- `pm cloud sync [gdrive|github|dropbox]`
+- `pm cloud auto-sync`
+- `pm cloud get [gdrive|github|dropbox] [retrieval_key|repo]`
+- `pm cloud diff [gdrive|github|dropbox]`
+- `pm cloud delete [gdrive]`
+- `pm cloud reset`
+
+Notes:
+
+- Google Drive and Dropbox support `APM_PUBLIC` and `self_hosted` modes.
+- GitHub uses token-based auth and a repository target.
+- `cloud get` can work with provider identifiers such as repo, file ID, or Dropbox path.
+
+### Plugins
+
+- `pm plugins installed`
+- `pm plugins list`
+- `pm plugins market`
+- `pm plugins add [name]`
+- `pm plugins install [name]`
+- `pm plugins push [name]`
+- `pm plugins remove [name]`
+- `pm plugins search`
+- `pm plugins local [path]`
+- `pm plugins access [plugin] [permission] [on|off]`
+- `pm plugins run [plugin] [command] [args...]`
+
+Plugins may also register extra root-level commands.
+
+### MCP
+
+- `pm mcp config`
+- `pm mcp token`
+- `pm mcp list`
+- `pm mcp revoke [name_or_token]`
+- `pm mcp serve`
+
+### Autofill and autocomplete
+
+- `pm autofill start`
+- `pm autofill stop`
+- `pm autofill status`
+- `pm autofill list-profiles`
+- `pm autofill daemon`
+- `pm autocomplete enable`
+- `pm autocomplete disable`
+- `pm autocomplete start`
+- `pm autocomplete stop`
+- `pm autocomplete status`
+- `pm autocomplete window enable`
+- `pm autocomplete window disable`
+- `pm autocomplete window status`
+- `pm autocomplete link-totp`
+
+These flows are primarily relevant on Windows.
+
+### Notes and vocabulary
+
+- `pm vocab`
+- `pm vocab enable`
+- `pm vocab disable`
+- `pm vocab status`
+- `pm vocab alias`
+- `pm vocab alias-list`
+- `pm vocab alias-remove [alias]`
+- `pm vocab rank [word] [delta]`
+- `pm vocab remove [word]`
+- `pm vocab reindex`
+
+### Auditing and diagnostics
+
+- `pm health`
+- `pm trust`
+- `pm audit`
+- `pm loaded`
+- `pm brutetest [minutes]`
+- `pm compromise`
+- `pm update`
+
+### Optional command trees
+
+Depending on build and runtime state, `pm` also exposes:
+
+- `pm inject ...`
+- `pm faceid ...`
+- plugin-defined root commands
+
+## Team binary: `pm-team`
+
+### Session and identity
+
+- `pm-team init <org_name> <admin_username>`
+- `pm-team login <username>`
+- `pm-team whoami`
+- `pm-team logout`
+
+### Departments
+
+- `pm-team dept list`
+- `pm-team dept create <name>`
+- `pm-team dept switch <username> <dept_id>`
+
+### Users
+
+- `pm-team user list`
+- `pm-team user add <username>`
+- `pm-team user remove <username>`
+- `pm-team user promote <username> <role>`
+- `pm-team user roles`
+- `pm-team user permission grant <username> <permission>`
+- `pm-team user permission revoke <username> <permission>`
+
+### Shared vault operations
+
+- `pm-team add`
+- `pm-team list`
+- `pm-team get [query]`
+- `pm-team gen`
+- `pm-team edit <entry_name>`
+- `pm-team delete <entry_name>`
+
+Implementation notes:
+
+- `pm-team list` currently prints only some shared entry categories.
+- `pm-team get` is the main search path for broader retrieval.
+- `pm-team edit` is only fully implemented for a smaller subset of entry types.
+
+### Approvals and reporting
+
+- `pm-team approvals list`
+- `pm-team approvals approve <idx>`
+- `pm-team approvals deny <idx>`
+- `pm-team export`
+- `pm-team audit`
+- `pm-team health`
+- `pm-team info`
+
+### Type-specific shared namespaces
+
+The team binary also registers type-focused command groups with `add`, `list`, and `get` subcommands:
+
+- `pm-team password`
+- `pm-team totp`
+- `pm-team apikey`
+- `pm-team token`
+- `pm-team note`
+- `pm-team ssh`
+- `pm-team cert`
+- `pm-team wifi`
+- `pm-team recovery`
+- `pm-team banking`
+- `pm-team doc`
+- `pm-team gov`
+- `pm-team medical`
+- `pm-team travel`
+- `pm-team contact`
+- `pm-team cloud`
+- `pm-team k8s`
+- `pm-team docker`
+- `pm-team ssh-config`
+- `pm-team cicd`
+- `pm-team license`
+- `pm-team legal`

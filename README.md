@@ -1,325 +1,100 @@
-<h1 style="text-align: center;">
-  APM<br>
-  <span style="font-size: 0.82em;">
-    Advanced Password Manager
-  </span>
-</h1>
+# APM
 
-APM is a professional-grade, zero-knowledge command-line interface (CLI) for managing high-sensitivity credentials. Engineered for cryptographic performance and organizational scalability, it features a dual-engine architecture supporting both individual privacy and team-based collaboration.
+APM is a local-first password manager written in Go. The primary binary, `pm`, manages an encrypted personal vault with sessions, recovery, cloud sync, plugins, MCP access for AI tools, Windows autofill, shell injection, and an optional TUI. The repo also contains a separate `pm-team` binary for shared organizational vaults.
 
-[![License](https://img.shields.io/github/license/aaravmaloo/apm)](LICENSE.md)
-[![Release](https://img.shields.io/github/v/release/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/releases)
-[![Commits](https://img.shields.io/github/commit-activity/m/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
-[![Last Commit](https://img.shields.io/github/last-commit/aaravmaloo/apm)](https://github.com/aaravmaloo/apm/commits)
-[![Preview Builds](https://img.shields.io/badge/preview-v10-yellow)](https://github.com/aaravmaloo/apm/tree/master/build/previews)
+## What exists in this repo
 
----
+- A versioned vault format (`APMVAULT`, current format v4) with profile-based encryption settings.
+- 25 personal secret types, including passwords, TOTP, notes, API keys, SSH material, cloud credentials, documents, recovery codes, media, and legal or financial records.
+- Session-based unlock with inactivity timeouts and delegated ephemeral sessions.
+- Recovery setup with verified email, a recovery key, optional passkeys, one-time recovery codes, and trustee quorum shares.
+- Cloud sync for Google Drive, GitHub, and Dropbox.
+- A manifest-based plugin system with hooks, permissions, marketplace commands, and runtime-added commands.
+- A built-in MCP server with permission-scoped tokens and transaction previews for mutations.
+- Windows autofill and autocomplete tooling, plus `pm inject` for environment-variable injection.
+- A separate team edition under [`team/`](team) with departments, RBAC, approvals, and shared entry types.
 
-## Table of Contents
-- [Table of Contents](#table-of-contents)
-- [1. Security Architecture](#1-security-architecture)
-  - [1.1 Key Derivation: Argon2id](#11-key-derivation-argon2id)
-  - [1.2 Authenticated Encryption: AES-256-GCM and XChaCha20-Poly1305](#12-authenticated-encryption-aes-256-gcm-and-xchacha20-poly1305)
-  - [1.3 Secure Recovery \& Identity Verification](#13-secure-recovery--identity-verification)
-  - [1.4 Threat Model Summary](#14-threat-model-summary)
-- [2. Core Technical Specifications](#2-core-technical-specifications)
-  - [2.1 Performance Profiles](#21-performance-profiles)
-- [3. Comprehensive Command Glossary](#3-comprehensive-command-glossary)
-  - [3.1 Personal Edition (pm)](#31-personal-edition-pm)
-- [4. MCP Server (Model Context Protocol)](#4-mcp-server-model-context-protocol)
-  - [4.1 Configuration Guide](#41-configuration-guide)
-    - [For Claude Desktop](#for-claude-desktop)
-    - [For Cursor / Windsurf / Others](#for-cursor--windsurf--others)
-- [5. Team Edition (pm-team)](#5-team-edition-pm-team)
-- [6. Supported Secret Types](#6-supported-secret-types)
-- [7. Plugin Architecture](#7-plugin-architecture)
-- [8. Policy Engine \& Compliance](#8-policy-engine--compliance)
-- [9. Installation and Deployment](#9-installation-and-deployment)
-  - [9.1 One-Command Install](#91-one-command-install)
-  - [9.2 Build from Source](#92-build-from-source)
-  - [9.3 Build Requirements](#93-build-requirements)
-  - [9.4 Pre-built Binaries](#94-pre-built-binaries)
-  - [9.5 Installation of Previews and Betas](#95-installation-of-previews-and-betas)
-- [10. Contact \& Support](#10-contact--support)
-- [11. Development \& Contributing](#11-development--contributing)
-- [12. Cloud Synchronization Matrix](#12-cloud-synchronization-matrix)
-  - [12.1 Cloud Initialization](#121-cloud-initialization)
-- [13. AI Usage](#13-ai-usage)
-- [14. Version System For Contributors](#14-version-system-for-contributors)
+## Main CLI surface
 
----
+Top-level `pm` commands from the current codebase include:
 
-## 1. Security Architecture
+`add`, `get`, `gen`, `setup`, `unlock`, `lock`, `readonly`, `mode`, `session`, `profile`, `space`, `policy`, `cloud`, `plugins`, `mcp`, `auth`, `totp`, `vocab`, `autocomplete`, `autofill`, `inject`, `health`, `trust`, `audit`, `cinfo`, `info`, `loaded`, `update`, `brutetest`, `tui`, `compromise`
 
-APM uses industry-standard, high-performance cryptographic primitives designed to withstand modern attack vectors, including high-end GPU clusters and dictionary attacks.
+Plugin manifests can also register additional root-level commands at runtime.
 
-### 1.1 Key Derivation: Argon2id
-The master password is never stored. Keys are derived using **Argon2id**, the winner of the Password Hashing Competition.
-- **Memory-Hard**: Resistant to GPU/ASIC cracking by requiring significant RAM (Default: 64MB, configurable up to 512MB).
-- **Three-Layer Derivation**: Derives 96 bytes of key material, split into distinct 32-byte keys for Encryption, Authentication, and internal Validation.
+## Personal secret types
 
-### 1.2 Authenticated Encryption: AES-256-GCM and XChaCha20-Poly1305
-Confidentiality and integrity are provided by a profile-selected AEAD cipher: **AES-256-GCM** or **XChaCha20-Poly1305**.
-- **Authenticated Encryption**: The active AEAD ensures data hasn't been modified.
-- **Double-Layer Integrity**: Extra protection with an HMAC-SHA256 signature over the entire vault file, derived from the master password.
-- **Vault V4 Format**: Includes an unencrypted (but signed) metadata header for identity verification and recovery coordination.
-- **Nonce Integrity**: Every save operation generates a unique nonce to prevent replay attacks and pattern analysis.
+The current `pm add` flow supports 25 entry types:
 
-### 1.3 Secure Recovery & Identity Verification
-APM features a robust recovery engine designed for zero-knowledge environments.
-- **Email OTP Verification**: 6-digit cryptographically generated email verification codes with strict 15-minute expirations.
-- **Hashed Validation**: Verification codes are compared in hashed form (SHA-256) and never persisted in plaintext.
-- **Recovery Key Obfuscation**: XOR-obfuscation for recovery keys stored in the vault, preventing simple memory dumps from exposing them.
-- **Quorum Recovery Shares**: Optional threshold recovery with trustee shares (`pm auth quorum-setup`, `pm auth quorum-recover`).
-- **WebAuthn Passkeys**: Optional passkey recovery factor via local browser ceremony (`pm auth passkey register`).
-- **One-Time Recovery Codes**: Optional single-use recovery codes (`pm auth codes generate`).
-- **DEK Unlocking**: Recovery key verification gates DEK unlock, and email OTP plus optional second factors complete identity checks.
+1. Password
+2. TOTP
+3. Token
+4. Secure note
+5. API key
+6. SSH key
+7. Wi-Fi
+8. Recovery codes
+9. Certificate
+10. Banking item
+11. Document
+12. Government ID
+13. Medical record
+14. Travel document
+15. Contact
+16. Cloud credential
+17. Kubernetes secret
+18. Docker registry
+19. SSH config
+20. CI/CD secret
+21. Software license
+22. Legal contract
+23. Audio
+24. Video
+25. Photo
 
-### 1.4 Threat Model Summary
-| Vector              | Status        | Mitigation                                                        |
-| ------------------- | ------------- | ----------------------------------------------------------------- |
-| Offline Brute-Force | Protected     | Argon2id high-cost derivation.                                    |
-| Vault Tampering     | Protected     | HMAC-SHA256 integrity signature across all metadata.              |
-| Credential Theft    | Protected     | Cloud tokens are encrypted inside the vault.                      |
-| Identity Spoofing   | Protected     | Multi-factor recovery (Email -> Recovery Key -> OTP -> Optional 2nd factor). |
-| Session Hijacking   | Protected     | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts. |
-| Weak Passwords      | Controlled    | Enforceable password policies via YAML Policy Engine.             |
-| Compromised Host    | Not Protected | Outside the security boundary (Keyloggers/Malware).               |
-
-## 2. Core Technical Specifications
-
-### 2.1 Performance Profiles
-Users can select from pre-defined encryption profiles via `pm profile set` to balance security and latency, and custom profiles can also change the encryption method.
-
-| Profile  | Memory     | Time | Parallelism | Nonce Size |
-| -------- | ---------- | ---- | ----------- | ---------- |
-| Standard | 64 MB      | 3    | 2           | 12 bytes   |
-| Hardened | 256 MB     | 5    | 4           | 12 bytes   |
-| Paranoid | 512 MB     | 6    | 4           | 24 bytes   |
-| Legacy   | 0 (PBKDF2) | 600k | 1           | 12 bytes   |
-
----
-
-## 3. Comprehensive Command Glossary
-
-### 3.1 Personal Edition (pm)
-
-The personal edition focuses on local-first security and privacy with native multi-cloud synchronization.
-
-| Command     | Category   | Description                                                            |
-| :---------- | :--------- | :--------------------------------------------------------------------- |
-| `setup`     | Lifecycle  | Guided setup for vault creation, profile selection, spaces, plugins, and cloud sync. |
-| `add`       | Mutation   | Interactive menu to store any of the 22 supported secret types.        |
-| `get [q]`   | Retrieval  | Fuzzy search and display entry details. Use `--show-pass` for secrets. |
-| `edit [n]`  | Mutation   | Interactive modification of existing entry metadata.                   |
-| `del [n]`   | Mutation   | Permanent deletion of an entry from the vault.                         |
-| `gen`       | Utility    | High-entropy password generator.                                       |
-| `totp`      | Security   | Interactive 2FA list, copy, and persistent ordering.                   |
-| `unlock`    | Session    | Starts a session-scoped unlock instance with inactivity timeout.       |
-| `lock`      | Session    | Immediately terminates and wipes the active session.                   |
-| `session`   | Session    | Issue/list/revoke ephemeral, context-bound delegated sessions.         |
-| `auth`      | Account    | Consistently manage `email`, `reset`, `change`, and `recover`.         |
-| `cloud`     | Sync       | Google Drive, GitHub, & Dropbox integration for cross-device syncing.  |
-| `space`     | Org        | Manage isolated compartments (e.g., Work, Personal, DevOps).           |
-| `mcp`       | Agentic    | Connect AI agents to your vault via Model Context Protocol.            |
-| `health`    | Audit      | Dashboard with security scoring and vulnerability reporting.           |
-| `trust`     | Audit      | Per-secret trust scoring with risk-level reasons.                      |
-| `audit`     | History    | Tamper-evident log of every vault interaction.                         |
-| `import`    | IO         | Ingest data from external files (JSON, CSV, KDBX).                     |
-| `export`    | IO         | Securely dump vault data to encrypted or plaintext formats.            |
-| `policy`    | Compliance | Load and enforce YAML-based password requirement policies.             |
-| `plugins`   | Extension  | Manage manifest plugins, marketplace actions, and permissions.         |
-| `info`      | System     | Display version, install path, and environment details.                |
-| `cinfo`     | Crypto     | Inspection of current vault cryptographic parameters.                  |
-| `update`    | System     | Automated self-update engine to fetch the latest builds.               |
-
----
-
-## 4. MCP Server (Model Context Protocol)
-
-APM includes a native MCP server for integration with AI assistants (Claude Desktop, Cursor, etc.). This allows AI agents to read your vault entries, search for credentials, and even retrieve TOTP codes securely if granted permission.
-
-Mutation tools (`add_entry`, `edit_entry`, `delete_entry`) now support transaction guardrails:
-- First call creates a preview transaction.
-- Commit requires `tx_id` + `approve: true`.
-- Successful commits return a receipt id.
-
-### 4.1 Configuration Guide
-
-To use the APM MCP server, you must first generate a dedicated access token:
+## Quick start
 
 ```bash
-pm mcp token
+go build -o pm .
+pm setup
+pm unlock
+pm add
+pm get github
+pm lock
 ```
 
-Follow the prompts to select permissions (`read`, `secrets`, etc.). Once generated, manually add the following configuration to your MCP client.
+To build the team edition:
 
-#### For Claude Desktop
-Add this to your `claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "apm": {
-      "command": "C:\\path\\to\\pm.exe",
-      "args": ["mcp", "serve", "--token", "YOUR_TOKEN_HERE"]
-    }
-  }
-}
-```
-
-#### For Cursor / Windsurf / Others
-Add the following manual configuration:
-```json
-{
-  "mcpServers": {
-    "apm": {
-      "command": "C:\\path\\to\\pm.exe",
-      "args": ["mcp", "serve", "--token", "YOUR_TOKEN_HERE"],
-      "capabilities": ["tools"],
-      "env": {
-        "APM_VAULT_PATH": "C:\\path\\to\\vault.dat"
-      }
-    }
-  }
-}
-```
-
-> [!IMPORTANT]
-> The MCP server requires an active APM session. You MUST run `pm unlock` in your terminal before the AI agent can access the vault.
-> You can alternatively provide an ephemeral delegated session using `APM_EPHEMERAL_ID`.
-
----
-
-## 5. Team Edition (pm-team)
-
-Designed for organizations, the Team Edition facilitates secure credential sharing via a multi-layered RBAC model.
-
-| Command     | Usage                             | Result                                     |
-| ----------- | --------------------------------- | ------------------------------------------ |
-| `init`      | `pm-team init "Corp"`             | Sets up organization root environment.     |
-| `dept`      | `pm-team dept create Engineering` | Creates a new isolated encryption domain.  |
-| `user`      | `pm-team user add alice`          | Onboards a new member with specific roles. |
-| `approvals` | `pm-team approvals list`          | Manage pending sensitive entry requests.   |
-
----
-
-## 6. Supported Secret Types
-
-APM supports 22 distinct data structures:
-1. **Passwords** | 2. **TOTP** | 3. **Gov IDs** | 4. **Medical** | 5. **Travel** | 6. **Contacts** | 7. **Wi-Fi** | 8. **API Keys** | 9. **Tokens** | 10. **SSH Keys** | 11. **SSH Configs** | 12. **Cloud Creds** | 13. **K8s** | 14. **Docker** | 15. **CI/CD** | 16. **Notes** | 17. **Recovery** | 18. **Certs** | 19. **Banking** | 20. **Docs** | 21. **Software Licenses** | 22. **Legal**
-
----
-
-## 7. Plugin Architecture
-
-APM plugins use the legacy manifest architecture based on `plugin.json`.
-- **Local plugins directory**: `plugins/<name>/plugin.json`
-- **Marketplace flow**: `pm plugins market`, `pm plugins install`, `pm plugins push`
-- **Permissions control**: `pm plugins access` toggles per-plugin permissions on/off
-- **Examples**: `examples/plugins/` contains working manifest plugins
-
----
-
-## 8. Policy Engine & Compliance
-
-APM enforces security standards through a flexible, YAML-based policy engine.
-- **Password Complexity**: Validated during `pm add`.
-- **Rotation**: Tracked via `pm health`.
-
----
-
-## 9. Installation and Deployment
-
-### 9.1 One-Command Install
-Linux and macOS (latest stable release):
 ```bash
-curl -sSL https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh | bash
+cd team
+go build -o pm-team .
 ```
 
-Windows PowerShell (latest stable release):
-```powershell
-powershell -ExecutionPolicy Bypass -Command "iwr Set-ExecutionPolicy Bypass -Scope Process -Force
-iwr https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.ps1 -UseBasicParsing | iex
-```
+## Security model summary
 
-Install layout used by the scripts:
-- **macOS**: installs to `/usr/local/opt/apm/apm` and symlinks `/usr/local/bin/apm -> /usr/local/opt/apm/apm`
-- **Linux**: installs to `/opt/apm/apm` and symlinks `/usr/local/bin/apm -> /opt/apm/apm`
-- **Windows**: installs `apm.exe` to `%LOCALAPPDATA%\pm` and safely appends that directory to user `PATH` if missing
+- Personal vaults use profile metadata plus authenticated encryption and integrity checks.
+- Built-in profiles are `standard`, `hardened`, `paranoid`, and `legacy`.
+- The current code supports both `aes-gcm` and `xchacha20-poly1305`.
+- Normal unlock sessions are encrypted on disk; delegated ephemeral sessions are stored separately for short-lived agent or automation use.
+- Recovery metadata is stored in the v4 vault header so recovery checks can run before the main vault body is decrypted.
 
-### 9.2 Build from Source
-```bash
-git clone https://github.com/aaravmaloo/apm.git
-cd apm
-go build -o pm.exe main.go
-./pm.exe setup
-```
+## Docs
 
-### 9.3 Build Requirements
-- Go 1.21+
-- Windows, macOS, or Linux
+The MkDocs site lives in [`docs/`](docs). Start with:
 
-### 9.4 Pre-built Binaries
-Pre-built binaries for Windows, macOS, and Linux for stable releases are available for download from the [Releases page](https://github.com/aaravmaloo/apm/releases).
+- [`docs/index.md`](docs/index.md)
+- [`docs/getting-started/first-steps.md`](docs/getting-started/first-steps.md)
+- [`docs/reference/cli.md`](docs/reference/cli.md)
+- [`docs/concepts/recovery.md`](docs/concepts/recovery.md)
 
-### 9.5 Installation of Previews and Betas
-Pre-built binaries for Windows, macOS, and Linux for previews, betas, and canarys will be available for download from the [Builds page](https://github.com/aaravmaloo/apm/tree/master/build).
-Note that these builds may break your vault, or may not be stable. These builds are solely for developers and testers to report any bugs present and resolve them. Do not use these builds for production use. Use them at your own risk.
+## Development notes
 
----
+- Root module: Go CLI for `pm`
+- Team module: separate Go module in [`team/`](team)
+- Install scripts: [`scripts/install.sh`](scripts/install.sh), [`scripts/install.ps1`](scripts/install.ps1)
+- Example plugins: [`examples/plugins/`](examples/plugins)
 
-## 10. Contact & Support
-- **Primary Maintainer**: Aarav Maloo
-- **Security Alerts**: aaravmaloo06@gmail.com
-- **GitHub Issues**: aaravmaloo/apm/issues
-
----
-
-## 11. Development & Contributing
-APM is open-source. All PRs must pass the test suite in `/tests`.
-
----
-
-## 12. Cloud Synchronization Matrix
-
-APM provides native support for multiple cloud storage providers to ensure your vault is available across all your trusted devices.
-
-| Feature             | Google Drive (GDrive)      | GitHub (GH)                 | Dropbox (DBX)              |
-| :------------------ | :------------------------- | :-------------------------- | :------------------------- |
-| **Authentication**  | OAuth2 (PKCE)              | Personal Access Token       | OAuth2 (PKCE)              |
-| **Storage Type**    | Application Data Folder    | Private Repository          | Application Folder         |
-| **Setup Speed**     | Instant (APM_PUBLIC)       | Manual (Token required)     | Instant (APM_PUBLIC)       |
-| **Privacy Level**   | High (Isolated from files) | Exceptional (Git History)   | High (Isolated from files) |
-| **Version History** | Limited (Drive native)     | Comprehensive (Git Commits) | Limited (Dropbox native)   |
-| **Recommended For** | Mobile users & Fast sync   | Developers & Power users    | Cross-platform persistence |
-
-### 12.1 Cloud Initialization
-To set up synchronization, use the following commands:
-- `pm cloud init gdrive`: Setup Google Drive sync.
-- `pm cloud init github`: Setup GitHub sync (requires token and repo).
-- `pm cloud init dropbox`: Setup Dropbox sync.
-- `pm cloud init all`: Initialize all supported providers simultaneously.
-
-### 12.2 Safeguards and Scope
-- End-to-end encrypted vault blobs are uploaded; cloud providers do not receive plaintext entries or
-  your master password.
-- Google Drive and Dropbox ask explicit user consent before storing a one-way retrieval-key hash in
-  provider metadata.
-- If metadata consent is declined, retrieval works with direct provider identifiers (Drive file ID /
-  Dropbox path) instead of key-hash lookup.
-- Conflict handling is whole-vault only: `pm cloud get` prompts to overwrite local, keep local and
-  save a conflict copy, or cancel.
-
----
-
-## 13. AI Usage
-
-The code written for APM is completely hand-written by me. Some exceptions include the `examples/` folder, which was generated by AI; keep in mind that the plugins parser was completely human-written. AI was used to refactor the code for better naming schemes and readability. Each change made by the AI is monitored. 
-
-I acknowledge that AI is a great tool for productivity and I am not against it; however, I feel AI is not perfect at security, nor is a human. Though a human is much preferred for security tools. Hence, I write code by myself, which makes development slower but keeps APM secure. Due to this reason APM releases take upto a month. 
-Releases also may take around two to three weeks when minor changes are made and when bugs are to be fixed. 
-
-Copyright (c) 2025-2026 Aarav Maloo. Licensed under the MIT License.
+## License
 
 ## 14. Version System For Contributors
 (from pre-dev to release stages) (with examples)

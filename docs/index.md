@@ -1,154 +1,97 @@
 # APM Documentation
 
-**APM** (Advanced Password Manager) is a professional-grade, zero-knowledge command-line password manager built in Go. It provides encrypted-at-rest vault storage, multi-cloud synchronization, AI-agent integration via MCP, a Windows autofill daemon, a manifest-based plugin system, and organizational team support — all driven from a single CLI binary.
+APM is a Go-based password manager with two binaries:
 
----
+- `pm` for personal vaults
+- `pm-team` for shared organizational vaults
 
-## Why APM?
+The source tree implements more than a basic password CLI. It includes sessions, recovery, cloud sync, plugins, MCP access, Windows autofill, shell injection, and a TUI alongside the core encrypted vault.
 
-- **Zero-Knowledge Architecture** — Your master password never leaves your machine. The vault is encrypted with Argon2id plus an AEAD cipher (`AES-256-GCM` or `XChaCha20-Poly1305`) and protected by HMAC-SHA256 integrity signatures.
-- **25+ Secret Types** — Passwords, TOTP, API keys, SSH keys, certificates, banking, medical records, legal contracts, documents with file attachments, and more — each with a structured schema.
-- **Multi-Cloud Sync** — Native support for Google Drive, GitHub, and Dropbox. Your vault is uploaded as an encrypted blob; providers never see plaintext.
-- **AI-Agent Integration** — Built-in MCP (Model Context Protocol) server lets AI assistants like Claude, Cursor, and Windsurf read and manage vault entries with permission-scoped, token-based access.
-- **Windows Autofill** — A local daemon that detects credential forms and injects keystrokes via hotkey — no browser extension required.
-- **Face ID Unlock (Optional)** — Biometric unlock powered by local face recognition. Available when built with the `faceid` build tag.
-- **Plugin Ecosystem** — Manifest-based plugins with 100+ granular permissions, a marketplace, and hook-based lifecycle integration.
-- **Team Edition** — Multi-user credential sharing with RBAC, departments, and approval workflows.
+## What APM currently does
 
----
+- Stores 25 personal secret types in one encrypted vault.
+- Uses explicit unlock sessions with expiry and inactivity controls.
+- Supports delegated ephemeral sessions for automation and AI-agent access.
+- Syncs encrypted vault blobs to Google Drive, GitHub, and Dropbox.
+- Exposes a built-in MCP server with scoped tokens and mutation previews.
+- Runs a manifest-based plugin system with hooks and runtime-added commands.
+- Offers Windows autofill and autocomplete support plus shell-side secret injection.
+- Provides a separate team edition with departments, approvals, roles, and shared entries.
 
-## Quick Install
-
-=== "macOS / Linux"
-
-    ```bash
-    curl -sSL https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh | bash
-    ```
-
-=== "Windows PowerShell"
-
-    ```powershell
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    iwr https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.ps1 -UseBasicParsing | iex
-    ```
-
-=== "Build from Source"
-
-    ```bash
-    git clone https://github.com/aaravmaloo/apm.git
-    cd apm
-    go build -o pm main.go
-    ```
-
-For full installation details, see [Installation](getting-started/installation.md).
-
----
-
-## Quickstart
+## Quick start
 
 ```bash
-# 1. Run the guided setup flow
+go build -o pm .
 pm setup
-
-# 2. Unlock the vault to start a session
 pm unlock
-
-# 3. Add your first entry
 pm add
-
-# 4. Search and retrieve entries
 pm get github
-
-# 5. Generate a strong password
-pm gen
-
-# 6. Lock when done
 pm lock
 ```
 
-For a detailed walkthrough, see [First Steps](getting-started/first-steps.md).
+Team edition:
 
----
+```bash
+cd team
+go build -o pm-team .
+```
 
-## How the Documentation Is Organized
+## Documentation map
 
 ### [Getting Started](getting-started/index.md)
 
-Installation, first steps, and a feature overview to get productive quickly.
+- [Installation](getting-started/installation.md)
+- [First steps](getting-started/first-steps.md)
+- [Features](getting-started/features.md)
+- [Getting help](getting-started/help.md)
 
 ### [Guides](guides/index.md)
 
-Practical how-to guides for day-to-day tasks:
-
-- [Managing your vault](guides/vault-management.md) — Adding, searching, editing, and organizing entries
-- [Cloud synchronization](guides/cloud-sync.md) — Setting up GDrive, GitHub, and Dropbox sync
-- [Using .apmignore](guides/apmignore.md) — Controlling what gets uploaded to cloud providers
-- [Autofill on Windows](autofill_windows.md) — The autofill daemon and hotkey injection
-- [Generating TOTP codes](guides/totp.md) — 2FA management and autofill linking
-- [Managing sessions](guides/sessions.md) — Unlock, lock, ephemeral sessions, and delegation
-- [Using plugins](guides/plugins.md) — Installing, managing, and creating plugins
-- [MCP integration](guides/mcp-integration.md) — Connecting AI assistants to your vault
-- [Team edition](guides/team-edition.md) — Organizational credential sharing
-- [Importing and exporting](guides/import-export.md) — JSON, CSV, and TXT import/export
+- [Vault management](guides/vault-management.md)
+- [Cloud synchronization](guides/cloud-sync.md)
+- [Using `.apmignore`](guides/apmignore.md)
+- [Injecting secrets into your shell](guides/inject.md)
+- [Generating TOTP codes](guides/totp.md)
+- [Managing sessions](guides/sessions.md)
+- [Using plugins](guides/plugins.md)
+- [MCP integration](guides/mcp-integration.md)
+- [Team edition](guides/team-edition.md)
+- [Import and export](guides/import-export.md)
+- [Windows autofill](autofill_windows.md)
 
 ### [Concepts](concepts/index.md)
 
-Deep technical explanations of how APM works:
-
-- [Architecture](concepts/architecture.md) — The four-layer design
-- [Encryption](concepts/encryption.md) — Argon2id, AES-GCM, XChaCha20-Poly1305, HMAC-SHA256
-- [Vault format](concepts/vault-format.md) — The V4 binary format specification
-- [Secret types](concepts/secret-types.md) — All 25+ structured entry types
-- [Security profiles](concepts/security-profiles.md) — Standard, Hardened, Paranoid, Legacy
-- [Policy engine](concepts/policy-engine.md) — YAML-based password and rotation policies
-- [Sessions](concepts/sessions.md) — Shell-scoped and ephemeral delegated sessions
-- [Cloud synchronization](concepts/cloud-sync.md) — Provider comparison and sync mechanics
-- [Plugins](concepts/plugins.md) — Plugin architecture and permission model
-- [MCP server](concepts/mcp.md) — Model Context Protocol server internals
-- [Recovery](concepts/recovery.md) — Multi-factor recovery, quorum shares, passkeys
+- [Architecture](concepts/architecture.md)
+- [Encryption](concepts/encryption.md)
+- [Vault format](concepts/vault-format.md)
+- [Secret types](concepts/secret-types.md)
+- [Security profiles](concepts/security-profiles.md)
+- [Policy engine](concepts/policy-engine.md)
+- [Sessions](concepts/sessions.md)
+- [Cloud sync](concepts/cloud-sync.md)
+- [Plugins](concepts/plugins.md)
+- [MCP](concepts/mcp.md)
+- [Recovery](concepts/recovery.md)
 
 ### [Reference](reference/index.md)
 
-Precise technical specifications:
-
-- [CLI reference](reference/cli.md) — Every command, subcommand, and flag
-- [.apmignore reference](reference/apmignore.md) — Format specification
-- [Storage reference](reference/storage.md) — File locations and data layout
-- [Environment variables](reference/environment-variables.md) — All supported env vars
-- [Plugin API](reference/plugin-api.md) — Manifest schema and permissions catalog
-- [MCP tools](reference/mcp-tools.md) — Tool schemas and permission requirements
-- [Policies](reference/policies.md) — YAML policy schema and examples
+- [CLI reference](reference/cli.md)
+- [Storage](reference/storage.md)
+- [Environment variables](reference/environment-variables.md)
+- [Plugin API](reference/plugin-api.md)
+- [MCP tools](reference/mcp-tools.md)
+- [Policies](reference/policies.md)
+- [`.apmignore`](reference/apmignore.md)
 
 ### [Team](team/index.md)
-
-Team edition documentation for organizational deployments:
 
 - [RBAC and roles](team/rbac.md)
 - [Departments](team/departments.md)
 - [Approval workflows](team/approvals.md)
 
----
+## Important implementation notes
 
-## Threat Model
-
-| Vector              | Status        | Mitigation                                                               |
-| :------------------ | :------------ | :----------------------------------------------------------------------- |
-| Offline Brute-Force | Protected     | Argon2id high-cost derivation (up to 512 MB, 6 iterations)               |
-| Vault Tampering     | Protected     | HMAC-SHA256 integrity signature across all metadata                      |
-| Credential Theft    | Protected     | Cloud tokens are encrypted inside the vault                              |
-| Identity Spoofing   | Protected     | Multi-factor recovery (Email → Recovery Key → OTP → Optional 2nd factor) |
-| Session Hijacking   | Protected     | Shell-scoped sessions (`APM_SESSION_ID`) and inactivity timeouts         |
-| Weak Passwords      | Controlled    | Enforceable password policies via YAML Policy Engine                     |
-| Compromised Host    | Not Protected | Outside security boundary (keyloggers, malware)                          |
-
----
-
-## Contact & Support
-
-- **Primary Maintainer**: Aarav Maloo
-- **Security Alerts**: aaravmaloo06@gmail.com
-- **GitHub Issues**: [aaravmaloo/apm/issues](https://github.com/aaravmaloo/apm/issues)
-
----
-
-*APM is open-source software licensed under the [MIT License](https://github.com/aaravmaloo/apm/blob/master/LICENSE). Copyright © 2025–2026 Aarav Maloo.*
+- The current personal vault format is `APMVAULT` v4.
+- Built-in profiles are `standard`, `hardened`, `paranoid`, and `legacy`.
+- Personal `pm add` supports 25 entry types; team `pm-team add` currently supports 22 shared entry types.
+- Plugin commands can extend the `pm` command surface at runtime.

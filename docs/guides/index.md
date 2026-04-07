@@ -1,47 +1,30 @@
 # Guides
 
-Practical how-to guides for every major APM workflow. Each guide is task-oriented and walks you through real usage scenarios.
+These guides focus on workflows that are actually present in the current binaries.
 
----
+## Personal vault workflows
 
-## Vault Operations
+- [Managing your vault](vault-management.md)
+- [Importing and exporting](import-export.md)
+- [Managing sessions](sessions.md)
+- [Generating TOTP codes](totp.md)
+- [Injecting secrets into your shell](inject.md)
 
-- **[Managing Your Vault](vault-management.md)** — Adding, searching, editing, deleting entries, organizing with spaces, and using the vocabulary engine for notes
+## Sync and integration
 
-- **[Importing and Exporting](import-export.md)** — Moving data in and out of APM using JSON, CSV, and TXT formats
+- [Cloud synchronization](cloud-sync.md)
+- [Using `.apmignore`](apmignore.md)
+- [MCP integration](mcp-integration.md)
+- [Autofill on Windows](../autofill_windows.md)
+- [Face ID](faceid.md)
 
----
+## Extension and organization
 
-## Cloud & Sync
+- [Using plugins](plugins.md)
+- [Team edition](team-edition.md)
 
-- **[Cloud Synchronization](cloud-sync.md)** — Setting up Google Drive, GitHub, and Dropbox sync with conflict resolution and auto-sync
+## Notes on scope
 
-- **[Using .apmignore](apmignore.md)** — Controlling what entries, spaces, and vocabulary data get uploaded to cloud providers
-
----
-
-## Security & Sessions
-
-- **[Managing Sessions](sessions.md)** — The lock/unlock lifecycle, inactivity timeouts, shell-scoped sessions, and ephemeral delegated sessions
-
-- **[Generating TOTP Codes](totp.md)** — 2FA management, interactive TOTP list, ordering, and autofill linking
-
-- **[Injecting Secrets Into Your Shell](inject.md)** — Using `pm inject`, `.apminject`, session teardown, and shell helpers
-
----
-
-## Platform Integration
-
-- **[Autofill on Windows](../autofill_windows.md)** — The autofill daemon, hotkey configuration, context detection, and fill sequences
-
-- **[Face ID](faceid.md)** — Building with `faceid`, enrolling, testing, and fallback behavior
-
-- **[MCP Integration](mcp-integration.md)** — Connecting AI assistants to your vault via the Model Context Protocol server
-
----
-
-## Extensions & Teams
-
-- **[Using Plugins](plugins.md)** — Installing, managing permissions, creating manifest-based plugins, and the marketplace
-
-- **[Team Edition](team-edition.md)** — Organizational deployment with RBAC, departments, and approval workflows
+- `pm` is the personal CLI.
+- `pm-team` is a separate binary documented under [Team](../team/index.md).
+- Plugin manifests can add new runtime commands, so the exact command list may be larger than the built-in docs surface.
