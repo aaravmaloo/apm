@@ -34,6 +34,7 @@ type FillRequest struct {
 	Context        RequestContext `json:"context"`
 	SelectionID    string         `json:"selection_id,omitempty"`
 	IncludeTOTP    bool           `json:"include_totp,omitempty"`
+	MailOnly       bool           `json:"mail_only,omitempty"`
 	Sequence       string         `json:"sequence,omitempty"`
 	ExplicitAction bool           `json:"explicit_action"`
 }
@@ -69,6 +70,7 @@ type DaemonStatus struct {
 	StartedAt        time.Time `json:"started_at"`
 	Locked           bool      `json:"locked"`
 	Hotkey           string    `json:"hotkey"`
+	MailHotkey       string    `json:"mail_hotkey"`
 	SystemEngine     string    `json:"system_engine"`
 	ProfileCount     int       `json:"profile_count"`
 	PendingSelection int       `json:"pending_selection"`

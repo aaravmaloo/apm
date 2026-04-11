@@ -32,3 +32,11 @@ func profileFilePath() (string, error) {
 	}
 	return filepath.Join(dir, "profiles.json"), nil
 }
+
+func mailConfigFilePath() (string, error) {
+	dir, err := autofillDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "mail.json"), nil
+}

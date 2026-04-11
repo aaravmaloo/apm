@@ -50,12 +50,14 @@ type input struct {
 }
 
 type windowsSystemEngine struct {
-	mu       sync.Mutex
-	typeMu   sync.Mutex
-	stopCh   chan struct{}
-	stopped  bool
-	hotkey   Hotkey
-	callback func(WindowContext)
+	mu           sync.Mutex
+	typeMu       sync.Mutex
+	stopCh       chan struct{}
+	stopped      bool
+	hotkey       Hotkey
+	mailHotkey   Hotkey
+	callback     func(WindowContext)
+	mailCallback func(WindowContext)
 }
 
 func newSystemEngine() SystemEngine {
@@ -66,14 +68,16 @@ func (w *windowsSystemEngine) Name() string {
 	return "windows-sendinput"
 }
 
-func (w *windowsSystemEngine) Start(h Hotkey, onHotkey func(WindowContext)) error {
+func (w *windowsSystemEngine) Start(primary Hotkey, onPrimary func(WindowContext), mail Hotkey, onMail func(WindowContext)) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.stopCh != nil {
 		return errors.New("system engine already running")
 	}
-	w.hotkey = h
-	w.callback = onHotkey
+	w.hotkey = primary
+	w.mailHotkey = mail
+	w.callback = onPrimary
+	w.mailCallback = onMail
 	w.stopCh = make(chan struct{})
 	go w.pollHotkey()
 	return nil
@@ -120,22 +124,32 @@ func (w *windowsSystemEngine) pollHotkey() {
 	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
 
-	wasDown := false
+	wasPrimaryDown := false
+	wasMailDown := false
 	for {
 		select {
 		case <-w.stopCh:
 			return
 		case <-ticker.C:
-			down := w.hotkeyPressed()
-			if down && !wasDown {
-				go w.dispatchHotkey()
+			primaryDown := w.hotkeyPressed(w.hotkey)
+			if primaryDown && !wasPrimaryDown {
+				go w.dispatchHotkey(w.hotkey, w.callback)
 			}
-			wasDown = down
+			wasPrimaryDown = primaryDown
+
+			mailDown := w.hotkeyPressed(w.mailHotkey)
+			if mailDown && !wasMailDown {
+				go w.dispatchHotkey(w.mailHotkey, w.mailCallback)
+			}
+			wasMailDown = mailDown
 		}
 	}
 }
 
-func (w *windowsSystemEngine) dispatchHotkey() {
+func (w *windowsSystemEngine) dispatchHotkey(hotkey Hotkey, callback func(WindowContext)) {
+	if callback == nil || hotkey.Key == "" {
+		return
+	}
 
 	deadline := time.Now().Add(500 * time.Millisecond)
 	for time.Now().Before(deadline) {
@@ -144,7 +158,7 @@ func (w *windowsSystemEngine) dispatchHotkey() {
 			return
 		default:
 		}
-		if !w.hotkeyPressed() && !isKeyDown(vkControl) && !isKeyDown(vkShift) && !isKeyDown(vkAlt) {
+		if !w.hotkeyPressed(hotkey) && !isKeyDown(vkControl) && !isKeyDown(vkShift) && !isKeyDown(vkAlt) {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -152,8 +166,8 @@ func (w *windowsSystemEngine) dispatchHotkey() {
 	time.Sleep(15 * time.Millisecond)
 
 	ctx, err := getActiveWindowContext()
-	if err == nil && w.callback != nil {
-		w.callback(ctx)
+	if err == nil {
+		callback(ctx)
 	}
 }
 
@@ -167,17 +181,20 @@ func (w *windowsSystemEngine) waitForModifierRelease(maxWait time.Duration) {
 	}
 }
 
-func (w *windowsSystemEngine) hotkeyPressed() bool {
-	if w.hotkey.Ctrl && !isKeyDown(vkControl) {
+func (w *windowsSystemEngine) hotkeyPressed(hotkey Hotkey) bool {
+	if hotkey.Key == "" {
 		return false
 	}
-	if w.hotkey.Alt && !isKeyDown(vkAlt) {
+	if hotkey.Ctrl && !isKeyDown(vkControl) {
 		return false
 	}
-	if w.hotkey.Shift && !isKeyDown(vkShift) {
+	if hotkey.Alt && !isKeyDown(vkAlt) {
 		return false
 	}
-	vk := hotkeyKeyToVK(w.hotkey.Key)
+	if hotkey.Shift && !isKeyDown(vkShift) {
+		return false
+	}
+	vk := hotkeyKeyToVK(hotkey.Key)
 	if vk == 0 {
 		return false
 	}

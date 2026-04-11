@@ -17,18 +17,21 @@ import (
 )
 
 type RunOptions struct {
-	VaultPath string
-	Hotkey    string
+	VaultPath  string
+	Hotkey     string
+	MailHotkey string
 }
 
 type Daemon struct {
 	mu sync.Mutex
 
-	vaultPath string
-	token     string
-	startedAt time.Time
-	hotkeyRaw string
-	hotkey    Hotkey
+	vaultPath     string
+	token         string
+	startedAt     time.Time
+	hotkeyRaw     string
+	hotkey        Hotkey
+	mailHotkeyRaw string
+	mailHotkey    Hotkey
 
 	locked            bool
 	vault             *src.Vault
@@ -38,6 +41,8 @@ type Daemon struct {
 
 	pendingCandidates []MatchCandidate
 	recentNotices     map[string]time.Time
+	mailCache         []MailOTPResult
+	usedMailCodes     map[string]time.Time
 	popupDisabled     bool
 
 	listener net.Listener
@@ -56,8 +61,18 @@ func Run(opts RunOptions) error {
 	if _, err := os.Stat(opts.VaultPath); err != nil {
 		return fmt.Errorf("vault path is invalid: %w", err)
 	}
+	if strings.TrimSpace(opts.Hotkey) == "" {
+		opts.Hotkey = "CTRL+SHIFT+L"
+	}
+	if strings.TrimSpace(opts.MailHotkey) == "" {
+		opts.MailHotkey = "CTRL+SHIFT+P"
+	}
 
 	hotkey, err := parseHotkey(opts.Hotkey)
+	if err != nil {
+		return err
+	}
+	mailHotkey, err := parseHotkey(opts.MailHotkey)
 	if err != nil {
 		return err
 	}
@@ -92,6 +107,8 @@ func Run(opts RunOptions) error {
 		startedAt:         state.StartedAt,
 		hotkeyRaw:         opts.Hotkey,
 		hotkey:            hotkey,
+		mailHotkeyRaw:     opts.MailHotkey,
+		mailHotkey:        mailHotkey,
 		locked:            true,
 		listener:          listener,
 		stopCh:            make(chan struct{}),
@@ -99,9 +116,13 @@ func Run(opts RunOptions) error {
 		inactivityTimeout: 15 * time.Minute,
 		notifier:          newPopupNotifier(),
 		recentNotices:     make(map[string]time.Time),
+		usedMailCodes:     make(map[string]time.Time),
 	}
 	if daemon.hotkeyRaw == "" {
 		daemon.hotkeyRaw = "CTRL+SHIFT+L"
+	}
+	if daemon.mailHotkeyRaw == "" {
+		daemon.mailHotkeyRaw = "CTRL+SHIFT+P"
 	}
 
 	mux := http.NewServeMux()
@@ -117,7 +138,7 @@ func Run(opts RunOptions) error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	if err := daemon.systemEngine.Start(daemon.hotkey, daemon.handleHotkey); err != nil {
+	if err := daemon.systemEngine.Start(daemon.hotkey, daemon.handleHotkey, daemon.mailHotkey, daemon.handleMailHotkey); err != nil {
 		// Keep the HTTP daemon alive even when native hotkey hooks are unavailable.
 		daemon.systemEngine = newSystemEngine()
 	}
@@ -177,6 +198,7 @@ func (d *Daemon) handleStatus(w http.ResponseWriter, r *http.Request) {
 		StartedAt:        d.startedAt,
 		Locked:           d.locked,
 		Hotkey:           d.hotkeyRaw,
+		MailHotkey:       d.mailHotkeyRaw,
 		SystemEngine:     d.systemEngine.Name(),
 		ProfileCount:     profileCount,
 		PendingSelection: len(d.pendingCandidates),
@@ -314,11 +336,17 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
+	if req.MailOnly {
+		return d.resolveMailFillLocked(req)
+	}
+
 	if d.locked || d.vault == nil {
-		return FillResponse{
-			Status: ResponseStatusOK,
-			Error:  ErrVaultLocked,
-		}, http.StatusLocked
+		if !d.tryUnlockFromSessionLocked() {
+			return FillResponse{
+				Status: ResponseStatusOK,
+				Error:  ErrVaultLocked,
+			}, http.StatusLocked
+		}
 	}
 
 	d.lastActivity = time.Now().UTC()
@@ -335,7 +363,7 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 	if len(matches) == 0 && strings.EqualFold(strings.TrimSpace(req.Context.Kind), ContextSystem) {
 		// System contexts do not have DOM metadata, so fall back to the looser
 		// heuristic matcher built for desktop apps and native dialogs.
-		return resolveSystemIntelligentFill(d.vault, req)
+		return d.resolveSystemIntelligentFillLocked(req)
 	}
 	if len(matches) == 0 {
 		return FillResponse{
@@ -382,7 +410,6 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 			Error:  "CredentialResolutionError",
 		}, http.StatusInternalServerError
 	}
-
 	sequence := req.Sequence
 	if strings.TrimSpace(sequence) == "" {
 		sequence = selected.Sequence
@@ -405,6 +432,145 @@ func (d *Daemon) resolveFill(req FillRequest) (FillResponse, int) {
 	}, http.StatusOK
 }
 
+func (d *Daemon) tryUnlockFromSessionLocked() bool {
+	unlock, err := src.AttemptUnlockWithSession(d.vaultPath)
+	if err != nil || unlock == nil || unlock.Vault == nil {
+		return false
+	}
+
+	now := time.Now().UTC()
+	d.vault = unlock.Vault
+	d.locked = false
+	d.pendingCandidates = nil
+	d.lastActivity = now
+
+	if session, err := src.GetSession(); err == nil {
+		d.unlockExpiresAt = session.Expiry.UTC()
+		d.inactivityTimeout = session.InactivityTimeout
+	} else {
+		d.unlockExpiresAt = now.Add(1 * time.Hour)
+		d.inactivityTimeout = 15 * time.Minute
+	}
+
+	return true
+}
+
+func (d *Daemon) resolveSystemIntelligentFillLocked(req FillRequest) (FillResponse, int) {
+	return resolveSystemIntelligentFill(d.vault, req)
+}
+
+func (d *Daemon) lookupMailOTPLocked(ctx RequestContext, consume bool) (string, bool) {
+	d.pruneMailArtifactsLocked()
+
+	now := time.Now()
+	filtered := d.mailCache[:0]
+	for _, item := range d.mailCache {
+		if now.Sub(item.ReceivedAt) <= 8*time.Minute && !d.mailCodeConsumedLocked(item) {
+			filtered = append(filtered, item)
+		}
+	}
+	d.mailCache = filtered
+	if len(d.mailCache) > 0 {
+		best := d.mailCache[0]
+		best.Score = scoreMailOTPResult(best, ctx)
+		for _, item := range d.mailCache[1:] {
+			item.Score = scoreMailOTPResult(item, ctx)
+			if item.Score > best.Score || (item.Score == best.Score && item.ReceivedAt.After(best.ReceivedAt)) {
+				best = item
+			}
+		}
+		if best.Score >= 180 {
+			if consume {
+				d.consumeMailCodeLocked(best)
+			}
+			return best.Code, true
+		}
+	}
+
+	results, err := LookupGmailOTP(context.Background(), ctx, d.usedMailCodes)
+	if err != nil || len(results) == 0 {
+		return "", false
+	}
+	d.mailCache = results
+	best := results[0]
+	if best.Score <= 0 {
+		return "", false
+	}
+	if consume {
+		d.consumeMailCodeLocked(best)
+	}
+	return best.Code, true
+}
+
+func (d *Daemon) resolveMailFillLocked(req FillRequest) (FillResponse, int) {
+	if inferFieldIntent(req.Context) != fieldIntentMailOTP {
+		return FillResponse{
+			Status: ResponseStatusOK,
+			Error:  "NoMatchingMailOTPError",
+		}, http.StatusNotFound
+	}
+	code, ok := d.lookupMailOTPLocked(req.Context, true)
+	if !ok {
+		return FillResponse{
+			Status: ResponseStatusOK,
+			Error:  "NoMatchingMailOTPError",
+		}, http.StatusNotFound
+	}
+	return FillResponse{
+		Status:   ResponseStatusOK,
+		TOTP:     code,
+		Sequence: "{TOTP}",
+	}, http.StatusOK
+}
+
+func (d *Daemon) consumeMailCodeLocked(item MailOTPResult) {
+	expiresAt := item.ReceivedAt.Add(8 * time.Minute)
+	if expiresAt.Before(time.Now()) {
+		expiresAt = time.Now().Add(8 * time.Minute)
+	}
+	if strings.TrimSpace(item.MessageID) != "" {
+		d.usedMailCodes[strings.TrimSpace(item.MessageID)] = expiresAt
+	}
+	if strings.TrimSpace(item.Code) != "" {
+		d.usedMailCodes["code:"+strings.TrimSpace(item.Code)] = expiresAt
+	}
+
+	filtered := d.mailCache[:0]
+	for _, cached := range d.mailCache {
+		if cached.MessageID == item.MessageID && cached.Code == item.Code {
+			continue
+		}
+		if strings.TrimSpace(cached.Code) != "" && strings.EqualFold(strings.TrimSpace(cached.Code), strings.TrimSpace(item.Code)) {
+			continue
+		}
+		filtered = append(filtered, cached)
+	}
+	d.mailCache = filtered
+}
+
+func (d *Daemon) mailCodeConsumedLocked(item MailOTPResult) bool {
+	if strings.TrimSpace(item.MessageID) != "" {
+		if expiry, ok := d.usedMailCodes[strings.TrimSpace(item.MessageID)]; ok && time.Now().Before(expiry) {
+			return true
+		}
+	}
+	if strings.TrimSpace(item.Code) != "" {
+		if expiry, ok := d.usedMailCodes["code:"+strings.TrimSpace(item.Code)]; ok && time.Now().Before(expiry) {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *Daemon) pruneMailArtifactsLocked() {
+	now := time.Now()
+	for key, expiry := range d.usedMailCodes {
+		if now.After(expiry) {
+			delete(d.usedMailCodes, key)
+		}
+	}
+}
+
 func (d *Daemon) handleHotkey(ctx WindowContext) {
 	if d.tryHandleHotkeyContext(requestContextFromWindow(ctx)) {
 		return
@@ -415,6 +581,18 @@ func (d *Daemon) handleHotkey(ctx WindowContext) {
 		return
 	}
 	_ = d.tryHandleHotkeyContext(requestContextFromWindow(freshCtx))
+}
+
+func (d *Daemon) handleMailHotkey(ctx WindowContext) {
+	if d.tryHandleMailHotkeyContext(requestContextFromWindow(ctx)) {
+		return
+	}
+
+	freshCtx, err := captureActiveWindowContext()
+	if err != nil {
+		return
+	}
+	_ = d.tryHandleMailHotkeyContext(requestContextFromWindow(freshCtx))
 }
 
 func (d *Daemon) tryHandleHotkeyContext(requestContext RequestContext) bool {
@@ -436,6 +614,22 @@ func (d *Daemon) tryHandleHotkeyContext(requestContext RequestContext) bool {
 	}
 
 	actions := renderSequence(resp.Sequence, resp.Username, resp.Password, resp.TOTP)
+	_ = d.systemEngine.Type(actions)
+	return true
+}
+
+func (d *Daemon) tryHandleMailHotkeyContext(requestContext RequestContext) bool {
+	resp, statusCode := d.resolveFill(FillRequest{
+		Context:        requestContext,
+		IncludeTOTP:    true,
+		MailOnly:       true,
+		ExplicitAction: true,
+	})
+	if statusCode != http.StatusOK || resp.Status != ResponseStatusOK || resp.Error != "" {
+		return false
+	}
+
+	actions := renderSequence("{TOTP}", "", "", resp.TOTP)
 	_ = d.systemEngine.Type(actions)
 	return true
 }
@@ -601,7 +795,7 @@ func contextSuggestsCredentialEntry(ctx RequestContext) bool {
 	)
 
 	switch inferFieldIntent(ctx) {
-	case fieldIntentOTP, fieldIntentPassword:
+	case fieldIntentTOTP, fieldIntentMailOTP, fieldIntentPassword:
 		return true
 	case fieldIntentUsername:
 		return authPageSignals || focusSignals
@@ -612,7 +806,7 @@ func contextSuggestsCredentialEntry(ctx RequestContext) bool {
 
 func contextIntentBucket(ctx RequestContext) string {
 	switch inferFieldIntent(ctx) {
-	case fieldIntentOTP:
+	case fieldIntentTOTP, fieldIntentMailOTP:
 		return "otp"
 	case fieldIntentPassword:
 		return "password"

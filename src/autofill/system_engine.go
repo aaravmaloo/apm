@@ -26,7 +26,7 @@ type Hotkey struct {
 
 type SystemEngine interface {
 	Name() string
-	Start(h Hotkey, onHotkey func(WindowContext)) error
+	Start(primary Hotkey, onPrimary func(WindowContext), mail Hotkey, onMail func(WindowContext)) error
 	Stop() error
 	Type(actions []SequenceAction) error
 }

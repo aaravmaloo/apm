@@ -517,7 +517,7 @@ func accountTokens(value string) []string {
 func chooseSystemSequence(c intelligentCandidate, ctx RequestContext, totpCode string) string {
 	intent := inferFieldIntent(ctx)
 	switch intent {
-	case fieldIntentOTP:
+	case fieldIntentTOTP, fieldIntentMailOTP:
 		if totpCode != "" {
 			return "{TOTP}"
 		}
@@ -583,7 +583,8 @@ const (
 	fieldIntentUnknown = iota
 	fieldIntentUsername
 	fieldIntentPassword
-	fieldIntentOTP
+	fieldIntentTOTP
+	fieldIntentMailOTP
 )
 
 func inferFieldIntent(ctx RequestContext) int {
@@ -592,8 +593,14 @@ func inferFieldIntent(ctx RequestContext) int {
 	title := strings.ToLower(strings.TrimSpace(ctx.WindowTitle))
 
 	joined := strings.TrimSpace(name + " " + title)
-	if containsAny(joined, "otp", "2fa", "two-factor", "verification", "authenticator", "one-time", "security code") {
-		return fieldIntentOTP
+	if looksLikeAuthenticatorAppPrompt(joined) {
+		return fieldIntentTOTP
+	}
+	if looksLikeMailOTPPrompt(joined) {
+		return fieldIntentMailOTP
+	}
+	if containsAny(joined, "otp", "2fa", "two-factor", "verification", "one-time", "security code") {
+		return fieldIntentMailOTP
 	}
 	if containsAny(name, "password", "passcode", "pass phrase") {
 		return fieldIntentPassword
@@ -604,15 +611,21 @@ func inferFieldIntent(ctx RequestContext) int {
 	if strings.Contains(value, "@") {
 		return fieldIntentUsername
 	}
+	if isLikelyOTPValue(value) && looksLikeAuthenticatorAppPrompt(title) {
+		return fieldIntentTOTP
+	}
+	if isLikelyOTPValue(value) && looksLikeMailOTPPrompt(title) {
+		return fieldIntentMailOTP
+	}
 	if isLikelyOTPValue(value) && looksLikeOTPWindow(title) {
-		return fieldIntentOTP
+		return fieldIntentMailOTP
 	}
 	return fieldIntentUnknown
 }
 
 func scoreCandidateForIntent(c intelligentCandidate, intent int) int {
 	switch intent {
-	case fieldIntentOTP:
+	case fieldIntentTOTP:
 		if c.TOTPCount == 1 {
 			return 600
 		}
@@ -622,6 +635,14 @@ func scoreCandidateForIntent(c intelligentCandidate, intent int) int {
 		if c.HasPassword {
 			return -180
 		}
+	case fieldIntentMailOTP:
+		if c.HasPassword {
+			return -140
+		}
+		if c.TOTPCount > 0 {
+			return -220
+		}
+		return -80
 	case fieldIntentPassword:
 		if c.HasPassword {
 			return 320
@@ -637,6 +658,40 @@ func scoreCandidateForIntent(c intelligentCandidate, intent int) int {
 		return -120
 	}
 	return 0
+}
+
+func looksLikeAuthenticatorAppPrompt(text string) bool {
+	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "" {
+		return false
+	}
+	return containsAny(
+		text,
+		"authenticator app",
+		"authentication app",
+		"code from your app",
+		"app code",
+		"totp",
+		"time-based",
+		"6-digit code from",
+	)
+}
+
+func looksLikeMailOTPPrompt(text string) bool {
+	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "" {
+		return false
+	}
+	return containsAny(
+		text,
+		"email code",
+		"mail code",
+		"sent to your email",
+		"check your email",
+		"inbox",
+		"email verification",
+		"verification email",
+	)
 }
 
 func containsAny(s string, keywords ...string) bool {
