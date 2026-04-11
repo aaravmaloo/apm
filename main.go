@@ -3535,15 +3535,16 @@ func main() {
 		Short: "Manage autocomplete daemon and hints",
 	}
 	var autocompleteHotkey string
+	var autocompleteMailHotkey string
 	autocompleteEnableCmd := &cobra.Command{
 		Use:   "enable",
 		Short: "Enable autocomplete daemon autostart and start now",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.EnableAutofillAutostart(vaultPath, autocompleteHotkey); err != nil {
+			if err := autofillcmd.EnableAutofillAutostart(vaultPath, autocompleteHotkey, autocompleteMailHotkey); err != nil {
 				color.Red("Failed to enable autostart: %v", err)
 				return
 			}
-			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey); err != nil {
+			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey, autocompleteMailHotkey); err != nil {
 				color.Red("Failed to start autocomplete daemon: %v", err)
 				return
 			}
@@ -3551,6 +3552,7 @@ func main() {
 		},
 	}
 	autocompleteEnableCmd.Flags().StringVar(&autocompleteHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
+	autocompleteEnableCmd.Flags().StringVar(&autocompleteMailHotkey, "mail-hotkey", "CTRL+SHIFT+P", "Global hotkey for Gmail mail OTP fill")
 	autocompleteDisableCmd := &cobra.Command{
 		Use:   "disable",
 		Short: "Disable autocomplete daemon autostart and stop daemon",
@@ -3569,7 +3571,7 @@ func main() {
 		Use:   "start",
 		Short: "Start the autocomplete daemon",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey); err != nil {
+			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey, autocompleteMailHotkey); err != nil {
 				color.Red("Failed to start autocomplete daemon: %v", err)
 				return
 			}
@@ -3577,6 +3579,7 @@ func main() {
 		},
 	}
 	autocompleteStartCmd.Flags().StringVar(&autocompleteHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
+	autocompleteStartCmd.Flags().StringVar(&autocompleteMailHotkey, "mail-hotkey", "CTRL+SHIFT+P", "Global hotkey for Gmail mail OTP fill")
 	autocompleteStopCmd := &cobra.Command{
 		Use:   "stop",
 		Short: "Stop the autocomplete daemon",
@@ -3613,6 +3616,7 @@ func main() {
 			fmt.Printf("Daemon: %s\n", state)
 			fmt.Printf("PID: %d\n", status.PID)
 			fmt.Printf("Hotkey: %s\n", status.Hotkey)
+			fmt.Printf("Mail Hotkey: %s\n", status.MailHotkey)
 			fmt.Printf("System Engine: %s\n", status.SystemEngine)
 			fmt.Printf("Profiles: %d\n", status.ProfileCount)
 			if status.PendingSelection > 0 {
@@ -3710,7 +3714,17 @@ func main() {
 		},
 	}
 	autocompleteWindowCmd.AddCommand(autocompleteWindowEnableCmd, autocompleteWindowDisableCmd, autocompleteWindowStatusCmd)
-	autocompleteCmd.AddCommand(autocompleteEnableCmd, autocompleteDisableCmd, autocompleteStartCmd, autocompleteStopCmd, autocompleteStatusCmd, autocompleteWindowCmd, autocompleteLinkTOTPCmd)
+	autocompleteCmd.AddCommand(
+		autocompleteEnableCmd,
+		autocompleteDisableCmd,
+		autocompleteStartCmd,
+		autocompleteStopCmd,
+		autocompleteStatusCmd,
+		autocompleteWindowCmd,
+		autocompleteLinkTOTPCmd,
+		buildAutocompleteMailCommand(),
+		buildAutocompleteFillCommand(),
+	)
 
 	rootCmd.AddCommand(autofillCmd, autocompleteCmd)
 	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
@@ -7437,6 +7451,86 @@ func setAutocompletePopupDisabled(disabled bool) {
 
 	if status, err := autofill.TryStatus(context.Background()); err == nil && status != nil {
 		color.Cyan("Restart or re-unlock the daemon to apply popup changes.")
+	}
+}
+
+func buildAutocompleteMailCommand() *cobra.Command {
+	mailCmd := &cobra.Command{
+		Use:   "mail",
+		Short: "Manage Gmail OTP autocomplete",
+	}
+
+	mailSetupCmd := &cobra.Command{
+		Use:   "setup",
+		Short: "Connect Gmail for OTP autocomplete",
+		Run: func(cmd *cobra.Command, args []string) {
+			cfg, err := autofill.SetupGmail(context.Background())
+			if err != nil {
+				color.Red("Failed to connect Gmail: %v", err)
+				return
+			}
+			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, "CTRL+SHIFT+L", "CTRL+SHIFT+P"); err != nil {
+				color.Yellow("Gmail is connected, but the autocomplete daemon is not running yet: %v", err)
+			}
+			if cfg.EmailAddress != "" {
+				color.Green("Gmail connected for OTP autocomplete: %s", cfg.EmailAddress)
+				return
+			}
+			color.Green("Gmail connected for OTP autocomplete.")
+		},
+	}
+
+	mailStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show Gmail autocomplete status",
+		Run: func(cmd *cobra.Command, args []string) {
+			if !autofill.MailConfigured() {
+				fmt.Println("Mail: not configured")
+				return
+			}
+			fmt.Println("Mail: gmail configured")
+		},
+	}
+
+	mailDisconnectCmd := &cobra.Command{
+		Use:   "disconnect",
+		Short: "Disconnect Gmail autocomplete",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := autofill.DisconnectGmail(); err != nil {
+				color.Red("Failed to disconnect Gmail: %v", err)
+				return
+			}
+			color.Green("Gmail autocomplete disconnected.")
+		},
+	}
+
+	mailFillCmd := &cobra.Command{
+		Use:   "fill",
+		Short: "Fill the current field with a Gmail mail OTP",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := autofillcmd.TriggerMailOTPFillForActiveWindow(); err != nil {
+				color.Red("Mail OTP fill failed: %v", err)
+				return
+			}
+			color.Green("Mail OTP fill completed.")
+		},
+	}
+
+	mailCmd.AddCommand(mailSetupCmd, mailStatusCmd, mailDisconnectCmd, mailFillCmd)
+	return mailCmd
+}
+
+func buildAutocompleteFillCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "fill",
+		Short: "Fill the active window now",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := autofillcmd.TriggerAutofillForActiveWindow(true); err != nil {
+				color.Red("Autocomplete fill failed: %v", err)
+				return
+			}
+			color.Green("Autocomplete fill completed.")
+		},
 	}
 }
 
