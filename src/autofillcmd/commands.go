@@ -30,6 +30,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 	}
 
 	var daemonHotkey string
+	var daemonMailHotkey string
 
 	autofillCmd := &cobra.Command{
 		Use:   "autofill",
@@ -40,7 +41,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 		Use:   "start",
 		Short: "Start the autofill daemon",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := ensureAutofillDaemonRunning(*opts.VaultPath, daemonHotkey); err != nil {
+			if err := ensureAutofillDaemonRunning(*opts.VaultPath, daemonHotkey, daemonMailHotkey); err != nil {
 				color.Red("Failed to start autofill daemon: %v", err)
 				return
 			}
@@ -48,6 +49,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 		},
 	}
 	autofillStartCmd.Flags().StringVar(&daemonHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
+	autofillStartCmd.Flags().StringVar(&daemonMailHotkey, "mail-hotkey", "CTRL+SHIFT+P", "Global hotkey for Gmail mail OTP fill")
 
 	autofillStopCmd := &cobra.Command{
 		Use:   "stop",
@@ -96,6 +98,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 			fmt.Printf("Status: %s\n", state)
 			fmt.Printf("PID: %d\n", status.PID)
 			fmt.Printf("Hotkey: %s\n", status.Hotkey)
+			fmt.Printf("Mail Hotkey: %s\n", status.MailHotkey)
 			fmt.Printf("System Engine: %s\n", status.SystemEngine)
 			fmt.Printf("Profiles: %d\n", status.ProfileCount)
 			if status.PendingSelection > 0 {
@@ -140,9 +143,11 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 		Hidden: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			hotkey, _ := cmd.Flags().GetString("hotkey")
+			mailHotkey, _ := cmd.Flags().GetString("mail-hotkey")
 			if err := autofill.Run(autofill.RunOptions{
-				VaultPath: *opts.VaultPath,
-				Hotkey:    hotkey,
+				VaultPath:  *opts.VaultPath,
+				Hotkey:     hotkey,
+				MailHotkey: mailHotkey,
 			}); err != nil {
 				color.Red("Autofill daemon failed: %v", err)
 				os.Exit(1)
@@ -150,6 +155,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 		},
 	}
 	autofillDaemonCmd.Flags().String("hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
+	autofillDaemonCmd.Flags().String("mail-hotkey", "CTRL+SHIFT+P", "Global hotkey for Gmail mail OTP fill")
 
 	autofillCmd.AddCommand(
 		autofillStartCmd,
@@ -172,8 +178,9 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 			timeout, _ := cmd.Flags().GetDuration("timeout")
 			inactivity, _ := cmd.Flags().GetDuration("inactivity")
 			hotkey, _ := cmd.Flags().GetString("hotkey")
+			mailHotkey, _ := cmd.Flags().GetString("mail-hotkey")
 
-			if err := ensureAutofillDaemonRunning(*opts.VaultPath, hotkey); err != nil {
+			if err := ensureAutofillDaemonRunning(*opts.VaultPath, hotkey, mailHotkey); err != nil {
 				color.Red("Unable to start autofill daemon: %v", err)
 				return
 			}
@@ -214,6 +221,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 	vaultUnlockCmd.Flags().Duration("timeout", 1*time.Hour, "Unlock duration")
 	vaultUnlockCmd.Flags().Duration("inactivity", 15*time.Minute, "Inactivity auto-lock duration")
 	vaultUnlockCmd.Flags().String("hotkey", "CTRL+SHIFT+L", "Global hotkey used if daemon must be started")
+	vaultUnlockCmd.Flags().String("mail-hotkey", "CTRL+SHIFT+P", "Global hotkey used for Gmail mail OTP fill if daemon must be started")
 
 	vaultLockCmd := &cobra.Command{
 		Use:   "lock",
@@ -238,7 +246,7 @@ func NewAutofillAndVaultCommands(opts Options) (*cobra.Command, *cobra.Command) 
 	return autofillCmd, vaultCmd
 }
 
-func ensureAutofillDaemonRunning(vaultPath, hotkey string) error {
+func ensureAutofillDaemonRunning(vaultPath, hotkey, mailHotkey string) error {
 	if status, err := autofill.TryStatus(context.Background()); err == nil && status != nil {
 		return nil
 	}
@@ -248,7 +256,7 @@ func ensureAutofillDaemonRunning(vaultPath, hotkey string) error {
 		return err
 	}
 
-	cmd := exec.Command(exe, "autofill", "daemon", "--vault", vaultPath, "--hotkey", hotkey)
+	cmd := exec.Command(exe, "autofill", "daemon", "--vault", vaultPath, "--hotkey", hotkey, "--mail-hotkey", mailHotkey)
 	cmd.Stdin = nil
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
@@ -267,8 +275,8 @@ func ensureAutofillDaemonRunning(vaultPath, hotkey string) error {
 	return errors.New("daemon did not become ready")
 }
 
-func EnsureAutofillDaemonRunning(vaultPath, hotkey string) error {
-	return ensureAutofillDaemonRunning(vaultPath, hotkey)
+func EnsureAutofillDaemonRunning(vaultPath, hotkey, mailHotkey string) error {
+	return ensureAutofillDaemonRunning(vaultPath, hotkey, mailHotkey)
 }
 
 func StopAutofillDaemon() error {
@@ -291,7 +299,7 @@ func UnlockDaemonWithPassword(vaultPath, password string, timeout, inactivity ti
 	if strings.TrimSpace(hotkey) == "" {
 		hotkey = "CTRL+SHIFT+L"
 	}
-	if err := ensureAutofillDaemonRunning(vaultPath, hotkey); err != nil {
+	if err := ensureAutofillDaemonRunning(vaultPath, hotkey, "CTRL+SHIFT+P"); err != nil {
 		return err
 	}
 	client, err := autofill.NewClientFromState()
@@ -315,4 +323,77 @@ func LockDaemonIfRunning() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
 	return client.Lock(ctx)
+}
+
+func TriggerAutofillForActiveWindow(includeTOTP bool) error {
+	client, err := autofill.NewClientFromState()
+	if err != nil {
+		return err
+	}
+	requestContext, err := autofill.CaptureCurrentRequestContext()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	resp, err := client.RequestFill(ctx, autofill.FillRequest{
+		Context:        requestContext,
+		IncludeTOTP:    includeTOTP,
+		ExplicitAction: true,
+	})
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("empty fill response")
+	}
+	if resp.Status == autofill.ResponseStatusMultiple && len(resp.Candidates) > 0 {
+		resp, err = client.RequestFill(ctx, autofill.FillRequest{
+			Context:        requestContext,
+			SelectionID:    resp.Candidates[0].ProfileID,
+			IncludeTOTP:    includeTOTP,
+			ExplicitAction: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if resp.Error != "" {
+		return errors.New(resp.Error)
+	}
+	return autofill.TypeFillResponse(*resp)
+}
+
+func TriggerMailOTPFillForActiveWindow() error {
+	client, err := autofill.NewClientFromState()
+	if err != nil {
+		return err
+	}
+	requestContext, err := autofill.CaptureCurrentRequestContext()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	resp, err := client.RequestFill(ctx, autofill.FillRequest{
+		Context:        requestContext,
+		IncludeTOTP:    true,
+		MailOnly:       true,
+		ExplicitAction: true,
+	})
+	if err != nil {
+		return err
+	}
+	if resp == nil {
+		return errors.New("empty fill response")
+	}
+	if resp.Error != "" {
+		return errors.New(resp.Error)
+	}
+	if strings.TrimSpace(resp.TOTP) == "" {
+		return errors.New("no matching mail otp found")
+	}
+	return autofill.TypeMailOTP(resp.TOTP)
 }
