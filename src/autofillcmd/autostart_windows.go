@@ -3,58 +3,71 @@
 package autofillcmd
 
 import (
-	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
+
+	"golang.org/x/sys/windows/registry"
 )
 
-const autofillAutostartTaskName = "APM Autofill"
+const autofillAutostartValueName = "APM Autofill"
+const autofillRunKeyPath = `Software\Microsoft\Windows\CurrentVersion\Run`
 
-func EnableAutofillAutostart(vaultPath, hotkey string) error {
+func EnableAutofillAutostart(vaultPath, hotkey, mailHotkey string) error {
 	if strings.TrimSpace(vaultPath) == "" {
 		return fmt.Errorf("vault path is required")
 	}
 	if strings.TrimSpace(hotkey) == "" {
 		hotkey = "CTRL+SHIFT+L"
 	}
+	if strings.TrimSpace(mailHotkey) == "" {
+		mailHotkey = "CTRL+SHIFT+P"
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
-	cmdLine := fmt.Sprintf("\"%s\" autofill daemon --vault \"%s\" --hotkey \"%s\"", exe, vaultPath, hotkey)
-	_, err = runSchTasks("/Create", "/F", "/SC", "ONLOGON", "/TN", autofillAutostartTaskName, "/TR", cmdLine)
-	return err
+	cmdLine := fmt.Sprintf("\"%s\" autofill daemon --vault \"%s\" --hotkey \"%s\" --mail-hotkey \"%s\"", exe, vaultPath, hotkey, mailHotkey)
+	key, _, err := registry.CreateKey(registry.CURRENT_USER, autofillRunKeyPath, registry.SET_VALUE)
+	if err != nil {
+		return err
+	}
+	defer key.Close()
+	return key.SetStringValue(autofillAutostartValueName, cmdLine)
 }
 
 func DisableAutofillAutostart() error {
-	_, err := runSchTasks("/Delete", "/TN", autofillAutostartTaskName, "/F")
-	if err != nil && strings.Contains(strings.ToLower(err.Error()), "cannot find the file specified") {
+	key, err := registry.OpenKey(registry.CURRENT_USER, autofillRunKeyPath, registry.SET_VALUE)
+	if err != nil {
+		if err == registry.ErrNotExist {
+			return nil
+		}
+		return err
+	}
+	defer key.Close()
+	err = key.DeleteValue(autofillAutostartValueName)
+	if err == registry.ErrNotExist {
 		return nil
 	}
 	return err
 }
 
 func AutofillAutostartEnabled() (bool, error) {
-	_, err := runSchTasks("/Query", "/TN", autofillAutostartTaskName)
+	key, err := registry.OpenKey(registry.CURRENT_USER, autofillRunKeyPath, registry.QUERY_VALUE)
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "cannot find the file specified") {
+		if err == registry.ErrNotExist {
 			return false, nil
 		}
 		return false, err
 	}
-	return true, nil
-}
-
-func runSchTasks(args ...string) (string, error) {
-	cmd := exec.Command("schtasks", args...)
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-	if err := cmd.Run(); err != nil {
-		return strings.TrimSpace(buf.String()), fmt.Errorf("%v: %s", err, strings.TrimSpace(buf.String()))
+	defer key.Close()
+	value, _, err := key.GetStringValue(autofillAutostartValueName)
+	if err != nil {
+		if err == registry.ErrNotExist {
+			return false, nil
+		}
+		return false, err
 	}
-	return strings.TrimSpace(buf.String()), nil
+	return strings.TrimSpace(value) != "", nil
 }
