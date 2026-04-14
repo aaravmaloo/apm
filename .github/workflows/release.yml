@@ -10,21 +10,17 @@ permissions:
 
 jobs:
   build:
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             goos: linux
             goarch: amd64
-            faceid: true
           - os: macos-latest
             goos: darwin
             goarch: amd64
-            faceid: true
-          - os: windows-latest
-            goos: windows
-            goarch: amd64
-            faceid: false
 
     runs-on: ${{ matrix.os }}
 
@@ -33,16 +29,8 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
-
-      - if: matrix.faceid == true && runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install -y libopencv-dev
-
-      - if: matrix.faceid == true && runner.os == 'macOS'
-        run: |
-          brew install opencv
+          go-version-file: go.mod
+          cache: true
 
       - run: |
           echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
@@ -51,30 +39,11 @@ jobs:
       - shell: bash
         run: |
           NAME="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
+          export CGO_ENABLED=0
 
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            EXT=".exe"
-          else
-            EXT=""
-          fi
-
-          if [ "${{ matrix.faceid }}" = "true" ]; then
-            export CGO_ENABLED=1
-            TAGS="-tags faceid"
-          else
-            export CGO_ENABLED=0
-            TAGS=""
-          fi
-
-          go build $TAGS -ldflags="-s -w" -o "$NAME$EXT"
-
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            zip "$NAME.zip" "$NAME$EXT"
-            echo "ASSET=$NAME.zip" >> $GITHUB_ENV
-          else
-            tar -czf "$NAME.tar.gz" "$NAME$EXT"
-            echo "ASSET=$NAME.tar.gz" >> $GITHUB_ENV
-          fi
+          go build -ldflags="-s -w" -o "$NAME"
+          tar -czf "$NAME.tar.gz" "$NAME"
+          echo "ASSET=$NAME.tar.gz" >> $GITHUB_ENV
 
       - uses: actions/upload-artifact@v4
         with:
@@ -89,7 +58,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: apm-*
+          merge-multiple: true
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: artifacts/*
