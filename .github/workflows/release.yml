@@ -18,9 +18,15 @@ jobs:
           - os: ubuntu-latest
             goos: linux
             goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
           - os: macos-latest
             goos: darwin
             goarch: amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -39,16 +45,19 @@ jobs:
       - shell: bash
         run: |
           NAME="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
+          ARCHIVE="$NAME.tar.gz"
           export CGO_ENABLED=0
 
           go build -ldflags="-s -w" -o "$NAME"
           chmod +x "$NAME"
-          echo "ASSET=$NAME" >> $GITHUB_ENV
+          tar -czf "$ARCHIVE" "$NAME"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ASSET }}
-          path: ${{ env.ASSET }}
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}
+            apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
 
   release:
     needs: build
@@ -58,7 +67,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-          pattern: apm-*
+          pattern: *
           merge-multiple: true
 
       - uses: softprops/action-gh-release@v2
