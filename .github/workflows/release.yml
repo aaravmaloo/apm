@@ -42,8 +42,8 @@ jobs:
           export CGO_ENABLED=0
 
           go build -ldflags="-s -w" -o "$NAME"
-          tar -czf "$NAME.tar.gz" "$NAME"
-          echo "ASSET=$NAME.tar.gz" >> $GITHUB_ENV
+          chmod +x "$NAME"
+          echo "ASSET=$NAME" >> $GITHUB_ENV
 
       - uses: actions/upload-artifact@v4
         with:
