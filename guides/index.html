@@ -1985,10 +1985,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#vault-operations" class="md-nav__link">
+  <a href="#personal-vault-workflows" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vault Operations
+        Personal vault workflows
       
     </span>
   </a>
@@ -1996,10 +1996,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cloud-sync" class="md-nav__link">
+  <a href="#sync-and-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cloud &amp; Sync
+        Sync and integration
       
     </span>
   </a>
@@ -2007,10 +2007,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-sessions" class="md-nav__link">
+  <a href="#extension-and-organization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security &amp; Sessions
+        Extension and organization
       
     </span>
   </a>
@@ -2018,21 +2018,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#platform-integration" class="md-nav__link">
+  <a href="#notes-on-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Platform Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#extensions-teams" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Extensions &amp; Teams
+        Notes on scope
       
     </span>
   </a>
@@ -2108,62 +2097,33 @@
 
 
 <h1 id="guides">Guides<a class="headerlink" href="#guides" title="Permanent link">&para;</a></h1>
-<p>Practical how-to guides for every major APM workflow. Each guide is task-oriented and walks you through real usage scenarios.</p>
-<hr />
-<h2 id="vault-operations">Vault Operations<a class="headerlink" href="#vault-operations" title="Permanent link">&para;</a></h2>
+<p>These guides focus on workflows that are actually present in the current binaries.</p>
+<h2 id="personal-vault-workflows">Personal vault workflows<a class="headerlink" href="#personal-vault-workflows" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong><a href="vault-management/">Managing Your Vault</a></strong> — Adding, searching, editing, deleting entries, organizing with spaces, and using the vocabulary engine for notes</p>
-</li>
-<li>
-<p><strong><a href="import-export/">Importing and Exporting</a></strong> — Moving data in and out of APM using JSON, CSV, and TXT formats</p>
-</li>
+<li><a href="vault-management/">Managing your vault</a></li>
+<li><a href="import-export/">Importing and exporting</a></li>
+<li><a href="sessions/">Managing sessions</a></li>
+<li><a href="totp/">Generating TOTP codes</a></li>
+<li><a href="inject/">Injecting secrets into your shell</a></li>
 </ul>
-<hr />
-<h2 id="cloud-sync">Cloud &amp; Sync<a class="headerlink" href="#cloud-sync" title="Permanent link">&para;</a></h2>
+<h2 id="sync-and-integration">Sync and integration<a class="headerlink" href="#sync-and-integration" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong><a href="cloud-sync/">Cloud Synchronization</a></strong> — Setting up Google Drive, GitHub, and Dropbox sync with conflict resolution and auto-sync</p>
-</li>
-<li>
-<p><strong><a href="apmignore/">Using .apmignore</a></strong> — Controlling what entries, spaces, and vocabulary data get uploaded to cloud providers</p>
-</li>
+<li><a href="cloud-sync/">Cloud synchronization</a></li>
+<li><a href="apmignore/">Using <code>.apmignore</code></a></li>
+<li><a href="mcp-integration/">MCP integration</a></li>
+<li><a href="../autofill_windows/">Autofill on Windows</a></li>
+<li><a href="faceid/">Face ID</a></li>
 </ul>
-<hr />
-<h2 id="security-sessions">Security &amp; Sessions<a class="headerlink" href="#security-sessions" title="Permanent link">&para;</a></h2>
+<h2 id="extension-and-organization">Extension and organization<a class="headerlink" href="#extension-and-organization" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong><a href="sessions/">Managing Sessions</a></strong> — The lock/unlock lifecycle, inactivity timeouts, shell-scoped sessions, and ephemeral delegated sessions</p>
-</li>
-<li>
-<p><strong><a href="totp/">Generating TOTP Codes</a></strong> — 2FA management, interactive TOTP list, ordering, and autofill linking</p>
-</li>
-<li>
-<p><strong><a href="inject/">Injecting Secrets Into Your Shell</a></strong> — Using <code>pm inject</code>, <code>.apminject</code>, session teardown, and shell helpers</p>
-</li>
+<li><a href="plugins/">Using plugins</a></li>
+<li><a href="team-edition/">Team edition</a></li>
 </ul>
-<hr />
-<h2 id="platform-integration">Platform Integration<a class="headerlink" href="#platform-integration" title="Permanent link">&para;</a></h2>
+<h2 id="notes-on-scope">Notes on scope<a class="headerlink" href="#notes-on-scope" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong><a href="../autofill_windows/">Autofill on Windows</a></strong> — The autofill daemon, hotkey configuration, context detection, and fill sequences</p>
-</li>
-<li>
-<p><strong><a href="faceid/">Face ID</a></strong> — Building with <code>faceid</code>, enrolling, testing, and fallback behavior</p>
-</li>
-<li>
-<p><strong><a href="mcp-integration/">MCP Integration</a></strong> — Connecting AI assistants to your vault via the Model Context Protocol server</p>
-</li>
-</ul>
-<hr />
-<h2 id="extensions-teams">Extensions &amp; Teams<a class="headerlink" href="#extensions-teams" title="Permanent link">&para;</a></h2>
-<ul>
-<li>
-<p><strong><a href="plugins/">Using Plugins</a></strong> — Installing, managing permissions, creating manifest-based plugins, and the marketplace</p>
-</li>
-<li>
-<p><strong><a href="team-edition/">Team Edition</a></strong> — Organizational deployment with RBAC, departments, and approval workflows</p>
-</li>
+<li><code>pm</code> is the personal CLI.</li>
+<li><code>pm-team</code> is a separate binary documented under <a href="../team/">Team</a>.</li>
+<li>Plugin manifests can add new runtime commands, so the exact command list may be larger than the built-in docs surface.</li>
 </ul>
 
 

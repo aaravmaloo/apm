@@ -476,10 +476,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-apm" class="md-nav__link">
+  <a href="#what-apm-currently-does" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why APM?
+        What APM currently does
       
     </span>
   </a>
@@ -487,10 +487,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-install" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Install
+        Quick start
       
     </span>
   </a>
@@ -498,26 +498,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
+  <a href="#documentation-map" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quickstart
+        Documentation map
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-the-documentation-is-organized" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How the Documentation Is Organized
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How the Documentation Is Organized">
+    <nav class="md-nav" aria-label="Documentation map">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -581,21 +570,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#threat-model" class="md-nav__link">
+  <a href="#important-implementation-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Threat Model
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contact-support" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contact &amp; Support
+        Important implementation notes
       
     </span>
   </a>
@@ -2154,10 +2132,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-apm" class="md-nav__link">
+  <a href="#what-apm-currently-does" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why APM?
+        What APM currently does
       
     </span>
   </a>
@@ -2165,10 +2143,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-install" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Install
+        Quick start
       
     </span>
   </a>
@@ -2176,26 +2154,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
+  <a href="#documentation-map" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quickstart
+        Documentation map
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-the-documentation-is-organized" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How the Documentation Is Organized
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How the Documentation Is Organized">
+    <nav class="md-nav" aria-label="Documentation map">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2259,21 +2226,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#threat-model" class="md-nav__link">
+  <a href="#important-implementation-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Threat Model
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contact-support" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contact &amp; Support
+        Important implementation notes
       
     </span>
   </a>
@@ -2309,170 +2265,94 @@
 
 
 <h1 id="apm-documentation">APM Documentation<a class="headerlink" href="#apm-documentation" title="Permanent link">&para;</a></h1>
-<p><strong>APM</strong> (Advanced Password Manager) is a professional-grade, zero-knowledge command-line password manager built in Go. It provides encrypted-at-rest vault storage, multi-cloud synchronization, AI-agent integration via MCP, a Windows autofill daemon, a manifest-based plugin system, and organizational team support — all driven from a single CLI binary.</p>
-<hr />
-<h2 id="why-apm">Why APM?<a class="headerlink" href="#why-apm" title="Permanent link">&para;</a></h2>
+<p>APM is a Go-based password manager with two binaries:</p>
 <ul>
-<li><strong>Zero-Knowledge Architecture</strong> — Your master password never leaves your machine. The vault is encrypted with Argon2id plus an AEAD cipher (<code>AES-256-GCM</code> or <code>XChaCha20-Poly1305</code>) and protected by HMAC-SHA256 integrity signatures.</li>
-<li><strong>25+ Secret Types</strong> — Passwords, TOTP, API keys, SSH keys, certificates, banking, medical records, legal contracts, documents with file attachments, and more — each with a structured schema.</li>
-<li><strong>Multi-Cloud Sync</strong> — Native support for Google Drive, GitHub, and Dropbox. Your vault is uploaded as an encrypted blob; providers never see plaintext.</li>
-<li><strong>AI-Agent Integration</strong> — Built-in MCP (Model Context Protocol) server lets AI assistants like Claude, Cursor, and Windsurf read and manage vault entries with permission-scoped, token-based access.</li>
-<li><strong>Windows Autofill</strong> — A local daemon that detects credential forms and injects keystrokes via hotkey — no browser extension required.</li>
-<li><strong>Face ID Unlock (Optional)</strong> — Biometric unlock powered by local face recognition. Available when built with the <code>faceid</code> build tag.</li>
-<li><strong>Plugin Ecosystem</strong> — Manifest-based plugins with 100+ granular permissions, a marketplace, and hook-based lifecycle integration.</li>
-<li><strong>Team Edition</strong> — Multi-user credential sharing with RBAC, departments, and approval workflows.</li>
+<li><code>pm</code> for personal vaults</li>
+<li><code>pm-team</code> for shared organizational vaults</li>
 </ul>
-<hr />
-<h2 id="quick-install">Quick Install<a class="headerlink" href="#quick-install" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">macOS / Linux</label><label for="__tabbed_1_2">Windows PowerShell</label><label for="__tabbed_1_3">Build from Source</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-sSL<span class="w"> </span>https://raw.githubusercontent.com/aaravmaloo/apm/master/scripts/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">Set-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="n">-Scope</span> <span class="k">Process</span> <span class="n">-Force</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">iwr </span><span class="n">https</span><span class="p">://</span><span class="n">raw</span><span class="p">.</span><span class="n">githubusercontent</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">aaravmaloo</span><span class="p">/</span><span class="n">apm</span><span class="p">/</span><span class="n">master</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">install</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-UseBasicParsing</span> <span class="p">|</span> <span class="nb">iex</span>
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaravmaloo/apm.git
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>apm
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span>pm<span class="w"> </span>main.go
-</span></code></pre></div>
-</div>
-</div>
-</div>
-<p>For full installation details, see <a href="getting-started/installation/">Installation</a>.</p>
-<hr />
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 1. Run the guided setup flow</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pm<span class="w"> </span>setup
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># 2. Unlock the vault to start a session</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>pm<span class="w"> </span>unlock
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># 3. Add your first entry</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>pm<span class="w"> </span>add
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># 4. Search and retrieve entries</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>pm<span class="w"> </span>get<span class="w"> </span>github
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># 5. Generate a strong password</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>pm<span class="w"> </span>gen
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># 6. Lock when done</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>pm<span class="w"> </span>lock
-</span></code></pre></div>
-<p>For a detailed walkthrough, see <a href="getting-started/first-steps/">First Steps</a>.</p>
-<hr />
-<h2 id="how-the-documentation-is-organized">How the Documentation Is Organized<a class="headerlink" href="#how-the-documentation-is-organized" title="Permanent link">&para;</a></h2>
-<h3 id="getting-started"><a href="getting-started/">Getting Started</a><a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h3>
-<p>Installation, first steps, and a feature overview to get productive quickly.</p>
-<h3 id="guides"><a href="guides/">Guides</a><a class="headerlink" href="#guides" title="Permanent link">&para;</a></h3>
-<p>Practical how-to guides for day-to-day tasks:</p>
+<p>The source tree implements more than a basic password CLI. It includes sessions, recovery, cloud sync, plugins, MCP access, Windows autofill, shell injection, and a TUI alongside the core encrypted vault.</p>
+<h2 id="what-apm-currently-does">What APM currently does<a class="headerlink" href="#what-apm-currently-does" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="guides/vault-management/">Managing your vault</a> — Adding, searching, editing, and organizing entries</li>
-<li><a href="guides/cloud-sync/">Cloud synchronization</a> — Setting up GDrive, GitHub, and Dropbox sync</li>
-<li><a href="guides/apmignore/">Using .apmignore</a> — Controlling what gets uploaded to cloud providers</li>
-<li><a href="autofill_windows/">Autofill on Windows</a> — The autofill daemon and hotkey injection</li>
-<li><a href="guides/totp/">Generating TOTP codes</a> — 2FA management and autofill linking</li>
-<li><a href="guides/sessions/">Managing sessions</a> — Unlock, lock, ephemeral sessions, and delegation</li>
-<li><a href="guides/plugins/">Using plugins</a> — Installing, managing, and creating plugins</li>
-<li><a href="guides/mcp-integration/">MCP integration</a> — Connecting AI assistants to your vault</li>
-<li><a href="guides/team-edition/">Team edition</a> — Organizational credential sharing</li>
-<li><a href="guides/import-export/">Importing and exporting</a> — JSON, CSV, and TXT import/export</li>
+<li>Stores 25 personal secret types in one encrypted vault.</li>
+<li>Uses explicit unlock sessions with expiry and inactivity controls.</li>
+<li>Supports delegated ephemeral sessions for automation and AI-agent access.</li>
+<li>Syncs encrypted vault blobs to Google Drive, GitHub, and Dropbox.</li>
+<li>Exposes a built-in MCP server with scoped tokens and mutation previews.</li>
+<li>Runs a manifest-based plugin system with hooks and runtime-added commands.</li>
+<li>Offers Windows autofill and autocomplete support plus shell-side secret injection.</li>
+<li>Provides a separate team edition with departments, approvals, roles, and shared entries.</li>
+</ul>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span>pm<span class="w"> </span>.
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pm<span class="w"> </span>setup
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pm<span class="w"> </span>unlock
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pm<span class="w"> </span>add
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pm<span class="w"> </span>get<span class="w"> </span>github
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pm<span class="w"> </span>lock
+</span></code></pre></div>
+<p>Team edition:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>team
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span>pm-team<span class="w"> </span>.
+</span></code></pre></div>
+<h2 id="documentation-map">Documentation map<a class="headerlink" href="#documentation-map" title="Permanent link">&para;</a></h2>
+<h3 id="getting-started"><a href="getting-started/">Getting Started</a><a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="getting-started/installation/">Installation</a></li>
+<li><a href="getting-started/first-steps/">First steps</a></li>
+<li><a href="getting-started/features/">Features</a></li>
+<li><a href="getting-started/help/">Getting help</a></li>
+</ul>
+<h3 id="guides"><a href="guides/">Guides</a><a class="headerlink" href="#guides" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="guides/vault-management/">Vault management</a></li>
+<li><a href="guides/cloud-sync/">Cloud synchronization</a></li>
+<li><a href="guides/apmignore/">Using <code>.apmignore</code></a></li>
+<li><a href="guides/inject/">Injecting secrets into your shell</a></li>
+<li><a href="guides/totp/">Generating TOTP codes</a></li>
+<li><a href="guides/sessions/">Managing sessions</a></li>
+<li><a href="guides/plugins/">Using plugins</a></li>
+<li><a href="guides/mcp-integration/">MCP integration</a></li>
+<li><a href="guides/team-edition/">Team edition</a></li>
+<li><a href="guides/import-export/">Import and export</a></li>
+<li><a href="autofill_windows/">Windows autofill</a></li>
 </ul>
 <h3 id="concepts"><a href="concepts/">Concepts</a><a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h3>
-<p>Deep technical explanations of how APM works:</p>
 <ul>
-<li><a href="concepts/architecture/">Architecture</a> — The four-layer design</li>
-<li><a href="concepts/encryption/">Encryption</a> — Argon2id, AES-GCM, XChaCha20-Poly1305, HMAC-SHA256</li>
-<li><a href="concepts/vault-format/">Vault format</a> — The V4 binary format specification</li>
-<li><a href="concepts/secret-types/">Secret types</a> — All 25+ structured entry types</li>
-<li><a href="concepts/security-profiles/">Security profiles</a> — Standard, Hardened, Paranoid, Legacy</li>
-<li><a href="concepts/policy-engine/">Policy engine</a> — YAML-based password and rotation policies</li>
-<li><a href="concepts/sessions/">Sessions</a> — Shell-scoped and ephemeral delegated sessions</li>
-<li><a href="concepts/cloud-sync/">Cloud synchronization</a> — Provider comparison and sync mechanics</li>
-<li><a href="concepts/plugins/">Plugins</a> — Plugin architecture and permission model</li>
-<li><a href="concepts/mcp/">MCP server</a> — Model Context Protocol server internals</li>
-<li><a href="concepts/recovery/">Recovery</a> — Multi-factor recovery, quorum shares, passkeys</li>
+<li><a href="concepts/architecture/">Architecture</a></li>
+<li><a href="concepts/encryption/">Encryption</a></li>
+<li><a href="concepts/vault-format/">Vault format</a></li>
+<li><a href="concepts/secret-types/">Secret types</a></li>
+<li><a href="concepts/security-profiles/">Security profiles</a></li>
+<li><a href="concepts/policy-engine/">Policy engine</a></li>
+<li><a href="concepts/sessions/">Sessions</a></li>
+<li><a href="concepts/cloud-sync/">Cloud sync</a></li>
+<li><a href="concepts/plugins/">Plugins</a></li>
+<li><a href="concepts/mcp/">MCP</a></li>
+<li><a href="concepts/recovery/">Recovery</a></li>
 </ul>
 <h3 id="reference"><a href="reference/">Reference</a><a class="headerlink" href="#reference" title="Permanent link">&para;</a></h3>
-<p>Precise technical specifications:</p>
 <ul>
-<li><a href="reference/cli/">CLI reference</a> — Every command, subcommand, and flag</li>
-<li><a href="reference/apmignore/">.apmignore reference</a> — Format specification</li>
-<li><a href="reference/storage/">Storage reference</a> — File locations and data layout</li>
-<li><a href="reference/environment-variables/">Environment variables</a> — All supported env vars</li>
-<li><a href="reference/plugin-api/">Plugin API</a> — Manifest schema and permissions catalog</li>
-<li><a href="reference/mcp-tools/">MCP tools</a> — Tool schemas and permission requirements</li>
-<li><a href="reference/policies/">Policies</a> — YAML policy schema and examples</li>
+<li><a href="reference/cli/">CLI reference</a></li>
+<li><a href="reference/storage/">Storage</a></li>
+<li><a href="reference/environment-variables/">Environment variables</a></li>
+<li><a href="reference/plugin-api/">Plugin API</a></li>
+<li><a href="reference/mcp-tools/">MCP tools</a></li>
+<li><a href="reference/policies/">Policies</a></li>
+<li><a href="reference/apmignore/"><code>.apmignore</code></a></li>
 </ul>
 <h3 id="team"><a href="team/">Team</a><a class="headerlink" href="#team" title="Permanent link">&para;</a></h3>
-<p>Team edition documentation for organizational deployments:</p>
 <ul>
 <li><a href="team/rbac/">RBAC and roles</a></li>
 <li><a href="team/departments/">Departments</a></li>
 <li><a href="team/approvals/">Approval workflows</a></li>
 </ul>
-<hr />
-<h2 id="threat-model">Threat Model<a class="headerlink" href="#threat-model" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Vector</th>
-<th style="text-align: left;">Status</th>
-<th style="text-align: left;">Mitigation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">Offline Brute-Force</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Argon2id high-cost derivation (up to 512 MB, 6 iterations)</td>
-</tr>
-<tr>
-<td style="text-align: left;">Vault Tampering</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">HMAC-SHA256 integrity signature across all metadata</td>
-</tr>
-<tr>
-<td style="text-align: left;">Credential Theft</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Cloud tokens are encrypted inside the vault</td>
-</tr>
-<tr>
-<td style="text-align: left;">Identity Spoofing</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Multi-factor recovery (Email → Recovery Key → OTP → Optional 2nd factor)</td>
-</tr>
-<tr>
-<td style="text-align: left;">Session Hijacking</td>
-<td style="text-align: left;">Protected</td>
-<td style="text-align: left;">Shell-scoped sessions (<code>APM_SESSION_ID</code>) and inactivity timeouts</td>
-</tr>
-<tr>
-<td style="text-align: left;">Weak Passwords</td>
-<td style="text-align: left;">Controlled</td>
-<td style="text-align: left;">Enforceable password policies via YAML Policy Engine</td>
-</tr>
-<tr>
-<td style="text-align: left;">Compromised Host</td>
-<td style="text-align: left;">Not Protected</td>
-<td style="text-align: left;">Outside security boundary (keyloggers, malware)</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="contact-support">Contact &amp; Support<a class="headerlink" href="#contact-support" title="Permanent link">&para;</a></h2>
+<h2 id="important-implementation-notes">Important implementation notes<a class="headerlink" href="#important-implementation-notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Primary Maintainer</strong>: Aarav Maloo</li>
-<li><strong>Security Alerts</strong>: aaravmaloo06@gmail.com</li>
-<li><strong>GitHub Issues</strong>: <a href="https://github.com/aaravmaloo/apm/issues">aaravmaloo/apm/issues</a></li>
+<li>The current personal vault format is <code>APMVAULT</code> v4.</li>
+<li>Built-in profiles are <code>standard</code>, <code>hardened</code>, <code>paranoid</code>, and <code>legacy</code>.</li>
+<li>Personal <code>pm add</code> supports 25 entry types; team <code>pm-team add</code> currently supports 22 shared entry types.</li>
+<li>Plugin commands can extend the <code>pm</code> command surface at runtime.</li>
 </ul>
-<hr />
-<p><em>APM is open-source software licensed under the <a href="https://github.com/aaravmaloo/apm/blob/master/LICENSE">MIT License</a>. Copyright © 2025–2026 Aarav Maloo.</em></p>
 
 
 

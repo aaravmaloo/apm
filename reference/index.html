@@ -1978,6 +1978,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -2045,16 +2064,21 @@
 
 
 <h1 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h1>
-<p>Precise technical specifications for APM internals. These pages are designed for looking up exact details, schemas, and parameters.</p>
-<hr />
+<p>This section is the factual lookup layer for the current repo state.</p>
 <ul>
-<li><strong><a href="cli/">CLI Reference</a></strong> — Every command, subcommand, and flag</li>
-<li><strong><a href="apmignore/">.apmignore Reference</a></strong> — Complete format specification</li>
-<li><strong><a href="storage/">Storage Reference</a></strong> — File locations and data layout</li>
-<li><strong><a href="environment-variables/">Environment Variables</a></strong> — All supported environment variables</li>
-<li><strong><a href="plugin-api/">Plugin API</a></strong> — Manifest schema, permissions catalog, and step commands</li>
-<li><strong><a href="mcp-tools/">MCP Tools</a></strong> — Tool schemas and permission requirements</li>
-<li><strong><a href="policies/">Policies</a></strong> — YAML policy schema and examples</li>
+<li><a href="cli/">CLI reference</a></li>
+<li><a href="storage/">Storage reference</a></li>
+<li><a href="environment-variables/">Environment variables</a></li>
+<li><a href="plugin-api/">Plugin API</a></li>
+<li><a href="mcp-tools/">MCP tools</a></li>
+<li><a href="policies/">Policies</a></li>
+<li><a href="apmignore/"><code>.apmignore</code></a></li>
+</ul>
+<h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pm</code> and <code>pm-team</code> are separate binaries.</li>
+<li>The built-in <code>pm</code> command surface is already large and can grow further at runtime because plugins may register additional commands.</li>
+<li>The reference pages should be read as describing the current repository implementation, not older releases or screenshots.</li>
 </ul>
 
 
