@@ -1229,7 +1229,7 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "v10.1.0:1 Stable Release"
+			infoVersion := "v10.1.1 Stable Release"
 			infoBuild := " (24/07/2026 (MM/DD/YYYY))"
 
 			vaultAccessible := true
