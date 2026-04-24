@@ -1229,8 +1229,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "v10.1.0 Stable Release"
-			infoBuild := " (04/07/2026 (MM/DD/YYYY))"
+			infoVersion := "v10.1.0:1 Stable Release"
+			infoBuild := " (24/07/2026 (MM/DD/YYYY))"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
@@ -4942,8 +4942,25 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			break
 		}
 
+		// Windows consoles can emit extended key codes for arrows:
+		// Up: 224,72 and Down: 224,80 (sometimes 0,72 / 0,80).
+		if n >= 2 && (b[0] == 224 || b[0] == 0) {
+			if b[1] == 72 {
+				if selectedIndex > 0 {
+					selectedIndex--
+				}
+				continue
+			}
+			if b[1] == 80 {
+				if selectedIndex < len(results)-1 {
+					selectedIndex++
+				}
+				continue
+			}
+		}
+
 		if b[0] == 27 {
-			if n >= 3 && b[1] == '[' {
+			if n >= 3 && (b[1] == '[' || b[1] == 'O') {
 				if b[2] == 'A' {
 					if selectedIndex > 0 {
 						selectedIndex--
