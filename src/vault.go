@@ -236,6 +236,7 @@ type HistoryEntry struct {
 	Action     string    `json:"action"`
 	Category   string    `json:"category"`
 	Identifier string    `json:"identifier"`
+	PrevHash   string    `json:"prev_hash,omitempty"`
 	Hash       string    `json:"hash,omitempty"`
 	Signature  string    `json:"signature,omitempty"`
 }
@@ -1215,14 +1216,20 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 }
 
 func (v *Vault) logHistory(action, category, identifier string) {
+	prevHash := ""
+	if n := len(v.History); n > 0 {
+		prevHash = v.History[n-1].Hash
+	}
+
 	entry := HistoryEntry{
 		Timestamp:  time.Now(),
 		Action:     action,
 		Category:   category,
 		Identifier: identifier,
+		PrevHash:   prevHash,
 	}
 
-	data := fmt.Sprintf("%d:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier)
+	data := fmt.Sprintf("%d:%s:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier, entry.PrevHash)
 	hash := sha256.Sum256([]byte(data))
 	entry.Hash = hex.EncodeToString(hash[:])
 
@@ -1240,6 +1247,43 @@ func (v *Vault) logHistory(action, category, identifier string) {
 	case "DEL":
 		v.RemoveSecretTelemetry(category, identifier)
 	}
+}
+
+func VerifyHistoryEntrySignature(salt []byte, entry HistoryEntry) bool {
+	if entry.Hash == "" || entry.Signature == "" {
+		return false
+	}
+
+	legacyData := fmt.Sprintf("%d:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier)
+	legacyHash := sha256.Sum256([]byte(legacyData))
+	legacyHashHex := hex.EncodeToString(legacyHash[:])
+
+	newData := fmt.Sprintf("%d:%s:%s:%s:%s", entry.Timestamp.UnixNano(), entry.Action, entry.Category, entry.Identifier, entry.PrevHash)
+	newHash := sha256.Sum256([]byte(newData))
+	newHashHex := hex.EncodeToString(newHash[:])
+
+	if entry.Hash != legacyHashHex && entry.Hash != newHashHex {
+		return false
+	}
+
+	mac := hmac.New(sha256.New, salt)
+	mac.Write([]byte(entry.Hash))
+	expectedSig := hex.EncodeToString(mac.Sum(nil))
+	return hmac.Equal([]byte(expectedSig), []byte(entry.Signature))
+}
+
+func VerifyHistoryChain(v *Vault) []bool {
+	out := make([]bool, len(v.History))
+	expectedPrev := ""
+	for i, h := range v.History {
+		ok := VerifyHistoryEntrySignature(v.Salt, h)
+		if h.PrevHash != "" && h.PrevHash != expectedPrev {
+			ok = false
+		}
+		out[i] = ok
+		expectedPrev = h.Hash
+	}
+	return out
 }
 
 func (v *Vault) AddEntry(account, username, password string) error {
