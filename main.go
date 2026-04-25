@@ -1159,26 +1159,288 @@ func main() {
 		},
 	}
 
-	var auditCmd = &cobra.Command{
-		Use:   "audit",
-		Short: "View secure access logs",
+	var logsCmd = &cobra.Command{
+		Use:   "logs",
+		Short: "View signed and verified vault logs",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
 				return
 			}
+			limit, _ := cmd.Flags().GetInt("limit")
+
+			historyVerified := src.VerifyHistoryChain(vault)
+			auditLogs, _ := src.GetAuditLogs(0)
+			auditVerified := src.VerifyAuditLogs(auditLogs)
+			lgitCommits, _ := src.GetLGitCommits(0)
+			lgitVerified := src.VerifyLGitCommits(lgitCommits)
+
+			fmt.Println("Vault History")
+			fmt.Println("-------------")
+			printed := 0
+			for i := len(vault.History) - 1; i >= 0; i-- {
+				if limit > 0 && printed >= limit {
+					break
+				}
+				h := vault.History[i]
+				fmt.Printf("%s %-7s %-12s %-28s %s\n", h.Timestamp.Format("2006-01-02 15:04:05"), h.Action, h.Category, h.Identifier, verificationBadge(historyVerified[i]))
+				printed++
+			}
 			if len(vault.History) == 0 {
-				fmt.Println("No audit logs found.")
-				return
+				fmt.Println("No vault history.")
 			}
-			fmt.Println("Timestamp           Action  Category      Identifier")
-			fmt.Println("----------------------------------------------------")
-			for _, h := range vault.History {
-				fmt.Printf("%s %-7s %-12s %s\n", h.Timestamp.Format("2006-01-02 15:04"), h.Action, h.Category, h.Identifier)
+
+			fmt.Println()
+			fmt.Println("Audit Events")
+			fmt.Println("------------")
+			printed = 0
+			for i := len(auditLogs) - 1; i >= 0; i-- {
+				if limit > 0 && printed >= limit {
+					break
+				}
+				a := auditLogs[i]
+				fmt.Printf("%s %-24s %-44s user=%s@%s %s\n", a.Timestamp.Format("2006-01-02 15:04:05"), truncateText(a.Action, 24), truncateText(a.Details, 44), truncateText(a.User, 12), truncateText(a.Hostname, 18), verificationBadge(auditVerified[i]))
+				printed++
 			}
-			src.LogAction("AUDIT_VIEWED", "Audit logs displayed")
+			if len(auditLogs) == 0 {
+				fmt.Println("No audit events.")
+			}
+
+			fmt.Println()
+			fmt.Println("LGit Commits")
+			fmt.Println("------------")
+			printed = 0
+			for i := len(lgitCommits) - 1; i >= 0; i-- {
+				if limit > 0 && printed >= limit {
+					break
+				}
+				c := lgitCommits[i]
+				fmt.Printf("%s %-14s %-8s %s %s\n", c.Timestamp.Format("2006-01-02 15:04:05"), truncateText(c.ID, 14), truncateText(c.Action, 8), truncateText(c.DataHash, 16), verificationBadge(lgitVerified[i]))
+				printed++
+			}
+			if len(lgitCommits) == 0 {
+				fmt.Println("No lgit commits.")
+			}
+
+			src.LogAction("LOGS_VIEWED", "Displayed signed logs")
 		},
 	}
+	logsCmd.Flags().Int("limit", 200, "Maximum records to print per section (0 for all)")
+
+	var lgitCmd = &cobra.Command{
+		Use:   "lgit",
+		Short: "Vault log history controls",
+	}
+
+	var lgitTreeCmd = &cobra.Command{
+		Use:   "tree",
+		Short: "Display signed lgit commit history",
+		Run: func(cmd *cobra.Command, args []string) {
+			limit, _ := cmd.Flags().GetInt("limit")
+			commits, err := src.GetLGitCommits(limit)
+			if err != nil {
+				color.Red("Failed to read lgit history: %v", err)
+				return
+			}
+			if len(commits) == 0 {
+				fmt.Println("No lgit history found.")
+				return
+			}
+			verified := src.VerifyLGitCommits(commits)
+			fmt.Println("Timestamp            ID             Action   Data Hash         Status")
+			fmt.Println("-----------------------------------------------------------------------")
+			for i := len(commits) - 1; i >= 0; i-- {
+				c := commits[i]
+				fmt.Printf("%s %-14s %-8s %-16s %s\n", c.Timestamp.Format("2006-01-02 15:04:05"), truncateText(c.ID, 14), truncateText(c.Action, 8), truncateText(c.DataHash, 16), verificationBadge(verified[i]))
+			}
+		},
+	}
+	lgitTreeCmd.Flags().Int("limit", 200, "Maximum commits to display (0 for all)")
+
+	var lgitLogCmd = &cobra.Command{
+		Use:   "log",
+		Short: "Alias for lgit tree",
+		Run:   lgitTreeCmd.Run,
+	}
+	lgitLogCmd.Flags().Int("limit", 200, "Maximum commits to display (0 for all)")
+
+	var lgitStatusCmd = &cobra.Command{
+		Use:   "status",
+		Short: "Show whether current vault matches lgit HEAD snapshot",
+		Run: func(cmd *cobra.Command, args []string) {
+			hasHistory, headID, headHash, inSync, err := src.LGitStatus(vaultPath)
+			if err != nil {
+				color.Red("Failed to read lgit status: %v", err)
+				return
+			}
+			if !hasHistory {
+				fmt.Println("LGit history: empty")
+				return
+			}
+			fmt.Printf("HEAD:        %s\n", headID)
+			fmt.Printf("HEAD hash:   %s\n", truncateText(headHash, 24))
+			if inSync {
+				fmt.Printf("Vault state: %s\n", color.HiGreenString("clean (matches HEAD)"))
+			} else {
+				fmt.Printf("Vault state: %s\n", color.HiYellowString("modified (differs from HEAD)"))
+			}
+		},
+	}
+
+	var lgitShowCmd = &cobra.Command{
+		Use:   "show [commit-id|head]",
+		Short: "Show details for one lgit commit",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			target := "head"
+			if len(args) > 0 {
+				target = args[0]
+			}
+			commit, idx, err := src.FindLGitCommitByPrefix(target)
+			if err != nil {
+				color.Red("Failed to find commit: %v", err)
+				return
+			}
+			if commit == nil {
+				fmt.Printf("No matching commit found for '%s'.\n", target)
+				return
+			}
+			commits, _ := src.GetLGitCommits(0)
+			verified := src.VerifyLGitCommits(commits)
+			status := "[UNVERIFIED]"
+			if idx >= 0 && idx < len(verified) && verified[idx] {
+				status = "[VERIFIED]"
+			}
+			fmt.Printf("ID:           %s\n", commit.ID)
+			fmt.Printf("Timestamp:    %s\n", commit.Timestamp.Format(time.RFC3339))
+			fmt.Printf("Action:       %s\n", commit.Action)
+			fmt.Printf("Vault Path:   %s\n", commit.VaultPath)
+			fmt.Printf("Data Hash:    %s\n", commit.DataHash)
+			fmt.Printf("Prev Hash:    %s\n", truncateText(commit.PrevHash, 24))
+			fmt.Printf("Chain Hash:   %s\n", commit.Hash)
+			fmt.Printf("Snapshot:     %s\n", commit.SnapshotFile)
+			fmt.Printf("Verification: %s\n", status)
+		},
+	}
+
+	var lgitVerifyCmd = &cobra.Command{
+		Use:   "verify",
+		Short: "Verify cryptographic integrity of lgit history",
+		Run: func(cmd *cobra.Command, args []string) {
+			ok, total, err := src.VerifyLGitHistory()
+			if err != nil {
+				color.Red("Verification failed: %v", err)
+				return
+			}
+			fmt.Printf("Verified commits: %d/%d\n", ok, total)
+			if ok == total {
+				fmt.Println(color.HiGreenString("LGit chain integrity is valid."))
+			} else {
+				fmt.Println(color.HiRedString("LGit chain integrity check failed for one or more commits."))
+			}
+		},
+	}
+
+	var lgitSquashCmd = &cobra.Command{
+		Use:   "squash",
+		Short: "Squash lgit history into a compact chain",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, _, readonly, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			if readonly {
+				color.Red("Vault is in READ-ONLY mode. Cannot squash lgit history.")
+				return
+			}
+			keep, _ := cmd.Flags().GetInt("keep")
+			if err := src.SquashLGitHistory(vaultPath, keep); err != nil {
+				color.Red("Failed to squash lgit history: %v", err)
+				return
+			}
+			color.Green("LGit history squashed.")
+			src.LogAction("LGIT_SQUASH", fmt.Sprintf("Squashed lgit history, kept=%d", keep))
+		},
+	}
+	lgitSquashCmd.Flags().Int("keep", 1, "Number of latest commits to keep before squash")
+
+	var lgitCheckoutCmd = &cobra.Command{
+		Use:   "checkout [commit-id|head]",
+		Short: "Restore vault to a specific lgit snapshot",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			_, _, readonly, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			if readonly {
+				color.Red("Vault is in READ-ONLY mode. Cannot checkout.")
+				return
+			}
+			target := "head"
+			if len(args) > 0 {
+				target = args[0]
+			}
+			if err := src.CheckoutLGit(vaultPath, target); err != nil {
+				color.Red("Checkout failed: %v", err)
+				return
+			}
+			color.Green("Restored vault from lgit commit '%s'.", target)
+			src.LogAction("LGIT_CHECKOUT", fmt.Sprintf("Checked out lgit commit=%s", target))
+		},
+	}
+
+	var lgitUndoCmd = &cobra.Command{
+		Use:   "undo",
+		Short: "Undo vault changes by restoring previous lgit snapshot",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, _, readonly, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			if readonly {
+				color.Red("Vault is in READ-ONLY mode. Cannot undo.")
+				return
+			}
+			steps, _ := cmd.Flags().GetInt("steps")
+			if steps < 1 {
+				steps = 1
+			}
+			for i := 0; i < steps; i++ {
+				if err := src.UndoLGit(vaultPath); err != nil {
+					color.Red("Undo stopped at step %d: %v", i+1, err)
+					return
+				}
+			}
+			color.Green("Undo completed (%d step(s)).", steps)
+			src.LogAction("LGIT_UNDO", fmt.Sprintf("Undid %d lgit change(s)", steps))
+		},
+	}
+	lgitUndoCmd.Flags().Int("steps", 1, "How many changes to undo")
+
+	var lgitPruneCmd = &cobra.Command{
+		Use:   "prune",
+		Short: "Remove orphaned lgit snapshot files not referenced by history",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, _, readonly, err := src_unlockVault()
+			if err != nil {
+				return
+			}
+			if readonly {
+				color.Red("Vault is in READ-ONLY mode. Cannot prune.")
+				return
+			}
+			removed, kept, err := src.PruneLGitSnapshots()
+			if err != nil {
+				color.Red("Prune failed: %v", err)
+				return
+			}
+			color.Green("LGit prune complete. Removed=%d, Kept=%d", removed, kept)
+			src.LogAction("LGIT_PRUNE", fmt.Sprintf("Pruned lgit snapshots removed=%d kept=%d", removed, kept))
+		},
+	}
+
+	lgitCmd.AddCommand(lgitTreeCmd, lgitLogCmd, lgitStatusCmd, lgitShowCmd, lgitVerifyCmd, lgitCheckoutCmd, lgitSquashCmd, lgitUndoCmd, lgitPruneCmd)
 
 	var genCmd = &cobra.Command{
 		Use:   "gen",
@@ -3525,7 +3787,7 @@ func main() {
 		}
 		return filepath.Join(filepath.Dir(vaultPath), "faceid", "models")
 	})
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, auditCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd, faceidCmd, injectcmd.BuildInjectCmd(src_unlockVault))
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, logsCmd, lgitCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd, faceidCmd, injectcmd.BuildInjectCmd(src_unlockVault))
 	autofillCmd, _ := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
 		VaultPath:    &vaultPath,
 		ReadPassword: readPassword,
@@ -4149,6 +4411,26 @@ func readIntWithDefault(label string, defaultVal int) int {
 func readInput() string {
 	input, _ := inputReader.ReadString('\n')
 	return strings.TrimSpace(input)
+}
+
+func truncateText(s string, max int) string {
+	if max <= 0 {
+		return ""
+	}
+	if len(s) <= max {
+		return s
+	}
+	if max <= 3 {
+		return s[:max]
+	}
+	return s[:max-3] + "..."
+}
+
+func verificationBadge(ok bool) string {
+	if ok {
+		return color.HiGreenString("[VERIFIED]")
+	}
+	return color.HiRedString("[UNVERIFIED]")
 }
 
 func loadIgnoreConfigOrEmpty() src.IgnoreConfig {
