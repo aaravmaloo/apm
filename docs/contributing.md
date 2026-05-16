@@ -8,11 +8,11 @@ Thanks for contributing to APM. This page covers the fastest path to a clean bui
 # Standard build
 go build -o pm.exe
 
-# Face ID build (requires native OpenCV + dlib)
-go build -tags faceid -o pm.exe
+# Face ID build (requires Rust)
+./scripts/build.sh
 ```
 
-Face ID is behind a build tag because it depends on native OpenCV/dlib libraries that are not required for the core CLI.
+Face ID is behind a build tag because it depends on the native Rust FaceID library, which is not required for the core CLI.
 
 ## Pull Requests
 

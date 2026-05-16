@@ -1,6 +1,6 @@
 # Face ID (Optional)
 
-Face ID enables biometric unlock using local face recognition. It is **optional** and only available when APM is built with the `faceid` build tag because it depends on native OpenCV and dlib libraries.
+Face ID enables biometric unlock using local face recognition. It is **optional** and only available when APM is built with the `faceid` build tag because it depends on the native Rust FaceID library.
 
 It is a convenience layer over the normal unlock flow, not a replacement for the master password. If Face ID is unavailable or verification fails, you can still unlock with your password.
 
@@ -13,7 +13,7 @@ It is a convenience layer over the normal unlock flow, not a replacement for the
 go build -o pm.exe
 
 # Face ID build
-go build -tags faceid -o pm.exe
+./scripts/build.sh
 ```
 
 ---
@@ -55,7 +55,7 @@ Deletes the local Face ID enrollment metadata.
 ## Typical Workflow
 
 ```bash
-go build -tags faceid -o pm.exe
+./scripts/build.sh
 pm faceid enroll
 pm faceid status
 pm unlock
@@ -69,4 +69,4 @@ Face ID participates in the unlock path only when the binary was built with the 
 
 - Face ID uses the default camera (index `0`).
 - If Face ID fails, you can always unlock with your master password.
-- Native OpenCV and dlib requirements are the reason this feature is behind a build tag.
+- Native Rust camera-capture requirements are the reason this feature is behind a build tag.
