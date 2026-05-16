@@ -26,7 +26,7 @@ cp "$LIB_NATIVE" "$NATIVE_OUT/libapm_native.a"
 
 case "$(uname -s)" in
   Darwin*)
-    RUST_NATIVE_FLAGS="-lc++ -framework Security -framework Foundation"
+    RUST_NATIVE_FLAGS="-lc++ -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework CoreFoundation -framework Foundation -framework Security"
     GO_EXTLDFLAGS="-L$NATIVE_OUT -lapm_native $RUST_NATIVE_FLAGS"
     ;;
   MINGW*|MSYS*|CYGWIN*)

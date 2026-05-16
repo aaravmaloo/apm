@@ -17,16 +17,40 @@ if (-not $env:CARGO_TARGET_DIR) {
     $env:CARGO_TARGET_DIR = Join-Path $RootDrive "apm-cargo-target"
 }
 
+function Resolve-ToolPath {
+    param(
+        [string]$Name,
+        [string[]]$Candidates
+    )
+
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
+    }
+
+    foreach ($candidate in $Candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    throw "Required tool '$Name' was not found in PATH or known MSYS2 locations."
+}
+
 switch ($Target) {
     "aarch64-pc-windows-gnullvm" {
-        $ToolBin = "C:\msys64\clangarm64\bin"
-        if (-not (Test-Path (Join-Path $ToolBin "gcc.exe"))) {
-            throw "ARM64 Windows toolchain not found at $ToolBin"
-        }
-        $env:PATH = "$ToolBin;$env:PATH"
-        $env:CC = Join-Path $ToolBin "gcc.exe"
-        $env:CXX = Join-Path $ToolBin "g++.exe"
-        $env:AR = Join-Path $ToolBin "llvm-ar.exe"
+        $env:CC = Resolve-ToolPath "clang.exe" @(
+            "C:\msys64\clangarm64\bin\clang.exe",
+            "D:\a\_temp\msys64\clangarm64\bin\clang.exe"
+        )
+        $env:CXX = Resolve-ToolPath "clang++.exe" @(
+            "C:\msys64\clangarm64\bin\clang++.exe",
+            "D:\a\_temp\msys64\clangarm64\bin\clang++.exe"
+        )
+        $env:AR = Resolve-ToolPath "llvm-ar.exe" @(
+            "C:\msys64\clangarm64\bin\llvm-ar.exe",
+            "D:\a\_temp\msys64\clangarm64\bin\llvm-ar.exe"
+        )
         $env:CC_aarch64_pc_windows_gnullvm = $env:CC
         $env:CXX_aarch64_pc_windows_gnullvm = $env:CXX
         $env:AR_aarch64_pc_windows_gnullvm = $env:AR
@@ -34,14 +58,18 @@ switch ($Target) {
         $RustNativeFlags = "-lstdc++ $RustNativeFlags"
     }
     default {
-        $ToolBin = "C:\msys64\mingw64\bin"
-        if (-not (Test-Path (Join-Path $ToolBin "gcc.exe"))) {
-            throw "Windows x64 toolchain not found at $ToolBin"
-        }
-        $env:PATH = "$ToolBin;$env:PATH"
-        $env:CC = Join-Path $ToolBin "gcc.exe"
-        $env:CXX = Join-Path $ToolBin "g++.exe"
-        $env:AR = Join-Path $ToolBin "ar.exe"
+        $env:CC = Resolve-ToolPath "gcc.exe" @(
+            "C:\msys64\mingw64\bin\gcc.exe",
+            "D:\a\_temp\msys64\mingw64\bin\gcc.exe"
+        )
+        $env:CXX = Resolve-ToolPath "g++.exe" @(
+            "C:\msys64\mingw64\bin\g++.exe",
+            "D:\a\_temp\msys64\mingw64\bin\g++.exe"
+        )
+        $env:AR = Resolve-ToolPath "ar.exe" @(
+            "C:\msys64\mingw64\bin\ar.exe",
+            "D:\a\_temp\msys64\mingw64\bin\ar.exe"
+        )
         $env:CC_x86_64_pc_windows_gnu = $env:CC
         $env:CXX_x86_64_pc_windows_gnu = $env:CXX
         $env:AR_x86_64_pc_windows_gnu = $env:AR

@@ -42,27 +42,6 @@ jobs:
             archive: tar.gz
             bin_name: pm
             artifact_suffix: darwin-arm64
-          - os: windows-latest
-            label: windows-amd64
-            archive: zip
-            bin_name: pm.exe
-            artifact_suffix: windows-amd64
-            cargo_target: x86_64-pc-windows-gnu
-            msys_system: mingw64
-            msys_packages: >-
-              mingw-w64-x86_64-gcc
-              mingw-w64-x86_64-binutils
-          - os: windows-11-arm
-            label: windows-arm64
-            archive: zip
-            bin_name: pm.exe
-            artifact_suffix: windows-arm64
-            cargo_target: aarch64-pc-windows-gnullvm
-            msys_system: clangarm64
-            msys_packages: >-
-              mingw-w64-clang-aarch64-clang
-              mingw-w64-clang-aarch64-gcc-compat
-              mingw-w64-clang-aarch64-binutils
 
     runs-on: ${{ matrix.os }}
 
@@ -86,30 +65,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential pkg-config libasound2-dev libudev-dev
 
-      - name: Setup MSYS2
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: ${{ matrix.msys_system }}
-          install: ${{ matrix.msys_packages }}
-
       - name: Build release binary (Unix)
-        if: runner.os != 'Windows'
         env:
           BIN_NAME: ${{ matrix.bin_name }}
         run: bash ./scripts/build.sh
 
-      - name: Build release binary (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          BIN_NAME: ${{ matrix.bin_name }}
-          CARGO_BUILD_TARGET: ${{ matrix.cargo_target }}
-        run: .\scripts\build.ps1
-
       - name: Package release artifact (Unix)
-        if: runner.os != 'Windows'
         shell: bash
         run: |
           ARTIFACT_NAME="apm-${RELEASE_TAG}-${{ matrix.artifact_suffix }}"
@@ -117,15 +78,6 @@ jobs:
           cp "dist/${{ matrix.bin_name }}" "release/$ARTIFACT_NAME"
           chmod +x "release/$ARTIFACT_NAME"
           tar -C release -czf "release/$ARTIFACT_NAME.tar.gz" "$ARTIFACT_NAME"
-
-      - name: Package release artifact (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $artifactName = "apm-$env:RELEASE_TAG-${{ matrix.artifact_suffix }}"
-          New-Item -ItemType Directory -Force -Path release | Out-Null
-          Copy-Item "dist\${{ matrix.bin_name }}" "release\$artifactName.exe"
-          Compress-Archive -Path "release\$artifactName.exe" -DestinationPath "release\$artifactName.zip" -Force
 
       - uses: actions/upload-artifact@v4
         with:
