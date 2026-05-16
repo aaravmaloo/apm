@@ -1492,8 +1492,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "v10.2.0 Canary Release"
-			infoBuild := " (25/07/2026 (MM/DD/YYYY))"
+			infoVersion := "v10.2.0 Canary Release (Rust Migrations)"
+			infoBuild := " (05/16/2026 (MM/DD/YYYY))"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
