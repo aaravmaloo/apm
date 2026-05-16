@@ -5,6 +5,8 @@ on:
     tags:
       - "v*"
       - "can*"
+      - "alpha*"
+      - "beta*"
 
 permissions:
   contents: write
