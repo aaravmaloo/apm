@@ -4,6 +4,7 @@ $RootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
 $DistDir = if ($env:DIST_DIR) { $env:DIST_DIR } else { Join-Path $RootDir "dist" }
 $BinName = if ($env:BIN_NAME) { $env:BIN_NAME } else { "pm.exe" }
 $Target = if ($env:CARGO_BUILD_TARGET) { $env:CARGO_BUILD_TARGET } else { "x86_64-pc-windows-gnu" }
+$RustNativeFlags = "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lmfplat -lmf -lmfreadwrite -lmfuuid -lstrmiids -lntdll -luserenv -lws2_32 -ldbghelp"
 
 # Native library output directory
 $NativeOut = if ($env:APM_NATIVE_OUT) { $env:APM_NATIVE_OUT } else { Join-Path ([System.IO.Path]::GetPathRoot((Resolve-Path $RootDir).Path)) "apm-native-libs" }
@@ -16,11 +17,37 @@ if (-not $env:CARGO_TARGET_DIR) {
     $env:CARGO_TARGET_DIR = Join-Path $RootDrive "apm-cargo-target"
 }
 
-if (Test-Path "C:\msys64\mingw64\bin\gcc.exe") {
-    $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
-    $env:CC_x86_64_pc_windows_gnu = "C:\msys64\mingw64\bin\gcc.exe"
-    $env:CXX_x86_64_pc_windows_gnu = "C:\msys64\mingw64\bin\g++.exe"
-    $env:AR_x86_64_pc_windows_gnu = "C:\msys64\mingw64\bin\ar.exe"
+switch ($Target) {
+    "aarch64-pc-windows-gnullvm" {
+        $ToolBin = "C:\msys64\clangarm64\bin"
+        if (-not (Test-Path (Join-Path $ToolBin "gcc.exe"))) {
+            throw "ARM64 Windows toolchain not found at $ToolBin"
+        }
+        $env:PATH = "$ToolBin;$env:PATH"
+        $env:CC = Join-Path $ToolBin "gcc.exe"
+        $env:CXX = Join-Path $ToolBin "g++.exe"
+        $env:AR = Join-Path $ToolBin "llvm-ar.exe"
+        $env:CC_aarch64_pc_windows_gnullvm = $env:CC
+        $env:CXX_aarch64_pc_windows_gnullvm = $env:CXX
+        $env:AR_aarch64_pc_windows_gnullvm = $env:AR
+        $env:GOARCH = "arm64"
+        $RustNativeFlags = "-lstdc++ $RustNativeFlags"
+    }
+    default {
+        $ToolBin = "C:\msys64\mingw64\bin"
+        if (-not (Test-Path (Join-Path $ToolBin "gcc.exe"))) {
+            throw "Windows x64 toolchain not found at $ToolBin"
+        }
+        $env:PATH = "$ToolBin;$env:PATH"
+        $env:CC = Join-Path $ToolBin "gcc.exe"
+        $env:CXX = Join-Path $ToolBin "g++.exe"
+        $env:AR = Join-Path $ToolBin "ar.exe"
+        $env:CC_x86_64_pc_windows_gnu = $env:CC
+        $env:CXX_x86_64_pc_windows_gnu = $env:CXX
+        $env:AR_x86_64_pc_windows_gnu = $env:AR
+        $env:GOARCH = "amd64"
+        $RustNativeFlags = "-lstdc++ $RustNativeFlags"
+    }
 }
 
 # Build Unified Native Rust Library
@@ -32,10 +59,10 @@ Copy-Item -Force (Join-Path $env:CARGO_TARGET_DIR "$Target\release\libapm_native
 
 # Prepare Go build
 $GoTags = "faceid nativeget"
-$RustNativeFlags = "-lstdc++ -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lmfplat -lmf -lmfreadwrite -lmfuuid -lstrmiids -lntdll -luserenv -lws2_32 -ldbghelp"
 $ExtLdFlags = "-static -L$NativeOut -lapm_native $RustNativeFlags"
 
 $env:CGO_ENABLED = "1"
+Remove-Item Env:GOOS -ErrorAction SilentlyContinue
 Remove-Item Env:CGO_LDFLAGS -ErrorAction SilentlyContinue
 
 Write-Host "Building Go application..."

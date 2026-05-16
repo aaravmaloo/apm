@@ -7,6 +7,10 @@ on:
       - "can*"
       - "alpha*"
       - "beta*"
+  release:
+    types:
+      - published
+      - prereleased
 
 permissions:
   contents: write
@@ -23,6 +27,11 @@ jobs:
             archive: tar.gz
             bin_name: pm
             artifact_suffix: linux-amd64
+          - os: ubuntu-24.04-arm
+            label: linux-arm64
+            archive: tar.gz
+            bin_name: pm
+            artifact_suffix: linux-arm64
           - os: macos-13
             label: darwin-amd64
             archive: tar.gz
@@ -39,11 +48,30 @@ jobs:
             bin_name: pm.exe
             artifact_suffix: windows-amd64
             cargo_target: x86_64-pc-windows-gnu
+            msys_system: mingw64
+            msys_packages: >-
+              mingw-w64-x86_64-gcc
+              mingw-w64-x86_64-binutils
+          - os: windows-11-arm
+            label: windows-arm64
+            archive: zip
+            bin_name: pm.exe
+            artifact_suffix: windows-arm64
+            cargo_target: aarch64-pc-windows-gnullvm
+            msys_system: clangarm64
+            msys_packages: >-
+              mingw-w64-clang-aarch64-clang
+              mingw-w64-clang-aarch64-gcc-compat
+              mingw-w64-clang-aarch64-binutils
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve tag name
+        shell: bash
+        run: echo "RELEASE_TAG=${{ github.event.release.tag_name || github.ref_name }}" >> "$GITHUB_ENV"
 
       - uses: actions/setup-go@v5
         with:
@@ -63,9 +91,8 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-binutils
+          msystem: ${{ matrix.msys_system }}
+          install: ${{ matrix.msys_packages }}
 
       - name: Build release binary (Unix)
         if: runner.os != 'Windows'
@@ -85,7 +112,7 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          ARTIFACT_NAME="apm-${{ github.ref_name }}-${{ matrix.artifact_suffix }}"
+          ARTIFACT_NAME="apm-${RELEASE_TAG}-${{ matrix.artifact_suffix }}"
           mkdir -p release
           cp "dist/${{ matrix.bin_name }}" "release/$ARTIFACT_NAME"
           chmod +x "release/$ARTIFACT_NAME"
@@ -95,7 +122,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $artifactName = "apm-${{ github.ref_name }}-${{ matrix.artifact_suffix }}"
+          $artifactName = "apm-$env:RELEASE_TAG-${{ matrix.artifact_suffix }}"
           New-Item -ItemType Directory -Force -Path release | Out-Null
           Copy-Item "dist\${{ matrix.bin_name }}" "release\$artifactName.exe"
           Compress-Archive -Path "release\$artifactName.exe" -DestinationPath "release\$artifactName.zip" -Force
@@ -116,6 +143,10 @@ jobs:
           pattern: "*"
           merge-multiple: true
 
+      - name: Resolve tag name
+        shell: bash
+        run: echo "RELEASE_TAG=${{ github.event.release.tag_name || github.ref_name }}" >> "$GITHUB_ENV"
+
       - name: Generate checksums
         run: |
           cd artifacts
@@ -123,4 +154,5 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           files: artifacts/*
