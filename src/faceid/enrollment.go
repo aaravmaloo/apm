@@ -59,7 +59,7 @@ func EnrollFace(masterPassword string, vaultDir string, modelsDir string, profil
 		EncryptedMasterPass: encryptedPass,
 		EnrolledAt:          time.Now(),
 		DeviceName:          hostname,
-		ModelVersion:        "dlib_resnet_v1",
+		ModelVersion:        "rust_nokhwa_onnx_v1",
 	}
 
 	enrollmentPath := filepath.Join(vaultDir, "faceid", "enrollment.json")

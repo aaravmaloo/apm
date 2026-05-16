@@ -16,20 +16,7 @@ type modelSpec struct {
 	URL  string
 }
 
-var requiredModels = []modelSpec{
-	{
-		Name: "shape_predictor_5_face_landmarks.dat",
-		URL:  "https://github.com/Kagami/go-face-testdata/raw/master/models/shape_predictor_5_face_landmarks.dat",
-	},
-	{
-		Name: "dlib_face_recognition_resnet_model_v1.dat",
-		URL:  "https://github.com/Kagami/go-face-testdata/raw/master/models/dlib_face_recognition_resnet_model_v1.dat",
-	},
-	{
-		Name: "mmod_human_face_detector.dat",
-		URL:  "https://github.com/Kagami/go-face-testdata/raw/master/models/mmod_human_face_detector.dat",
-	},
-}
+var requiredModels = []modelSpec{}
 
 func EnsureModels(modelsDir string) error {
 	if modelsDir == "" {

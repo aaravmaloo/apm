@@ -1,0 +1,19 @@
+[package]
+name = "faceid"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "faceid"
+crate-type = ["staticlib"]
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+panic = "abort"
+strip = "symbols"
+
+[dependencies]
+image = { version = "0.25.10", default-features = false }
+nokhwa = { version = "0.10.11", default-features = false, features = ["input-native", "decoding"] }
+onnxruntime = "0.0.14"
