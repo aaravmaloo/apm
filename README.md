@@ -1,6 +1,6 @@
 # APM
 
-APM is a local-first password manager written in Go. The primary binary, `pm`, manages an encrypted personal vault with sessions, recovery, cloud sync, plugins, MCP access for AI tools, Windows autofill, shell injection, and an optional TUI. The repo also contains a separate `pm-team` binary for shared organizational vaults.
+APM is a local-first password manager built from Go plus native Rust components. The primary binary, `pm`, manages an encrypted personal vault with sessions, recovery, cloud sync, plugins, MCP access for AI tools, Windows autofill, shell injection, and an optional TUI. The repo also contains a separate `pm-team` binary for shared organizational vaults.
 
 ## What exists in this repo
 
@@ -55,7 +55,7 @@ The current `pm add` flow supports 25 entry types:
 ## Quick start
 
 ```bash
-go build -o pm .
+./scripts/build.sh
 pm setup
 pm unlock
 pm add
@@ -91,6 +91,8 @@ The MkDocs site lives in [`docs/`](docs). Start with:
 
 - Root module: Go CLI for `pm`
 - Team module: separate Go module in [`team/`](team)
+- Native modules: Rust crates in [`rust/`](rust)
+- Supported local build/test entrypoints: [`scripts/build.sh`](scripts/build.sh), [`scripts/build.ps1`](scripts/build.ps1), [`scripts/test.sh`](scripts/test.sh), [`scripts/test.ps1`](scripts/test.ps1)
 - Install scripts: [`scripts/install.sh`](scripts/install.sh), [`scripts/install.ps1`](scripts/install.ps1)
 - Example plugins: [`examples/plugins/`](examples/plugins)
 
