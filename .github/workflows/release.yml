@@ -32,12 +32,12 @@ jobs:
             archive: tar.gz
             bin_name: pm
             artifact_suffix: linux-arm64
-          - os: macos-13
+          - os: macos-latest
             label: darwin-amd64
             archive: tar.gz
             bin_name: pm
             artifact_suffix: darwin-amd64
-          - os: macos-14
+          - os: macos-latest
             label: darwin-arm64
             archive: tar.gz
             bin_name: pm
