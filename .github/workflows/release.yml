@@ -11,23 +11,32 @@ permissions:
 
 jobs:
   build:
-    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
+    name: Build (${{ matrix.label }})
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            goos: linux
-            goarch: amd64
-          - os: ubuntu-latest
-            goos: linux
-            goarch: arm64
-          - os: macos-latest
-            goos: darwin
-            goarch: amd64
-          - os: macos-latest
-            goos: darwin
-            goarch: arm64
+            label: linux-amd64
+            archive: tar.gz
+            bin_name: pm
+            artifact_suffix: linux-amd64
+          - os: macos-13
+            label: darwin-amd64
+            archive: tar.gz
+            bin_name: pm
+            artifact_suffix: darwin-amd64
+          - os: macos-14
+            label: darwin-arm64
+            archive: tar.gz
+            bin_name: pm
+            artifact_suffix: darwin-arm64
+          - os: windows-latest
+            label: windows-amd64
+            archive: zip
+            bin_name: pm.exe
+            artifact_suffix: windows-amd64
+            cargo_target: x86_64-pc-windows-gnu
 
     runs-on: ${{ matrix.os }}
 
@@ -39,26 +48,60 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - run: |
-          echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
-          echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@stable
 
-      - shell: bash
+      - name: Install Linux native deps
+        if: runner.os == 'Linux'
         run: |
-          NAME="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
-          ARCHIVE="$NAME.tar.gz"
-          export CGO_ENABLED=0
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libasound2-dev libudev-dev
 
-          go build -ldflags="-s -w" -o "$NAME"
-          chmod +x "$NAME"
-          tar -czf "$ARCHIVE" "$NAME"
+      - name: Setup MSYS2
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-binutils
+
+      - name: Build release binary (Unix)
+        if: runner.os != 'Windows'
+        env:
+          BIN_NAME: ${{ matrix.bin_name }}
+        run: bash ./scripts/build.sh
+
+      - name: Build release binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          BIN_NAME: ${{ matrix.bin_name }}
+          CARGO_BUILD_TARGET: ${{ matrix.cargo_target }}
+        run: .\scripts\build.ps1
+
+      - name: Package release artifact (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          ARTIFACT_NAME="apm-${{ github.ref_name }}-${{ matrix.artifact_suffix }}"
+          mkdir -p release
+          cp "dist/${{ matrix.bin_name }}" "release/$ARTIFACT_NAME"
+          chmod +x "release/$ARTIFACT_NAME"
+          tar -C release -czf "release/$ARTIFACT_NAME.tar.gz" "$ARTIFACT_NAME"
+
+      - name: Package release artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $artifactName = "apm-${{ github.ref_name }}-${{ matrix.artifact_suffix }}"
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item "dist\${{ matrix.bin_name }}" "release\$artifactName.exe"
+          Compress-Archive -Path "release\$artifactName.exe" -DestinationPath "release\$artifactName.zip" -Force
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.goos }}-${{ matrix.goarch }}
-          path: |
-            apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}
-            apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
+          name: ${{ matrix.label }}
+          path: release/*
 
   release:
     needs: build
@@ -70,6 +113,11 @@ jobs:
           path: artifacts
           pattern: "*"
           merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          sha256sum * > checksums.txt
 
       - uses: softprops/action-gh-release@v2
         with:

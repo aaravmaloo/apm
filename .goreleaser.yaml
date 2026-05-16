@@ -1,7 +1,11 @@
 version: 2
 project_name: apm
+
+# Hybrid Go+Rust releases are produced by the native GitHub Actions matrix in
+# .github/workflows/release.yml. Keeping GoReleaser on direct build duty here
+# would silently regress to an invalid pure-Go release path.
 release:
-  tag_template: "v10.0.0"
+  tag_template: "{{ .Tag }}"
 
 before:
   hooks:
@@ -9,8 +13,9 @@ before:
 
 builds:
   - id: apm
-    binary: apm
+    binary: pm
     main: ./main.go
+    skip: true
     goos:
       - linux
       - windows
@@ -18,12 +23,15 @@ builds:
     goarch:
       - amd64
       - arm64
+    tags:
+      - faceid
+      - nativeget
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
 
 archives:
   - format: tar.gz
-    name_template: "{{ .ProjectName }}_v10.0.0_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
@@ -36,7 +44,7 @@ nfpms:
     vendor: "APM"
     maintainer: "Aarav Maloo <aaravmaloo06@gmail.com>"
     homepage: "https://aaravmaloo.github.io/apm/"
-    description: "Advanced Package Manager."
+    description: "Advanced Password Manager."
     license: MIT
 
 checksum:

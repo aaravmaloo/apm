@@ -5,6 +5,10 @@ team/team_vault.dat
 CHANGES.md
 
 scripts/*
+!scripts/build.sh
+!scripts/build.ps1
+!scripts/test.sh
+!scripts/test.ps1
 !scripts/install.sh
 !scripts/install.ps1
 dev/bin/
@@ -14,3 +18,6 @@ gha-creds-*.json
 site/
 /dev
 /tests
+/rust/apm-native/target/*
+/rust/apm-get/target/*
+/rust/target/*

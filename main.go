@@ -27,6 +27,7 @@ import (
 	"context"
 
 	injectcmd "github.com/aaravmaloo/apm/cmd"
+	"github.com/aaravmaloo/apm/src/native/get"
 	src "github.com/aaravmaloo/apm/src"
 	"github.com/aaravmaloo/apm/src/autofill"
 	"github.com/aaravmaloo/apm/src/autofillcmd"
@@ -5060,54 +5061,7 @@ type ScoredResult struct {
 }
 
 func rankMatch(query, target string) int {
-	if query == "" {
-		return 1
-	}
-	q := strings.ToLower(query)
-	t := strings.ToLower(target)
-
-	if q == t {
-		return 1000
-	}
-
-	terms := strings.Fields(q)
-	totalScore := 0
-	foundAll := true
-
-	for _, term := range terms {
-		termScore := 0
-		if term == t {
-			termScore = 500
-		} else if strings.HasPrefix(t, term) {
-			termScore = 200
-		} else if strings.Contains(t, term) {
-			termScore = 100
-		} else {
-			qi := 0
-			ti := 0
-			matchCount := 0
-			for qi < len(term) && ti < len(t) {
-				if term[qi] == t[ti] {
-					matchCount++
-					qi++
-				}
-				ti++
-			}
-			if matchCount == len(term) {
-				termScore = 50
-			} else {
-				foundAll = false
-				break
-			}
-		}
-		totalScore += termScore
-	}
-
-	if !foundAll {
-		return 0
-	}
-
-	return totalScore
+	return get.RankMatch(query, target)
 }
 
 func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string, readonly, showPass bool) {
@@ -5147,8 +5101,15 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 	}()
 
 	focusMode := 0
+	allEntries := v.SearchAll("")
+	identifiers := make([]string, len(allEntries))
+	for i, r := range allEntries {
+		identifiers[i] = r.Identifier
+	}
+	get.LoadTargets(identifiers)
+
 	for {
-		results := performSearch(v, query)
+		results := performSearchWithCache(query, allEntries)
 		if len(results) > 0 {
 			if selectedIndex >= len(results) {
 				selectedIndex = len(results) - 1
@@ -5412,23 +5373,25 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 
 func performSearch(v *src.Vault, query string) []src.SearchResult {
 	all := v.SearchAll("")
-	var scored []ScoredResult
-	for _, r := range all {
-		score := rankMatch(query, r.Identifier)
-		if score > 0 {
-			scored = append(scored, ScoredResult{r, score})
-		}
-	}
-	sort.Slice(scored, func(i, j int) bool {
-		if scored[i].Score == scored[j].Score {
-			return scored[i].Result.Identifier < scored[j].Result.Identifier
-		}
-		return scored[i].Score > scored[j].Score
-	})
+	return performSearchWithCache(query, all)
+}
 
-	var out []src.SearchResult
-	for _, s := range scored {
-		out = append(out, s.Result)
+func performSearchWithCache(query string, all []src.SearchResult) []src.SearchResult {
+	if len(all) == 0 {
+		return nil
+	}
+
+	if query == "" {
+		return all
+	}
+
+	indices := get.SearchSorted(query, 1000) // Get top 1000 results
+
+	out := make([]src.SearchResult, 0, len(indices))
+	for _, idx := range indices {
+		if idx >= 0 && idx < len(all) {
+			out = append(out, all[idx])
+		}
 	}
 	return out
 }
