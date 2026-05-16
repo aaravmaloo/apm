@@ -97,13 +97,11 @@ The MkDocs site lives in [`docs/`](docs). Start with:
 - Example plugins: [`examples/plugins/`](examples/plugins)
 
 ## License
+GPL-3.0 License
 
-## 14. Version System For Contributors
-(from pre-dev to release stages) (with examples)
-the stages correspond to the ultimate release.
-Suppose releasing a v8 of an app.
-All releases except stable release are released in builds/ folder.
-Canary --> can-8 
-Beta --> beta-8 
-Pre-release --> pre-8 
-Release --> v8
+## Release Structure
+The releases structure for APM is designed to be simple. The previews and testing versions are released as pre-releases on GitHub releases. The below list includes the order of releases.
+Canary -> testing release. for trying out new features/improvements earliest. Canary releases can be very unstable and buggy. Using this could corrupt your vault and these releases are NOT for daily usage. Always backup your vault before trying canary releases.
+Alpha -> Alpha releases are for non-stable, but vault-safe changes. These releases won't break vaults or cause corruption, but the features can be very unstable at this stage and make unwanted changes to the vault. 
+Beta -> These releases are stable features that are fully tested and can be used without any precaution. The only reason why beta exists is to ship features carefully and for further testing reasons. Betas include small changes and everything that cannot make a version release itself. 
+Stable Release: These releases are confidently shipped with no errors and will not break the vault. These are the most stable releases and used in production environment.
