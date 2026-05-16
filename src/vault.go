@@ -373,6 +373,8 @@ type Vault struct {
 	ActivePolicy              Policy                     `json:"active_policy,omitempty"`
 	PluginPermissionOverrides map[string]map[string]bool `json:"plugin_permission_overrides,omitempty"`
 	NeedsRepair               bool                       `json:"-"`
+	searchCache               []SearchResult             `json:"-"`
+	cacheValid                bool                       `json:"-"`
 
 	CurrentProfileParams   *CryptoProfile             `json:"-"`
 	RecoveryEmail          string                     `json:"recovery_email,omitempty"`
@@ -1938,6 +1940,10 @@ type SearchResult struct {
 }
 
 func (v *Vault) SearchAll(query string) []SearchResult {
+	if query == "" && v.searchCache != nil && v.cacheValid {
+		return v.searchCache
+	}
+
 	var results []SearchResult
 	query = strings.ToLower(query)
 
@@ -2077,6 +2083,10 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 		if matchSpace(e.Space) && (query == "" || strings.Contains(strings.ToLower(e.Name), query)) {
 			results = append(results, SearchResult{"Legal Contract", e.Name, e, e.Space})
 		}
+	}
+	if query == "" {
+		v.searchCache = results
+		v.cacheValid = true
 	}
 	return results
 }
