@@ -1,0 +1,55 @@
+name: winget_release
+
+on:
+  workflow_run:
+    workflows:
+      - Build & Release
+      - release.yml
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, like v1.2.3"
+        required: true
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: windows-latest
+
+    steps:
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          VERSION="$DISPATCH_VERSION"
+
+          if [ -z "$VERSION" ]; then
+            VERSION=$(curl -fsSL \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" \
+              | jq -r '.tag_name')
+          fi
+
+          VERSION="${VERSION#refs/tags/}"
+
+          if [ -z "$VERSION" ] || [[ "$VERSION" != v* ]]; then
+            echo "Could not resolve release tag."
+            exit 1
+          fi
+
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to WinGet
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: aaravmaloo.apm
+          installers-regex: '.*-windows_amd64\.zip$'
+          release-tag: ${{ steps.version.outputs.tag }}
+          token: ${{ secrets.WINGET_TOKEN }}
