@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -698,8 +698,6 @@
       
         
       
-        
-      
     
     
     
@@ -996,67 +994,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes-and-the-vocabulary-engine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes and the Vocabulary Engine
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Notes and the Vocabulary Engine">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#writing-notes-with-autocomplete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Writing Notes with Autocomplete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#managing-the-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Managing the Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-vocabulary-storage-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Vocabulary Storage Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#vault-health-and-trust" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1236,34 +1173,6 @@
     
   
     Injecting secrets into your shell
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../faceid/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Face ID
   
 
     
@@ -2509,67 +2418,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes-and-the-vocabulary-engine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes and the Vocabulary Engine
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Notes and the Vocabulary Engine">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#writing-notes-with-autocomplete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Writing Notes with Autocomplete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#managing-the-vocabulary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Managing the Vocabulary
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-vocabulary-storage-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How Vocabulary Storage Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#vault-health-and-trust" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2710,7 +2558,7 @@
 
 
 <h1 id="managing-your-vault">Managing Your Vault<a class="headerlink" href="#managing-your-vault" title="Permanent link">&para;</a></h1>
-<p>This guide covers the day-to-day operations of working with your APM vault — adding entries, searching, editing, organizing with spaces, and using the vocabulary engine for notes.</p>
+<p>This guide covers the day-to-day operations of working with your APM vault — adding entries, searching, editing, organizing with spaces,.</p>
 <hr />
 <h2 id="adding-entries">Adding Entries<a class="headerlink" href="#adding-entries" title="Permanent link">&para;</a></h2>
 <h3 id="interactive-add">Interactive Add<a class="headerlink" href="#interactive-add" title="Permanent link">&para;</a></h3>
@@ -2840,50 +2688,9 @@
 <p>Generate a password first with <code>pm gen</code>, then paste it when <code>pm add</code> asks for the password field.</p>
 </div>
 <hr />
-<h2 id="notes-and-the-vocabulary-engine">Notes and the Vocabulary Engine<a class="headerlink" href="#notes-and-the-vocabulary-engine" title="Permanent link">&para;</a></h2>
-<p>Secure notes in APM are more than text blobs. The <strong>vocabulary engine</strong> builds a compressed index from your notes and provides autocomplete functionality.</p>
-<h3 id="enabling-vocabulary">Enabling Vocabulary<a class="headerlink" href="#enabling-vocabulary" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">enable</span><span class="w">     </span><span class="c1"># Turn on vocabulary indexing</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pm<span class="w"> </span>vocab<span class="w"> </span>disable<span class="w">    </span><span class="c1"># Turn it off</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pm<span class="w"> </span>vocab<span class="w"> </span>status<span class="w">     </span><span class="c1"># Check if it&#39;s active</span>
-</span></code></pre></div>
-<h3 id="writing-notes-with-autocomplete">Writing Notes with Autocomplete<a class="headerlink" href="#writing-notes-with-autocomplete" title="Permanent link">&para;</a></h3>
-<p>When adding or editing a secure note, APM offers autocomplete suggestions based on your vocabulary. Suggestions are ranked by frequency and user feedback (accepted suggestions increase a word's score; dismissed ones decrease it).</p>
-<h3 id="managing-the-vocabulary">Managing the Vocabulary<a class="headerlink" href="#managing-the-vocabulary" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># List all indexed words with scores</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pm<span class="w"> </span>vocab
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Create an alias (normalizes terms)</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>k8s<span class="w"> </span>kubernetes
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>pm<span class="w"> </span>vocab<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>tf<span class="w"> </span>terraform
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># List all aliases</span>
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>pm<span class="w"> </span>vocab<span class="w"> </span>alias-list
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># Remove an alias</span>
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>pm<span class="w"> </span>vocab<span class="w"> </span>alias-remove<span class="w"> </span>k8s
-</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
-</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="c1"># Adjust word ranking manually</span>
-</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>pm<span class="w"> </span>vocab<span class="w"> </span>rank<span class="w"> </span>deploy<span class="w"> </span>+5<span class="w">    </span><span class="c1"># Boost &quot;deploy&quot;</span>
-</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>pm<span class="w"> </span>vocab<span class="w"> </span>rank<span class="w"> </span>temp<span class="w"> </span>-3<span class="w">      </span><span class="c1"># Demote &quot;temp&quot;</span>
-</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
-</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="c1"># Remove a word from the index</span>
-</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>pm<span class="w"> </span>vocab<span class="w"> </span>remove<span class="w"> </span>obsolete_term
-</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>
-</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="c1"># Rebuild the entire vocabulary from current notes</span>
-</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>pm<span class="w"> </span>vocab<span class="w"> </span>reindex
-</span></code></pre></div>
-<h3 id="how-vocabulary-storage-works">How Vocabulary Storage Works<a class="headerlink" href="#how-vocabulary-storage-works" title="Permanent link">&para;</a></h3>
-<p>The vocabulary is stored as a <strong>gzip-compressed JSON</strong> blob inside the encrypted vault (<code>Vault.VocabCompressed</code>). This means:</p>
-<ul>
-<li>It's encrypted at rest alongside all other vault data</li>
-<li>It can be stripped from cloud uploads using <code>ignore:vocab</code> in <code>.apmignore</code></li>
-<li>It's rebuilt from notes content during reindexing</li>
-</ul>
-<hr />
 <h2 id="vault-health-and-trust">Vault Health and Trust<a class="headerlink" href="#vault-health-and-trust" title="Permanent link">&para;</a></h2>
 <h3 id="health-dashboard">Health Dashboard<a class="headerlink" href="#health-dashboard" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pm<span class="w"> </span>health
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pm<span class="w"> </span>health
 </span></code></pre></div>
 <p>Produces a numeric score (0–100) based on:</p>
 <ul>
@@ -2893,7 +2700,7 @@
 <li><strong>High-risk secrets</strong> — Trust scores below 55 (high risk) or 35 (critical) add penalties</li>
 </ul>
 <h3 id="trust-scores">Trust Scores<a class="headerlink" href="#trust-scores" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pm<span class="w"> </span>trust
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pm<span class="w"> </span>trust
 </span></code></pre></div>
 <p>Every secret gets a trust score based on:</p>
 <table>
@@ -2950,7 +2757,7 @@
 <p>Risk levels: <strong>Low</strong> (≥80), <strong>Medium</strong> (≥55), <strong>High</strong> (≥35), <strong>Critical</strong> (&lt;35)</p>
 <hr />
 <h2 id="audit-log">Audit Log<a class="headerlink" href="#audit-log" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pm<span class="w"> </span>audit
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pm<span class="w"> </span>audit
 </span></code></pre></div>
 <p>Every vault interaction is logged with:</p>
 <ul>
@@ -2962,7 +2769,7 @@
 <p>The audit log is stored outside the vault at <code>~/.config/apm/audit.json</code> and is append-only.</p>
 <hr />
 <h2 id="cryptographic-information">Cryptographic Information<a class="headerlink" href="#cryptographic-information" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pm<span class="w"> </span>cinfo
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pm<span class="w"> </span>cinfo
 </span></code></pre></div>
 <p>Displays the active cryptographic parameters:</p>
 <ul>
@@ -3040,7 +2847,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "navigation.path", "search.suggest", "search.highlight", "search.share", "content.tabs.link", "content.code.copy", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
