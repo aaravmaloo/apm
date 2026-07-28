@@ -1489,8 +1489,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "v10.2.0 Canary Release"
-			infoBuild := " (25/07/2026 (MM/DD/YYYY))"
+			infoVersion := "v11 Stable Release"
+			infoBuild := " (28/07/2026 (MM/DD/YYYY))"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
@@ -4078,7 +4078,6 @@ func main() {
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
 	authTouchIDCmd.AddCommand(authTouchIDSetupCmd, authTouchIDStatusCmd, authTouchIDRemoveCmd, authTouchIDTestCmd)
 
-
 	var updateCmd = &cobra.Command{
 		Use:   "update",
 		Short: "Check for updates and self-update",
@@ -4091,7 +4090,7 @@ func main() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(mcpCmd)
 
-		registerDynamicPluginCommands := func() {
+	registerDynamicPluginCommands := func() {
 		existingNames := make(map[string]struct{})
 		for _, registered := range rootCmd.Commands() {
 			existingNames[strings.ToLower(strings.TrimSpace(registered.Name()))] = struct{}{}
@@ -4493,7 +4492,6 @@ func loadIgnoreConfigOrEmpty() src.IgnoreConfig {
 	}
 	return cfg
 }
-
 
 func saveVaultState(vault *src.Vault, masterPassword string) error {
 	data, err := src.EncryptVault(vault, masterPassword)
@@ -5333,12 +5331,12 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 					fmt.Print("\033[H\033[J")
 					fmt.Printf("Are you sure you want to delete %d selected items? (y/n): ", len(selectedItems))
 					if strings.ToLower(readInput()) == "y" {
-				for key, res := range selectedItems {
+						for key, res := range selectedItems {
 							if deleteEntryByResult(v, res) {
 								delete(selectedItems, key)
 							}
 						}
-							data, _ := src.EncryptVault(v, masterPassword)
+						data, _ := src.EncryptVault(v, masterPassword)
 						src.SaveVault(vaultPath, data)
 						color.Green("Bulk deletion complete.")
 						fmt.Print("\nPress Enter to continue...")
@@ -5761,8 +5759,9 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 			color.Red("Vault is READ-ONLY.")
 		} else {
 			fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
-			if strings.ToLower(readInput()) == "y" {					if deleteEntryByResult(v, res) {
-						data, _ := src.EncryptVault(v, mp)
+			if strings.ToLower(readInput()) == "y" {
+				if deleteEntryByResult(v, res) {
+					data, _ := src.EncryptVault(v, mp)
 					if err := src.SaveVault(vaultPath, data); err != nil {
 						color.Red("Error saving vault: %v", err)
 					} else {
@@ -6381,9 +6380,9 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	default:
 		color.Yellow("Editing for %s not implemented.", res.Type)
 	}
-		if updated {
-			data, _ := src.EncryptVault(v, mp)
-			if err := src.SaveVault(vaultPath, data); err != nil {
+	if updated {
+		data, _ := src.EncryptVault(v, mp)
+		if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v", err)
 		} else {
 			src.SendAlert(v, src.LevelAll, "ENTRY MODIFIED", fmt.Sprintf("Modified entry: %s (%s)", res.Identifier, res.Type))

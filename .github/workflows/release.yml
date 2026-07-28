@@ -28,6 +28,12 @@ jobs:
           - os: macos-latest
             goos: darwin
             goarch: arm64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+          - os: windows-latest
+            goos: windows
+            goarch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -45,20 +51,30 @@ jobs:
 
       - shell: bash
         run: |
-          NAME="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
-          ARCHIVE="$NAME.tar.gz"
+          BASE="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
           export CGO_ENABLED=0
 
-          go build -ldflags="-s -w" -o "$NAME"
-          chmod +x "$NAME"
-          tar -czf "$ARCHIVE" "$NAME"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY="$BASE.exe"
+          else
+            BINARY="$BASE"
+          fi
+
+          go build -ldflags="-s -w" -o "$BINARY"
+          chmod +x "$BINARY"
+
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            ARCHIVE="$BASE.zip"
+            zip -r "$ARCHIVE" "$BINARY"
+          else
+            ARCHIVE="$BASE.tar.gz"
+            tar -czf "$ARCHIVE" "$BINARY"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.goos }}-${{ matrix.goarch }}
-          path: |
-            apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}
-            apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
+          path: apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}*
 
   release:
     needs: build
