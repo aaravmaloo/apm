@@ -16,3 +16,4 @@ site/
 /tests
 .DS_Store
 apm
+/site/
