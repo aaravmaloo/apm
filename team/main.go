@@ -3177,27 +3177,27 @@ func handleInteractiveSharedEntries(tv *TeamVault, s *TeamSession, initialQuery 
 		}
 
 		fmt.Print("\033[H\033[2J")
-		fmt.Printf("\x1b[1;36mAPM Team Search & Manage\x1b[0m | Dept ID: \x1b[1;32m%s\x1b[0m\n", s.ActiveDeptID)
-		fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\x1b[5m_\x1b[0m\n", query)
-		fmt.Println("--------------------------------------------------")
+		fmt.Printf("\r\x1b[1;36mAPM Team Search & Manage\x1b[0m | Dept ID: \x1b[1;32m%s\x1b[0m\r\n", s.ActiveDeptID)
+		fmt.Printf("\r\x1b[1;33mQuery:\x1b[0m %s\x1b[5m_\x1b[0m\r\n", query)
+		fmt.Print("\r--------------------------------------------------\r\n")
 
 		displayLimit := 20
 		for i := 0; i < len(results) && i < displayLimit; i++ {
 			r := results[i]
 			line := fmt.Sprintf("[%d] %-30s (%s)", i+1, r.Identifier, r.Type)
 			if i == selectedIndex {
-				fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
+				fmt.Printf("\r\x1b[1;7m %s \x1b[0m\r\n", line)
 			} else {
-				fmt.Printf(" %s \n", line)
+				fmt.Printf("\r %s \r\n", line)
 			}
 		}
 
 		if len(results) == 0 {
-			fmt.Println(" (No entries found)")
+			fmt.Print("\r (No entries found)\r\n")
 		}
 
-		fmt.Println("\n--------------------------------------------------------------")
-		fmt.Println("\x1b[1;37mArrows\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc\x1b[0m: Exit")
+		fmt.Print("\r\n\r--------------------------------------------------------------\r\n")
+		fmt.Print("\r\x1b[1;37mArrows\x1b[0m: Navigate | \x1b[1;37mEnter\x1b[0m: View | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc\x1b[0m: Exit\r\n")
 
 		b := make([]byte, 3)
 		n, err := os.Stdin.Read(b)
