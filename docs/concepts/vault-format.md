@@ -133,7 +133,6 @@ The decrypted JSON payload contains the full `Vault` struct:
   "security_level": 2,
   "current_space": "default",
   "spaces": ["default", "Work", "Personal"],
-  "vocab_compressed": "base64...",
   "cloud_config": {...},
   "mcp_tokens": [...],
   "plugin_permission_overrides": {...},
@@ -164,7 +163,7 @@ APM detects older vault formats automatically:
 2. **Pre-V4** — Falls back to legacy decryption (`decryptOldVault`) which uses hardcoded Argon2 parameters
 
 !!! warning "Legacy Vaults"
-    Legacy vaults (pre-V4) are supported for reading but **cannot receive new features** like recovery, trust scoring, or vocabulary. You should re-encrypt with `pm profile` to upgrade to V4.
+    Legacy vaults (pre-V4) are supported for reading but **cannot receive new features** like recovery or trust scoring. You should re-encrypt with `pm profile` to upgrade to V4.
 
 ---
 

@@ -28,7 +28,6 @@ APM is a fast, zero-knowledge CLI password manager written in Go and Rust. It st
 - **Optional cloud** — sync to Google Drive, GitHub, or Dropbox. Fully opt-in; no account required to use APM.
 - **Extensible** — a manifest-based plugin system with 100+ granular permissions, lifecycle hooks, and a plugin marketplace.
 - **AI-ready** — native MCP server with scoped tokens so Claude, Cursor, or any MCP-compatible agent can access your vault safely.
-- **Biometric unlock** — optional Face ID via OpenCV + dlib (requires `faceid` build tag).
 - **Team-ready** — full RBAC, departments, approval workflows, and shared vaults in `pm-team`.
 
 ---
@@ -81,7 +80,6 @@ APM supports **25 structured secret types** with validated fields and type-speci
 - Dual AEAD ciphers: AES-256-GCM and XChaCha20-Poly1305
 - HMAC-SHA256 double-layer integrity check
 - Four tunable security profiles: `standard`, `hardened`, `paranoid`, `legacy`
-- Built-in brute-force simulator (`pm brutetest <minutes>`)
 - Per-secret trust scoring (0–100) based on age, access, and privilege level
 - Tamper-evident audit log stored outside the vault
 
@@ -90,7 +88,6 @@ APM supports **25 structured secret types** with validated fields and type-speci
 - Spaces for logical compartmentation (like folders)
 - Fuzzy search with interactive browser and keyboard navigation
 - Metadata inspector: creation date, last access, access count, trust score
-- Vocabulary engine for secure notes: autocomplete, aliases, ranking, gzip storage
 
 **TOTP**
 - Live countdown timers in an interactive list
@@ -126,16 +123,6 @@ APM supports **25 structured secret types** with validated fields and type-speci
 - `Ctrl+Shift+L` hotkey, window-title context detection
 - Keystroke injection (no clipboard exposure)
 - TOTP auto-injection for 2FA fields
-
-**Face ID (optional)**
-```sh
-# Build with Face ID support (requires OpenCV + dlib)
-go build -tags faceid -o pm.exe
-
-pm faceid enroll
-pm faceid status
-pm faceid test
-```
 
 **Recovery**
 | Factor | Command |

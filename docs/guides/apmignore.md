@@ -66,26 +66,7 @@ Format: `provider:space:type:name`
 
 Supported providers: `gdrive`, `github`, `dropbox`
 
-### `[vocab]` — Ignore Vocabulary Words
-
-Exclude specific words from the vocabulary index during cloud exports:
-
-```ini
-[vocab]
-internal_project_name
-secret_codename
-```
-
 ### `[misc]` — Miscellaneous Flags
-
-```ini
-[misc]
-ignore:vocab
-```
-
-| Flag           | Effect                                              |
-| :------------- | :-------------------------------------------------- |
-| `ignore:vocab` | Strip the entire compressed vocabulary from uploads |
 
 ---
 
@@ -111,14 +92,6 @@ personal:ssh_key:id_ed25519_local
 [cloud-specific-ignore]
 dropbox:work:password:legacy_admin
 github:*:document:*confidential*
-
-# Vocabulary words to exclude
-[vocab]
-internal_project_alpha
-
-# Strip the entire vocabulary from uploads
-[misc]
-ignore:vocab
 ```
 
 ---
@@ -140,9 +113,7 @@ When you run `pm cloud sync`:
 
 1. APM loads and parses `.apmignore`
 2. A **filtered copy** of the vault is created in memory
-3. Entries matching ignore rules are removed from the copy
-4. If `ignore:vocab` is set, the vocabulary blob is stripped
-5. The filtered vault is encrypted and uploaded
+3. Entries matching ignore rules are removed from the copy4. The filtered vault is encrypted and uploaded
 
 !!! info "Local Vault Unaffected"
     Filtering only affects the **upload payload**. Your local vault file is never modified by `.apmignore`. All ignored entries remain safely stored locally.

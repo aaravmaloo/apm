@@ -1,6 +1,6 @@
 # Managing Your Vault
 
-This guide covers the day-to-day operations of working with your APM vault — adding entries, searching, editing, organizing with spaces, and using the vocabulary engine for notes.
+This guide covers the day-to-day operations of working with your APM vault — adding entries, searching, editing, organizing with spaces,.
 
 ---
 
@@ -140,59 +140,6 @@ APM generates a high-entropy password using cryptographically secure randomness.
 
 !!! tip
     Generate a password first with `pm gen`, then paste it when `pm add` asks for the password field.
-
----
-
-## Notes and the Vocabulary Engine
-
-Secure notes in APM are more than text blobs. The **vocabulary engine** builds a compressed index from your notes and provides autocomplete functionality.
-
-### Enabling Vocabulary
-
-```bash
-pm vocab enable     # Turn on vocabulary indexing
-pm vocab disable    # Turn it off
-pm vocab status     # Check if it's active
-```
-
-### Writing Notes with Autocomplete
-
-When adding or editing a secure note, APM offers autocomplete suggestions based on your vocabulary. Suggestions are ranked by frequency and user feedback (accepted suggestions increase a word's score; dismissed ones decrease it).
-
-### Managing the Vocabulary
-
-```bash
-# List all indexed words with scores
-pm vocab
-
-# Create an alias (normalizes terms)
-pm vocab alias k8s kubernetes
-pm vocab alias tf terraform
-
-# List all aliases
-pm vocab alias-list
-
-# Remove an alias
-pm vocab alias-remove k8s
-
-# Adjust word ranking manually
-pm vocab rank deploy +5    # Boost "deploy"
-pm vocab rank temp -3      # Demote "temp"
-
-# Remove a word from the index
-pm vocab remove obsolete_term
-
-# Rebuild the entire vocabulary from current notes
-pm vocab reindex
-```
-
-### How Vocabulary Storage Works
-
-The vocabulary is stored as a **gzip-compressed JSON** blob inside the encrypted vault (`Vault.VocabCompressed`). This means:
-
-- It's encrypted at rest alongside all other vault data
-- It can be stripped from cloud uploads using `ignore:vocab` in `.apmignore`
-- It's rebuilt from notes content during reindexing
 
 ---
 

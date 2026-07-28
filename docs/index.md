@@ -5,7 +5,7 @@ APM is a Go-based password manager with two binaries:
 - `pm` for personal vaults
 - `pm-team` for shared organizational vaults
 
-The source tree implements more than a basic password CLI. It includes sessions, recovery, cloud sync, plugins, MCP access, Windows autofill, shell injection, and a TUI alongside the core encrypted vault.
+The source tree implements more than a basic password CLI. It includes sessions, recovery, cloud sync, plugins, MCP access, Windows autofill, shell injection alongside the core encrypted vault.
 
 ## What APM currently does
 

@@ -55,8 +55,6 @@ This page lists the capabilities that are implemented in the current codebase.
 - Windows autofill daemon
 - Autocomplete popup and domain matching
 - TOTP linking for autofill flows
-- Optional Face ID command tree when built with face-recognition support
-- Bubble Tea TUI entry point through `pm tui`
 
 ## Team edition
 

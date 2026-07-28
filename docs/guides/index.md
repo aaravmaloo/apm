@@ -16,7 +16,6 @@ These guides focus on workflows that are actually present in the current binarie
 - [Using `.apmignore`](apmignore.md)
 - [MCP integration](mcp-integration.md)
 - [Autofill on Windows](../autofill_windows.md)
-- [Face ID](faceid.md)
 
 ## Extension and organization
 

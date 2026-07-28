@@ -13,7 +13,6 @@ This reference reflects the command trees defined in the current source.
 - `pm mode`
 - `pm cinfo`
 - `pm info`
-- `pm tui`
 
 ### Entries and retrieval
 
@@ -123,26 +122,12 @@ Plugins may also register extra root-level commands.
 
 These flows are primarily relevant on Windows.
 
-### Notes and vocabulary
-
-- `pm vocab`
-- `pm vocab enable`
-- `pm vocab disable`
-- `pm vocab status`
-- `pm vocab alias`
-- `pm vocab alias-list`
-- `pm vocab alias-remove [alias]`
-- `pm vocab rank [word] [delta]`
-- `pm vocab remove [word]`
-- `pm vocab reindex`
-
 ### Auditing and diagnostics
 
 - `pm health`
 - `pm trust`
 - `pm audit`
 - `pm loaded`
-- `pm brutetest [minutes]`
 - `pm compromise`
 - `pm update`
 
@@ -151,7 +136,6 @@ These flows are primarily relevant on Windows.
 Depending on build and runtime state, `pm` also exposes:
 
 - `pm inject ...`
-- `pm faceid ...`
 - plugin-defined root commands
 
 ## Team binary: `pm-team`

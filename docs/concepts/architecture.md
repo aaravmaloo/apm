@@ -21,10 +21,8 @@ graph TB
         G[health.go — Health Dashboard]
         H[audit.go — Audit Log]
         I[anomaly.go — Anomaly Detection]
-        J[vocab.go — Vocabulary Engine]
         K[portability.go — Import/Export]
         L[apmignore.go — Ignore Rules]
-        M[brute.go — Brute Force Test]
         N[recovery_*.go — Recovery Subsystem]
         O[ephemeral_session.go — Delegated Sessions]
     end
@@ -87,10 +85,8 @@ The domain layer contains all business logic. It operates entirely in memory aft
 | `health.go`            | Vault health scoring algorithm                   |
 | `audit.go`             | Tamper-evident audit logging                     |
 | `anomaly.go`           | Unusual activity time detection                  |
-| `vocab.go`             | Note vocabulary with aliases and scoring         |
 | `portability.go`       | JSON, CSV, TXT import/export                     |
 | `apmignore.go`         | Ignore rule parsing and filtering                |
-| `brute.go`             | Brute-force test engine                          |
 | `recovery_passkey.go`  | WebAuthn passkey recovery                        |
 | `quorum_recovery.go`   | Shamir secret sharing (quorum recovery)          |
 | `recovery_codes.go`    | One-time recovery codes                          |

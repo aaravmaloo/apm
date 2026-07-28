@@ -11,7 +11,7 @@ File locations and data layout for all APM artifacts.
 | Default vault | `./vault.dat` (current working directory) |
 | Override      | `APM_VAULT_PATH` environment variable     |
 
-The vault is a single binary file in [V4 format](../concepts/vault-format.md) containing all encrypted entries, configuration, cloud tokens, MCP tokens, plugin overrides, vocabulary, and telemetry.
+The vault is a single binary file in [V4 format](../concepts/vault-format.md) containing all encrypted entries, configuration, cloud tokens, MCP tokens, plugin overrides, and telemetry.
 
 ---
 

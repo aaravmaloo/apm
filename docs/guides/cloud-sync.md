@@ -147,8 +147,6 @@ The `.apmignore` file is processed **before** encryption and upload. You can:
 - Exclude entire spaces
 - Exclude specific entries by `space:type:name` pattern
 - Use provider-specific rules
-- Strip vocabulary data
-
 See the [.apmignore Guide](apmignore.md) for full details.
 
 ---

@@ -82,30 +82,9 @@ gdrive:personal:notes:*journal*
 
 ---
 
-### `[vocab]`
-
-Specific vocabulary words to exclude.
-
-```ini
-[vocab]
-internal_codename
-secret_project
-```
-
----
-
 ### `[misc]`
 
 Miscellaneous flags.
-
-```ini
-[misc]
-ignore:vocab
-```
-
-| Flag           | Effect                                              |
-| :------------- | :-------------------------------------------------- |
-| `ignore:vocab` | Strip the entire compressed vocabulary from uploads |
 
 ---
 
@@ -131,12 +110,4 @@ work:password:local_dev_db
 [cloud-specific-ignore]
 dropbox:work:password:legacy_admin
 github:*:document:*confidential*
-
-# Words to strip from vocabulary
-[vocab]
-internal_project_alpha
-
-# Strip entire vocabulary
-[misc]
-ignore:vocab
 ```
