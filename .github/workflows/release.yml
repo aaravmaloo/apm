@@ -63,13 +63,19 @@ jobs:
           go build -ldflags="-s -w" -o "$BINARY"
           chmod +x "$BINARY"
 
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            ARCHIVE="$BASE.zip"
-            zip -r "$ARCHIVE" "$BINARY"
-          else
-            ARCHIVE="$BASE.tar.gz"
-            tar -czf "$ARCHIVE" "$BINARY"
-          fi
+      - name: Package (Unix)
+        if: matrix.goos != 'windows'
+        shell: bash
+        run: |
+          BASE="apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
+          tar -czf "$BASE.tar.gz" "$BASE"
+
+      - name: Package (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: |
+          $BASE = "apm-${{ github.ref_name }}-${{ matrix.goos }}_${{ matrix.goarch }}"
+          Compress-Archive -Path "$BASE.exe" -DestinationPath "$BASE.zip"
 
       - uses: actions/upload-artifact@v4
         with:

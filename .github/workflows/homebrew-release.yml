@@ -1,0 +1,90 @@
+name: homebrew_release
+
+on:
+  workflow_run:
+    workflows:
+      - Build & Release
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, like v1.2.3"
+        required: true
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          VERSION="$DISPATCH_VERSION"
+
+          if [ -z "$VERSION" ]; then
+            VERSION=$(curl -fsSL \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" \
+              | jq -r '.tag_name')
+          fi
+
+          VERSION="${VERSION#refs/tags/}"
+
+          if [ -z "$VERSION" ] || [[ "$VERSION" != v* ]]; then
+            echo "Could not resolve release tag."
+            exit 1
+          fi
+
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate Source SHA256
+        id: sha
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          URL="https://github.com/aaravmaloo/apm/archive/refs/tags/${TAG}.tar.gz"
+          echo "==> Downloading source tarball..."
+          curl -L -s "$URL" -o source.tar.gz
+          SHA=$(sha256sum source.tar.gz | awk '{print $1}')
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "==> Source SHA256: $SHA"
+
+      - name: Checkout Homebrew Tap
+        uses: actions/checkout@v4
+        with:
+          repository: aaravmaloo/homebrew-tap
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          path: tap
+
+      - name: Update Formula
+        working-directory: tap
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+
+          # Replace url and sha256 in Formula/apm.rb
+          sed -i "s|url \".*\"|url \"https://github.com/aaravmaloo/apm/archive/refs/tags/${TAG}.tar.gz\"|" Formula/apm.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${SHA}\"|" Formula/apm.rb
+
+      - name: Commit and Push to Tap
+        working-directory: tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/apm.rb
+
+          if git diff --cached --quiet; then
+            echo "No Homebrew formula changes."
+            exit 0
+          fi
+
+          git commit -m "Update apm to ${{ steps.version.outputs.tag }}"
+          git push
