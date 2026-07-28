@@ -352,9 +352,7 @@ type Vault struct {
 	DecoyMode                  bool                   `json:"decoy_mode,omitempty"`
 	DecoySessionCount          int                    `json:"decoy_session_count,omitempty"`
 	Profile                    string                 `json:"profile,omitempty"`
-	AutocompleteEnabled        bool                   `json:"autocomplete_enabled,omitempty"`
 	AutocompleteWindowDisabled bool                   `json:"autocomplete_window_disabled,omitempty"`
-	VocabCompressed            []byte                 `json:"vocab_compressed,omitempty"`
 
 	AlertEmail                string                     `json:"alert_email,omitempty"`
 	AlertsEnabled             bool                       `json:"alerts_enabled,omitempty"`
