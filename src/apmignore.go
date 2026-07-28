@@ -27,13 +27,12 @@ type IgnoreCloudRule struct {
 type IgnoreConfig struct {
 	Spaces        []string
 	Entries       []IgnoreEntryRule
-	Vocab         []string
 	CloudSpecific []IgnoreCloudRule
 	Misc          map[string]string
 }
 
 func (cfg IgnoreConfig) IsEmpty() bool {
-	return len(cfg.Spaces) == 0 && len(cfg.Entries) == 0 && len(cfg.Vocab) == 0 && len(cfg.CloudSpecific) == 0 && len(cfg.Misc) == 0
+	return len(cfg.Spaces) == 0 && len(cfg.Entries) == 0 && len(cfg.CloudSpecific) == 0 && len(cfg.Misc) == 0
 }
 
 // LoadIgnoreConfigForVault searches the working directory first and then the
@@ -102,8 +101,6 @@ func ParseIgnoreConfig(content string) (IgnoreConfig, error) {
 				return IgnoreConfig{}, fmt.Errorf(".apmignore line %d: %w", lineNo, err)
 			}
 			cfg.Entries = append(cfg.Entries, rule)
-		case "vocab":
-			cfg.Vocab = append(cfg.Vocab, normalizeIgnoreToken(line, true))
 		case "cloud-specific-ignore":
 			rule, err := parseIgnoreCloudRule(line)
 			if err != nil {
@@ -165,15 +162,6 @@ func (cfg IgnoreConfig) ShouldIgnoreEntry(space, entryType, name, provider strin
 	return false
 }
 
-func (cfg IgnoreConfig) ShouldIgnoreVocabWord(word string) bool {
-	word = strings.TrimSpace(word)
-	for _, pattern := range cfg.Vocab {
-		if ignorePatternMatch(pattern, word, true) {
-			return true
-		}
-	}
-	return false
-}
 
 func (cfg IgnoreConfig) MiscIgnoreEnabled(name string) bool {
 	name = strings.ToLower(strings.TrimSpace(name))
@@ -312,19 +300,6 @@ func (cfg IgnoreConfig) FilterVaultForProvider(vault *Vault, provider string) *V
 		})
 	}
 
-	if cfg.MiscIgnoreEnabled("vocab") {
-		clone.VocabCompressed = nil
-	} else if len(cfg.Vocab) > 0 && len(clone.VocabCompressed) > 0 {
-		vocab, err := clone.LoadNoteVocabulary()
-		if err == nil {
-			for word := range vocab.Words {
-				if cfg.ShouldIgnoreVocabWord(word) {
-					delete(vocab.Words, word)
-				}
-			}
-			_ = clone.SaveNoteVocabulary(vocab)
-		}
-	}
 
 	return &clone
 }
