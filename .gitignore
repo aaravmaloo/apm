@@ -14,3 +14,5 @@ gha-creds-*.json
 site/
 /dev
 /tests
+.DS_Store
+apm
