@@ -30,9 +30,8 @@ import (
 	src "github.com/aaravmaloo/apm/src"
 	"github.com/aaravmaloo/apm/src/autofill"
 	"github.com/aaravmaloo/apm/src/autofillcmd"
-	"github.com/aaravmaloo/apm/src/faceid"
 	"github.com/aaravmaloo/apm/src/plugins"
-	"github.com/aaravmaloo/apm/src/tui"
+	"github.com/aaravmaloo/apm/src/touchid"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/atotto/clipboard"
@@ -485,7 +484,6 @@ func main() {
 					color.Red("Error: %v\n", err)
 					return
 				}
-				reindexNoteVocabularyIfEnabled(vault)
 			case "5":
 				fmt.Print("Label: ")
 				name := readInput()
@@ -2708,13 +2706,13 @@ func main() {
 
 		render := func() {
 			fmt.Print("\033[H\033[J")
-			fmt.Printf("\x1b[1;36mAPM Plugin Access\x1b[0m | Plugin: \x1b[1;32m%s\x1b[0m\n", pluginName)
-			fmt.Println("Up/Down: Navigate | Space: Toggle | Enter: Save | Esc/q: Cancel")
+			fmt.Printf("\r\x1b[1;36mAPM Plugin Access\x1b[0m | Plugin: \x1b[1;32m%s\x1b[0m\r\n", pluginName)
+			fmt.Print("\rUp/Down: Navigate | Space: Toggle | Enter: Save | Esc/q: Cancel\r\n")
 			if statusMsg != "" {
-				fmt.Printf("%s\n", statusMsg)
+				fmt.Printf("\r%s\r\n", statusMsg)
 				statusMsg = ""
 			}
-			fmt.Println(strings.Repeat("-", 50))
+			fmt.Print("\r" + strings.Repeat("-", 50) + "\r\n")
 
 			for i, p := range perms {
 				cursor := " "
@@ -2728,7 +2726,7 @@ func main() {
 					colorCode = "\x1b[1;32m"
 				}
 
-				fmt.Printf("%s %s %s%-30s\x1b[0m\n", cursor, checkbox, colorCode, p)
+				fmt.Printf("\r%s %s %s%-30s\x1b[0m\r\n", cursor, checkbox, colorCode, p)
 			}
 		}
 
@@ -3775,19 +3773,105 @@ func main() {
 				fmt.Println("(not found)")
 			} else {
 				fmt.Printf("path=%s\n", ignorePath)
-				fmt.Printf("spaces=%d entries=%d vocab=%d cloud-specific=%d misc=%d\n",
-					len(ignoreCfg.Spaces), len(ignoreCfg.Entries), len(ignoreCfg.Vocab), len(ignoreCfg.CloudSpecific), len(ignoreCfg.Misc))
+				fmt.Printf("spaces=%d entries=%d cloud-specific=%d misc=%d\n",
+					len(ignoreCfg.Spaces), len(ignoreCfg.Entries), len(ignoreCfg.CloudSpecific), len(ignoreCfg.Misc))
 			}
 		},
 	}
+	var cleanupCmd = &cobra.Command{
+		Use:   "cleanup",
+		Short: "Scan and clean up vault issues (deprecated fields, empty entries, expired items)",
+		Run: func(cmd *cobra.Command, args []string) {
+			masterPassword, vault, readonly, err := src_unlockVault()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if readonly {
+				color.Red("Vault is in READ-ONLY mode. Cannot modify vault.\n")
+				return
+			}
 
-	faceidCmd := faceid.BuildFaceIDCmd(vaultPath, readPassword, func() string {
-		if cfgDir, err := os.UserConfigDir(); err == nil {
-			return filepath.Join(cfgDir, "apm", "faceid", "models")
-		}
-		return filepath.Join(filepath.Dir(vaultPath), "faceid", "models")
-	})
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, logsCmd, lgitCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, vocabCmd, loadedCmd, faceidCmd, injectcmd.BuildInjectCmd(src_unlockVault))
+			autoYes, _ := cmd.Flags().GetBool("yes")
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
+
+			issues := src.RunCleanup(vault)
+			if len(issues) == 0 {
+				color.Green("\n  No issues found — vault is clean!\n")
+				return
+			}
+
+			fmt.Println()
+			color.HiCyan("  Vault Cleanup Report")
+			color.HiCyan("  ====================")
+			fmt.Println()
+
+			var fixable, total int
+			for _, iss := range issues {
+				total++
+				if iss.AutoFix {
+					fixable++
+				}
+				switch iss.Severity {
+				case "error":
+					color.Red("  [%s] %s\n", iss.Section, iss.Message)
+				case "warning":
+					color.Yellow("  [%s] %s\n", iss.Section, iss.Message)
+				default:
+					color.Cyan("  [%s] %s\n", iss.Section, iss.Message)
+				}
+			}
+
+			fmt.Printf("\n  Found %d issue(s), %d auto-fixable\n", total, fixable)
+
+			if dryRun {
+				color.Yellow("  Dry-run mode — no changes made.\n")
+				return
+			}
+
+			if fixable == 0 {
+				fmt.Println("  No auto-fixable issues to resolve.")
+				return
+			}
+
+			if !autoYes {
+				fmt.Print("\n  Apply auto-fixes? (y/n): ")
+				answer := readInput()
+				if strings.ToLower(strings.TrimSpace(answer)) != "y" {
+					color.Yellow("  Cleanup cancelled.\n")
+					return
+				}
+			}
+
+			fixed := 0
+			// Apply fixes in reverse to avoid index shifting when removing
+			// adjacent items from the same slice.
+			for i := len(issues) - 1; i >= 0; i-- {
+				iss := issues[i]
+				if iss.AutoFix && iss.RemoveFn != nil {
+					iss.RemoveFn(vault)
+					fixed++
+				}
+			}
+
+			data, err := src.EncryptVault(vault, masterPassword)
+			if err != nil {
+				color.Red("  Failed to save vault: %v\n", err)
+				return
+			}
+			if err := src.SaveVault(vaultPath, data); err != nil {
+				color.Red("  Failed to save vault: %v\n", err)
+				return
+			}
+
+			color.Green("\n  Cleanup complete! Fixed %d issue(s).\n", fixed)
+			src.LogAction("VAULT_CLEANUP", fmt.Sprintf("Fixed %d/%d issues", fixed, total))
+		},
+	}
+	cleanupCmd.Flags().BoolP("yes", "y", false, "Auto-apply all fixes without prompting")
+	cleanupCmd.Flags().Bool("dry-run", false, "Scan only, don't make any changes")
+
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, logsCmd, lgitCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, loadedCmd, cleanupCmd, injectcmd.BuildInjectCmd(src_unlockVault))
 	autofillCmd, _ := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
 		VaultPath:    &vaultPath,
 		ReadPassword: readPassword,
@@ -3989,10 +4073,11 @@ func main() {
 	)
 
 	rootCmd.AddCommand(autofillCmd, autocompleteCmd)
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd)
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd, authTouchIDCmd)
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
-	vocabCmd.AddCommand(vocabEnableCmd, vocabDisableCmd, vocabStatusCmd, vocabAliasCmd, vocabAliasListCmd, vocabAliasRemoveCmd, vocabRankCmd, vocabRemoveCmd, vocabReindexCmd)
+	authTouchIDCmd.AddCommand(authTouchIDSetupCmd, authTouchIDStatusCmd, authTouchIDRemoveCmd, authTouchIDTestCmd)
+
 
 	var updateCmd = &cobra.Command{
 		Use:   "update",
@@ -4005,25 +4090,8 @@ func main() {
 	updateCmd.Flags().Bool("force", false, "Force update even if version is latest")
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(mcpCmd)
-	rootCmd.AddCommand(bruteCmd)
 
-	var tuiCmd = &cobra.Command{
-		Use:   "tui",
-		Short: "Start the Advanced Password Manager TUI",
-		Run: func(cmd *cobra.Command, args []string) {
-			res, err := tui.RunUnlock(vaultPath)
-			if err != nil {
-				color.Red("Unlock failed: %v", err)
-				return
-			}
-			if err := tui.RunTUI(res, vaultPath); err != nil {
-				color.Red("TUI Error: %v", err)
-			}
-		},
-	}
-	rootCmd.AddCommand(tuiCmd)
-
-	registerDynamicPluginCommands := func() {
+		registerDynamicPluginCommands := func() {
 		existingNames := make(map[string]struct{})
 		for _, registered := range rootCmd.Commands() {
 			existingNames[strings.ToLower(strings.TrimSpace(registered.Name()))] = struct{}{}
@@ -4110,21 +4178,6 @@ func main() {
 
 	rootCmd.PersistentFlags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
 	rootCmd.Execute()
-}
-
-var bruteCmd = &cobra.Command{
-	Use:   "brutetest [minutes]",
-	Short: "Stress-test vault security using brute force (simulated attack)",
-	Args:  cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		mins := 5
-		if len(args) > 0 {
-			if m, err := strconv.Atoi(args[0]); err == nil {
-				mins = m
-			}
-		}
-		src.RunBruteTest(vaultPath, mins)
-	},
 }
 
 const Version = "9.2"
@@ -4441,13 +4494,6 @@ func loadIgnoreConfigOrEmpty() src.IgnoreConfig {
 	return cfg
 }
 
-func reindexNoteVocabularyIfEnabled(vault *src.Vault) {
-	if vault == nil || !vault.AutocompleteEnabled {
-		return
-	}
-	ignoreCfg := loadIgnoreConfigOrEmpty()
-	_ = vault.ReindexNoteVocabulary(ignoreCfg)
-}
 
 func saveVaultState(vault *src.Vault, masterPassword string) error {
 	data, err := src.EncryptVault(vault, masterPassword)
@@ -4485,13 +4531,7 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 
 	buffer := []rune(initial)
 	cursor := len(buffer)
-	dismissedSuggestion := ""
 	statusMsg := ""
-
-	type suggestionState struct {
-		prefix string
-		word   string
-	}
 
 	getWordRangeAtCursor := func() (int, int, string) {
 		if cursor == 0 {
@@ -4550,9 +4590,6 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 		if corrected, ok := autocorrect[lowerWord]; ok {
 			replacement = corrected
 		}
-		if value, ok := vault.ResolveVocabAlias(lowerWord); ok {
-			replacement = value
-		}
 		if replacement == word {
 			return
 		}
@@ -4564,40 +4601,25 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 		cursor = start + len(insert)
 	}
 
-	render := func(s suggestionState) {
+	render := func() {
 		fmt.Print("\033[H\033[2J")
 		fmt.Printf("APM Note Editor - %s\n", title)
-		fmt.Println("Ctrl+S save | Ctrl+V paste | Esc cancel | Right accept suggestion | Left dismiss suggestion")
-		fmt.Println("Auto: autocorrect, bracket pair (), alias replacement on space")
+		fmt.Println("Ctrl+S save | Ctrl+V paste | Esc cancel")
+		fmt.Println("Auto: autocorrect, bracket pair () on space")
 		if statusMsg != "" {
 			fmt.Println(statusMsg)
 		}
 		fmt.Println("--------------------------------------------------------------")
 
-		ghostSuffix := ""
-		if s.word != "" {
-			ghostSuffix = strings.TrimPrefix(s.word, strings.ToLower(s.prefix))
-		}
-
 		var view strings.Builder
 		for i, r := range buffer {
 			if i == cursor {
 				view.WriteRune('█')
-				if ghostSuffix != "" {
-					view.WriteString("\033[90m")
-					view.WriteString(ghostSuffix)
-					view.WriteString("\033[0m")
-				}
 			}
 			view.WriteRune(r)
 		}
 		if cursor == len(buffer) {
 			view.WriteRune('█')
-			if ghostSuffix != "" {
-				view.WriteString("\033[90m")
-				view.WriteString(ghostSuffix)
-				view.WriteString("\033[0m")
-			}
 		}
 		if len(buffer) == 0 {
 			view.WriteRune('█')
@@ -4606,32 +4628,8 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 		fmt.Println("--------------------------------------------------------------")
 	}
 
-	buildSuggestion := func() suggestionState {
-		if vault == nil || !vault.AutocompleteEnabled {
-			return suggestionState{}
-		}
-		start, end, word := getWordRangeAtCursor()
-		_ = start
-		if word == "" {
-			return suggestionState{}
-		}
-		if end != cursor {
-			return suggestionState{}
-		}
-		prefix := strings.ToLower(word)
-		if dismissedSuggestion == prefix {
-			return suggestionState{}
-		}
-		suggestions, err := vault.SuggestNoteWords(prefix, 1, loadIgnoreConfigOrEmpty())
-		if err != nil || len(suggestions) == 0 {
-			return suggestionState{}
-		}
-		return suggestionState{prefix: prefix, word: suggestions[0]}
-	}
-
 	for {
-		s := buildSuggestion()
-		render(s)
+		render()
 
 		key := make([]byte, 8)
 		n, err := os.Stdin.Read(key)
@@ -4658,13 +4656,11 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 				clip = strings.ReplaceAll(clip, "\r\n", "\n")
 				clip = strings.ReplaceAll(clip, "\r", "\n")
 				insertRunes([]rune(clip))
-				dismissedSuggestion = ""
 				statusMsg = fmt.Sprintf("Pasted %d chars from clipboard", len([]rune(clip)))
 			case 27:
 				return "", fmt.Errorf("note edit cancelled")
 			case 127, 8:
 				deleteBeforeCursor()
-				dismissedSuggestion = ""
 				statusMsg = ""
 			case '\r', '\n':
 				if cursor < len(buffer) && isNoteWordRune(buffer[cursor]) {
@@ -4673,17 +4669,14 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 					}
 				}
 				insertRunes([]rune{'\n'})
-				dismissedSuggestion = ""
 				statusMsg = ""
 			case ' ':
 				applyWordTransforms()
 				insertRunes([]rune{' '})
-				dismissedSuggestion = ""
 				statusMsg = ""
 			case '(':
 				insertRunes([]rune{'(', ')'})
 				cursor--
-				dismissedSuggestion = ""
 				statusMsg = ""
 			case ')':
 				if cursor < len(buffer) && buffer[cursor] == ')' {
@@ -4695,7 +4688,6 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 			default:
 				if ch >= 32 && ch <= 126 {
 					insertRunes([]rune{rune(ch)})
-					dismissedSuggestion = ""
 					statusMsg = ""
 				}
 			}
@@ -4704,22 +4696,12 @@ func captureNoteContent(vault *src.Vault, title, initial string) (string, error)
 
 		switch {
 		case strings.Contains(seq, "\x1b[C"):
-			if s.word != "" {
-				suffix := strings.TrimPrefix(s.word, strings.ToLower(s.prefix))
-				if suffix != "" {
-					insertRunes([]rune(suffix))
-					_ = vault.RecordNoteSuggestionFeedback(s.word, true)
-					dismissedSuggestion = ""
-				}
-			} else if cursor < len(buffer) {
+			if cursor < len(buffer) {
 				cursor++
 			}
 			statusMsg = ""
 		case strings.Contains(seq, "\x1b[D"):
-			if s.word != "" {
-				_ = vault.RecordNoteSuggestionFeedback(s.word, false)
-				dismissedSuggestion = s.prefix
-			} else if cursor > 0 {
+			if cursor > 0 {
 				cursor--
 			}
 			statusMsg = ""
@@ -4972,41 +4954,20 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		var pass string
 		var err error
+		var usedTouchID bool
 
-		vaultDir := filepath.Dir(vaultPath)
-		enrollment, _ := faceid.LoadEnrollment(vaultDir)
-
-		if enrollment != nil {
-			fmt.Printf("Master Password (attempt %d/3): \n", i+1)
-			// Keep the real unlock path aligned with `pm faceid test` so both
-			// commands resolve the same installed model location.
-			modelsDir := filepath.Join(vaultDir, "faceid", "models")
-			if cfgDir, cfgErr := os.UserConfigDir(); cfgErr == nil {
-				modelsDir = filepath.Join(cfgDir, "apm", "faceid", "models")
-			}
-
-			profile, _, err := src.GetVaultParams(data)
-			profileName := "standard"
-			if err == nil {
-				profileName = profile.Name
-			}
-
-			method, p, err := faceid.RaceUnlock(enrollment, modelsDir, profileName)
-			if err == nil && p != "" {
+		// Try Touch ID first if configured
+		if touchid.IsConfigured() {
+			if p, terr := touchid.GetPassword(); terr == nil {
 				pass = p
-				if method == "face" {
-					fmt.Println("  Unlocked via Face ID")
-				}
-			} else {
-
-				fmt.Printf("  Fallback to password: ")
-				pass, err = readPassword()
-				if err != nil {
-					return "", nil, false, err
-				}
-				fmt.Println()
+				usedTouchID = true
+				fmt.Println("  Unlocked via Touch ID")
+			} else if terr != touchid.ErrAuthFailed {
+				color.Yellow("Touch ID error: %v — falling back to password\n", terr)
 			}
-		} else {
+		}
+
+		if pass == "" {
 			fmt.Printf("Master Password (attempt %d/3): ", i+1)
 			pass, err = readPassword()
 			if err != nil {
@@ -5016,6 +4977,27 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 		}
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
+
+		// Touch ID migration: if Touch ID provided wrong password, offer to update it
+		if err != nil && usedTouchID {
+			color.Yellow("\n  Touch ID password is outdated. Enter your current master password to update it.\n")
+			fmt.Printf("  Master Password: ")
+			newPass, rErr := readPassword()
+			fmt.Println()
+			if rErr == nil {
+				if newVault, dErr := src.DecryptVault(data, newPass, costMultiplier); dErr == nil {
+					if sErr := touchid.Setup(newPass); sErr == nil {
+						color.Green("  Touch ID updated with your current password.\n")
+					} else {
+						color.Yellow("  Could not update Touch ID: %v. Run 'pm auth touchid setup' later.\n", sErr)
+					}
+					pass = newPass
+					vault = newVault
+					err = nil // clear the error so we proceed to success
+				}
+			}
+		}
+
 		if err == nil {
 			src.LogAccess("UNLOCK")
 			vault.FailedAttempts = 0
@@ -5163,14 +5145,14 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 		}
 
 		fmt.Print("\033[H\033[J")
-		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Space: \x1b[1;32m%s\x1b[0m (readonly: %v)\n", profileDisplay, readonly)
+		fmt.Printf("\x1b[1;36mAPM Search & Manage\x1b[0m | Space: \x1b[1;32m%s\x1b[0m (readonly: %v)\r\n", profileDisplay, readonly)
 
 		if focusMode == 0 {
-			fmt.Printf("\x1b[1;33mQuery:\x1b[0m \x1b[1;37m%s\x1b[5m_\x1b[0m\n", query)
+			fmt.Printf("\x1b[1;33mQuery:\x1b[0m \x1b[1;37m%s\x1b[5m_\x1b[0m\r\n", query)
 		} else {
-			fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\n", query)
+			fmt.Printf("\x1b[1;33mQuery:\x1b[0m %s\r\n", query)
 		}
-		fmt.Println("--------------------------------------------------")
+		fmt.Print("\r--------------------------------------------------\r\n")
 
 		displayLimit := 20
 		start := 0
@@ -5197,25 +5179,25 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			line := fmt.Sprintf("%s[%d] %-30s (%s)", prefix, i+1, r.Identifier, r.Type)
 			if i == selectedIndex {
 				if focusMode == 1 {
-					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V/SPACE/S\x1b[0m\n", line)
+					fmt.Printf("\x1b[1;7m %s \x1b[0m \x1b[1;32m<-- PRESS E/D/V/SPACE/S\x1b[0m\r\n", line)
 				} else {
-					fmt.Printf("\x1b[1;7m %s \x1b[0m\n", line)
+					fmt.Printf("\x1b[1;7m %s \x1b[0m\r\n", line)
 				}
 			} else {
-				fmt.Printf(" %s \n", line)
+				fmt.Printf(" %s \r\n", line)
 			}
 		}
 
 		if len(results) == 0 {
-			fmt.Println(" (No entries found)")
+			fmt.Print("\r (No entries found)\r\n")
 		}
 
-		fmt.Println("\n--------------------------------------------------------------")
+		fmt.Print("\r\n\r--------------------------------------------------------------\r\n")
 		if focusMode == 0 {
-			fmt.Println("\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit")
+			fmt.Print("\r\x1b[1;37mType to Search\x1b[0m | \x1b[1;37mTab/Enter\x1b[0m: Focus List | \x1b[1;37mEsc\x1b[0m: Exit\r\n")
 		} else {
-			fmt.Println("\x1b[1;37mUp/Down\x1b[0m: Navigate | \x1b[1;37mSpace\x1b[0m: Quicklook | \x1b[1;37ms\x1b[0m: Select | \x1b[1;37ma\x1b[0m: All | \x1b[1;37mc\x1b[0m: Clear")
-			fmt.Println("\x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37mi\x1b[0m: Metadata | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search")
+			fmt.Print("\r\x1b[1;37mUp/Down\x1b[0m: Navigate | \x1b[1;37mSpace\x1b[0m: Quicklook | \x1b[1;37ms\x1b[0m: Select | \x1b[1;37ma\x1b[0m: All | \x1b[1;37mc\x1b[0m: Clear\r\n")
+			fmt.Print("\r\x1b[1;37mEnter/v\x1b[0m: View | \x1b[1;37mi\x1b[0m: Metadata | \x1b[1;37me\x1b[0m: Edit | \x1b[1;37md\x1b[0m: Delete | \x1b[1;37mEsc/Tab\x1b[0m: Focus Search\r\n")
 		}
 
 		b := make([]byte, 3)
@@ -5351,19 +5333,12 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 					fmt.Print("\033[H\033[J")
 					fmt.Printf("Are you sure you want to delete %d selected items? (y/n): ", len(selectedItems))
 					if strings.ToLower(readInput()) == "y" {
-						noteChanged := false
-						for key, res := range selectedItems {
+				for key, res := range selectedItems {
 							if deleteEntryByResult(v, res) {
-								if res.Type == "Note" {
-									noteChanged = true
-								}
 								delete(selectedItems, key)
 							}
 						}
-						if noteChanged {
-							reindexNoteVocabularyIfEnabled(v)
-						}
-						data, _ := src.EncryptVault(v, masterPassword)
+							data, _ := src.EncryptVault(v, masterPassword)
 						src.SaveVault(vaultPath, data)
 						color.Green("Bulk deletion complete.")
 						fmt.Print("\nPress Enter to continue...")
@@ -5408,6 +5383,10 @@ func handleInteractiveEntries(v *src.Vault, masterPassword, initialQuery string,
 			focusMode = 0
 		}
 	}
+
+	// Clear the screen on exit so the shell prompt doesn't
+	// appear in the middle of the UI area.
+	fmt.Print("\033[H\033[J")
 }
 
 func performSearch(v *src.Vault, query string) []src.SearchResult {
@@ -5581,7 +5560,7 @@ func runInteractiveTOTP(v *src.Vault, masterPassword string) {
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-	fmt.Println("\x1b[?25l")
+	fmt.Print("\x1b[?25l\r\n")
 	defer fmt.Print("\x1b[?25h")
 
 	inputCh := make(chan []byte, 16)
@@ -5608,7 +5587,7 @@ func runInteractiveTOTP(v *src.Vault, masterPassword string) {
 		entries = orderedTOTPEntries(v)
 		if len(entries) == 0 {
 			fmt.Print("\033[H\033[J")
-			fmt.Println("No TOTP entries left in the current space.")
+			fmt.Print("\rNo TOTP entries left in the current space.\r\n")
 			return
 		}
 		if selected < 0 {
@@ -5619,13 +5598,13 @@ func runInteractiveTOTP(v *src.Vault, masterPassword string) {
 		}
 
 		fmt.Print("\033[H\033[J")
-		fmt.Printf("APM TOTP | Space: %s | Refresh: %ds\n", currentSpaceDisplay(v), src.TimeRemaining())
-		fmt.Println("Enter: copy selected | 1-9: copy by number | Shift+Up/Down: reorder | Up/Down: move | q/Esc: exit")
+		fmt.Printf("\rAPM TOTP | Space: %s | Refresh: %ds\r\n", currentSpaceDisplay(v), src.TimeRemaining())
+		fmt.Print("\rEnter: copy selected | 1-9: copy by number | Shift+Up/Down: reorder | Up/Down: move | q/Esc: exit\r\n")
 		if status != "" {
-			fmt.Printf("%s\n", status)
+			fmt.Printf("\r%s\r\n", status)
 			status = ""
 		}
-		fmt.Println("--------------------------------------------------------------")
+		fmt.Print("\r--------------------------------------------------------------\r\n")
 		for i, entry := range entries {
 			code, err := src.GenerateTOTP(entry.Secret)
 			if err != nil {
@@ -5635,7 +5614,7 @@ func runInteractiveTOTP(v *src.Vault, masterPassword string) {
 			if i == selected {
 				marker = ">"
 			}
-			fmt.Printf("%s [%d] %-26s %s\n", marker, i+1, entry.Account, code)
+			fmt.Printf("\r%s [%d] %-26s %s\r\n", marker, i+1, entry.Account, code)
 		}
 
 		select {
@@ -5782,12 +5761,8 @@ func handleAction(v *src.Vault, mp string, res src.SearchResult, action byte, re
 			color.Red("Vault is READ-ONLY.")
 		} else {
 			fmt.Printf("Are you sure you want to delete '%s' (%s)? (y/n): ", res.Identifier, res.Type)
-			if strings.ToLower(readInput()) == "y" {
-				if deleteEntryByResult(v, res) {
-					if res.Type == "Note" {
-						reindexNoteVocabularyIfEnabled(v)
-					}
-					data, _ := src.EncryptVault(v, mp)
+			if strings.ToLower(readInput()) == "y" {					if deleteEntryByResult(v, res) {
+						data, _ := src.EncryptVault(v, mp)
 					if err := src.SaveVault(vaultPath, data); err != nil {
 						color.Red("Error saving vault: %v", err)
 					} else {
@@ -6406,13 +6381,9 @@ func editEntryInVault(v *src.Vault, mp string, res src.SearchResult) {
 	default:
 		color.Yellow("Editing for %s not implemented.", res.Type)
 	}
-
-	if updated {
-		if res.Type == "Note" {
-			reindexNoteVocabularyIfEnabled(v)
-		}
-		data, _ := src.EncryptVault(v, mp)
-		if err := src.SaveVault(vaultPath, data); err != nil {
+		if updated {
+			data, _ := src.EncryptVault(v, mp)
+			if err := src.SaveVault(vaultPath, data); err != nil {
 			color.Red("Error saving vault: %v", err)
 		} else {
 			src.SendAlert(v, src.LevelAll, "ENTRY MODIFIED", fmt.Sprintf("Modified entry: %s (%s)", res.Identifier, res.Type))
@@ -7214,6 +7185,84 @@ var authCodesStatusCmd = &cobra.Command{
 	},
 }
 
+var authTouchIDCmd = &cobra.Command{
+	Use:   "touchid",
+	Short: "Manage Touch ID / biometric unlock (macOS only)",
+}
+
+var authTouchIDSetupCmd = &cobra.Command{
+	Use:   "setup",
+	Short: "Store your vault password in the Keychain protected by Touch ID",
+	Long: `Prompts for your master password once, then stores it in the
+macOS login keychain. Future unlocks can use Touch ID instead.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		pass, _, readonly, err := src_unlockVault()
+		if err != nil {
+			color.Red("Error: %v\n", err)
+			return
+		}
+		if readonly {
+			color.Red("Vault is READ-ONLY. Cannot set up Touch ID.")
+			return
+		}
+
+		if !touchid.IsAvailable() {
+			color.Red("Touch ID is not available on this Mac.\n")
+			return
+		}
+
+		if err := touchid.Setup(pass); err != nil {
+			color.Red("Failed to set up Touch ID: %v\n", err)
+			return
+		}
+
+		color.Green("Touch ID configured successfully. You can now use 'pm unlock' with Touch ID.\n")
+	},
+}
+
+var authTouchIDStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show Touch ID configuration status",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(touchid.StatusText())
+	},
+}
+
+var authTouchIDRemoveCmd = &cobra.Command{
+	Use:   "remove",
+	Short: "Remove Touch ID configuration from the Keychain",
+	Run: func(cmd *cobra.Command, args []string) {
+		if !touchid.IsConfigured() {
+			color.Yellow("Touch ID is not configured. Nothing to remove.\n")
+			return
+		}
+
+		if err := touchid.Remove(); err != nil {
+			color.Red("Failed to remove Touch ID: %v\n", err)
+			return
+		}
+		color.Green("Touch ID configuration removed.\n")
+	},
+}
+
+var authTouchIDTestCmd = &cobra.Command{
+	Use:   "test",
+	Short: "Test Touch ID authentication",
+	Run: func(cmd *cobra.Command, args []string) {
+		if !touchid.IsAvailable() {
+			color.Red("Touch ID is not available on this Mac.\n")
+			return
+		}
+
+		fmt.Println("Touch ID is available. Attempting authentication...")
+		if err := touchid.Authenticate("Test Touch ID for APM"); err != nil {
+			color.Red("Touch ID failed: %v\n", err)
+			return
+		}
+		color.Green("Touch ID authentication successful!\n")
+	},
+}
+
 var authRecoverCmd = &cobra.Command{
 	Use:   "recover",
 	Short: "Recover vault access using recovery key",
@@ -7697,35 +7746,6 @@ var authChangeCmd = &cobra.Command{
 	},
 }
 
-func setNotesAutocompleteEnabled(enabled bool) {
-	pass, vault, readonly, err := src_unlockVault()
-	if err != nil {
-		color.Red("Error: %v\n", err)
-		return
-	}
-	if readonly {
-		color.Red("Vault is READ-ONLY. Cannot change autocomplete settings.")
-		return
-	}
-
-	vault.AutocompleteEnabled = enabled
-	if enabled {
-		if err := vault.ReindexNoteVocabulary(loadIgnoreConfigOrEmpty()); err != nil {
-			color.Yellow("Autocomplete enabled, but indexing failed: %v", err)
-		}
-	}
-
-	if err := saveVaultState(vault, pass); err != nil {
-		color.Red("Error saving vault: %v", err)
-		return
-	}
-	if enabled {
-		color.Green("Autocomplete enabled and vocabulary indexed.")
-	} else {
-		color.Yellow("Autocomplete disabled.")
-	}
-}
-
 func setAutocompletePopupDisabled(disabled bool) {
 	pass, vault, readonly, err := src_unlockVault()
 	if err != nil {
@@ -7831,271 +7851,6 @@ func buildAutocompleteFillCommand() *cobra.Command {
 			color.Green("Autocomplete fill completed.")
 		},
 	}
-}
-
-var vocabCmd = &cobra.Command{
-	Use:   "vocab",
-	Short: "Manage personal note vocabulary and aliases",
-	Run: func(cmd *cobra.Command, args []string) {
-		_, vault, _, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-
-		words, err := vault.ListVocabWords()
-		if err != nil {
-			color.Red("Failed to load vocab: %v", err)
-			return
-		}
-		aliases, _ := vault.ListVocabAliases()
-		ignoreCfg := loadIgnoreConfigOrEmpty()
-
-		type row struct {
-			Word  string
-			Stats src.VocabWord
-		}
-		rows := make([]row, 0, len(words))
-		for word, stats := range words {
-			if ignoreCfg.ShouldIgnoreVocabWord(word) {
-				continue
-			}
-			rows = append(rows, row{Word: word, Stats: stats})
-		}
-		sort.Slice(rows, func(i, j int) bool {
-			if rows[i].Stats.Score == rows[j].Stats.Score {
-				return rows[i].Word < rows[j].Word
-			}
-			return rows[i].Stats.Score > rows[j].Stats.Score
-		})
-
-		if len(rows) == 0 {
-			fmt.Println("Vocabulary is empty.")
-		} else {
-			fmt.Printf("%-24s %-8s %-8s %-8s %-8s\n", "WORD", "SCORE", "SEEN", "ACCEPT", "DISMISS")
-			fmt.Println(strings.Repeat("-", 62))
-			for _, r := range rows {
-				fmt.Printf("%-24s %-8d %-8d %-8d %-8d\n", r.Word, r.Stats.Score, r.Stats.Seen, r.Stats.Accepted, r.Stats.Dismissed)
-			}
-		}
-
-		if len(aliases) > 0 {
-			fmt.Println("\nAliases:")
-			keys := make([]string, 0, len(aliases))
-			for alias := range aliases {
-				keys = append(keys, alias)
-			}
-			sort.Strings(keys)
-			for _, alias := range keys {
-				fmt.Printf("  %s -> %s\n", alias, aliases[alias])
-			}
-		}
-	},
-}
-
-var vocabEnableCmd = &cobra.Command{
-	Use:   "enable",
-	Short: "Enable note autocomplete indexing",
-	Run: func(cmd *cobra.Command, args []string) {
-		setNotesAutocompleteEnabled(true)
-	},
-}
-
-var vocabDisableCmd = &cobra.Command{
-	Use:   "disable",
-	Short: "Disable note autocomplete indexing",
-	Run: func(cmd *cobra.Command, args []string) {
-		setNotesAutocompleteEnabled(false)
-	},
-}
-
-var vocabStatusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "Show note autocomplete status",
-	Run: func(cmd *cobra.Command, args []string) {
-		_, vault, _, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v", err)
-			return
-		}
-		if vault.AutocompleteEnabled {
-			color.Green("Autocomplete: enabled")
-		} else {
-			color.Yellow("Autocomplete: disabled")
-		}
-	},
-}
-
-var vocabAliasCmd = &cobra.Command{
-	Use:   "alias",
-	Short: "Create or update a note alias",
-	Run: func(cmd *cobra.Command, args []string) {
-		pass, vault, readonly, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		if readonly {
-			color.Red("Vault is READ-ONLY. Cannot edit aliases.")
-			return
-		}
-
-		fmt.Print("Alias trigger (typed word): ")
-		alias := readInput()
-		fmt.Print("Alias replacement value: ")
-		value := readInput()
-
-		if strings.TrimSpace(alias) == "" || strings.TrimSpace(value) == "" {
-			color.Red("Alias and value are required.")
-			return
-		}
-		if err := vault.UpsertVocabAlias(alias, value); err != nil {
-			color.Red("Failed to save alias: %v", err)
-			return
-		}
-		if err := saveVaultState(vault, pass); err != nil {
-			color.Red("Error saving vault: %v", err)
-			return
-		}
-		color.Green("Alias saved: %s -> %s", strings.ToLower(strings.TrimSpace(alias)), value)
-	},
-}
-
-var vocabAliasListCmd = &cobra.Command{
-	Use:   "alias-list",
-	Short: "List all vocab aliases",
-	Run: func(cmd *cobra.Command, args []string) {
-		_, vault, _, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		aliases, err := vault.ListVocabAliases()
-		if err != nil {
-			color.Red("Failed to load aliases: %v", err)
-			return
-		}
-		if len(aliases) == 0 {
-			fmt.Println("No aliases found.")
-			return
-		}
-		keys := make([]string, 0, len(aliases))
-		for alias := range aliases {
-			keys = append(keys, alias)
-		}
-		sort.Strings(keys)
-		for _, alias := range keys {
-			fmt.Printf("%s -> %s\n", alias, aliases[alias])
-		}
-	},
-}
-
-var vocabAliasRemoveCmd = &cobra.Command{
-	Use:   "alias-remove [alias]",
-	Short: "Remove an alias",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		pass, vault, readonly, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		if readonly {
-			color.Red("Vault is READ-ONLY. Cannot remove aliases.")
-			return
-		}
-		if err := vault.DeleteVocabAlias(args[0]); err != nil {
-			color.Red("Failed to remove alias: %v", err)
-			return
-		}
-		if err := saveVaultState(vault, pass); err != nil {
-			color.Red("Error saving vault: %v", err)
-			return
-		}
-		color.Green("Alias removed.")
-	},
-}
-
-var vocabRankCmd = &cobra.Command{
-	Use:   "rank [word] [delta]",
-	Short: "Adjust ranking score for a vocab word",
-	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		pass, vault, readonly, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		if readonly {
-			color.Red("Vault is READ-ONLY. Cannot rank vocab.")
-			return
-		}
-		delta, err := strconv.Atoi(strings.TrimSpace(args[1]))
-		if err != nil {
-			color.Red("Delta must be an integer.")
-			return
-		}
-		if err := vault.AdjustVocabWordScore(args[0], delta); err != nil {
-			color.Red("Failed to adjust rank: %v", err)
-			return
-		}
-		if err := saveVaultState(vault, pass); err != nil {
-			color.Red("Error saving vault: %v", err)
-			return
-		}
-		color.Green("Updated rank for %s by %+d.", strings.ToLower(strings.TrimSpace(args[0])), delta)
-	},
-}
-
-var vocabRemoveCmd = &cobra.Command{
-	Use:   "remove [word]",
-	Short: "Remove a word from vocabulary",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		pass, vault, readonly, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		if readonly {
-			color.Red("Vault is READ-ONLY. Cannot remove vocab words.")
-			return
-		}
-		if err := vault.DeleteVocabWord(args[0]); err != nil {
-			color.Red("Failed to remove word: %v", err)
-			return
-		}
-		if err := saveVaultState(vault, pass); err != nil {
-			color.Red("Error saving vault: %v", err)
-			return
-		}
-		color.Green("Removed word %s.", strings.ToLower(strings.TrimSpace(args[0])))
-	},
-}
-
-var vocabReindexCmd = &cobra.Command{
-	Use:   "reindex",
-	Short: "Rebuild vocabulary from secure notes",
-	Run: func(cmd *cobra.Command, args []string) {
-		pass, vault, readonly, err := src_unlockVault()
-		if err != nil {
-			color.Red("Error: %v\n", err)
-			return
-		}
-		if readonly {
-			color.Red("Vault is READ-ONLY. Cannot reindex vocabulary.")
-			return
-		}
-		if err := vault.ReindexNoteVocabulary(loadIgnoreConfigOrEmpty()); err != nil {
-			color.Red("Reindex failed: %v", err)
-			return
-		}
-		if err := saveVaultState(vault, pass); err != nil {
-			color.Red("Error saving vault: %v", err)
-			return
-		}
-		color.Green("Vocabulary reindexed.")
-	},
 }
 
 var authQuorumSetupCmd = &cobra.Command{
