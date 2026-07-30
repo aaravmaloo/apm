@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
@@ -85,10 +86,11 @@ func newAEAD(key []byte, profile CryptoProfile) (cipher.AEAD, error) {
 }
 
 type Entry struct {
-	Account  string `json:"account"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Space    string `json:"space,omitempty"`
+	Account  string   `json:"account"`
+	Username string   `json:"username"`
+	Password string   `json:"password"`
+	URLs     []string `json:"urls,omitempty"`
+	Space    string   `json:"space,omitempty"`
 }
 
 type TOTPEntry struct {
@@ -373,6 +375,7 @@ type Vault struct {
 	NeedsRepair               bool                       `json:"-"`
 
 	CurrentProfileParams   *CryptoProfile             `json:"-"`
+	AuthKey                []byte                     `json:"-"` // derived auth key for HMAC signing (never serialized)
 	RecoveryEmail          string                     `json:"recovery_email,omitempty"`
 	RecoveryHash           []byte                     `json:"recovery_hash,omitempty"`
 	DEK                    []byte                     `json:"dek,omitempty"`
@@ -521,7 +524,11 @@ func EncryptVault(vault *Vault, masterPassword string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	mNonce := make([]byte, masterSlotAEAD.NonceSize())
+	// Derive master slot nonce from salt -- each vault save generates a new
+	// salt, so this nonce is unique per save without requiring storage space
+	// or breaking backward compatibility.
+	saltHash := sha256.Sum256(salt)
+	mNonce := saltHash[:masterSlotAEAD.NonceSize()]
 	masterSlot := masterSlotAEAD.Seal(nil, mNonce, vault.DEK, nil)
 	payload = append(payload, masterSlot...)
 
@@ -659,7 +666,11 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		masterSlotLen := 32 + slotAEAD.Overhead()
 		if offset+masterSlotLen <= len(data)-32 {
 			masterSlot := data[offset : offset+masterSlotLen]
-			mNonce := make([]byte, slotAEAD.NonceSize())
+			// Derive nonce from salt (same derivation as EncryptVault) so we
+			// don't need to store it separately. Backward compatible with
+			// vaults that used a zero nonce pre-fix.
+			saltHash := sha256.Sum256(salt)
+			mNonce := saltHash[:slotAEAD.NonceSize()]
 			dek, err = slotAEAD.Open(nil, mNonce, masterSlot, nil)
 			if err == nil {
 				offset += masterSlotLen
@@ -675,8 +686,15 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 					if i+masterSlotLen > len(data)-32 {
 						break
 					}
-					trialSlot := data[i : i+masterSlotLen]
-					dek, err = slotAEAD.Open(nil, mNonce, trialSlot, nil)
+					// Try with salt-derived nonce first (new format), fall back to
+				// zero nonce for vaults created before the nonce fix.
+				trialSlot := data[i : i+masterSlotLen]
+				dek, err = slotAEAD.Open(nil, mNonce, trialSlot, nil)
+				if err != nil {
+					// Legacy: vault created with zero master-slot nonce
+					legacyNonce := make([]byte, slotAEAD.NonceSize())
+					dek, err = slotAEAD.Open(nil, legacyNonce, trialSlot, nil)
+				}
 					if err == nil {
 						offset = i + masterSlotLen
 						found = true
@@ -750,6 +768,8 @@ func decryptNewVault(data []byte, masterPassword string, costMultiplier int) (*V
 		vault.NeedsRepair = true
 	}
 	vault.CurrentProfileParams = &profile
+	vault.AuthKey = make([]byte, len(keys.AuthKey))
+	copy(vault.AuthKey, keys.AuthKey)
 	if version == 4 {
 		rec, _ := GetVaultRecoveryInfo(data)
 		vault.AlertsEnabled = rec.AlertsEnabled
@@ -854,6 +874,7 @@ func DecryptVaultWithDEK(data []byte, dek []byte) (*Vault, error) {
 		vault.AlertsEnabled = rec.AlertsEnabled
 		vault.SecurityLevel = rec.SecurityLevel
 	}
+	vault.CurrentProfileParams = &profile
 	return &vault, nil
 }
 
@@ -983,26 +1004,40 @@ func GenerateRecoveryKey() string {
 }
 
 func DeriveRecoveryKey(key string, salt []byte) []byte {
-
-	hash := sha256.New()
-	hash.Write([]byte(key))
-	hash.Write(salt)
-	return hash.Sum(nil)
+	// Use Argon2id with moderate parameters for recovery key derivation.
+	// This replaces the previous single SHA-256 to provide brute-force
+	// resistance for the user-written recovery key.
+	return argon2.IDKey([]byte(key), salt, 2, 64*1024, 2, 32)
 }
 
-func (v *Vault) SetRecoveryKey(key string, salt []byte) {
+func (v *Vault) SetRecoveryKey(key string, salt []byte) error {
 	v.RawRecoveryKey = key
 	v.RecoverySalt = salt
 	rk := DeriveRecoveryKey(key, salt)
 
-	h := sha256.Sum256(rk)
-	v.RecoveryHash = h[:]
+	// Use HMAC-SHA256 with vault salt for recovery key hash (prevents
+	// length-extension and rainbow-table attacks vs raw SHA-256).
+	mac := hmac.New(sha256.New, salt)
+	mac.Write(rk)
+	v.RecoveryHash = mac.Sum(nil)
 
-	block, _ := aes.NewCipher(rk)
-	gcm, _ := cipher.NewGCM(block)
+	block, err := aes.NewCipher(rk)
+	if err != nil {
+		return fmt.Errorf("failed to create AES cipher for recovery slot: %v", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return fmt.Errorf("failed to create GCM for recovery slot: %v", err)
+	}
 	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return fmt.Errorf("failed to generate nonce for recovery slot: %v", err)
+	}
 
-	v.RecoverySlot = gcm.Seal(nil, nonce, v.DEK, nil)
+	// Prepend the nonce to the ciphertext so CheckRecoveryKey can extract it.
+	ciphertext := gcm.Seal(nil, nonce, v.DEK, nil)
+	v.RecoverySlot = append(nonce, ciphertext...)
+	return nil
 }
 
 func XORRecoveryKey(key string) []byte {
@@ -1023,6 +1058,35 @@ func DeObfuscateRecoveryKey(obf []byte) string {
 		res[i] = obf[i] ^ xorKey[i%len(xorKey)]
 	}
 	return string(res)
+}
+
+func tryDeriveRecoveryKey(KDF func(string, []byte) []byte, candidate string, salt []byte, targetHash []byte) ([]byte, bool) {
+	rk := KDF(candidate, salt)
+	// Use HMAC-SHA256 with salt for key validation (same derivation as
+	// SetRecoveryKey). Fall back to raw SHA-256 for legacy vaults.
+	mac := hmac.New(sha256.New, salt)
+	mac.Write(rk)
+	newHash := mac.Sum(nil)
+	if hmac.Equal(newHash, targetHash) {
+		return rk, true
+	}
+	// Legacy: raw SHA-256 hash (vaults created before the HMAC fix)
+	legacyHash := sha256.Sum256(rk)
+	if hmac.Equal(legacyHash[:], targetHash) {
+		return rk, true
+	}
+	return nil, false
+}
+
+func deriveRecoveryKeyArgon2(key string, salt []byte) []byte {
+	return argon2.IDKey([]byte(key), salt, 2, 64*1024, 2, 32)
+}
+
+func deriveRecoveryKeyLegacy(key string, salt []byte) []byte {
+	hash := sha256.New()
+	hash.Write([]byte(key))
+	hash.Write(salt)
+	return hash.Sum(nil)
 }
 
 func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
@@ -1067,21 +1131,28 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 	found := false
 	var rk []byte
 
-	for _, candidate := range candidates {
+	// KDFs to try, in order of preference (Argon2id first, then legacy SHA-256)
+	kdfs := []struct {
+		name string
+		fn   func(string, []byte) []byte
+	}{
+		{"argon2id", deriveRecoveryKeyArgon2},
+		{"legacy-sha256", deriveRecoveryKeyLegacy},
+	}
 
-		if len(rec.Salt) > 0 {
-			trialRk := DeriveRecoveryKey(candidate, rec.Salt)
-			h := sha256.Sum256(trialRk)
-			if hmac.Equal(h[:], rec.KeyHash) {
-				rk = trialRk
-				found = true
+	for _, candidate := range candidates {
+		for _, kdf := range kdfs {
+			if len(rec.Salt) > 0 {
+				if rk, found = tryDeriveRecoveryKey(kdf.fn, candidate, rec.Salt, rec.KeyHash); found {
+					break
+				}
 			}
 		}
-
 		if found {
 			break
 		}
 
+		// Salt search fallback for shifted vault layouts
 		searchStart := offset - 128
 		if searchStart < 0 {
 			searchStart = 0
@@ -1092,12 +1163,12 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 				break
 			}
 			trialSalt := data[i : i+profile.SaltLen]
-			trialRk := DeriveRecoveryKey(candidate, trialSalt)
-			h := sha256.Sum256(trialRk)
-
-			if hmac.Equal(h[:], rec.KeyHash) {
-				rk = trialRk
-				found = true
+			for _, kdf := range kdfs {
+				if rk, found = tryDeriveRecoveryKey(kdf.fn, candidate, trialSalt, rec.KeyHash); found {
+					break
+				}
+			}
+			if found {
 				break
 			}
 		}
@@ -1118,8 +1189,18 @@ func CheckRecoveryKey(data []byte, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	nonce := make([]byte, gcm.NonceSize())
-	dek, err := gcm.Open(nil, nonce, rec.DEKSlot, nil)
+
+	var dek []byte
+	// Try new format first (nonce prefix), fall back to legacy (zero nonce)
+	if len(rec.DEKSlot) >= gcm.NonceSize()+48 {
+		nonce := rec.DEKSlot[:gcm.NonceSize()]
+		encryptedSlot := rec.DEKSlot[gcm.NonceSize():]
+		dek, err = gcm.Open(nil, nonce, encryptedSlot, nil)
+	} else {
+		// Legacy: zero nonce, full DEKSlot is ciphertext+tag
+		nonce := make([]byte, gcm.NonceSize())
+		dek, err = gcm.Open(nil, nonce, rec.DEKSlot, nil)
+	}
 	if err != nil {
 		return nil, errors.New("failed to decrypt recovery slot")
 	}
@@ -1160,6 +1241,7 @@ func EncryptData(plaintext []byte, password string) ([]byte, error) {
 	p := ProfileStandard
 	keys := DeriveKeys(password, salt, p.Time, p.Memory, p.Parallelism)
 	defer Wipe(keys.EncryptionKey)
+	defer Wipe(keys.AuthKey)
 
 	block, err := aes.NewCipher(keys.EncryptionKey)
 	if err != nil {
@@ -1174,33 +1256,16 @@ func EncryptData(plaintext []byte, password string) ([]byte, error) {
 		return nil, err
 	}
 	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
-	return append(salt, ciphertext...), nil
+
+	// Append Encrypt-then-MAC for integrity (defense-in-depth beyond GCM's
+	// built-in authentication tag). Use AuthKey from the same KDF derivation.
+	hmacPayload := append(salt, ciphertext...)
+	signature := CalculateHMAC(hmacPayload, keys.AuthKey)
+	return append(hmacPayload, signature...), nil
 }
 
-func DecryptData(data []byte, password string) ([]byte, error) {
-	if len(data) < 16+12 {
-		return nil, errors.New("data too short")
-	}
-	salt := data[:16]
-	ciphertext := data[16:]
-
-	keys := DeriveKeys(password, salt, ProfileStandard.Time, ProfileStandard.Memory, ProfileStandard.Parallelism)
-	block, err := aes.NewCipher(keys.EncryptionKey)
-	if err == nil {
-		gcm, err := cipher.NewGCM(block)
-		if err == nil {
-			nonceSize := gcm.NonceSize()
-			if len(ciphertext) >= nonceSize {
-				nonce, ct := ciphertext[:nonceSize], ciphertext[nonceSize:]
-				plaintext, err := gcm.Open(nil, nonce, ct, nil)
-				if err == nil {
-					return plaintext, nil
-				}
-			}
-		}
-	}
-	legacyKey := DeriveLegacyKey(password, salt)
-	block, err = aes.NewCipher(legacyKey)
+func tryDecryptAESGCM(ciphertext, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -1209,8 +1274,58 @@ func DecryptData(data []byte, password string) ([]byte, error) {
 		return nil, err
 	}
 	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
 	nonce, ct := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	return gcm.Open(nil, nonce, ct, nil)
+}
+
+func DecryptData(data []byte, password string) ([]byte, error) {
+	if len(data) < 16+12 {
+		return nil, errors.New("data too short")
+	}
+
+	// Try HMAC-verified format first (new). Last 32 bytes are HMAC-SHA256,
+	// everything before is salt+ciphertext.
+	if len(data) >= 16+12+32 {
+		hmacData := data[:len(data)-32]
+		storedSig := data[len(data)-32:]
+		salt := hmacData[:16]
+		ciphertext := hmacData[16:]
+
+		keys := DeriveKeys(password, salt, ProfileStandard.Time, ProfileStandard.Memory, ProfileStandard.Parallelism)
+		if VerifyHMAC(hmacData, storedSig, keys.AuthKey) {
+			plaintext, err := tryDecryptAESGCM(ciphertext, keys.EncryptionKey)
+			Wipe(keys.EncryptionKey)
+			Wipe(keys.AuthKey)
+			if err == nil {
+				return plaintext, nil
+			}
+		}
+		Wipe(keys.EncryptionKey)
+		Wipe(keys.AuthKey)
+	}
+
+	// Fall back to legacy format (no HMAC). Try standard Argon2id first,
+	// then legacy key derivation.
+	salt := data[:16]
+	ciphertext := data[16:]
+
+	keys := DeriveKeys(password, salt, ProfileStandard.Time, ProfileStandard.Memory, ProfileStandard.Parallelism)
+	plaintext, err := tryDecryptAESGCM(ciphertext, keys.EncryptionKey)
+	Wipe(keys.EncryptionKey)
+	if err == nil {
+		return plaintext, nil
+	}
+
+	legacyKey := DeriveLegacyKey(password, salt)
+	plaintext, err = tryDecryptAESGCM(ciphertext, legacyKey)
+	if err == nil {
+		return plaintext, nil
+	}
+
+	return nil, errors.New("decryption failed: incorrect password or corrupted data")
 }
 
 func (v *Vault) logHistory(action, category, identifier string) {
@@ -1231,7 +1346,14 @@ func (v *Vault) logHistory(action, category, identifier string) {
 	hash := sha256.Sum256([]byte(data))
 	entry.Hash = hex.EncodeToString(hash[:])
 
-	mac := hmac.New(sha256.New, v.Salt)
+	// Use the derived AuthKey for HMAC signing (not the public salt) to prevent
+	// forgery by anyone who can read the vault file. Fall back to v.Salt for
+	// legacy vaults where AuthKey is not available.
+	signingKey := v.AuthKey
+	if len(signingKey) == 0 {
+		signingKey = v.Salt
+	}
+	mac := hmac.New(sha256.New, signingKey)
 	mac.Write([]byte(entry.Hash))
 	entry.Signature = hex.EncodeToString(mac.Sum(nil))
 
@@ -1247,7 +1369,7 @@ func (v *Vault) logHistory(action, category, identifier string) {
 	}
 }
 
-func VerifyHistoryEntrySignature(salt []byte, entry HistoryEntry) bool {
+func VerifyHistoryEntrySignature(authKey, salt []byte, entry HistoryEntry) bool {
 	if entry.Hash == "" || entry.Signature == "" {
 		return false
 	}
@@ -1264,17 +1386,28 @@ func VerifyHistoryEntrySignature(salt []byte, entry HistoryEntry) bool {
 		return false
 	}
 
-	mac := hmac.New(sha256.New, salt)
-	mac.Write([]byte(entry.Hash))
-	expectedSig := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(expectedSig), []byte(entry.Signature))
+	// Try verifying with AuthKey first (new), fall back to Salt (legacy).
+	// This maintains backward compatibility with vaults signed using the old
+	// salt-based HMAC while using the stronger derived key for new entries.
+	for _, key := range [][]byte{authKey, salt} {
+		if len(key) == 0 {
+			continue
+		}
+		mac := hmac.New(sha256.New, key)
+		mac.Write([]byte(entry.Hash))
+		expectedSig := hex.EncodeToString(mac.Sum(nil))
+		if hmac.Equal([]byte(expectedSig), []byte(entry.Signature)) {
+			return true
+		}
+	}
+	return false
 }
 
 func VerifyHistoryChain(v *Vault) []bool {
 	out := make([]bool, len(v.History))
 	expectedPrev := ""
 	for i, h := range v.History {
-		ok := VerifyHistoryEntrySignature(v.Salt, h)
+		ok := VerifyHistoryEntrySignature(v.AuthKey, v.Salt, h)
 		if h.PrevHash != "" && h.PrevHash != expectedPrev {
 			ok = false
 		}

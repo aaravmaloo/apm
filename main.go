@@ -28,8 +28,7 @@ import (
 
 	injectcmd "github.com/aaravmaloo/apm/cmd"
 	src "github.com/aaravmaloo/apm/src"
-	"github.com/aaravmaloo/apm/src/autofill"
-	"github.com/aaravmaloo/apm/src/autofillcmd"
+
 	"github.com/aaravmaloo/apm/src/plugins"
 	"github.com/aaravmaloo/apm/src/touchid"
 
@@ -894,9 +893,6 @@ func main() {
 			}
 			src.LogAction("VAULT_UNLOCKED", "Session updated")
 			color.Green("Vault session updated. Expires in %v or after %v of inactivity.\n", timeout, inactivity)
-			if err := autofillcmd.UnlockDaemonWithPassword(vaultPath, masterPassword, timeout, inactivity, "CTRL+SHIFT+L"); err != nil {
-				color.Yellow("Autofill daemon unlock skipped: %v", err)
-			}
 		},
 	}
 	unlockCmd.Flags().Duration("timeout", 1*time.Hour, "Session duration (e.g. 1h, 30m)")
@@ -942,10 +938,7 @@ func main() {
 				src.LogAction("VAULT_LOCKED", "Session terminated")
 				color.Green("Vault locked.\n")
 			}
-			if err := autofillcmd.LockDaemonIfRunning(); err != nil {
-				color.Yellow("Autofill daemon lock failed: %v", err)
-			}
-		},
+			},
 	}
 
 	var sessionCmd = &cobra.Command{
@@ -3872,211 +3865,11 @@ func main() {
 	cleanupCmd.Flags().Bool("dry-run", false, "Scan only, don't make any changes")
 
 	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, logsCmd, lgitCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, pluginsCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, loadedCmd, cleanupCmd, injectcmd.BuildInjectCmd(src_unlockVault))
-	autofillCmd, _ := autofillcmd.NewAutofillAndVaultCommands(autofillcmd.Options{
-		VaultPath:    &vaultPath,
-		ReadPassword: readPassword,
-	})
-	autocompleteCmd := &cobra.Command{
-		Use:   "autocomplete",
-		Short: "Manage autocomplete daemon and hints",
-	}
-	var autocompleteHotkey string
-	var autocompleteMailHotkey string
-	autocompleteEnableCmd := &cobra.Command{
-		Use:   "enable",
-		Short: "Enable autocomplete daemon autostart and start now",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.EnableAutofillAutostart(vaultPath, autocompleteHotkey, autocompleteMailHotkey); err != nil {
-				color.Red("Failed to enable autostart: %v", err)
-				return
-			}
-			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey, autocompleteMailHotkey); err != nil {
-				color.Red("Failed to start autocomplete daemon: %v", err)
-				return
-			}
-			color.Green("Autocomplete daemon autostart enabled and started.")
-		},
-	}
-	autocompleteEnableCmd.Flags().StringVar(&autocompleteHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
-	autocompleteEnableCmd.Flags().StringVar(&autocompleteMailHotkey, "mail-hotkey", "CTRL+SHIFT+P", "Global hotkey for Gmail mail OTP fill")
-	autocompleteDisableCmd := &cobra.Command{
-		Use:   "disable",
-		Short: "Disable autocomplete daemon autostart and stop daemon",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.DisableAutofillAutostart(); err != nil {
-				color.Red("Failed to disable autostart: %v", err)
-				return
-			}
-			if err := autofillcmd.StopAutofillDaemon(); err != nil {
-				color.Yellow("Autofill daemon stop failed: %v", err)
-			}
-			color.Yellow("Autocomplete daemon autostart disabled.")
-		},
-	}
-	autocompleteStartCmd := &cobra.Command{
-		Use:   "start",
-		Short: "Start the autocomplete daemon",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, autocompleteHotkey, autocompleteMailHotkey); err != nil {
-				color.Red("Failed to start autocomplete daemon: %v", err)
-				return
-			}
-			color.Green("Autocomplete daemon started.")
-		},
-	}
-	autocompleteStartCmd.Flags().StringVar(&autocompleteHotkey, "hotkey", "CTRL+SHIFT+L", "Global hotkey for system autofill")
-	autocompleteStartCmd.Flags().StringVar(&autocompleteMailHotkey, "mail-hotkey", "CTRL+SHIFT+P", "Global hotkey for Gmail mail OTP fill")
-	autocompleteStopCmd := &cobra.Command{
-		Use:   "stop",
-		Short: "Stop the autocomplete daemon",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.StopAutofillDaemon(); err != nil {
-				color.Yellow("Autocomplete daemon stop failed: %v", err)
-				return
-			}
-			color.Green("Autocomplete daemon stopped.")
-		},
-	}
-	autocompleteStatusCmd := &cobra.Command{
-		Use:   "status",
-		Short: "Show autocomplete daemon status",
-		Run: func(cmd *cobra.Command, args []string) {
-			enabled, err := autofillcmd.AutofillAutostartEnabled()
-			if err != nil {
-				color.Red("Autostart: error (%v)", err)
-			} else if enabled {
-				color.Green("Autostart: enabled")
-			} else {
-				color.Yellow("Autostart: disabled")
-			}
-
-			status, err := autofill.TryStatus(context.Background())
-			if err != nil || status == nil {
-				fmt.Println("Daemon: stopped")
-				return
-			}
-			state := "unlocked"
-			if status.Locked {
-				state = "locked"
-			}
-			fmt.Printf("Daemon: %s\n", state)
-			fmt.Printf("PID: %d\n", status.PID)
-			fmt.Printf("Hotkey: %s\n", status.Hotkey)
-			fmt.Printf("Mail Hotkey: %s\n", status.MailHotkey)
-			fmt.Printf("System Engine: %s\n", status.SystemEngine)
-			fmt.Printf("Profiles: %d\n", status.ProfileCount)
-			if status.PendingSelection > 0 {
-				fmt.Printf("Pending Selection: %d matches\n", status.PendingSelection)
-			}
-		},
-	}
-	autocompleteWindowCmd := &cobra.Command{
-		Use:   "window",
-		Short: "Manage autocomplete popup window",
-	}
-	autocompleteWindowEnableCmd := &cobra.Command{
-		Use:   "enable",
-		Short: "Enable autocomplete popup window",
-		Run: func(cmd *cobra.Command, args []string) {
-			setAutocompletePopupDisabled(false)
-		},
-	}
-	autocompleteWindowDisableCmd := &cobra.Command{
-		Use:   "disable",
-		Short: "Disable autocomplete popup window",
-		Run: func(cmd *cobra.Command, args []string) {
-			setAutocompletePopupDisabled(true)
-		},
-	}
-	autocompleteWindowStatusCmd := &cobra.Command{
-		Use:   "status",
-		Short: "Show autocomplete popup window status",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				color.Red("Error: %v", err)
-				return
-			}
-			if vault.AutocompleteWindowDisabled {
-				color.Yellow("Autocomplete popup: disabled")
-			} else {
-				color.Green("Autocomplete popup: enabled")
-			}
-		},
-	}
-	autocompleteLinkTOTPCmd := &cobra.Command{
-		Use:   "link-totp",
-		Short: "Link a domain to an existing TOTP entry",
-		Run: func(cmd *cobra.Command, args []string) {
-			pass, vault, readonly, err := src_unlockVault()
-			if err != nil {
-				color.Red("Error: %v", err)
-				return
-			}
-			if readonly {
-				color.Red("Vault is READ-ONLY. Cannot modify links.")
-				return
-			}
-
-			fmt.Print("domain: ")
-			domain := normalizeDomainInput(readInput())
-			if domain == "" {
-				color.Red("Domain is required.")
-				return
-			}
-
-			entries := orderedTOTPEntries(vault)
-			if len(entries) == 0 {
-				color.Red("No TOTP entries found in current space.")
-				return
-			}
-			fmt.Println("Available TOTP entries:")
-			for i, entry := range entries {
-				fmt.Printf("[%d] %s\n", i+1, entry.Account)
-			}
-			fmt.Print("link-totp-id: ")
-			idInput := strings.TrimSpace(readInput())
-			idx, err := strconv.Atoi(idInput)
-			if err != nil || idx < 1 || idx > len(entries) {
-				color.Red("Invalid link-totp-id.")
-				return
-			}
-
-			if vault.TOTPDomainLinks == nil {
-				vault.TOTPDomainLinks = make(map[string]string)
-			}
-			selected := entries[idx-1]
-			vault.TOTPDomainLinks[domain] = selected.Account
-			if err := saveVaultState(vault, pass); err != nil {
-				color.Red("Failed to save TOTP link: %v", err)
-				return
-			}
-			color.Green("Linked %s -> %s", domain, selected.Account)
-			if err := autofillcmd.UnlockDaemonWithPassword(vaultPath, pass, 1*time.Hour, 15*time.Minute, "CTRL+SHIFT+L"); err != nil {
-				color.Yellow("Link saved, but autofill daemon auto-start failed: %v", err)
-			} else {
-				color.Cyan("Autofill daemon is running and unlocked for autocomplete.")
-			}
-		},
-	}
-	autocompleteWindowCmd.AddCommand(autocompleteWindowEnableCmd, autocompleteWindowDisableCmd, autocompleteWindowStatusCmd)
-	autocompleteCmd.AddCommand(
-		autocompleteEnableCmd,
-		autocompleteDisableCmd,
-		autocompleteStartCmd,
-		autocompleteStopCmd,
-		autocompleteStatusCmd,
-		autocompleteWindowCmd,
-		autocompleteLinkTOTPCmd,
-		buildAutocompleteMailCommand(),
-		buildAutocompleteFillCommand(),
-	)
-
-	rootCmd.AddCommand(autofillCmd, autocompleteCmd)
 	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd, authTouchIDCmd)
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
 	authTouchIDCmd.AddCommand(authTouchIDSetupCmd, authTouchIDStatusCmd, authTouchIDRemoveCmd, authTouchIDTestCmd)
+
 
 	var updateCmd = &cobra.Command{
 		Use:   "update",
@@ -7565,7 +7358,10 @@ var authEmailCmd = &cobra.Command{
 
 		key := src.GenerateRecoveryKey()
 		salt, _ := src.GenerateSalt(vault.CurrentProfileParams.SaltLen)
-		vault.SetRecoveryKey(key, salt)
+		if err := vault.SetRecoveryKey(key, salt); err != nil {
+			color.Red("Error setting recovery key: %v\n", err)
+			return
+		}
 
 		m := gomail.NewMessage()
 		m.SetHeader("From", user)
@@ -7743,113 +7539,6 @@ var authChangeCmd = &cobra.Command{
 			color.Green("Master password changed successfully.\n")
 		}
 	},
-}
-
-func setAutocompletePopupDisabled(disabled bool) {
-	pass, vault, readonly, err := src_unlockVault()
-	if err != nil {
-		color.Red("Error: %v\n", err)
-		return
-	}
-	if readonly {
-		color.Red("Vault is READ-ONLY. Cannot change autocomplete window settings.")
-		return
-	}
-
-	vault.AutocompleteWindowDisabled = disabled
-	if err := saveVaultState(vault, pass); err != nil {
-		color.Red("Error saving vault: %v", err)
-		return
-	}
-	if disabled {
-		color.Yellow("Autocomplete popup window disabled.")
-	} else {
-		color.Green("Autocomplete popup window enabled.")
-	}
-
-	if status, err := autofill.TryStatus(context.Background()); err == nil && status != nil {
-		color.Cyan("Restart or re-unlock the daemon to apply popup changes.")
-	}
-}
-
-func buildAutocompleteMailCommand() *cobra.Command {
-	mailCmd := &cobra.Command{
-		Use:   "mail",
-		Short: "Manage Gmail OTP autocomplete",
-	}
-
-	mailSetupCmd := &cobra.Command{
-		Use:   "setup",
-		Short: "Connect Gmail for OTP autocomplete",
-		Run: func(cmd *cobra.Command, args []string) {
-			cfg, err := autofill.SetupGmail(context.Background())
-			if err != nil {
-				color.Red("Failed to connect Gmail: %v", err)
-				return
-			}
-			if err := autofillcmd.EnsureAutofillDaemonRunning(vaultPath, "CTRL+SHIFT+L", "CTRL+SHIFT+P"); err != nil {
-				color.Yellow("Gmail is connected, but the autocomplete daemon is not running yet: %v", err)
-			}
-			if cfg.EmailAddress != "" {
-				color.Green("Gmail connected for OTP autocomplete: %s", cfg.EmailAddress)
-				return
-			}
-			color.Green("Gmail connected for OTP autocomplete.")
-		},
-	}
-
-	mailStatusCmd := &cobra.Command{
-		Use:   "status",
-		Short: "Show Gmail autocomplete status",
-		Run: func(cmd *cobra.Command, args []string) {
-			if !autofill.MailConfigured() {
-				fmt.Println("Mail: not configured")
-				return
-			}
-			fmt.Println("Mail: gmail configured")
-		},
-	}
-
-	mailDisconnectCmd := &cobra.Command{
-		Use:   "disconnect",
-		Short: "Disconnect Gmail autocomplete",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofill.DisconnectGmail(); err != nil {
-				color.Red("Failed to disconnect Gmail: %v", err)
-				return
-			}
-			color.Green("Gmail autocomplete disconnected.")
-		},
-	}
-
-	mailFillCmd := &cobra.Command{
-		Use:   "fill",
-		Short: "Fill the current field with a Gmail mail OTP",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.TriggerMailOTPFillForActiveWindow(); err != nil {
-				color.Red("Mail OTP fill failed: %v", err)
-				return
-			}
-			color.Green("Mail OTP fill completed.")
-		},
-	}
-
-	mailCmd.AddCommand(mailSetupCmd, mailStatusCmd, mailDisconnectCmd, mailFillCmd)
-	return mailCmd
-}
-
-func buildAutocompleteFillCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "fill",
-		Short: "Fill the active window now",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := autofillcmd.TriggerAutofillForActiveWindow(true); err != nil {
-				color.Red("Autocomplete fill failed: %v", err)
-				return
-			}
-			color.Green("Autocomplete fill completed.")
-		},
-	}
 }
 
 var authQuorumSetupCmd = &cobra.Command{

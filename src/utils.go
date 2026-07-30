@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -158,6 +159,10 @@ func Wipe(b []byte) {
 	for i := range b {
 		b[i] = 0
 	}
+	// Prevent Go compiler from optimizing away the zeroing as dead code.
+	// Without this, the compiler may elide the loop since the slice is not
+	// read afterwards.
+	runtime.KeepAlive(b)
 }
 
 func CalculateHMAC(data, key []byte) []byte {

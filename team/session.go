@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 )
@@ -55,24 +53,7 @@ func CreateSession(user TeamUser, deptKey []byte, orgID string) error {
 		os.Remove(SessionFile)
 	}()
 
-	cleanupCmd(duration)
-
 	return nil
-}
-
-func cleanupCmd(duration time.Duration) {
-	seconds := int(duration.Seconds())
-	var cmd *exec.Cmd
-	if filepath.Separator == '\\' {
-		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, SessionFile))
-	} else {
-		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, SessionFile))
-	}
-
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Warning: Could not start background cleanup: %v\n", err)
-	}
 }
 
 func GetSession() (*TeamSession, error) {

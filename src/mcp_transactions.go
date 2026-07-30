@@ -32,7 +32,9 @@ type MCPTransactionStore struct {
 func getMCPTransactionFile() string {
 	configDir, _ := os.UserConfigDir()
 	apmDir := filepath.Join(configDir, "apm")
-	_ = os.MkdirAll(apmDir, 0700)
+	if err := os.MkdirAll(apmDir, 0700); err != nil {
+		// Best-effort; the caller will surface the write error.
+	}
 	return filepath.Join(apmDir, "mcp_transactions.json")
 }
 

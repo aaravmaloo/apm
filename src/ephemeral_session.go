@@ -35,7 +35,9 @@ type EphemeralSessionStore struct {
 func getEphemeralSessionFile() string {
 	configDir, _ := os.UserConfigDir()
 	apmDir := filepath.Join(configDir, "apm")
-	_ = os.MkdirAll(apmDir, 0700)
+	if err := os.MkdirAll(apmDir, 0700); err != nil {
+		// Best-effort; the caller will surface the write error.
+	}
 	return filepath.Join(apmDir, "ephemeral_sessions.json")
 }
 

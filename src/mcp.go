@@ -174,7 +174,9 @@ type MCPToken struct {
 func getMCPConfigFile() string {
 	configDir, _ := os.UserConfigDir()
 	apmDir := filepath.Join(configDir, "apm")
-	_ = os.MkdirAll(apmDir, 0700)
+	if err := os.MkdirAll(apmDir, 0700); err != nil {
+		// Return a best-effort path; the caller will surface the write error.
+	}
 	return filepath.Join(apmDir, "mcp_auth.json")
 }
 
@@ -288,7 +290,9 @@ func ensureMCPMutationAuthorized(tokenName, tool string, args json.RawMessage, p
 		TxID    string `json:"tx_id"`
 		Approve bool   `json:"approve"`
 	}
-	_ = json.Unmarshal(args, &meta)
+	if err := json.Unmarshal(args, &meta); err != nil {
+		return false, "", "", fmt.Errorf("failed to parse mutation args: %v", err)
+	}
 
 	if strings.TrimSpace(meta.TxID) == "" {
 		// Mutating tools default to a preview-only phase until the caller
@@ -537,9 +541,22 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport, pm 
 		jsonData, _ := json.MarshalIndent(foundItem, "", "  ")
 
 		ephemeralKey := make([]byte, 32)
-		rand.Read(ephemeralKey)
-		ciphertext, _ := encryptEpisodic(jsonData, ephemeralKey)
-		tempPath, _ := writeToTemp(ciphertext)
+		if _, err := rand.Read(ephemeralKey); err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Failed to generate ephemeral key: %v", err)}}}, nil
+		}
+		ciphertext, err := encryptEpisodic(jsonData, ephemeralKey)
+		if err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Failed to encrypt entry: %v", err)}}}, nil
+		}
+		tempPath, err := writeToTemp(ciphertext)
+		if err != nil {
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Failed to write temp file: %v", err)}}}, nil
+		}
+		// Schedule cleanup in case decrypt_entry is never called
+		go func() {
+			time.Sleep(5 * time.Minute)
+			os.Remove(tempPath)
+		}()
 
 		LogAction("MCP_ENTRY_ACCESSED", fmt.Sprintf("Token '%s' accessed entry '%s' (%s)", mcpToken.Name, args.Name, itemType))
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Data for %s '%s' encrypted at %s. Reference: %s. Use decrypt_entry to view.", itemType, args.Name, tempPath, hex.EncodeToString(ephemeralKey))}}}, nil

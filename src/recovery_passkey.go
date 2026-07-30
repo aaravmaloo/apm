@@ -15,6 +15,8 @@ import (
 	wa "github.com/go-webauthn/webauthn/webauthn"
 )
 
+// recoveryPasskeyUser adapts the vault recovery user to the webauthn.User interface.
+// It reuses the general-purpose passkey ceremony infrastructure.
 type recoveryPasskeyUser struct {
 	id          []byte
 	name        string
@@ -27,6 +29,7 @@ func (u recoveryPasskeyUser) WebAuthnName() string                 { return u.na
 func (u recoveryPasskeyUser) WebAuthnDisplayName() string          { return u.displayName }
 func (u recoveryPasskeyUser) WebAuthnCredentials() []wa.Credential { return u.creds }
 
+// newRecoveryWebAuthn creates a WebAuthn instance for recovery ceremonies.
 func newRecoveryWebAuthn(origin string) (*wa.WebAuthn, error) {
 	return wa.New(&wa.Config{
 		RPDisplayName: "APM Recovery",
@@ -35,6 +38,7 @@ func newRecoveryWebAuthn(origin string) (*wa.WebAuthn, error) {
 	})
 }
 
+// RunRecoveryPasskeyRegistration performs a WebAuthn registration ceremony for vault recovery.
 func RunRecoveryPasskeyRegistration() ([]byte, []byte, error) {
 	userID := make([]byte, 32)
 	if _, err := rand.Read(userID); err != nil {
@@ -42,7 +46,7 @@ func RunRecoveryPasskeyRegistration() ([]byte, []byte, error) {
 	}
 	user := recoveryPasskeyUser{id: userID, name: "apm-recovery", displayName: "APM Recovery"}
 
-	cred, err := runPasskeyCeremony(user, true)
+	cred, err := runGenericPasskeyCeremony(user, true, newRecoveryWebAuthn)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -53,16 +57,18 @@ func RunRecoveryPasskeyRegistration() ([]byte, []byte, error) {
 	return userID, credJSON, nil
 }
 
+// verifyRecoveryPasskey verifies the user's recovery passkey via a WebAuthn assertion.
 func verifyRecoveryPasskey(userID []byte, credJSON []byte) error {
 	var cred wa.Credential
 	if err := json.Unmarshal(credJSON, &cred); err != nil {
 		return fmt.Errorf("invalid stored passkey credential: %w", err)
 	}
 	user := recoveryPasskeyUser{id: userID, name: "apm-recovery", displayName: "APM Recovery", creds: []wa.Credential{cred}}
-	_, err := runPasskeyCeremony(user, false)
+	_, err := runGenericPasskeyCeremony(user, false, newRecoveryWebAuthn)
 	return err
 }
 
+// VerifyRecoveryPasskeyFromHeader checks the recovery passkey using vault header metadata.
 func VerifyRecoveryPasskeyFromHeader(info RecoveryData) error {
 	if !info.RecoveryPasskeyEnabled || len(info.RecoveryPasskeyUserID) == 0 || len(info.RecoveryPasskeyCred) == 0 {
 		return fmt.Errorf("recovery passkey not configured")
@@ -70,7 +76,21 @@ func VerifyRecoveryPasskeyFromHeader(info RecoveryData) error {
 	return verifyRecoveryPasskey(info.RecoveryPasskeyUserID, info.RecoveryPasskeyCred)
 }
 
-func runPasskeyCeremony(user recoveryPasskeyUser, registration bool) (*wa.Credential, error) {
+// webauthnUser is the minimal interface we need for the ceremony (webauthn.User is already satisfied by passkeyUser and recoveryPasskeyUser).
+type webAuthnUser interface {
+	WebAuthnID() []byte
+	WebAuthnName() string
+	WebAuthnDisplayName() string
+	WebAuthnCredentials() []wa.Credential
+}
+
+// webAuthnFactory creates a WebAuthn instance for a given origin.
+type webAuthnFactory func(origin string) (*wa.WebAuthn, error)
+
+// runGenericPasskeyCeremony starts a local HTTP server, opens a browser tab, and
+// runs the WebAuthn registration or authentication ceremony. The factory parameter
+// allows different WebAuthn configurations (different RP names, etc.).
+func runGenericPasskeyCeremony(user webAuthnUser, registration bool, newWA webAuthnFactory) (*wa.Credential, error) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, err
@@ -82,7 +102,7 @@ func runPasskeyCeremony(user recoveryPasskeyUser, registration bool) (*wa.Creden
 		return nil, splitErr
 	}
 	origin := "http://localhost:" + port
-	webAuthn, err := newRecoveryWebAuthn(origin)
+	webAuthn, err := newWA(origin)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +125,11 @@ func runPasskeyCeremony(user recoveryPasskeyUser, registration bool) (*wa.Creden
 	mux.HandleFunc("/options", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if registration {
-			opts, session, err := webAuthn.BeginRegistration(user, wa.WithAuthenticatorSelection(protocol.AuthenticatorSelection{UserVerification: protocol.VerificationRequired}))
+			opts, session, err := webAuthn.BeginRegistration(user,
+				wa.WithAuthenticatorSelection(protocol.AuthenticatorSelection{
+					UserVerification: protocol.VerificationRequired,
+				}),
+			)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -200,17 +224,17 @@ func passkeyHTML(registration bool) string {
 		mode = "create"
 	}
 	return fmt.Sprintf(`<!doctype html>
-<html><body style="font-family: sans-serif; padding: 20px;">
-<h2>APM Recovery Passkey %s</h2>
+<html><body style="font-family: sans-serif; padding: 20px; background: #000; color: #e0e0e0;">
+<h2 style="color: #00bfa5;">APM Passkey %s</h2>
 <p>Follow your browser/device prompt to continue.</p>
-<pre id="status">Starting...</pre>
+<pre id="status" style="background: #111; padding: 12px; border-radius: 8px;">Starting...</pre>
 <script>
 function b64urlToBuf(v){v=v.replace(/-/g,'+').replace(/_/g,'/');const pad=v.length%%4;if(pad)v += '='.repeat(4-pad);const s=atob(v);const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b;}
-function bufToB64url(buf){const b=new Uint8Array(buf);let s='';for(const x of b)s+=String.fromCharCode(x);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function bufToB64url(buf){const b=new Uint8Array(buf);let s='';for(const x of b)s+=String.fromCharCode(x);return btoa(s).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');}
 function preformatCreate(o){if(o.challenge)o.challenge=b64urlToBuf(o.challenge);if(o.user&&o.user.id)o.user.id=b64urlToBuf(o.user.id);if(o.excludeCredentials) o.excludeCredentials=o.excludeCredentials.map(c=>({...c,id:b64urlToBuf(c.id)}));return o;}
 function preformatGet(o){if(o.challenge)o.challenge=b64urlToBuf(o.challenge);if(o.allowCredentials) o.allowCredentials=o.allowCredentials.map(c=>({...c,id:b64urlToBuf(c.id)}));return o;}
 function credToJSON(c){if(!c)return null;const r={id:c.id,rawId:bufToB64url(c.rawId),type:c.type,response:{}}; if(c.response.attestationObject) r.response.attestationObject=bufToB64url(c.response.attestationObject); if(c.response.clientDataJSON) r.response.clientDataJSON=bufToB64url(c.response.clientDataJSON); if(c.response.authenticatorData) r.response.authenticatorData=bufToB64url(c.response.authenticatorData); if(c.response.signature) r.response.signature=bufToB64url(c.response.signature); if(c.response.userHandle) r.response.userHandle=bufToB64url(c.response.userHandle); return r; }
-(async()=>{const status=document.getElementById('status'); try{ const opts=await fetch('/options').then(r=>r.json()); const pk=opts.publicKey||opts; let cred; if('%s'==='create'){cred=await navigator.credentials.create({publicKey:preformatCreate(pk)});}else{cred=await navigator.credentials.get({publicKey:preformatGet(pk)});} const payload=credToJSON(cred); const resp=await fetch('/finish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok){status.textContent='Failed: '+await resp.text(); return;} status.textContent='Success. You can return to terminal.';}catch(e){status.textContent='Error: '+e;}})();
+(async()=>{const status=document.getElementById('status'); try{ const opts=await fetch('/options').then(r=>r.json()); const pk=opts.publicKey||opts; let cred; if('%s'==='create'){cred=await navigator.credentials.create({publicKey:preformatCreate(pk)});}else{cred=await navigator.credentials.get({publicKey:preformatGet(pk)});} const payload=credToJSON(cred); const resp=await fetch('/finish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!resp.ok){status.textContent='Failed: '+await resp.text(); return;} status.textContent='Success. You can return to the terminal.';}catch(e){status.textContent='Error: '+e;}})();
 </script>
 </body></html>`, map[bool]string{true: "Registration", false: "Verification"}[registration], mode)
 }

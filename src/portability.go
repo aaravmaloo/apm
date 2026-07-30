@@ -177,7 +177,12 @@ func ImportFromJSON(vault *Vault, filename string, decryptPass string) error {
 		decrypted, err := DecryptData(bytes, decryptPass)
 		if err == nil {
 			bytes = decrypted
+		} else if !json.Valid(bytes) {
+			// Data is not valid JSON and decryption failed — likely wrong password.
+			return fmt.Errorf("decryption failed: %v (wrong password or corrupted file)", err)
 		}
+		// If data is valid JSON, assume it wasn't encrypted and the password was
+		// provided unnecessarily; fall through to plaintext parsing.
 	}
 
 	var data ExportData

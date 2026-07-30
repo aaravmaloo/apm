@@ -183,9 +183,15 @@ func resolveRecoveryKeyForQuorum(v *Vault, provided string) (string, error) {
 
 	if len(v.RecoveryHash) > 0 && len(v.RecoverySalt) > 0 {
 		for _, c := range candidates {
+			// Try Argon2id-based derivation first, then legacy SHA-256
 			rk := DeriveRecoveryKey(c, v.RecoverySalt)
 			h := sha256.Sum256(rk)
 			if hmac.Equal(h[:], v.RecoveryHash) {
+				return c, nil
+			}
+			rkLegacy := deriveRecoveryKeyLegacy(c, v.RecoverySalt)
+			hLegacy := sha256.Sum256(rkLegacy)
+			if hmac.Equal(hLegacy[:], v.RecoveryHash) {
 				return c, nil
 			}
 		}

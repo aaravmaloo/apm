@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -73,26 +72,10 @@ func CreateSession(password string, duration time.Duration, readonly bool, inact
 		_ = os.Remove(sessionFile)
 	}()
 
-	cleanupCmd(duration, sessionFile)
-
 	return nil
 }
 
-func cleanupCmd(duration time.Duration, sessionFile string) {
-	seconds := int(duration.Seconds())
-	var cmd *exec.Cmd
 
-	if filepath.Separator == '\\' {
-		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /t %d /nobreak && del \"%s\"", seconds, sessionFile))
-	} else {
-		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep %d && rm -f \"%s\"", seconds, sessionFile))
-	}
-
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Warning: Could not start background cleanup: %v\n", err)
-	}
-}
 
 func GetSession() (*Session, error) {
 	sessionFile := getSessionFile()
@@ -199,6 +182,8 @@ func getSessionKey() (string, error) {
 			if decoded, err := base64.StdEncoding.DecodeString(key); err == nil && len(decoded) == 32 {
 				return key, nil
 			}
+			// Key is corrupted (wrong length or invalid base64).
+			return "", fmt.Errorf("session key file %s contains invalid key data", keyPath)
 		}
 	}
 
