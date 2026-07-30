@@ -938,7 +938,7 @@ func main() {
 				src.LogAction("VAULT_LOCKED", "Session terminated")
 				color.Green("Vault locked.\n")
 			}
-			},
+		},
 	}
 
 	var sessionCmd = &cobra.Command{
@@ -1482,8 +1482,8 @@ func main() {
 
 			exe, _ := os.Executable()
 			installDir := filepath.Dir(exe)
-			infoVersion := "v11 Stable Release"
-			infoBuild := " (28/07/2026 (MM/DD/YYYY))"
+			infoVersion := "v11.1.0 Stable Release"
+			infoBuild := " (07/30/2026 (MM/DD/YYYY))"
 
 			vaultAccessible := true
 			if _, statErr := os.Stat(vaultPath); statErr != nil {
@@ -1500,7 +1500,7 @@ func main() {
 				}
 			}
 
-			fmt.Println("APM Stable v10 Release")
+			fmt.Println("APM Stable v11.1.0 Release")
 			fmt.Println("────────────────────────────")
 			fmt.Println()
 			fmt.Printf("User:       %s@apm\n", processedHomeName)
@@ -3869,7 +3869,6 @@ func main() {
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
 	authTouchIDCmd.AddCommand(authTouchIDSetupCmd, authTouchIDStatusCmd, authTouchIDRemoveCmd, authTouchIDTestCmd)
-
 
 	var updateCmd = &cobra.Command{
 		Use:   "update",
