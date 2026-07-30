@@ -103,25 +103,6 @@ Plugins may also register extra root-level commands.
 - `pm mcp revoke [name_or_token]`
 - `pm mcp serve`
 
-### Autofill and autocomplete
-
-- `pm autofill start`
-- `pm autofill stop`
-- `pm autofill status`
-- `pm autofill list-profiles`
-- `pm autofill daemon`
-- `pm autocomplete enable`
-- `pm autocomplete disable`
-- `pm autocomplete start`
-- `pm autocomplete stop`
-- `pm autocomplete status`
-- `pm autocomplete window enable`
-- `pm autocomplete window disable`
-- `pm autocomplete window status`
-- `pm autocomplete link-totp`
-
-These flows are primarily relevant on Windows.
-
 ### Auditing and diagnostics
 
 - `pm health`

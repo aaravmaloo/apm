@@ -57,7 +57,7 @@ go build -o pm-team .
 - [MCP integration](guides/mcp-integration.md)
 - [Team edition](guides/team-edition.md)
 - [Import and export](guides/import-export.md)
-- [Windows autofill](autofill_windows.md)
+
 
 ### [Concepts](concepts/index.md)
 

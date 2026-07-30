@@ -118,11 +118,7 @@ APM supports **25 structured secret types** with validated fields and type-speci
 - Hook system for vault lifecycle events
 - Plugin marketplace via cloud providers
 
-**Autofill (Windows only)**
-- System-wide autofill without a browser extension
-- `Ctrl+Shift+L` hotkey, window-title context detection
-- Keystroke injection (no clipboard exposure)
-- TOTP auto-injection for 2FA fields
+
 
 **Recovery**
 | Factor | Command |

@@ -50,12 +50,6 @@ This page lists the capabilities that are implemented in the current codebase.
 - Runtime-added plugin commands
 - Built-in MCP server with permission-scoped tokens
 
-## Desktop integration
-
-- Windows autofill daemon
-- Autocomplete popup and domain matching
-- TOTP linking for autofill flows
-
 ## Team edition
 
 The separate `pm-team` module adds:
