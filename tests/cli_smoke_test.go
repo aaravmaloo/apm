@@ -24,7 +24,7 @@ func writeFile(t *testing.T, path string, content string) {
 func buildPMBinary(t *testing.T, outPath string) {
 	t.Helper()
 
-	cmd := exec.Command("go", "build", "-o", outPath, "../main.go")
+	cmd := exec.Command("go", "build", "-o", outPath, "..")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("failed to build pm binary: %v\n%s", err, string(output))
