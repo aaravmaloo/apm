@@ -90,6 +90,7 @@ type Entry struct {
 	Username string   `json:"username"`
 	Password string   `json:"password"`
 	URLs     []string `json:"urls,omitempty"`
+	Website  string   `json:"website,omitempty"`
 	Space    string   `json:"space,omitempty"`
 }
 

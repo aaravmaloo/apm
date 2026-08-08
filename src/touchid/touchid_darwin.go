@@ -16,6 +16,10 @@ const touchIDReasonEnv = "APM_TOUCHID_REASON"
 // from the environment variable APM_TOUCHID_REASON using ObjC bridging,
 // avoiding any shell escaping or URL-encoding issues.
 const authScriptTemplate = `ObjC.import('LocalAuthentication');
+ObjC.import('AppKit');
+// Activate the process as an active app before prompting: without this the
+// Touch ID dialog flashes instantly with no native animation.
+$.NSApplication.sharedApplication.activateIgnoringOtherApps(true);
 var ctx = $.LAContext.alloc.init;
 var errRef = Ref();
 if (!ctx.canEvaluatePolicyError(1, errRef)) {
@@ -28,7 +32,8 @@ if (!ctx.canEvaluatePolicyError(1, errRef)) {
     ok = success;
     done = true;
   });
-  while (!done) { $.NSRunLoop.currentRunLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(0.5)); }
+  // Tight 0.1s spin keeps the run loop responsive so the animation renders.
+  while (!done) { $.NSRunLoop.currentRunLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(0.1)); }
   ok ? "true" : "false:auth failed";
 }`
 

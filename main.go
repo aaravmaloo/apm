@@ -4437,6 +4437,21 @@ func copyToClipboard(text string) {
 	cmd.Run()
 }
 
+// syncTouchIDCredential keeps the Keychain (Touch ID) copy of the master
+// password in sync when the master password changes. The Keychain item is only
+// ever written here (during a deliberate rotation) or by an explicit
+// `pm auth touchid setup` — routine unlocks never write to it.
+func syncTouchIDCredential(newPass string) {
+	if !touchid.IsConfigured() {
+		return
+	}
+	if err := touchid.Setup(newPass); err != nil {
+		color.Yellow("Touch ID credential not updated: %v. Run 'pm auth touchid setup'.", err)
+		return
+	}
+	color.Green("Touch ID credential updated with the new master password.")
+}
+
 // src_unlockVault is the shared unlock entry point for CLI commands. It tries
 // reusable credentials first and only falls back to the interactive path when
 // no valid ephemeral or session-based unlock is available.
@@ -4551,19 +4566,17 @@ func src_unlockVault() (string, *src.Vault, bool, error) {
 
 		vault, err := src.DecryptVault(data, pass, costMultiplier)
 
-		// Touch ID migration: if Touch ID provided wrong password, offer to update it
+		// Touch ID provided a stale password: unlock with the current password,
+		// but NEVER rewrite the Keychain item implicitly here. The stored
+		// credential is only written by an explicit `pm auth touchid setup` or a
+		// master-password change — create once, read afterwards.
 		if err != nil && usedTouchID {
-			color.Yellow("\n  Touch ID password is outdated. Enter your current master password to update it.\n")
+			color.Yellow("\n  Touch ID password is outdated. Run 'pm auth touchid setup' to refresh it.\n")
 			fmt.Printf("  Master Password: ")
 			newPass, rErr := readPassword()
 			fmt.Println()
 			if rErr == nil {
 				if newVault, dErr := src.DecryptVault(data, newPass, costMultiplier); dErr == nil {
-					if sErr := touchid.Setup(newPass); sErr == nil {
-						color.Green("  Touch ID updated with your current password.\n")
-					} else {
-						color.Yellow("  Could not update Touch ID: %v. Run 'pm auth touchid setup' later.\n", sErr)
-					}
 					pass = newPass
 					vault = newVault
 					err = nil // clear the error so we proceed to success
@@ -7054,6 +7067,7 @@ var authRecoverCmd = &cobra.Command{
 		} else {
 			src.SendAlert(vault, src.LevelCritical, "RECOVERY SUCCESS", "Vault has been successfully recovered and master password reset.")
 			color.Green("Vault recovered and Master Password updated successfully!\n")
+			syncTouchIDCredential(newPass)
 		}
 	},
 }
@@ -7319,6 +7333,9 @@ var authChangeCmd = &cobra.Command{
 		} else {
 			src.SendAlert(vault, src.LevelSettings, "PASSWORD CHANGE", "Master password has been successfully rotated.")
 			color.Green("Master password changed successfully.\n")
+			// Keep the Touch ID / Keychain credential in sync exactly once, at
+			// this explicit rotation event, so routine unlocks stay read-only.
+			syncTouchIDCredential(newPass)
 		}
 	},
 }
@@ -7469,6 +7486,7 @@ var authQuorumRecoverCmd = &cobra.Command{
 			color.Red("Error saving vault: %v", err)
 			return
 		}
+		syncTouchIDCredential(newPass)
 		src.ClearFailures()
 		src.LogAction("RECOVERY_QUORUM_SUCCESS", "Vault recovered with quorum shares")
 		color.Green("Vault recovered successfully with trustee quorum.")
