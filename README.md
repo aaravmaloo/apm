@@ -5,7 +5,6 @@
 **A better local password manager for everyone.**
 
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go&logoColor=white)](https://golang.org)
-[![Rust](https://img.shields.io/badge/Rust-stable-orange?style=flat&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![License](https://img.shields.io/github/license/aaravmaloo/apm?style=flat)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-aaravmaloo.github.io%2Fapm-blue?style=flat)](https://aaravmaloo.github.io/apm)
 
