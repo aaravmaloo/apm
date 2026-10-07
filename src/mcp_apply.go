@@ -1,8 +1,13 @@
 package apm
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -226,4 +231,47 @@ func ApplyMCPTransaction(vault *Vault, tool string, raw json.RawMessage) (string
 		return "deleted:" + args.Name, nil
 	}
 	return "", fmt.Errorf("unsupported transaction tool: %s", tool)
+}
+
+// openVaultForMCPApply opens the vault through the pm session for writing an
+// approved change. A read-only session yields a decoy vault, which must never
+// be saved over the real file, so it counts as not being able to open it.
+func openVaultForMCPApply(vaultPath string) (*Vault, string, error) {
+	session, err := GetSession()
+	if err == nil && session.ReadOnly {
+		return nil, "", errors.New("the pm session is read-only")
+	}
+	if err != nil {
+		ephID := strings.TrimSpace(os.Getenv("APM_EPHEMERAL_ID"))
+		if ephID != "" {
+			eph, ephErr := ValidateEphemeralSession(ephID, os.Getpid(), strings.TrimSpace(os.Getenv("APM_EPHEMERAL_AGENT")))
+			if ephErr == nil && eph.Scope == "read" {
+				return nil, "", errors.New("the ephemeral session is read-only")
+			}
+		}
+	}
+	return unlockVaultForMCP(vaultPath)
+}
+
+// applyMCPTransactionToFile applies a claimed transaction to the vault file
+// and records it in History the way the desktop app does, so it can be undone.
+func applyMCPTransactionToFile(vault *Vault, masterPwd, vaultPath string, tx MCPTransaction) (string, error) {
+	prevSpace := vault.CurrentSpace
+	summary, err := ApplyMCPTransaction(vault, tx.Tool, tx.Args)
+	vault.CurrentSpace = prevSpace
+	if err != nil {
+		return "", err
+	}
+	data, err := EncryptVault(vault, masterPwd)
+	if err != nil {
+		return "", err
+	}
+	if err := SaveVault(vaultPath, data); err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(data)
+	if head, err := GetLGitHead(); err == nil && head != nil && head.DataHash == hex.EncodeToString(sum[:]) {
+		_ = SetLGitNote(head.ID, "Approved "+tx.TokenName+": "+tx.Preview)
+	}
+	return summary, nil
 }

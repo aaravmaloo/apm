@@ -190,6 +190,12 @@ func selectOption(opts tty.SelectOptions) (int, error) {
 // stdoutIsTerminal reports whether tty echoes and ends lines on stdout.
 func stdoutIsTerminal() bool { return term.IsTerminal(int(os.Stdout.Fd())) }
 
+// atTerminal reports whether both stdin and stdout are terminals, so a
+// person is there to answer. Tests replace it.
+var atTerminal = func() bool {
+	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
+}
+
 // rawScreen keeps the terminal raw for a full-screen view and hands it back
 // in cooked mode for sub-screens that print and prompt normally.
 type rawScreen struct {

@@ -97,9 +97,16 @@ func init() {
 		"mcp.client":                {fn: hMCPClient},
 		"mcp.token.create":          {fn: hMCPTokenCreate},
 		"mcp.token.revoke":          {fn: hMCPTokenRevoke},
+		"mcp.tx.pending":            {fn: hMCPTxPending},
+		"mcp.tx.decide":             {fn: hMCPTxDecide},
 		"mcp.tx.approve":            {fn: hMCPTxApprove},
 		"mcp.tx.abort":              {fn: hMCPTxAbort},
 		"mcp.config":                {fn: hMCPConfig},
+		"mcp.assistant.revoke":      {fn: hMCPAssistantRevoke},
+		"mcp.assistant.perms":       {fn: hMCPAssistantPerms},
+		"mcp.harnesses":             {fn: hMCPHarnesses},
+		"mcp.policy.set":            {fn: hMCPPolicySet},
+		"mcp.assistant.bypass":      {fn: hMCPAssistantBypass},
 		"data.export":               {fn: hDataExport},
 		"data.import":               {fn: hDataImport},
 		"transfer.formats":          {fn: hTransferFormats},
@@ -229,7 +236,6 @@ func (s *desktopServer) finishUnlock(password string, v *src.Vault, via string, 
 	if len(alerts) > 0 {
 		src.LogAction("ANOMALY", strings.Join(alerts, "; "))
 	}
-	s.markKnownTx()
 	return map[string]any{"ok": true, "snapshot": s.snapshot()}
 }
 
@@ -2741,6 +2747,43 @@ func hMCPTokenRevoke(s *desktopServer, p json.RawMessage) (any, error) {
 	return nil, rpcErr("not_found", "That token no longer exists.")
 }
 
+// hMCPTxPending lists the requests waiting for an answer, oldest first. It
+// works while the vault is locked so the approval prompt can show them.
+func hMCPTxPending(s *desktopServer, p json.RawMessage) (any, error) {
+	txs, err := src.ListMCPTransactions(0)
+	if err != nil {
+		return nil, err
+	}
+	out := []map[string]any{}
+	now := time.Now()
+	for i := len(txs) - 1; i >= 0; i-- {
+		if txs[i].Status == src.MCPTxPending && now.Before(txs[i].ExpiresAt) {
+			out = append(out, mcpTxView(txs[i]))
+		}
+	}
+	return map[string]any{"tx": out}, nil
+}
+
+func hMCPTxDecide(s *desktopServer, p json.RawMessage) (any, error) {
+	var in struct {
+		ID      string `json:"id"`
+		Approve bool   `json:"approve"`
+		Via     string `json:"via"`
+	}
+	if err := decodeParams(p, &in); err != nil {
+		return nil, err
+	}
+	via := strings.TrimSpace(in.Via)
+	switch via {
+	case "":
+		via = "click"
+	case "touchid", "click", "keyboard":
+	default:
+		return nil, rpcErr("invalid", "Unknown approval method "+via+".")
+	}
+	return s.decideMCPTx(in.ID, in.Approve, via)
+}
+
 func hMCPTxApprove(s *desktopServer, p json.RawMessage) (any, error) {
 	var in struct {
 		ID string `json:"id"`
@@ -2748,46 +2791,7 @@ func hMCPTxApprove(s *desktopServer, p json.RawMessage) (any, error) {
 	if err := decodeParams(p, &in); err != nil {
 		return nil, err
 	}
-	if err := s.requireWritable(); err != nil {
-		return nil, err
-	}
-	tx, err := src.GetMCPTransaction(in.ID)
-	if err != nil {
-		return nil, rpcErr("not_found", "That request expired or no longer exists.")
-	}
-	if tx.Status != "pending" {
-		return nil, rpcErr("invalid", "That request is already "+tx.Status+".")
-	}
-	prevSpace := s.vault.CurrentSpace
-	prevActor, hadActor := os.LookupEnv("APM_ACTOR")
-	_ = os.Setenv("APM_ACTOR", "AI")
-	summary, applyErr := src.ApplyMCPTransaction(s.vault, tx.Tool, tx.Args)
-	if hadActor {
-		_ = os.Setenv("APM_ACTOR", prevActor)
-	} else {
-		_ = os.Unsetenv("APM_ACTOR")
-	}
-	s.vault.CurrentSpace = prevSpace
-	if applyErr != nil {
-		if data, err := os.ReadFile(s.vaultPath); err == nil {
-			if v, derr := src.DecryptVault(data, s.password, 1); derr == nil {
-				s.vault = v
-			}
-		}
-		return nil, rpcErr("invalid", "Could not apply the request: "+applyErr.Error())
-	}
-	note := "Approved " + tx.TokenName + ": " + tx.Preview
-	if err := s.save(note); err != nil {
-		return nil, err
-	}
-	receipt, _ := src.FinalizeMCPTransaction(tx.ID, summary, true)
-	action := map[string]string{"add_entry": "MCP_ENTRY_ADDED", "edit_entry": "MCP_ENTRY_EDITED", "delete_entry": "MCP_ENTRY_DELETED"}[tx.Tool]
-	if action == "" {
-		action = "MCP_TX_APPROVED"
-	}
-	src.LogAction(action, fmt.Sprintf("Approved in the desktop app for token '%s': %s", tx.TokenName, tx.Preview))
-	s.knownTx[tx.ID] = true
-	return s.withSnapshot(map[string]any{"receipt": receipt}), nil
+	return s.decideMCPTx(in.ID, true, "app")
 }
 
 func hMCPTxAbort(s *desktopServer, p json.RawMessage) (any, error) {
@@ -2797,19 +2801,265 @@ func hMCPTxAbort(s *desktopServer, p json.RawMessage) (any, error) {
 	if err := decodeParams(p, &in); err != nil {
 		return nil, err
 	}
+	return s.decideMCPTx(in.ID, false, "app")
+}
+
+// decideMCPTx records the user's answer. The decision is recorded even while
+// the vault is locked; an approval is applied right away when the vault is
+// unlocked and writable, and otherwise by pm mcp serve or at the next unlock.
+func (s *desktopServer) decideMCPTx(id string, approve bool, via string) (any, error) {
+	cur, curErr := src.GetMCPTransaction(id)
+	if curErr == nil && approve && cur.ApproveWith == src.MCPApproveTouchID && via != "touchid" && desktopHasTouchID(s) {
+		return nil, rpcErr("invalid", "This request needs Touch ID.")
+	}
+	if curErr == nil && cur.Tool == src.MCPConnectTool {
+		return s.decideMCPConnect(id, approve, via)
+	}
+	if curErr == nil && !src.IsMCPWriteTool(cur.Tool) {
+		return s.decideMCPRead(id, approve, via)
+	}
+	if !approve {
+		tx, err := src.DecideMCPTransaction(id, false, via)
+		if err != nil {
+			return nil, mcpTxRPCErr(tx, err)
+		}
+		src.LogAction("MCP_TX_REJECTED", fmt.Sprintf("Rejected in the desktop app for token '%s': %s", tx.TokenName, tx.Preview))
+		return s.mcpTxResult(map[string]any{"status": src.MCPTxRejected}), nil
+	}
+	if s.requireWritable() != nil {
+		tx, err := src.DecideMCPTransaction(id, true, via)
+		if err != nil {
+			return nil, mcpTxRPCErr(tx, err)
+		}
+		src.LogAction("MCP_TX_APPROVED", fmt.Sprintf("Approved in the desktop app for token '%s': %s", tx.TokenName, tx.Preview))
+		return s.mcpTxResult(map[string]any{"status": src.MCPTxApproved}), nil
+	}
+	tx, err := src.ApproveAndClaimMCPTransaction(id, via, "desktop")
+	if err != nil {
+		return nil, mcpTxRPCErr(tx, err)
+	}
+	receipt, err := s.applyMCPTx(tx)
+	if err != nil {
+		return nil, rpcErr("invalid", "Could not apply the request: "+err.Error())
+	}
+	return s.withSnapshot(map[string]any{"status": src.MCPTxCommitted, "receipt": receipt}), nil
+}
+
+// desktopHasTouchID reports whether approvals on this Mac can use Touch ID,
+// for requests made under "approve with Touch ID only". Tests replace it.
+var desktopHasTouchID = func(s *desktopServer) bool { return s.touchIDAvailable() }
+
+// decideMCPRead answers an assistant asking to read secrets. Nothing is
+// applied here: the pm mcp serve waiting on it runs the read and closes it.
+func (s *desktopServer) decideMCPRead(id string, approve bool, via string) (any, error) {
+	tx, err := src.DecideMCPTransaction(id, approve, via)
+	if err != nil {
+		return nil, mcpTxRPCErr(tx, err)
+	}
+	if !approve {
+		src.LogAction("MCP_TX_REJECTED", fmt.Sprintf("Did not allow assistant '%s' in the desktop app: %s", tx.TokenName, tx.Preview))
+		return s.mcpTxResult(map[string]any{"status": src.MCPTxRejected}), nil
+	}
+	src.LogAction("MCP_TX_APPROVED", fmt.Sprintf("Allowed in the desktop app for assistant '%s': %s", tx.TokenName, tx.Preview))
+	return s.mcpTxResult(map[string]any{"status": src.MCPTxApproved}), nil
+}
+
+// hMCPPolicySet changes the MCP settings. Making them stricter works while
+// the vault is locked; loosening them needs the vault unlocked, since
+// unlocking is how the app knows the user is there.
+func hMCPPolicySet(s *desktopServer, p json.RawMessage) (any, error) {
+	var patch src.MCPPolicyPatch
+	if err := decodeParams(p, &patch); err != nil {
+		return nil, err
+	}
+	_, after, err := src.UpdateMCPPolicy(patch, s.unlocked(), "in the desktop app")
+	if errors.Is(err, src.ErrMCPPolicyLoosens) {
+		return nil, rpcErr("locked", "Unlock APM to loosen MCP settings.")
+	}
+	if err != nil {
+		if errors.Is(err, src.ErrMCPTxBusy) {
+			return nil, err
+		}
+		return nil, rpcErr("invalid", mcpSentence(err.Error()))
+	}
+	return s.mcpTxResult(map[string]any{"ok": true, "policy": mcpPolicyView(after)}), nil
+}
+
+// hMCPAssistantBypass sets whether an assistant's changes are approved
+// without asking. Turning a bypass on needs the vault unlocked; turning it
+// off ("ask") works while locked.
+func hMCPAssistantBypass(s *desktopServer, p json.RawMessage) (any, error) {
+	var in struct {
+		ID   string `json:"id"`
+		Mode string `json:"mode"`
+	}
+	if err := decodeParams(p, &in); err != nil {
+		return nil, err
+	}
+	mode, err := src.ParseMCPBypassMode(in.Mode)
+	if err != nil {
+		return nil, rpcErr("invalid", "Bypass must be ask, always or hour.")
+	}
+	if mode != src.MCPBypassAsk && !s.unlocked() {
+		return nil, rpcErr("locked", "Unlock APM to approve an assistant's changes without asking.")
+	}
+	a, err := src.SetMCPAssistantBypass(in.ID, mode)
+	if errors.Is(err, src.ErrMCPAssistantNotFound) {
+		return nil, rpcErr("not_found", "That assistant is no longer allowed.")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.mcpTxResult(map[string]any{"ok": true, "assistant": map[string]any{"id": a.ID, "bypass": mcpBypassView(a), "bypassUntil": mcpBypassUntilView(a)}}), nil
+}
+
+// mcpSentence capitalizes an engine error for the app.
+func mcpSentence(msg string) string {
+	msg = strings.TrimSpace(msg)
+	if msg == "" {
+		return msg
+	}
+	msg = strings.ToUpper(msg[:1]) + msg[1:]
+	if !strings.HasSuffix(msg, ".") {
+		msg += "."
+	}
+	return msg
+}
+
+// decideMCPConnect answers an assistant asking to use the vault. Allowing it
+// needs no vault, so it is completed at once whether or not it is unlocked.
+func (s *desktopServer) decideMCPConnect(id string, approve bool, via string) (any, error) {
+	tx, err := src.DecideMCPTransaction(id, approve, via)
+	if err != nil {
+		return nil, mcpTxRPCErr(tx, err)
+	}
+	if !approve {
+		src.LogAction("MCP_TX_REJECTED", fmt.Sprintf("Did not allow assistant '%s' in the desktop app", tx.TokenName))
+		return s.mcpTxResult(map[string]any{"status": src.MCPTxRejected}), nil
+	}
+	if _, ok, err := src.CompleteMCPConnect(id, "desktop"); err != nil {
+		return nil, rpcErr("invalid", "Could not allow "+tx.TokenName+": "+err.Error())
+	} else if !ok {
+		// pm mcp serve completed it first.
+		return s.mcpTxResult(map[string]any{"status": src.MCPTxApproved}), nil
+	}
+	return s.mcpTxResult(map[string]any{"status": src.MCPTxCommitted}), nil
+}
+
+func hMCPAssistantRevoke(s *desktopServer, p json.RawMessage) (any, error) {
+	var in struct {
+		ID string `json:"id"`
+	}
+	if err := decodeParams(p, &in); err != nil {
+		return nil, err
+	}
 	if err := s.requireUnlocked(); err != nil {
 		return nil, err
 	}
-	tx, err := src.GetMCPTransaction(in.ID)
-	if err != nil {
-		return nil, rpcErr("not_found", "That request expired or no longer exists.")
+	if _, err := src.GetMCPAssistant(in.ID); err != nil {
+		return nil, rpcErr("not_found", "That assistant is no longer allowed.")
 	}
-	if err := src.AbortMCPTransaction(tx.ID); err != nil {
+	if _, ok, err := src.RevokeMCPAssistant(in.ID); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, rpcErr("not_found", "That assistant is no longer allowed.")
+	}
+	return s.withSnapshot(nil), nil
+}
+
+func hMCPAssistantPerms(s *desktopServer, p json.RawMessage) (any, error) {
+	var in struct {
+		ID    string   `json:"id"`
+		Perms []string `json:"perms"`
+	}
+	if err := decodeParams(p, &in); err != nil {
 		return nil, err
 	}
-	src.LogAction("MCP_TX_ABORTED", fmt.Sprintf("Rejected in the desktop app for token '%s': %s", tx.TokenName, tx.Preview))
-	s.knownTx[tx.ID] = true
+	if err := s.requireUnlocked(); err != nil {
+		return nil, err
+	}
+	if in.Perms == nil {
+		in.Perms = []string{}
+	}
+	for _, perm := range in.Perms {
+		if _, err := src.ValidateMCPToolPerms([]string{perm}); err != nil {
+			return nil, rpcErr("invalid", "Unknown permission "+perm+".")
+		}
+	}
+	if _, err := src.SetMCPAssistantPerms(in.ID, in.Perms); err != nil {
+		if errors.Is(err, src.ErrMCPAssistantNotFound) {
+			return nil, rpcErr("not_found", "That assistant is no longer allowed.")
+		}
+		return nil, err
+	}
 	return s.withSnapshot(nil), nil
+}
+
+// hMCPHarnesses lists the assistants pm can add itself to, in popularity
+// order, with the one-line setup for each.
+func hMCPHarnesses(s *desktopServer, p json.RawMessage) (any, error) {
+	out := []map[string]any{}
+	for _, h := range src.MCPHarnesses() {
+		out = append(out, map[string]any{
+			"id":      h.ID,
+			"name":    h.Name,
+			"kind":    h.Kind,
+			"command": h.Command(),
+			"url":     h.URL,
+			"restart": h.Restart,
+			"notes":   h.Notes,
+		})
+	}
+	return map[string]any{"harnesses": out}, nil
+}
+
+// mcpTxResult adds a snapshot when the vault is unlocked, for the Settings
+// page; the approval prompt only reads the status.
+func (s *desktopServer) mcpTxResult(res map[string]any) map[string]any {
+	if s.unlocked() {
+		return s.withSnapshot(res)
+	}
+	return res
+}
+
+func mcpTxRPCErr(tx src.MCPTransaction, err error) error {
+	switch {
+	case errors.Is(err, src.ErrMCPTxNotFound), errors.Is(err, src.ErrMCPTxExpired):
+		return rpcErr("not_found", "That request expired or no longer exists.")
+	case errors.Is(err, src.ErrMCPTxNotPending):
+		return rpcErr("invalid", "That request is already "+tx.Status+".")
+	}
+	return err
+}
+
+// applyMCPTx applies a request this backend has claimed to the unlocked vault
+// and saves it with a History note, so the change can be undone.
+func (s *desktopServer) applyMCPTx(tx src.MCPTransaction) (string, error) {
+	prevSpace := s.vault.CurrentSpace
+	prevActor, hadActor := os.LookupEnv("APM_ACTOR")
+	_ = os.Setenv("APM_ACTOR", "AI")
+	summary, err := src.ApplyMCPTransaction(s.vault, tx.Tool, tx.Args)
+	if hadActor {
+		_ = os.Setenv("APM_ACTOR", prevActor)
+	} else {
+		_ = os.Unsetenv("APM_ACTOR")
+	}
+	s.vault.CurrentSpace = prevSpace
+	if err == nil {
+		err = s.save("Approved " + tx.TokenName + ": " + tx.Preview)
+	}
+	if err != nil {
+		if data, rerr := os.ReadFile(s.vaultPath); rerr == nil {
+			if v, derr := src.DecryptVault(data, s.password, 1); derr == nil {
+				s.vault = v
+			}
+		}
+		_ = src.FailMCPTransaction(tx.ID, err.Error())
+		return "", err
+	}
+	receipt, _ := src.FinalizeMCPTransaction(tx.ID, summary, true)
+	src.LogAction(src.MCPAuditAction(tx.Tool), fmt.Sprintf("Approved in the desktop app for token '%s': %s", tx.TokenName, tx.Preview))
+	return receipt, nil
 }
 
 func hMCPConfig(s *desktopServer, p json.RawMessage) (any, error) {

@@ -677,34 +677,92 @@ func (s *desktopServer) onVaultFileChanged() {
 	s.emit("vault.changed", map[string]any{"snapshot": s.snapshot()})
 }
 
+// pollMCP announces new MCP requests and their outcomes whether or not the
+// vault is unlocked, so the approval prompt can show over every window. While
+// the vault is unlocked and writable it also applies approved requests that
+// nobody has claimed, such as ones approved while it was locked.
 func (s *desktopServer) pollMCP() {
-	t := time.NewTicker(3 * time.Second)
+	t := time.NewTicker(time.Second)
 	defer t.Stop()
 	for range t.C {
 		s.mu.Lock()
-		if s.unlocked() {
-			txs, err := src.ListMCPTransactions(50)
-			if err == nil {
-				for _, tx := range txs {
-					if tx.Status != "pending" || s.knownTx[tx.ID] {
-						continue
-					}
-					s.knownTx[tx.ID] = true
-					s.emit("mcp.pending", map[string]any{"tx": mcpTxView(tx)})
-				}
-			}
-		}
+		s.pollMCPOnce()
 		s.mu.Unlock()
 	}
 }
 
+func (s *desktopServer) pollMCPOnce() {
+	txs, err := src.ListMCPTransactions(0)
+	if err != nil {
+		return
+	}
+	byID := make(map[string]src.MCPTransaction, len(txs))
+	for _, tx := range txs {
+		byID[tx.ID] = tx
+	}
+	for id := range s.knownTx {
+		tx, ok := byID[id]
+		if ok && tx.Status == src.MCPTxPending {
+			continue
+		}
+		status := "expired"
+		if ok {
+			status = tx.Status
+			if status == src.MCPTxApplying {
+				status = src.MCPTxApproved
+			}
+		}
+		delete(s.knownTx, id)
+		s.emit("mcp.resolved", map[string]any{"id": id, "status": status})
+	}
+	// Oldest first, so the prompt queue keeps the order requests arrived in.
+	for i := len(txs) - 1; i >= 0; i-- {
+		tx := txs[i]
+		if tx.Status != src.MCPTxPending || s.knownTx[tx.ID] {
+			continue
+		}
+		s.knownTx[tx.ID] = true
+		s.emit("mcp.pending", map[string]any{"tx": mcpTxView(tx)})
+	}
+	// Allowing an assistant needs no vault, so it is completed even while
+	// locked, for example when pm mcp serve stopped before the answer came.
+	for i := len(txs) - 1; i >= 0; i-- {
+		tx := txs[i]
+		if tx.Tool == src.MCPConnectTool && tx.Status == src.MCPTxApproved && tx.ClaimedBy == "" {
+			_, _, _ = src.CompleteMCPConnect(tx.ID, "desktop")
+		}
+	}
+	if s.requireWritable() != nil {
+		return
+	}
+	for i := len(txs) - 1; i >= 0; i-- {
+		tx := txs[i]
+		// Only changes are applied here. A connect request is completed above;
+		// a read request is closed by the pm mcp serve waiting on it, or expires.
+		if !src.IsMCPWriteTool(tx.Tool) || tx.Status != src.MCPTxApproved || tx.ClaimedBy != "" {
+			continue
+		}
+		claimed, ok, err := src.ClaimMCPTransaction(tx.ID, "desktop")
+		if err != nil || !ok {
+			continue
+		}
+		if _, err := s.applyMCPTx(claimed); err == nil {
+			s.emit("vault.changed", map[string]any{"snapshot": s.snapshot()})
+		}
+	}
+}
+
+// markKnownTx treats requests already pending as announced, for front ends
+// that list them on their own instead of waiting for mcp.pending.
 func (s *desktopServer) markKnownTx() {
 	txs, err := src.ListMCPTransactions(0)
 	if err != nil {
 		return
 	}
 	for _, tx := range txs {
-		s.knownTx[tx.ID] = true
+		if tx.Status == src.MCPTxPending {
+			s.knownTx[tx.ID] = true
+		}
 	}
 }
 
@@ -1295,6 +1353,73 @@ func mcpTokenViews() []map[string]any {
 	return out
 }
 
+// mcpAssistantViews lists the assistants allowed to use the vault without a
+// token, newest first.
+func mcpAssistantViews() []map[string]any {
+	list, _ := src.ListMCPAssistants()
+	out := []map[string]any{}
+	for _, a := range list {
+		perms := a.Perms
+		if perms == nil {
+			perms = []string{}
+		}
+		out = append(out, map[string]any{
+			"id":       a.ID,
+			"name":     a.Name,
+			"harness":  a.Harness,
+			"perms":    perms,
+			"created":  ms(a.CreatedAt),
+			"lastUsed": ms(a.LastUsedAt),
+			"uses":     a.Uses,
+			// bypass is "ask" or "always"; bypassUntil is when a timed bypass
+			// ends (ms), or 0 when none is running.
+			"bypass":      mcpBypassView(a),
+			"bypassUntil": mcpBypassUntilView(a),
+		})
+	}
+	return out
+}
+
+func mcpBypassView(a src.MCPAssistant) string {
+	if a.Bypass == src.MCPBypassAlways {
+		return src.MCPBypassAlways
+	}
+	return src.MCPBypassAsk
+}
+
+func mcpBypassUntilView(a src.MCPAssistant) int64 {
+	if a.BypassUntil.IsZero() || !time.Now().Before(a.BypassUntil) {
+		return 0
+	}
+	return ms(a.BypassUntil)
+}
+
+// mcpPolicyView is the MCP settings in the snapshot's camelCase.
+func mcpPolicyView(p src.MCPPolicy) map[string]any {
+	perms := p.DefaultPerms
+	if perms == nil {
+		perms = []string{}
+	}
+	return map[string]any{
+		"paused":           p.Paused,
+		"approveWith":      p.ApproveWith,
+		"expiryMinutes":    p.ExpiryMinutes,
+		"newAssistants":    p.NewAssistants,
+		"askBeforeSecrets": p.AskBeforeSecrets,
+		"defaultPerms":     perms,
+	}
+}
+
+// currentMCPPolicyView reads the settings for the snapshot; a damaged file
+// shows the defaults (pm mcp serve refuses every call until it is fixed).
+func currentMCPPolicyView() map[string]any {
+	p, err := src.LoadMCPPolicy()
+	if err != nil {
+		p = src.DefaultMCPPolicy()
+	}
+	return mcpPolicyView(p)
+}
+
 var mcpTypeToItemType = map[string]string{
 	"password": "password", "totp": "totp", "token": "token", "note": "note", "api_key": "apikey", "ssh_key": "ssh_key",
 	"wifi": "wifi", "recovery_code": "recovery", "certificate": "certificate", "banking": "banking", "document": "document",
@@ -1304,11 +1429,12 @@ var mcpTypeToItemType = map[string]string{
 }
 
 func mcpTxView(tx src.MCPTransaction) map[string]any {
+	// Settings shows applied requests as approved and aborted ones as rejected.
 	status := tx.Status
 	switch status {
-	case "committed":
+	case src.MCPTxCommitted, src.MCPTxApplying:
 		status = "approved"
-	case "aborted":
+	case src.MCPTxAborted:
 		status = "rejected"
 	}
 	if status == "pending" && time.Now().After(tx.ExpiresAt) {
@@ -1318,6 +1444,21 @@ func mcpTxView(tx src.MCPTransaction) map[string]any {
 	_ = json.Unmarshal(tx.Args, &args)
 	entry := map[string]any{}
 	f := map[string]any{}
+	if tx.Tool == src.MCPConnectTool {
+		// A new assistant asking to use the vault: the prompt shows what it
+		// gets, one row per access entry.
+		args = nil
+		var c src.MCPConnectArgs
+		_ = json.Unmarshal(tx.Args, &c)
+		entry["type"] = "assistant"
+		entry["name"] = c.Client
+		access := c.Access
+		if access == nil {
+			access = []string{}
+		}
+		f["access"] = access
+		f["version"] = c.Version
+	}
 	for k, v := range args {
 		switch k {
 		case "tx_id", "approve":
@@ -1333,25 +1474,32 @@ func mcpTxView(tx src.MCPTransaction) map[string]any {
 			f[k] = v
 		case "space":
 			entry["space"] = v
-		case "password", "secret", "key", "token_val", "cvv", "secret_key", "serial_key", "content", "id_number", "details":
-			if s := toStr(v); s != "" {
+		default:
+			if !src.IsMCPSecretArg(k) {
+				f[k] = v
+			} else if s := toStr(v); s != "" && s != "[]" {
 				f[k] = "••••••"
 			}
-		default:
-			f[k] = v
 		}
 	}
 	entry["f"] = f
+	approveWith := tx.ApproveWith
+	if approveWith == "" {
+		approveWith = src.MCPApproveAny
+	}
 	return map[string]any{
-		"id":      tx.ID,
-		"client":  tx.TokenName,
-		"op":      tx.Tool,
-		"summary": tx.Preview,
-		"entry":   entry,
-		"created": ms(tx.CreatedAt),
-		"expires": ms(tx.ExpiresAt),
-		"status":  status,
-		"receipt": tx.Receipt,
+		"id":          tx.ID,
+		"client":      tx.TokenName,
+		"op":          tx.Tool,
+		"summary":     tx.Preview,
+		"entry":       entry,
+		"created":     ms(tx.CreatedAt),
+		"expires":     ms(tx.ExpiresAt),
+		"status":      status,
+		"receipt":     tx.Receipt,
+		"error":       tx.Error,
+		"decidedVia":  tx.DecidedVia,
+		"approveWith": approveWith,
 	}
 }
 
@@ -1381,7 +1529,7 @@ func (s *desktopServer) mcpView() map[string]any {
 	for _, tx := range txs {
 		txList = append(txList, mcpTxView(tx))
 	}
-	return map[string]any{"enabled": enabled, "clients": clients, "tokens": mcpTokenViews(), "tx": txList}
+	return map[string]any{"enabled": enabled, "clients": clients, "tokens": mcpTokenViews(), "assistants": mcpAssistantViews(), "tx": txList, "policy": currentMCPPolicyView()}
 }
 
 func sessionsView() []map[string]any {

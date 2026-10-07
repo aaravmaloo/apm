@@ -279,40 +279,208 @@ func ListMCPTokens() ([]MCPToken, error) {
 	return list, nil
 }
 
-// requestMCPApproval queues a vault change as a pending transaction. Only the
-// person at the computer can commit it; nothing an MCP client sends can.
-func requestMCPApproval(tokenName, tool string, args json.RawMessage, preview string) *mcp.CallToolResult {
-	tx, err := CreateMCPTransaction(tokenName, tool, args, preview, 15*time.Minute)
+// How long a write tool waits for the user's answer before telling the agent
+// to check back, and how often it looks. Tests shorten the wait.
+var (
+	mcpApprovalWait = 2 * time.Minute
+	mcpApprovalPoll = 250 * time.Millisecond
+	mcpWatchPoll    = time.Second
+)
+
+func mcpText(text string) *mcp.CallToolResult {
+	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}
+}
+
+func mcpError(text string) *mcp.CallToolResult {
+	return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: text}}}
+}
+
+// requestMCPApproval queues a vault change and waits for the user's answer in
+// the APM approval prompt. Only the person at the computer can approve it;
+// nothing an MCP client sends can. An assistant the user set to bypass gets
+// its change approved at once, without a prompt; it is applied as usual.
+func requestMCPApproval(ctx, serverCtx context.Context, vaultPath string, access *mcpAccess, tool string, args json.RawMessage, preview string) *mcp.CallToolResult {
+	tokenName := access.name()
+	ttl := 15 * time.Minute
+	if policy, err := LoadMCPPolicy(); err == nil {
+		ttl = policy.Expiry()
+	}
+	auto := access.bypassActive()
+	via := ""
+	if auto {
+		via = "bypass"
+	}
+	tx, err := createMCPTransaction(tokenName, tool, args, preview, ttl, via)
 	if err != nil {
-		return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Transaction error: %v", err)}}}
+		return mcpError(fmt.Sprintf("Transaction error: %v", err))
 	}
 	LogAction("MCP_TX_REQUESTED", fmt.Sprintf("Token '%s' requested: %s", tokenName, preview))
-	msg := fmt.Sprintf("Waiting for approval: %s\nRequest %s expires at %s. The user approves or rejects it in the APM app (Settings > AI access). Nothing changes until they approve. Call tx_list to see whether it was approved.", preview, tx.ID, tx.ExpiresAt.Format(time.RFC3339))
-	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: msg}}}
+	if auto {
+		LogAction("MCP_TX_AUTO_APPROVED", fmt.Sprintf("Approved without asking for assistant '%s': %s", tokenName, preview))
+	} else {
+		notifyApprover(tx)
+	}
+
+	deadline := time.NewTimer(mcpApprovalWait)
+	defer deadline.Stop()
+	tick := time.NewTicker(mcpApprovalPoll)
+	defer tick.Stop()
+	for {
+		if res := mcpTxOutcome(tx.ID, vaultPath); res != nil {
+			return res
+		}
+		select {
+		case <-tick.C:
+			continue
+		case <-deadline.C:
+		case <-ctx.Done():
+		}
+		// The agent stops waiting, but an approval that arrives later is still
+		// applied while this server runs.
+		go watchMCPTransaction(serverCtx, tx.ID, vaultPath)
+		return mcpText(fmt.Sprintf("Still waiting for approval (request %s, expires %s). Call tx_list later to see the outcome.", tx.ID, tx.ExpiresAt.Format(time.RFC3339)))
+	}
+}
+
+// mcpSpacePhrase names where an assistant's change goes. No space (or
+// "default") means the default space, which is where pm puts it.
+func mcpSpacePhrase(space string) string {
+	space = strings.TrimSpace(space)
+	if space == "" || strings.EqualFold(space, "default") {
+		return "in the default space"
+	}
+	return fmt.Sprintf("in space %q", space)
+}
+
+func watchMCPTransaction(ctx context.Context, id, vaultPath string) {
+	tick := time.NewTicker(mcpWatchPoll)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+		}
+		if mcpTxOutcome(id, vaultPath) != nil {
+			return
+		}
+	}
+}
+
+// mcpTxOutcome reports what happened to a request, applying it when it is
+// approved and nobody has claimed it. nil means it is still undecided.
+func mcpTxOutcome(id, vaultPath string) *mcp.CallToolResult {
+	tx, err := GetMCPTransaction(id)
+	if err != nil {
+		if errors.Is(err, ErrMCPTxNotFound) || errors.Is(err, ErrMCPTxExpired) {
+			return mcpText(fmt.Sprintf("Request %s expired before it was approved. Nothing changed.", id))
+		}
+		return nil
+	}
+	switch tx.Status {
+	case MCPTxCommitted:
+		return mcpApprovedResult(*tx)
+	case MCPTxRejected:
+		return mcpText("Rejected in APM. Nothing changed.")
+	case MCPTxAborted:
+		return mcpText(fmt.Sprintf("Request %s was aborted. Nothing changed.", id))
+	case MCPTxFailed:
+		return mcpError("Could not apply the request: " + tx.Error)
+	case MCPTxApproved:
+		if tx.ClaimedBy == "" {
+			return applyApprovedMCPTransaction(id, vaultPath)
+		}
+	}
+	return nil
+}
+
+// applyApprovedMCPTransaction applies an approved request with the pm
+// session when the APM app has not. Without a usable session the request
+// stays approved and the app applies it once the vault is unlocked.
+func applyApprovedMCPTransaction(id, vaultPath string) *mcp.CallToolResult {
+	tx, ok, err := ClaimMCPTransaction(id, "serve")
+	if err != nil || !ok {
+		return nil
+	}
+	vault, masterPwd, err := openVaultForMCPApply(vaultPath)
+	if err != nil {
+		_ = ReleaseMCPTransaction(id)
+		return mcpText("Approved. APM will make the change when you unlock the vault.")
+	}
+	if r := mcpRefuseNewer(vault); r != nil {
+		_ = ReleaseMCPTransaction(id)
+		return r
+	}
+	summary, err := applyMCPTransactionToFile(vault, masterPwd, vaultPath, tx)
+	if err != nil {
+		_ = FailMCPTransaction(id, err.Error())
+		return mcpError("Could not apply the request: " + err.Error())
+	}
+	receipt, err := FinalizeMCPTransaction(id, summary, true)
+	if err != nil {
+		return mcpError(fmt.Sprintf("The change was saved, but the request could not be closed: %v", err))
+	}
+	LogAction(MCPAuditAction(tx.Tool), fmt.Sprintf("Approved in APM for token '%s': %s", tx.TokenName, tx.Preview))
+	tx.Receipt = receipt
+	return mcpApprovedResult(tx)
+}
+
+func mcpApprovedResult(tx MCPTransaction) *mcp.CallToolResult {
+	var args struct {
+		Name string `json:"name"`
+	}
+	_ = json.Unmarshal(tx.Args, &args)
+	verb := map[string]string{"add_entry": "Added", "edit_entry": "Changed", "delete_entry": "Deleted"}[tx.Tool]
+	if verb == "" {
+		verb = "Applied"
+	}
+	return mcpText(fmt.Sprintf("Approved. %s %q. Receipt %s", verb, args.Name, tx.Receipt))
+}
+
+// MCPServeOptions say how pm mcp serve identifies the assistant. With Token
+// the legacy token's permissions apply. Without it the assistant is paired:
+// Harness is the --client id it was set up with.
+type MCPServeOptions struct {
+	Token   string
+	Harness string
 }
 
 func StartMCPServer(token string, vaultPath string, transport mcp.Transport) error {
-	config, err := LoadMCPConfig()
-	if err != nil {
-		return err
-	}
+	return ServeMCP(MCPServeOptions{Token: token}, vaultPath, transport)
+}
 
-	mcpToken, ok := config.Tokens[token]
-	if !ok {
-		fmt.Printf("DEBUG: Token mismatch. Wanted: %s, have tokens: %v\n", token, config.Tokens)
-		LogAction("MCP_AUTH_FAILED", "Invalid token used")
-		return errors.New("invalid or revoked MCP token")
-	}
+func ServeMCP(opts MCPServeOptions, vaultPath string, transport mcp.Transport) error {
+	// Requests still waiting for approval are watched until the server stops.
+	serverCtx, stopServer := context.WithCancel(context.Background())
+	defer stopServer()
 
-	if !mcpToken.ExpiresAt.IsZero() && time.Now().After(mcpToken.ExpiresAt) {
-		LogAction("MCP_AUTH_FAILED", fmt.Sprintf("Expired token '%s' used", mcpToken.Name))
-		return errors.New("token expired")
-	}
+	var access *mcpAccess
+	if opts.Token != "" {
+		config, err := LoadMCPConfig()
+		if err != nil {
+			return err
+		}
+		token := opts.Token
+		mcpToken, ok := config.Tokens[token]
+		if !ok {
+			LogAction("MCP_AUTH_FAILED", "Invalid token used")
+			return errors.New("invalid or revoked MCP token")
+		}
 
-	mcpToken.LastUsedAt = time.Now()
-	mcpToken.UsageCount++
-	config.Tokens[token] = mcpToken
-	SaveMCPConfig(config)
+		if !mcpToken.ExpiresAt.IsZero() && time.Now().After(mcpToken.ExpiresAt) {
+			LogAction("MCP_AUTH_FAILED", fmt.Sprintf("Expired token '%s' used", mcpToken.Name))
+			return errors.New("token expired")
+		}
+
+		mcpToken.LastUsedAt = time.Now()
+		mcpToken.UsageCount++
+		config.Tokens[token] = mcpToken
+		SaveMCPConfig(config)
+		access = newMCPTokenAccess(mcpToken)
+	} else {
+		access = newMCPPairedAccess(serverCtx, opts.Harness)
+		defer access.close()
+	}
 	// Expose the execution context to downstream audit and policy layers so MCP
 	// actions are attributable without special casing every call site.
 	_ = os.Setenv("APM_CONTEXT", "mcp")
@@ -321,15 +489,19 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "APM-Server",
 		Version: "1.3.0",
-	}, nil)
+	}, &mcp.ServerOptions{
+		InitializedHandler: func(ctx context.Context, req *mcp.InitializedRequest) {
+			go access.begin(req.Session)
+		},
+	})
 
 	s.AddTool(&mcp.Tool{
 		Name:        "list_vault",
 		Description: "List all entries in the vault by category",
 		InputSchema: map[string]any{"type": "object"},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "list_vault") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "list_vault"); deny != nil {
+			return deny, nil
 		}
 		vault, _, err := unlockVaultForMCP(vaultPath)
 		if err != nil {
@@ -398,8 +570,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "get_entry") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "get_entry"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Name     string `json:"name"`
@@ -482,7 +654,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			os.Remove(tempPath)
 		}()
 
-		LogAction("MCP_ENTRY_ACCESSED", fmt.Sprintf("Token '%s' accessed entry '%s' (%s)", mcpToken.Name, args.Name, itemType))
+		access.rememberRef(tempPath, args.Name)
+		LogAction("MCP_ENTRY_ACCESSED", fmt.Sprintf("Token '%s' accessed entry '%s' (%s)", access.name(), args.Name, itemType))
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Data for %s '%s' encrypted at %s. Reference: %s. Use decrypt_entry to view.", itemType, args.Name, tempPath, hex.EncodeToString(ephemeralKey))}}}, nil
 	})
 
@@ -497,8 +670,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"query"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "search_vault") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "search_vault"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Query string `json:"query"`
@@ -560,8 +733,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"path", "reference"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "decrypt_entry") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "decrypt_entry"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Path      string `json:"path"`
@@ -600,8 +773,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "get_totp") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "get_totp"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Name string `json:"name"`
@@ -625,7 +798,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 
 	s.AddTool(&mcp.Tool{
 		Name:        "add_entry",
-		Description: "Request a new vault entry. The entry is added only after the user approves the request in the APM app.",
+		Description: "Request a new vault entry. APM asks the user to approve it and the call waits up to 2 minutes for the answer. The entry is added only if the user approves.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -694,38 +867,38 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"type", "name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "add_entry") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "add_entry"); deny != nil {
+			return deny, nil
 		}
 		var args MCPAddEntryArgs
 		json.Unmarshal(req.Params.Arguments, &args)
 
-		return requestMCPApproval(mcpToken.Name, "add_entry", req.Params.Arguments, fmt.Sprintf("Add %s entry '%s' in space '%s'", args.Type, args.Name, args.Space)), nil
+		return requestMCPApproval(ctx, serverCtx, vaultPath, access, "add_entry", req.Params.Arguments, fmt.Sprintf("Add %s %q %s", args.Type, args.Name, mcpSpacePhrase(args.Space))), nil
 	})
 
 	s.AddTool(&mcp.Tool{
 		Name:        "delete_entry",
-		Description: "Request removal of a vault entry. The entry is removed only after the user approves the request in the APM app.",
+		Description: "Request removal of a vault entry. APM asks the user to approve it and the call waits up to 2 minutes for the answer. The entry is removed only if the user approves.",
 		InputSchema: map[string]any{
 			"type":       "object",
 			"properties": map[string]any{"name": map[string]any{"type": "string"}},
 			"required":   []string{"name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "delete_entry") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "delete_entry"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Name string `json:"name"`
 		}
 		json.Unmarshal(req.Params.Arguments, &args)
 
-		return requestMCPApproval(mcpToken.Name, "delete_entry", req.Params.Arguments, fmt.Sprintf("Delete entry '%s'", args.Name)), nil
+		return requestMCPApproval(ctx, serverCtx, vaultPath, access, "delete_entry", req.Params.Arguments, fmt.Sprintf("Delete entry '%s'", args.Name)), nil
 	})
 
 	s.AddTool(&mcp.Tool{
 		Name:        "edit_entry",
-		Description: "Request a change to an existing vault entry. The change is made only after the user approves the request in the APM app.",
+		Description: "Request a change to an existing vault entry. APM asks the user to approve it and the call waits up to 2 minutes for the answer. The change is made only if the user approves.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -744,13 +917,13 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"type", "name"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "edit_entry") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "edit_entry"); deny != nil {
+			return deny, nil
 		}
 		var args MCPEditEntryArgs
 		json.Unmarshal(req.Params.Arguments, &args)
 
-		return requestMCPApproval(mcpToken.Name, "edit_entry", req.Params.Arguments, fmt.Sprintf("Edit %s entry '%s' in space '%s'", args.Type, args.Name, args.Space)), nil
+		return requestMCPApproval(ctx, serverCtx, vaultPath, access, "edit_entry", req.Params.Arguments, fmt.Sprintf("Edit %s %q %s", args.Type, args.Name, mcpSpacePhrase(args.Space))), nil
 	})
 
 	s.AddTool(&mcp.Tool{
@@ -765,8 +938,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"action"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "manage_profiles") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "manage_profiles"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Action  string `json:"action"`
@@ -818,8 +991,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"action"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "manage_spaces") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "manage_spaces"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Action string `json:"action"`
@@ -885,8 +1058,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			"required": []string{"provider", "token"},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "cloud_config") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "cloud_config"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Provider string `json:"provider"`
@@ -927,8 +1100,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 			},
 		},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "get_history") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "get_history"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Limit int `json:"limit"`
@@ -962,8 +1135,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 		Description: "Generate a secure random password",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"length": map[string]any{"type": "integer", "minimum": 1, "maximum": mcpMaxPasswordLength}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "generate_password") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "generate_password"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Length int `json:"length"`
@@ -987,8 +1160,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 		Description: "Trigger cloud sync",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"provider": map[string]any{"type": "string", "enum": []string{"gdrive", "github"}}}, "required": []string{"provider"}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "cloud_sync") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "cloud_sync"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Provider string `json:"provider"`
@@ -1048,8 +1221,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 		Description: "Retrieve recent audit logs",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"limit": map[string]any{"type": "integer"}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "get_audit_logs") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "get_audit_logs"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Limit int `json:"limit"`
@@ -1071,8 +1244,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 		Description: "List pending/recent MCP mutation transactions",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"limit": map[string]any{"type": "integer"}}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "tx_list") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "tx_list"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			Limit int `json:"limit"`
@@ -1100,8 +1273,8 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 		Description: "Abort a pending MCP transaction by id",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{"tx_id": map[string]any{"type": "string"}}, "required": []string{"tx_id"}},
 	}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if !hasPermission(mcpToken.Permissions, "tx_abort") {
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Denied"}}}, nil
+		if deny := access.check(ctx, req, "tx_abort"); deny != nil {
+			return deny, nil
 		}
 		var args struct {
 			TxID string `json:"tx_id"`
@@ -1116,7 +1289,7 @@ func StartMCPServer(token string, vaultPath string, transport mcp.Transport) err
 	if transport == nil {
 		transport = &mcp.StdioTransport{}
 	}
-	return s.Run(context.Background(), transport)
+	return s.Run(serverCtx, transport)
 }
 
 // mcpRefuseNewer stops an MCP write against a vault from a newer pm.
@@ -1232,7 +1405,6 @@ func unlockVaultForMCP(vaultPath string) (*Vault, string, error) {
 
 	data, err := LoadVault(vaultPath)
 	if err != nil {
-		fmt.Printf("DEBUG: LoadVault error: %v\n", err)
 		return nil, "", err
 	}
 
@@ -1242,7 +1414,6 @@ func unlockVaultForMCP(vaultPath string) (*Vault, string, error) {
 
 	vault, err := DecryptVault(data, session.MasterPassword, 1)
 	if err != nil {
-		fmt.Printf("DEBUG: DecryptVault error: %v\n", err)
 		return nil, "", err
 	}
 

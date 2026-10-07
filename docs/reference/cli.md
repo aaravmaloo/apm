@@ -141,11 +141,26 @@ While the vault is unlocked, the desktop app and `pm extension serve` fetch each
 
 ### MCP
 
-- `pm mcp config`
-- `pm mcp token`
+- `pm mcp add [assistant] [--yes]`
 - `pm mcp list`
-- `pm mcp revoke [name_or_token]`
-- `pm mcp serve`
+- `pm mcp revoke <name|id>`
+- `pm mcp pause`
+- `pm mcp resume`
+- `pm mcp settings [--approve-with any|touchid] [--expiry 5m|15m|30m|1h] [--new-assistants ask|block] [--ask-before-secrets on|off]`
+- `pm mcp bypass <assistant> ask|always|1h`
+- `pm mcp config`
+- `pm mcp serve [--client <assistant>] [--token <token>]`
+- `pm mcp token` (legacy, hidden)
+
+`pm mcp add` sets up an AI assistant to use APM. Without an argument it asks which assistant you use. It then runs the assistant's own setup command, merges an `apm` entry into the config file the assistant reads (keeping other keys, backing the old file up to `<file>.apm-backup`, and refusing to touch a file that isn't plain JSON), or opens the assistant's install link. Each way starts `pm mcp serve --client <assistant>`. The first time the assistant starts it, approve it in the APM prompt.
+
+A newly allowed assistant may use `list_vault`, `search_vault`, `get_entry`, `decrypt_entry`, `get_totp`, `generate_password`, `add_entry`, `edit_entry`, `delete_entry`, `tx_list` and `tx_abort`. Change this per assistant in **Settings → AI access**. Permissions and revokes apply from the assistant's next tool call.
+
+`pm mcp list` shows the allowed assistants (with whether their changes ask first) and any legacy tokens. `pm mcp revoke` takes an assistant's name or id, or a legacy token's name. `pm mcp config` prints the generic server entry for assistants `pm mcp add` doesn't know. `pm mcp serve` is what assistants run; with `--token` it uses a legacy token instead of pairing.
+
+`pm mcp pause` refuses every tool call from every assistant until `pm mcp resume`. `pm mcp settings` without flags prints the MCP settings; with flags it changes them: `--approve-with touchid` lets only a touch approve on a Mac with Touch ID, `--expiry` sets how long a change request stays open, `--new-assistants block` refuses assistants APM doesn't know without a prompt, and `--ask-before-secrets on` makes `get_entry`, `decrypt_entry`, `get_totp` and `search_vault` ask first. `pm mcp bypass` sets whether an assistant's adds, edits and deletes are approved in the prompt (`ask`), without asking (`always`), or without asking for the next hour (`1h`). Connect and read requests always ask.
+
+Stricter changes apply at once. Looser ones (resume, `--approve-with any`, a longer expiry, `--new-assistants ask`, `--ask-before-secrets off`, `bypass always` or `1h`) need you at the terminal: stdin and stdout must be a terminal, and pm asks for Touch ID, or the master password when Touch ID isn't available. Otherwise pm prints `Loosening MCP settings needs you at the terminal.` and exits 1. Each command prints what changed. See [MCP settings](../concepts/mcp.md#settings).
 
 ### Auditing and diagnostics
 

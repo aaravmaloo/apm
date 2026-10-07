@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=448">
+<title>APM approval</title>
+<script>
+document.documentElement.setAttribute('data-theme',
+  window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+</script>
+<style>{{.CSS}}</style>
+</head>
+<body>
+<section class="apm-sheet is-pre" id="sheet" role="alertdialog" aria-labelledby="sheetTitle" aria-describedby="sheetSub"
+  data-expires="{{.ExpiresMS}}" data-cap="{{.Caption}}" data-done="{{.DoneLabel}}" data-rejected="{{.RejectedLabel}}"{{if .TouchOnly}} data-approve-with="touchid"{{end}}>
+  <div class="sheet-top">
+    <span class="app-tile"><img src="{{.Mark}}" alt=""></span>
+    <button class="sheet-close" id="closeBtn" type="button" aria-label="{{.RejectLabel}}">{{.CloseIcon}}</button>
+  </div>
+  <div class="sheet-title" id="sheetTitle">{{.Title}}</div>
+  <div class="sheet-sub" id="sheetSub">{{.Subtitle}}</div>
+  <div class="sheet-meta">
+    <span>via <code>pm mcp serve</code></span>
+    {{- if .Connect}}
+    <span>{{.Token}}{{if .Version}} {{.Version}}{{end}}</span>
+    {{- else}}
+    <span>token <code>{{.Token}}</code></span>
+    {{- end}}
+    <span>expires in <span id="ttl" class="tnum">{{.TTL}}</span></span>
+  </div>
+
+  <div class="sheet-card">
+    <div class="card-head">
+      <span class="card-icon">{{.Icon}}</span>
+      <div>
+        <div class="card-name">{{.Name}}</div>
+        <div class="card-sub">{{.TypeLabel}}</div>
+      </div>
+    </div>
+    {{- if .Rows}}
+    <dl class="card-rows{{if .Connect}} is-wide{{end}}">
+      {{- range .Rows}}
+      <dt>{{.Label}}</dt><dd>{{if .Secret}}<span class="mono">{{.Value}}</span>{{else}}{{.Value}}{{end}}{{if .Badge}}<span class="badge is-warn">{{.Badge}}</span>{{end}}</dd>
+      {{- end}}
+    </dl>
+    {{- end}}
+  </div>
+
+  <div class="touch">
+    <div class="touch-layer" id="layerSensor" hidden>
+      <div class="touch-slot" id="slot" aria-hidden="true"></div>
+      <p class="touch-cap" id="cap" aria-live="polite">{{.Caption}}</p>
+    </div>
+    <div class="touch-layer" id="layerKeys">
+      <p class="touch-cap">Press <span class="kbd">Space</span> to {{.Verb}} · <span class="kbd">Esc</span> to {{.RejectVerb}}</p>
+    </div>
+  </div>
+
+  <div class="sheet-foot">
+    <button class="btn btn-ghost" id="rejectBtn" type="button">{{.RejectLabel}} <span class="kbd">Esc</span></button>
+    {{- if .TouchOnly}}
+    <span class="foot-hint" id="approveHint" hidden>Touch ID required</span>
+    {{- end}}
+    <button class="btn {{if .Danger}}btn-danger{{else}}btn-primary{{end}}" id="approveBtn" type="button">{{.ApproveLabel}}<span class="kbd" id="approveKbd">Space</span></button>
+  </div>
+</section>
+<script>{{.Script}}</script>
+</body>
+</html>

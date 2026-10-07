@@ -1,0 +1,172 @@
+@font-face{font-family:"Geist";src:url("fonts/Geist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Geist Mono";src:url("fonts/GeistMono-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root,[data-theme="light"]{
+  color-scheme:light;
+  --bg:#ffffff;
+  --bg-subtle:#f9f9fa;
+  --surface:#ffffff;
+  --fill:#f1f1f4;
+  --fill-hover:#e9e9ed;
+  --fill-active:#e2e2e7;
+  --border:#e7e7eb;
+  --border-strong:#d4d4da;
+  --border-hover:#b9b9c2;
+  --text:#111113;
+  --text-secondary:#5b5b65;
+  --text-tertiary:#696973;
+  --text-disabled:#a9a9b2;
+  --primary:#111113;
+  --primary-hover:#2b2b30;
+  --on-primary:#ffffff;
+  --accent:#1d5cf5;
+  --accent-hover:#1649cc;
+  --accent-soft:#edf2ff;
+  --on-accent:#ffffff;
+  --success:#157347;
+  --success-soft:#e8f6ee;
+  --warning:#955500;
+  --warning-soft:#fff4de;
+  --danger:#cc2338;
+  --danger-soft:#fdecee;
+  --on-danger:#ffffff;
+  --focus:var(--accent);
+  --overlay:rgba(9, 9, 11, 0.40);
+  --mark-tile:#0b0b0d;
+  --mark-ink:#f2f2f2;
+  --logo-plate:#ffffff;
+  --logo-ink-filter:none;
+  --shadow-xs:0 1px 2px rgba(17, 17, 19, 0.06);
+  --shadow-sm:0 1px 2px rgba(17, 17, 19, 0.04), 0 2px 8px rgba(17, 17, 19, 0.05);
+  --shadow-md:0 2px 4px rgba(17, 17, 19, 0.04), 0 10px 28px rgba(17, 17, 19, 0.10);
+  --shadow-lg:0 4px 8px rgba(17, 17, 19, 0.04), 0 28px 72px rgba(17, 17, 19, 0.16);
+  --shadow-highlight:inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#09090b;
+  --bg-subtle:#0e0e11;
+  --surface:#131316;
+  --fill:#1b1b1f;
+  --fill-hover:#222227;
+  --fill-active:#29292f;
+  --border:#1f1f24;
+  --border-strong:#303037;
+  --border-hover:#44444c;
+  --text:#ededf0;
+  --text-secondary:#a1a1ab;
+  --text-tertiary:#8a8a94;
+  --text-disabled:#56565f;
+  --primary:#ededf0;
+  --primary-hover:#cfcfd5;
+  --on-primary:#09090b;
+  --accent:#5b8dff;
+  --accent-hover:#7fa6ff;
+  --accent-soft:#111c38;
+  --on-accent:#09090b;
+  --success:#3ecf8e;
+  --success-soft:#0c271b;
+  --warning:#f2b441;
+  --warning-soft:#2a1e08;
+  --danger:#ff6b78;
+  --danger-soft:#331117;
+  --on-danger:#09090b;
+  --focus:var(--accent);
+  --overlay:rgba(0, 0, 0, 0.64);
+  --mark-tile:#18181c;
+  --mark-ink:#f2f2f2;
+  --logo-plate:#222226;
+  --logo-ink-filter:invert(1) hue-rotate(180deg);
+  --shadow-xs:0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm:0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-md:0 10px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --shadow-lg:0 28px 72px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-highlight:inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#09090b;
+  --bg-subtle:#0e0e11;
+  --surface:#131316;
+  --fill:#1b1b1f;
+  --fill-hover:#222227;
+  --fill-active:#29292f;
+  --border:#1f1f24;
+  --border-strong:#303037;
+  --border-hover:#44444c;
+  --text:#ededf0;
+  --text-secondary:#a1a1ab;
+  --text-tertiary:#8a8a94;
+  --text-disabled:#56565f;
+  --primary:#ededf0;
+  --primary-hover:#cfcfd5;
+  --on-primary:#09090b;
+  --accent:#5b8dff;
+  --accent-hover:#7fa6ff;
+  --accent-soft:#111c38;
+  --on-accent:#09090b;
+  --success:#3ecf8e;
+  --success-soft:#0c271b;
+  --warning:#f2b441;
+  --warning-soft:#2a1e08;
+  --danger:#ff6b78;
+  --danger-soft:#331117;
+  --on-danger:#09090b;
+  --focus:var(--accent);
+  --overlay:rgba(0, 0, 0, 0.64);
+  --mark-tile:#18181c;
+  --mark-ink:#f2f2f2;
+  --logo-plate:#222226;
+  --logo-ink-filter:invert(1) hue-rotate(180deg);
+  --shadow-xs:0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm:0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-md:0 10px 28px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --shadow-lg:0 28px 72px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-highlight:inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}}
+:root{
+  --font-sans:"Geist", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --space-0\.5:2px;
+  --space-1:4px;
+  --space-1\.5:6px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --radius-xs:4px;
+  --radius-sm:6px;
+  --radius-md:8px;
+  --radius-lg:12px;
+  --radius-xl:16px;
+  --radius-icon:22%;
+  --radius-full:9999px;
+  --control-xs:24px;
+  --control-sm:28px;
+  --control-md:32px;
+  --control-lg:40px;
+  --titlebar:48px;
+  --sidebar:248px;
+  --list-pane:340px;
+  --row:56px;
+  --icon-sm:14px;
+  --icon-md:16px;
+  --icon-lg:20px;
+}
+.display{font-family:var(--font-sans);font-size:32px;line-height:38px;font-weight:600;letter-spacing:-0.028em}
+.title-1{font-family:var(--font-sans);font-size:24px;line-height:30px;font-weight:600;letter-spacing:-0.022em}
+.title-2{font-family:var(--font-sans);font-size:18px;line-height:24px;font-weight:600;letter-spacing:-0.016em}
+.title-3{font-family:var(--font-sans);font-size:15px;line-height:22px;font-weight:600;letter-spacing:-0.011em}
+.body{font-family:var(--font-sans);font-size:14px;line-height:20px;font-weight:400;letter-spacing:-0.006em}
+.body-medium{font-family:var(--font-sans);font-size:14px;line-height:20px;font-weight:500;letter-spacing:-0.006em}
+.small{font-family:var(--font-sans);font-size:13px;line-height:18px;font-weight:400}
+.small-medium{font-family:var(--font-sans);font-size:13px;line-height:18px;font-weight:500}
+.caption{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:400}
+.overline{font-family:var(--font-sans);font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase}
+.mono{font-family:var(--font-mono);font-size:13px;line-height:20px;font-weight:400}
+.mono-small{font-family:var(--font-mono);font-size:12px;line-height:16px;font-weight:400}
+.code{font-family:var(--font-mono);font-size:22px;line-height:28px;font-weight:500;letter-spacing:0.06em}

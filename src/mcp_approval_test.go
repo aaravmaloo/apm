@@ -6,18 +6,17 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // An MCP client must not be able to commit its own vault change: write tools
 // only queue a request, and passing tx_id with approve=true changes nothing.
+// The calls give up waiting quickly here, since nobody answers.
 func TestMCPWriteToolsCannotSelfApprove(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv("HOME", dir)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
-	t.Setenv("APPDATA", filepath.Join(dir, "AppData"))
-	t.Setenv("APM_STATE_DIR", filepath.Join(dir, "state"))
+	dir := isolateMCPState(t)
+	setMCPApprovalWait(t, 100*time.Millisecond)
 	vaultPath := filepath.Join(dir, "vault.dat")
 
 	token, err := GenerateMCPToken("test", []string{"add_entry", "delete_entry", "edit_entry"}, 0)
@@ -50,7 +49,7 @@ func TestMCPWriteToolsCannotSelfApprove(t *testing.T) {
 	}
 
 	out := call("add_entry", map[string]any{"type": "password", "name": "example", "username": "me", "password": "pw"})
-	if !strings.Contains(out, "Waiting for approval") {
+	if !strings.Contains(out, "Still waiting for approval") {
 		t.Fatalf("add_entry did not ask for approval: %q", out)
 	}
 	txs, err := ListMCPTransactions(0)

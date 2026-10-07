@@ -4,6 +4,24 @@ Complete reference for every tool exposed by the APM MCP server, including schem
 
 ---
 
+## Permissions
+
+Assistants set up with `pm mcp add` are [paired](../concepts/mcp.md#pairing): you allow each one in APM the first time it connects. Each tool has a permission with the tool's own name (`list_vault`, `add_entry`, ...). A newly allowed assistant may use `list_vault`, `search_vault`, `get_entry`, `decrypt_entry`, `get_totp`, `generate_password`, `add_entry`, `edit_entry`, `delete_entry`, `tx_list` and `tx_abort`. `manage_profiles`, `manage_spaces`, `cloud_config`, `cloud_sync`, `get_history` and `get_audit_logs` apply without asking you, so they're off until you turn them on in **Settings → AI access**.
+
+APM checks the assistant's permissions on every call, so a change or a revoke applies to its next call. Calls return:
+
+- `APM didn't allow <assistant>. Ask again by restarting <assistant>.` when you declined the assistant, didn't answer within 2 minutes, or revoked it.
+- `Denied. <assistant> isn't allowed to use <tool>. ...` when its permissions leave the tool out.
+- `APM has paused MCP access. Resume it in APM settings.` for every tool while MCP access is paused (`pm mcp pause`).
+- `APM isn't accepting new assistants. Allow them in APM settings.` for an assistant APM doesn't know while new assistants are blocked.
+- `Not allowed in APM.` from `get_entry`, `decrypt_entry`, `get_totp` and `search_vault` when **Ask before secrets** is on and you decline the read or don't answer within 2 minutes.
+
+See [MCP settings](../concepts/mcp.md#settings) for these settings.
+
+The **Required scope** lines below are for [legacy tokens](../concepts/mcp.md#legacy-tokens) (`pm mcp serve --token`), which use scopes instead.
+
+---
+
 ## Read Tools
 
 ### `list_entries`
@@ -104,8 +122,12 @@ Add a new entry to the vault.
 
 **Transaction flow:**
 
-1. The call queues a pending request and returns its `tx_id`. Nothing is written yet.
-2. You approve or reject the request in the desktop app (**Settings → AI access**). The assistant cannot approve it.
+1. The call queues a pending request. Nothing is written yet.
+2. APM shows an approval prompt on top of every window and Space, including full-screen apps. Touch the Touch ID sensor or click **Approve** to approve it; on a Mac without Touch ID, press Space. Esc or **Reject** rejects it. The assistant cannot approve it.
+3. The call waits up to 2 minutes for your answer and returns the outcome: `Approved. Added "<name>". Receipt <receipt>`, or `Rejected in APM. Nothing changed.`
+4. If you haven't answered after 2 minutes, the call returns `Still waiting for approval (request <tx_id>, expires <time>)`. The request stays open for 15 minutes (the expiry setting: 5, 15, 30 or 60), and the assistant can check it with `tx_list`.
+
+When you set the assistant to approve changes without asking (`pm mcp bypass`), steps 2 and 3 are skipped: the request is approved at once and the call returns the result.
 
 ---
 
@@ -197,13 +219,14 @@ Read the audit log.
 
 ## Transaction Guardrails Summary
 
-| Tool            | Uses Transaction | Call returns            | Commit                          |
-| :-------------- | :--------------: | :---------------------- | :------------------------------ |
-| `add_entry`     |        ✅         | Pending request + tx_id | When you approve it in the app  |
-| `edit_entry`    |        ✅         | Pending request + tx_id | When you approve it in the app  |
-| `delete_entry`  |        ✅         | Pending request + tx_id | When you approve it in the app  |
-| `manage_spaces` |        ❌         | —                       | Executes immediately            |
-| All read tools  |        ❌         | —                       | Executes immediately            |
+| Tool            | Uses Transaction | Call returns                              | Commit                        |
+| :-------------- | :--------------: | :---------------------------------------- | :---------------------------- |
+| `add_entry`     |        ✅         | Your answer, after waiting up to 2 minutes | When you approve the prompt   |
+| `edit_entry`    |        ✅         | Your answer, after waiting up to 2 minutes | When you approve the prompt   |
+| `delete_entry`  |        ✅         | Your answer, after waiting up to 2 minutes | When you approve the prompt   |
+| `manage_spaces` |        ❌         | —                                         | Executes immediately          |
+| `get_entry`, `decrypt_entry`, `get_totp`, `search_vault` | With **Ask before secrets** | Your answer, after waiting up to 2 minutes | Runs when you allow it (otherwise immediately) |
+| Other read tools |        ❌         | —                                         | Executes immediately          |
 
 ---
 
@@ -211,7 +234,7 @@ Read the audit log.
 
 | Code                  | Description                        |
 | :-------------------- | :--------------------------------- |
-| `PERMISSION_DENIED`   | Token lacks required scope         |
+| `PERMISSION_DENIED`   | The assistant or token lacks the permission |
 | `SESSION_REQUIRED`    | No active APM session              |
 | `ENTRY_NOT_FOUND`     | Entry ID/name not found            |
 | `TRANSACTION_EXPIRED` | Request expired before you approved it |

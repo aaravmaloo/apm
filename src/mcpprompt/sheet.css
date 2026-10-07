@@ -1,0 +1,301 @@
+/* APM approval sheet, as shown by pm's own approval panel.
+   Production trim of the approved prototype's sheet.css: the sheet only,
+   placed in a 448px transparent panel that leaves room for its shadow. */
+
+:root{
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --ease-spring:cubic-bezier(.34,1.4,.64,1);
+  --dur-fast:120ms;
+  --dur-base:200ms;
+  --dur-slow:360ms;
+
+  /* The panel is the sheet plus this margin, so the shadow has to fit in it. */
+  --gutter:24px;
+  --gutter-bottom:48px;
+  --sheet-shadow:
+    0 0 0 .5px rgba(17,17,19,.04),
+    0 4px 10px rgba(17,17,19,.08),
+    0 12px 24px rgba(17,17,19,.18);
+  --sheet-rule:rgba(17,17,19,.08);
+}
+[data-theme="dark"]{
+  --sheet-shadow:
+    0 2px 6px rgba(0,0,0,.4),
+    0 12px 24px rgba(0,0,0,.55);
+  --sheet-rule:rgba(255,255,255,.07);
+}
+
+html,body{margin:0;background:transparent;overflow:hidden}
+body{
+  font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none;
+  cursor:default;
+}
+
+/* ---------- Sheet ---------- */
+
+.apm-sheet{
+  position:absolute;
+  left:var(--gutter);
+  top:var(--gutter);
+  width:400px;
+  transform-origin:50% 0;
+  box-sizing:border-box;
+  padding:var(--space-6);
+  background:var(--surface);
+  color:var(--text);
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--sheet-shadow), var(--shadow-highlight);
+  font-family:var(--font-sans);
+  font-size:14px;
+  line-height:20px;
+  letter-spacing:-0.006em;
+}
+.apm-sheet *,.apm-sheet *::before,.apm-sheet *::after{box-sizing:border-box}
+.apm-sheet [hidden]{display:none !important}
+.apm-sheet :where(p,h1,h2,h3,dl,dd){margin:0}
+/* Laid out but not painted until the panel is on screen, so it can be measured. */
+.apm-sheet.is-pre,.apm-sheet.is-gone{visibility:hidden}
+
+@keyframes apm-sheet-in{
+  from{opacity:0;transform:translateY(-10px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes apm-sheet-out{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  to{opacity:0;transform:translateY(-6px) scale(.98)}
+}
+@keyframes apm-fade-in{from{opacity:0}to{opacity:1}}
+
+.apm-sheet.is-entering{animation:apm-sheet-in var(--dur-slow) var(--ease-out) both}
+.apm-sheet.is-leaving{animation:apm-sheet-out 280ms var(--ease-in-out) both;pointer-events:none}
+
+/* ---------- Header ---------- */
+
+.sheet-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+
+.app-tile{
+  flex:none;
+  width:40px;height:40px;
+  display:grid;place-items:center;
+  border-radius:10px;
+  background:var(--mark-tile);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.10);
+}
+.app-tile img{width:26px;height:26px;display:block}
+
+.sheet-close{
+  flex:none;
+  width:28px;height:28px;
+  margin:-2px -4px 0 0;
+  display:grid;place-items:center;
+  padding:0;
+  border:0;
+  border-radius:var(--radius-md);
+  background:transparent;
+  color:var(--text-tertiary);
+  cursor:pointer;
+  transition:background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.sheet-close:hover{background:var(--fill-hover);color:var(--text)}
+.sheet-close:active{transform:scale(.97)}
+.sheet-close svg{width:16px;height:16px;display:block}
+
+.sheet-title{
+  margin-top:var(--space-4);
+  font-size:20px;
+  line-height:26px;
+  font-weight:600;
+  letter-spacing:-0.018em;
+  color:var(--text);
+  text-wrap:pretty;
+  overflow-wrap:anywhere;
+}
+.sheet-sub{
+  margin-top:var(--space-1);
+  font-size:14px;
+  line-height:20px;
+  color:var(--text-secondary);
+  text-wrap:pretty;
+}
+.sheet-meta{
+  margin-top:var(--space-2);
+  display:flex;flex-wrap:wrap;align-items:baseline;
+  font-size:12px;
+  line-height:16px;
+  color:var(--text-tertiary);
+  font-variant-numeric:tabular-nums;
+}
+.sheet-meta > * + *::before{content:"\00b7";margin:0 6px;color:var(--text-tertiary)}
+.sheet-meta code{font-family:var(--font-mono);font-size:11.5px;letter-spacing:0}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- Item card ---------- */
+
+.sheet-card{
+  margin-top:var(--space-4);
+  padding:12px 14px;
+  background:var(--fill);
+  border-radius:var(--radius-lg);
+}
+.card-head{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+.card-head > div{min-width:0}
+
+.card-icon{
+  flex:none;
+  width:36px;height:36px;
+  display:grid;place-items:center;
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  color:var(--text-secondary);
+  box-shadow:inset 0 0 0 1px var(--border);
+}
+.card-icon svg{width:18px;height:18px;display:block}
+
+.card-name{
+  font-size:14px;line-height:20px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-sub{font-size:13px;line-height:18px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.card-rows{
+  display:grid;
+  grid-template-columns:92px minmax(0,1fr);
+  column-gap:var(--space-3);
+  row-gap:6px;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid var(--sheet-rule);
+  font-size:13px;
+  line-height:20px;
+}
+/* Connect requests: the access list, each with a short value. */
+.card-rows.is-wide{grid-template-columns:minmax(0,1fr) auto}
+.card-rows > :nth-child(odd){color:var(--text-tertiary);margin:0;overflow-wrap:anywhere}
+.card-rows > :nth-child(even){
+  margin:0;color:var(--text);min-width:0;
+  display:flex;align-items:center;gap:var(--space-2);
+  overflow-wrap:anywhere;
+}
+.card-rows .mono{font-family:var(--font-mono);font-size:13px;line-height:20px;letter-spacing:.06em}
+
+.badge{
+  display:inline-flex;align-items:center;flex:none;
+  height:20px;padding:0 7px;
+  border-radius:var(--radius-full);
+  font-family:var(--font-sans);
+  font-size:11px;line-height:1;font-weight:500;letter-spacing:0;
+  color:var(--text-secondary);
+  background:color-mix(in srgb, var(--text) 8%, transparent);
+  white-space:nowrap;
+}
+.badge.is-warn{color:var(--warning);background:var(--warning-soft)}
+
+/* ---------- Touch area ---------- */
+
+.touch{
+  position:relative;
+  margin-top:var(--space-5);
+  height:112px;
+  text-align:center;
+}
+/* Stacked layers, so the sensor and the key hint swap without a jump. */
+.touch-layer{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--space-3);
+}
+.touch-layer.is-in{animation:apm-fade-in var(--dur-base) var(--ease-out) both}
+
+/* The 60px glyph slot. With Touch ID armed, pm draws the system glyph over it. */
+.touch-slot{width:60px;height:60px;line-height:0}
+
+.touch-cap{
+  font-size:13px;line-height:18px;
+  color:var(--text-secondary);
+  transition:color var(--dur-base) var(--ease-out);
+}
+.touch-cap.is-err{color:var(--danger)}
+.touch-cap.is-ok{color:var(--success)}
+.touch-cap .kbd{margin:0 2px;vertical-align:1px}
+
+/* ---------- Footer & buttons ---------- */
+
+.sheet-foot{
+  margin-top:var(--space-4);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:var(--space-2);
+}
+
+.btn{
+  appearance:none;
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:var(--space-2);
+  height:36px;
+  padding:0 16px;
+  border:1px solid transparent;
+  border-radius:var(--radius-md);
+  font-family:var(--font-sans);
+  font-size:14px;line-height:20px;font-weight:500;letter-spacing:-0.006em;
+  white-space:nowrap;
+  cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+  transition:background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:default;transform:none}
+.btn-primary:disabled:hover{background:var(--primary)}
+.btn-danger:disabled:hover{filter:none}
+/* "Touch ID required": beside an Approve that only a touch can press. */
+.foot-hint{margin-left:auto;color:var(--text-tertiary);font-size:12px;line-height:16px;text-align:right}
+.btn .kbd:last-child{margin-right:-6px}
+
+.btn-ghost{background:transparent;color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--fill-hover);color:var(--text)}
+
+.btn-primary{background:var(--primary);color:var(--on-primary);box-shadow:var(--shadow-highlight)}
+.btn-primary:hover{background:var(--primary-hover)}
+
+.btn-danger{background:var(--danger);color:var(--on-danger);box-shadow:var(--shadow-highlight)}
+.btn-danger:hover{filter:brightness(1.07)}
+
+.kbd{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:20px;
+  padding:0 5px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-xs);
+  background:transparent;
+  font-family:var(--font-mono);
+  font-size:11px;line-height:1;font-weight:500;letter-spacing:0;
+  color:var(--text-tertiary);
+  white-space:nowrap;
+}
+.btn-primary .kbd,.btn-danger .kbd{
+  border-color:color-mix(in srgb, currentColor 26%, transparent);
+  background:color-mix(in srgb, currentColor 10%, transparent);
+  color:inherit;
+  opacity:.78;
+}
+
+/* ---------- Focus ---------- */
+
+.apm-sheet :is(button,a,[tabindex]):focus{outline:none}
+.apm-sheet :is(button,a,[tabindex]):focus-visible{
+  outline:2px solid var(--focus);
+  outline-offset:2px;
+}
+
+/* ---------- Reduced motion: no animation, state changes are instant ---------- */
+
+@media (prefers-reduced-motion:reduce){
+  .apm-sheet.is-entering,.apm-sheet.is-leaving,.touch-layer.is-in{animation:none !important}
+  .apm-sheet *,.apm-sheet *::before,.apm-sheet *::after{
+    transition:none !important;
+    animation:none !important;
+  }
+  .btn:active,.sheet-close:active{transform:none}
+}

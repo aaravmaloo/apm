@@ -6141,7 +6141,12 @@ var authQuorumRecoverCmd = &cobra.Command{
 
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
-	Short: "Configure or start the APM MCP server",
+	Short: "Let AI assistants use your vault over MCP",
+	Long: `Let AI assistants use your vault over MCP.
+
+Run 'pm mcp add' to set up an assistant. The first time it starts APM, approve
+it in the prompt. It can then read your items and ask to change them, and you
+approve every change. Revoke it with 'pm mcp revoke' or in APM settings.`,
 }
 
 func buildMCPConfigForToken(token string) map[string]interface{} {
@@ -6152,20 +6157,37 @@ func buildMCPConfigForToken(token string) map[string]interface{} {
 	}
 }
 
+// mcpServerJSON is an MCP server entry, with command before args.
+type mcpServerJSON struct {
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
+}
+
+// mcpGenericConfig is the server entry any MCP client can use. The client is
+// paired the first time it starts pm.
+func mcpGenericConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"mcpServers": map[string]interface{}{
+			"apm": mcpServerJSON{Command: "pm", Args: src.MCPServeArgs("")},
+		},
+	}
+}
+
 var mcpConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Show the MCP server entry for your assistant's config",
+	Short: "Show the MCP server entry for an assistant's config",
 	Run: func(cmd *cobra.Command, args []string) {
-		configJSON, _ := json.MarshalIndent(buildMCPConfigForToken(""), "", "  ")
-		color.HiYellow("Copy this to your MCP settings:")
+		configJSON, _ := json.MarshalIndent(mcpGenericConfig(), "", "  ")
 		fmt.Println(string(configJSON))
-		color.Cyan("Run `pm mcp token` to create a token for this assistant, then add `--token <token>` to args.")
+		fmt.Fprintln(os.Stderr, "\nAdd this to your assistant's MCP settings, or run 'pm mcp add' to have pm do it.")
 	},
 }
 
 var mcpTokenCmd = &cobra.Command{
-	Use:   "token",
-	Short: "Interactive setup for MCP access tokens",
+	Use:    "token",
+	Short:  "Create a legacy MCP access token",
+	Long:   "Legacy. Assistants no longer need a token: run 'pm mcp add' and approve the assistant in APM. Existing tokens keep working with 'pm mcp serve --token'.",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		auto, _ := cmd.Flags().GetBool("auto")
 
@@ -6279,90 +6301,653 @@ var mcpTokenCmd = &cobra.Command{
 	},
 }
 
+var mcpAddCmd = &cobra.Command{
+	Use:   "add [assistant]",
+	Short: "Set up an AI assistant to use APM",
+	Long: `Set up an AI assistant to use APM.
+
+Without an argument pm asks which assistant you use. pm then runs the
+assistant's own setup command, adds APM to its config file, or opens its
+install link. The first time the assistant starts APM, approve it in the
+prompt.
+
+Assistants: ` + strings.Join(mcpHarnessIDs(), ", "),
+	Args: cobra.MaximumNArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return mcpHarnessIDs(), cobra.ShellCompDirectiveNoFileComp
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		yes, _ := cmd.Flags().GetBool("yes")
+		h, ok := pickMCPHarness(args)
+		if !ok {
+			return
+		}
+		ask := func(question string) bool {
+			if yes {
+				return true
+			}
+			return promptConfirm(question, true)
+		}
+		done := false
+		switch h.Kind {
+		case "cli":
+			done = mcpAddWithCommand(h, ask)
+		case "file":
+			done = mcpAddToFile(h, ask)
+		case "deeplink":
+			done = mcpAddWithLink(h, ask)
+		default:
+			color.Red("pm can't set up %s yet. Run 'pm mcp config' and add the entry yourself.", h.Name)
+			return
+		}
+		if !done {
+			return
+		}
+		fmt.Println()
+		if h.Restart != "" {
+			fmt.Println(h.Restart)
+		}
+		fmt.Printf("The first time %s starts APM, approve it in the prompt.\n", h.Name)
+	},
+}
+
+func mcpHarnessIDs() []string {
+	ids := []string{}
+	for _, h := range src.MCPHarnesses() {
+		ids = append(ids, h.ID)
+	}
+	return ids
+}
+
+// pickMCPHarness finds the assistant named on the command line, or asks.
+func pickMCPHarness(args []string) (src.MCPHarness, bool) {
+	list := src.MCPHarnesses()
+	if len(args) == 1 {
+		if h, ok := src.GetMCPHarness(args[0]); ok {
+			return h, true
+		}
+		for _, h := range list {
+			if strings.EqualFold(h.Name, strings.TrimSpace(args[0])) {
+				return h, true
+			}
+		}
+		color.Red("pm doesn't know the assistant %q.", args[0])
+		fmt.Printf("Known assistants: %s\n", strings.Join(mcpHarnessIDs(), ", "))
+		fmt.Println("For any other assistant, run 'pm mcp config' and add the entry to its MCP settings.")
+		return src.MCPHarness{}, false
+	}
+	if !tty.Interactive() {
+		color.Red("Name the assistant, for example 'pm mcp add %s'.", list[0].ID)
+		fmt.Printf("Known assistants: %s\n", strings.Join(mcpHarnessIDs(), ", "))
+		return src.MCPHarness{}, false
+	}
+	names := make([]string, len(list))
+	for i, h := range list {
+		names[i] = h.Name
+	}
+	i, err := selectOption(tty.SelectOptions{Title: "Which assistant do you use?", Options: names})
+	if err != nil {
+		if errors.Is(err, tty.ErrCanceled) {
+			fmt.Println("Cancelled.")
+		} else {
+			color.Red("Could not read your choice: %v", err)
+		}
+		return src.MCPHarness{}, false
+	}
+	return list[i], true
+}
+
+// mcpAddWithCommand runs the assistant's own setup command. pm builds the
+// argument list itself and runs it without a shell.
+func mcpAddWithCommand(h src.MCPHarness, ask func(string) bool) bool {
+	argv := h.Argv
+	if len(argv) == 0 {
+		color.Red("pm has no setup command for %s.", h.Name)
+		return false
+	}
+	fmt.Printf("To add APM to %s, run:\n\n  %s\n\n", h.Name, src.FormatArgv(argv))
+	if !ask("Run it now? [Y/n] ") {
+		fmt.Println("Run the command above when you're ready.")
+		return true
+	}
+	bin, err := exec.LookPath(argv[0])
+	if err != nil {
+		color.Red("Could not find %s. Install %s first, then run the command above.", argv[0], h.Name)
+		return false
+	}
+	c := exec.Command(bin, argv[1:]...)
+	c.Stdin, c.Stdout, c.Stderr = os.Stdin, os.Stdout, os.Stderr
+	if err := c.Run(); err != nil {
+		color.Red("The command did not finish: %v", err)
+		if h.Notes != "" {
+			fmt.Println(h.Notes)
+		}
+		return false
+	}
+	color.Green("Added APM to %s.", h.Name)
+	return true
+}
+
+// mcpServerEntry is the apm entry for a harness's config file, starting
+// "pm" (see mcpFileEntry for what is written).
+func mcpServerEntry(h src.MCPHarness) json.RawMessage {
+	if len(h.Entry) > 0 {
+		return h.Entry
+	}
+	entry, _ := json.Marshal(mcpServerJSON{Command: "pm", Args: src.MCPServeArgs(h.ID)})
+	return entry
+}
+
+// mcpFileEntry is the entry pm writes into a config file. Desktop apps don't
+// inherit the shell's PATH, so it names pm by its full path.
+func mcpFileEntry(h src.MCPHarness) json.RawMessage {
+	entry := mcpServerEntry(h)
+	pmPath := mcpPMPath()
+	if pmPath == "pm" {
+		return entry
+	}
+	if withPath, err := src.MCPEntryWithCommand(entry, pmPath); err == nil {
+		return withPath
+	}
+	return entry
+}
+
+// mcpPMPath is the full path of the running pm, preferring a stable link
+// (/usr/local/bin/pm, which the app installs, or pm on PATH) to this same
+// binary over a versioned install path.
+func mcpPMPath() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "pm"
+	}
+	if abs, err := filepath.Abs(exe); err == nil {
+		exe = abs
+	}
+	real, err := filepath.EvalSymlinks(exe)
+	if err != nil {
+		real = exe
+	}
+	sameBinary := func(p string) bool {
+		r, err := filepath.EvalSymlinks(p)
+		return err == nil && r == real
+	}
+	if runtime.GOOS != "windows" && sameBinary("/usr/local/bin/pm") {
+		return "/usr/local/bin/pm"
+	}
+	if p, err := exec.LookPath("pm"); err == nil {
+		if abs, err := filepath.Abs(p); err == nil && sameBinary(abs) {
+			return abs
+		}
+	}
+	return exe
+}
+
+func printMCPEntry(h src.MCPHarness) {
+	var buf bytes.Buffer
+	_ = json.Indent(&buf, mcpFileEntry(h), "  ", "  ")
+	key := h.ConfigKey
+	if key == "" {
+		key = "mcpServers"
+	}
+	fmt.Printf("\nAdd this under %q, as \"apm\":\n\n  %s\n", key, buf.String())
+}
+
+// mcpAddToFile merges the apm entry into the config file the harness reads.
+func mcpAddToFile(h src.MCPHarness, ask func(string) bool) bool {
+	path := h.ConfigFile()
+	if path == "" || (h.ConfigFormat != "" && h.ConfigFormat != "json" && h.ConfigFormat != "jsonc") {
+		fmt.Printf("pm can't change %s's settings on this computer.", h.Name)
+		printMCPEntry(h)
+		return true
+	}
+	verb := "Add APM to"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		verb = "Create"
+	}
+	fmt.Printf("%s's MCP settings are in:\n\n  %s\n\n", h.Name, path)
+	if !ask(verb + " this file now? [Y/n] ") {
+		printMCPEntry(h)
+		return true
+	}
+	backup, replaced, err := src.MergeMCPConfigFile(path, h.ConfigKey, "apm", mcpFileEntry(h))
+	if errors.Is(err, src.ErrMCPConfigUnparseable) {
+		color.Red("%s isn't plain JSON (it may have comments), so pm left it alone to keep them.", path)
+		printMCPEntry(h)
+		return false
+	}
+	if err != nil {
+		color.Red("Could not change %s: %v", path, err)
+		return false
+	}
+	if replaced {
+		color.Green("Updated APM in %s.", path)
+	} else {
+		color.Green("Added APM to %s.", path)
+	}
+	if backup != "" {
+		fmt.Printf("The previous version is in %s.\n", backup)
+	}
+	return true
+}
+
+// mcpOpenURLArgv is the command that opens url with the system's handler.
+func mcpOpenURLArgv(goos, url string) []string {
+	switch goos {
+	case "darwin":
+		return []string{"open", url}
+	case "windows":
+		return []string{"rundll32", "url.dll,FileProtocolHandler", url}
+	}
+	return []string{"xdg-open", url}
+}
+
+// mcpAddWithLink opens the harness's install link.
+func mcpAddWithLink(h src.MCPHarness, ask func(string) bool) bool {
+	if h.URL == "" {
+		color.Red("pm has no install link for %s.", h.Name)
+		return false
+	}
+	fmt.Printf("To add APM to %s, open this link:\n\n  %s\n\n", h.Name, h.URL)
+	if !ask("Open it now? [Y/n] ") {
+		fmt.Println("Open the link above when you're ready.")
+		return true
+	}
+	argv := mcpOpenURLArgv(runtime.GOOS, h.URL)
+	if err := exec.Command(argv[0], argv[1:]...).Run(); err != nil {
+		color.Red("Could not open the link: %v", err)
+		return false
+	}
+	fmt.Printf("Confirm the install in %s.\n", h.Name)
+	return true
+}
+
 var mcpListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List active MCP tokens",
+	Short: "List the assistants allowed to use APM",
 	Run: func(cmd *cobra.Command, args []string) {
+		assistants, err := src.ListMCPAssistants()
+		if err != nil {
+			color.Red("Could not read the allowed assistants: %v", err)
+			return
+		}
 		tokens, err := src.ListMCPTokens()
 		if err != nil {
-			color.Red("Error listing tokens: %v", err)
+			color.Red("Could not read the MCP tokens: %v", err)
 			return
 		}
-
-		if len(tokens) == 0 {
-			fmt.Println("No active MCP tokens.")
+		if len(assistants) == 0 && len(tokens) == 0 {
+			fmt.Println("No assistants are allowed yet. Run 'pm mcp add' to set one up.")
 			return
 		}
-
-		fmt.Printf("%-20s %-25s %-10s %-25s\n", "NAME", "CREATED", "USES", "EXPIRES")
-		fmt.Println(strings.Repeat("-", 85))
-		for _, t := range tokens {
-			expires := "Never"
-			if !t.ExpiresAt.IsZero() {
-				expires = t.ExpiresAt.Format("2006-01-02 15:04")
+		when := func(t time.Time) string {
+			if t.IsZero() {
+				return "Never"
 			}
-			fmt.Printf("%-20s %-25s %-10d %-25s\n",
-				t.Name,
-				t.CreatedAt.Format("2006-01-02 15:04"),
-				t.UsageCount,
-				expires)
+			return t.Format("2006-01-02 15:04")
+		}
+		if len(assistants) > 0 {
+			fmt.Printf("%-20s %-16s %-17s %-6s %-18s %s\n", "NAME", "ASSISTANT", "LAST USED", "USES", "CHANGES", "ID")
+			fmt.Println(strings.Repeat("-", 104))
+			now := time.Now()
+			for _, a := range assistants {
+				harness := a.Harness
+				if harness == "" {
+					harness = "-"
+				}
+				changes := "ask first"
+				switch a.BypassMode(now) {
+				case src.MCPBypassAlways:
+					changes = "approved"
+				case src.MCPBypassHour:
+					changes = "approved to " + a.BypassUntil.Format("15:04")
+				}
+				fmt.Printf("%-20s %-16s %-17s %-6d %-18s %s\n", a.Name, harness, when(a.LastUsedAt), a.Uses, changes, a.ID)
+			}
+		}
+		if len(tokens) > 0 {
+			if len(assistants) > 0 {
+				fmt.Println()
+			}
+			fmt.Println("Legacy tokens")
+			fmt.Printf("%-20s %-25s %-10s %-25s\n", "NAME", "CREATED", "USES", "EXPIRES")
+			fmt.Println(strings.Repeat("-", 85))
+			for _, t := range tokens {
+				fmt.Printf("%-20s %-25s %-10d %-25s\n",
+					t.Name,
+					t.CreatedAt.Format("2006-01-02 15:04"),
+					t.UsageCount,
+					when(t.ExpiresAt))
+			}
 		}
 	},
 }
 
 var mcpRevokeCmd = &cobra.Command{
-	Use:   "revoke [name_or_token]",
-	Short: "Revoke an MCP token",
+	Use:   "revoke <name|id>",
+	Short: "Stop an assistant or legacy token from using APM",
+	Long:  "Stop an assistant or legacy token from using APM. A running assistant is denied from its next request; restart it to ask again.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		success, err := src.RevokeMCPToken(args[0])
+		a, ok, err := src.RevokeMCPAssistant(args[0])
 		if err != nil {
-			color.Red("Error revoking token: %v", err)
+			color.Red("Could not revoke %q: %v", args[0], err)
 			return
 		}
-		if success {
-			color.Green("Token '%s' revoked successfully.", args[0])
-		} else {
-			color.Yellow("Token '%s' not found.", args[0])
+		if ok {
+			color.Green("Revoked %s. Its next request is denied.", a.Name)
+			return
 		}
+		ok, err = src.RevokeMCPToken(args[0])
+		if err != nil {
+			color.Red("Could not revoke %q: %v", args[0], err)
+			return
+		}
+		if ok {
+			color.Green("Revoked the token %q.", args[0])
+			return
+		}
+		color.Yellow("No assistant or token called %q. Run 'pm mcp list' to see them.", args[0])
 	},
 }
 
 var mcpServeCmd = &cobra.Command{
 	Use:    "serve",
-	Short:  "Internal command to start the MCP server (stdio)",
+	Short:  "Start the MCP server for an assistant (stdio)",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		token, _ := cmd.Flags().GetString("token")
-		if token == "" {
-			config, _ := src.LoadMCPConfig()
-			if len(config.Tokens) == 0 {
-				color.Yellow("No MCP token found. Triggering automated setup...")
-				exe, _ := os.Executable()
-				if runtime.GOOS == "windows" {
-					setupCmd := exec.Command("cmd", "/c", "start", "powershell", "-NoExit", "-Command", fmt.Sprintf("& '%s' mcp token --auto", exe))
-					setupCmd.Run()
-				} else {
-					color.Red("Auto-setup currently only supported on Windows.")
-				}
-				color.Cyan("Please complete the setup in the new window and then restart your agent.")
-				os.Exit(0)
-			}
-			for t := range config.Tokens {
-				token = t
-				break
-			}
-		}
-		if err := src.StartMCPServer(token, vaultPath, nil); err != nil {
+		client, _ := cmd.Flags().GetString("client")
+		opts := src.MCPServeOptions{Token: strings.TrimSpace(token), Harness: strings.TrimSpace(client)}
+		if err := src.ServeMCP(opts, vaultPath, nil); err != nil {
 			fmt.Fprintf(os.Stderr, "MCP Server Error: %v\n", err)
 			os.Exit(1)
 		}
 	},
 }
 
+var mcpPauseCmd = &cobra.Command{
+	Use:   "pause",
+	Short: "Refuse every assistant's requests until you resume",
+	Long: `Refuse every tool call from every assistant until you run 'pm mcp resume'.
+While MCP access is paused nothing an assistant asks for runs or is shown.`,
+	Args: cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		paused := true
+		runMCPPolicyChange(src.MCPPolicyPatch{Paused: &paused})
+	},
+}
+
+var mcpResumeCmd = &cobra.Command{
+	Use:   "resume",
+	Short: "Let assistants use APM again",
+	Long: `Let assistants use APM again after 'pm mcp pause'.
+Resuming needs you at the terminal: confirm with Touch ID or your master password.`,
+	Args: cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		paused := false
+		runMCPPolicyChange(src.MCPPolicyPatch{Paused: &paused})
+	},
+}
+
+var mcpSettingsCmd = &cobra.Command{
+	Use:   "settings",
+	Short: "Show or change how APM handles assistants",
+	Long: `Show how APM handles assistants, or change it with the flags.
+
+Making a setting stricter takes effect at once. Making it looser (approving
+without Touch ID, a longer expiry, accepting new assistants, not asking before
+secrets are read) needs you at the terminal: confirm with Touch ID or your
+master password.`,
+	Example: `  pm mcp settings
+  pm mcp settings --approve-with touchid --expiry 5m
+  pm mcp settings --new-assistants block --ask-before-secrets on`,
+	Args: cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		patch, err := parseMCPSettingsFlags(cmd)
+		if err != nil {
+			color.Red("%v", err)
+			os.Exit(1)
+		}
+		if patch.Empty() {
+			p, err := src.LoadMCPPolicy()
+			if err != nil {
+				color.Red("Could not read the MCP settings: %v", err)
+				os.Exit(1)
+			}
+			printMCPPolicy(p)
+			return
+		}
+		runMCPPolicyChange(patch)
+	},
+}
+
+var mcpBypassCmd = &cobra.Command{
+	Use:   "bypass <assistant> ask|always|1h",
+	Short: "Choose whether an assistant's changes ask first",
+	Long: `Choose whether an assistant's changes are approved in the prompt or without asking.
+
+  ask      every add, edit and delete asks you first (the default)
+  always   its changes are approved without asking
+  1h       its changes are approved without asking for the next hour
+
+Connect requests and reads always ask. Approving without asking needs you at
+the terminal: confirm with Touch ID or your master password.`,
+	Example: `  pm mcp bypass "Claude Code" 1h
+  pm mcp bypass "Claude Code" ask`,
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := setMCPBypass(args[0], args[1]); err != nil {
+			color.Red("%v", err)
+			os.Exit(1)
+		}
+	},
+}
+
+// errMCPNeedsTerminal is the refusal for loosening MCP settings without a
+// person at the terminal.
+var errMCPNeedsTerminal = errors.New("Loosening MCP settings needs you at the terminal.")
+
+func mcpOnOffFlag(name, v string) (bool, error) {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "on", "true", "yes":
+		return true, nil
+	case "off", "false", "no":
+		return false, nil
+	}
+	return false, fmt.Errorf("--%s must be on or off, not %q.", name, v)
+}
+
+// parseMCPExpiry reads --expiry: 5m, 15m, 30m or 1h.
+func parseMCPExpiry(v string) (int, error) {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "5m", "5":
+		return 5, nil
+	case "15m", "15":
+		return 15, nil
+	case "30m", "30":
+		return 30, nil
+	case "1h", "60m", "60":
+		return 60, nil
+	}
+	return 0, fmt.Errorf("--expiry must be 5m, 15m, 30m or 1h, not %q.", v)
+}
+
+// parseMCPSettingsFlags turns the pm mcp settings flags into a change; flags
+// that weren't given stay as they are.
+func parseMCPSettingsFlags(cmd *cobra.Command) (src.MCPPolicyPatch, error) {
+	var patch src.MCPPolicyPatch
+	fs := cmd.Flags()
+	if fs.Changed("approve-with") {
+		v, _ := fs.GetString("approve-with")
+		v = strings.ToLower(strings.TrimSpace(v))
+		if v != src.MCPApproveAny && v != src.MCPApproveTouchID {
+			return patch, fmt.Errorf("--approve-with must be any or touchid, not %q.", v)
+		}
+		patch.ApproveWith = &v
+	}
+	if fs.Changed("expiry") {
+		v, _ := fs.GetString("expiry")
+		m, err := parseMCPExpiry(v)
+		if err != nil {
+			return patch, err
+		}
+		patch.ExpiryMinutes = &m
+	}
+	if fs.Changed("new-assistants") {
+		v, _ := fs.GetString("new-assistants")
+		v = strings.ToLower(strings.TrimSpace(v))
+		if v != src.MCPNewAsk && v != src.MCPNewBlock {
+			return patch, fmt.Errorf("--new-assistants must be ask or block, not %q.", v)
+		}
+		patch.NewAssistants = &v
+	}
+	if fs.Changed("ask-before-secrets") {
+		v, _ := fs.GetString("ask-before-secrets")
+		b, err := mcpOnOffFlag("ask-before-secrets", v)
+		if err != nil {
+			return patch, err
+		}
+		patch.AskBeforeSecrets = &b
+	}
+	return patch, nil
+}
+
+func printMCPPolicy(p src.MCPPolicy) {
+	fmt.Println("MCP settings")
+	for _, l := range src.MCPPolicyLines(p) {
+		fmt.Printf("  %-24s %s\n", l[0], l[1])
+	}
+	fmt.Println("\nChange them with 'pm mcp settings --help', or in APM settings.")
+}
+
+// confirmMCPPresence checks that the user is at the terminal before MCP
+// access gets looser: Touch ID when this Mac has it, otherwise the master
+// password, checked by opening the vault.
+var confirmMCPPresence = func(what []string) error {
+	if !atTerminal() {
+		return errMCPNeedsTerminal
+	}
+	fmt.Printf("To %s, confirm it's you.\n", strings.Join(what, " and "))
+	if strings.TrimSpace(os.Getenv("APM_DESKTOP_NO_TOUCHID")) == "" && touchid.IsAvailable() {
+		err := touchid.Authenticate("change APM's MCP settings")
+		if err == nil {
+			return nil
+		}
+		if errors.Is(err, touchid.ErrAuthFailed) {
+			return errors.New("Touch ID didn't confirm it's you. Nothing changed.")
+		}
+		color.Yellow("Touch ID isn't working (%v). Use your master password.", err)
+	}
+	pass, err := promptPassword("Master password: ")
+	if err != nil {
+		return errors.New("No password entered. Nothing changed.")
+	}
+	data, err := src.LoadVault(vaultPath)
+	if err != nil {
+		return fmt.Errorf("Could not read the vault: %v", err)
+	}
+	if _, err := src.DecryptVault(data, pass, 1); err != nil {
+		src.LogAction("MCP_SETTINGS_DENIED", "Wrong master password when loosening MCP settings")
+		return errors.New("Wrong master password. Nothing changed.")
+	}
+	return nil
+}
+
+// applyMCPPolicyChange makes a settings change from the terminal, asking for
+// the user's presence when it loosens anything, and returns what changed.
+func applyMCPPolicyChange(patch src.MCPPolicyPatch) ([]string, error) {
+	before, err := src.LoadMCPPolicy()
+	if err != nil {
+		return nil, fmt.Errorf("Could not read the MCP settings: %v", err)
+	}
+	after, err := before.Apply(patch)
+	if err != nil {
+		return nil, fmt.Errorf("Could not change the MCP settings: %v", err)
+	}
+	if loosens := src.MCPPolicyLoosens(before, after); len(loosens) > 0 {
+		if err := confirmMCPPresence(loosens); err != nil {
+			return nil, err
+		}
+	}
+	b, a, err := src.UpdateMCPPolicy(patch, true, "from the terminal")
+	if err != nil {
+		return nil, fmt.Errorf("Could not change the MCP settings: %v", err)
+	}
+	return src.DescribeMCPPolicyChanges(b, a), nil
+}
+
+func runMCPPolicyChange(patch src.MCPPolicyPatch) {
+	changes, err := applyMCPPolicyChange(patch)
+	if err != nil {
+		color.Red("%v", err)
+		os.Exit(1)
+	}
+	if len(changes) == 0 {
+		fmt.Println("Nothing changed.")
+		return
+	}
+	for _, c := range changes {
+		color.Green("%s.", c)
+	}
+	if patch.Paused != nil && *patch.Paused && len(changes) > 0 {
+		fmt.Println("Every assistant's requests are refused until you run 'pm mcp resume'.")
+	}
+}
+
+// setMCPBypass sets an assistant's bypass from the terminal. Approving
+// without asking needs the user's presence; going back to asking doesn't.
+func setMCPBypass(query, modeArg string) error {
+	mode, err := src.ParseMCPBypassMode(modeArg)
+	if err != nil {
+		return fmt.Errorf("Choose ask, always or 1h, not %q.", modeArg)
+	}
+	list, err := src.ListMCPAssistants()
+	if err != nil {
+		return fmt.Errorf("Could not read the allowed assistants: %v", err)
+	}
+	found := false
+	for _, a := range list {
+		if a.ID == strings.TrimSpace(query) || strings.EqualFold(a.Name, strings.TrimSpace(query)) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("No assistant called %q. Run 'pm mcp list' to see them.", query)
+	}
+	if mode != src.MCPBypassAsk {
+		if err := confirmMCPPresence([]string{"approve this assistant's changes without asking"}); err != nil {
+			return err
+		}
+	}
+	a, err := src.SetMCPAssistantBypass(query, mode)
+	if err != nil {
+		return fmt.Errorf("Could not change %q: %v", query, err)
+	}
+	color.Green("%s: %s.", a.Name, src.MCPBypassDescription(a, time.Now()))
+	return nil
+}
+
 func init() {
-	mcpCmd.AddCommand(mcpConfigCmd, mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
-	mcpServeCmd.Flags().String("token", "", "MCP access token")
+	mcpCmd.AddCommand(mcpPauseCmd, mcpResumeCmd, mcpSettingsCmd, mcpBypassCmd)
+	addMCPSettingsFlags(mcpSettingsCmd)
+}
+
+func addMCPSettingsFlags(cmd *cobra.Command) {
+	cmd.Flags().String("approve-with", "", "What approves a request: any (Touch ID, Space or click) or touchid (Touch ID only)")
+	cmd.Flags().String("expiry", "", "How long a request waits for you: 5m, 15m, 30m or 1h")
+	cmd.Flags().String("new-assistants", "", "What happens when a new assistant starts: ask or block")
+	cmd.Flags().String("ask-before-secrets", "", "Ask before an assistant reads secrets, reads 2FA codes or searches: on or off")
+}
+
+func init() {
+	mcpCmd.AddCommand(mcpAddCmd, mcpConfigCmd, mcpTokenCmd, mcpListCmd, mcpRevokeCmd, mcpServeCmd)
+	mcpAddCmd.Flags().BoolP("yes", "y", false, "Make the change without asking")
+	mcpServeCmd.Flags().String("token", "", "Legacy MCP access token")
+	mcpServeCmd.Flags().String("client", "", "The assistant this server is for, as set up by 'pm mcp add'")
 	mcpTokenCmd.Flags().Bool("auto", false, "Automatically configure IDEs")
 	authAlertsCmd.Flags().Bool("enable", false, "Enable security alerts")
 	authAlertsCmd.Flags().Bool("disable", false, "Disable security alerts")

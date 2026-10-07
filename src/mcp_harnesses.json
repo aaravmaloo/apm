@@ -1,0 +1,397 @@
+[
+  {
+    "id": "claude-code",
+    "name": "Claude Code",
+    "kind": "cli",
+    "argv": [
+      "claude",
+      "mcp",
+      "add",
+      "--scope",
+      "user",
+      "apm",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "claude-code"
+    ],
+    "restart": "Start a new Claude Code session, or run /mcp in Claude Code to check that APM is connected.",
+    "notes": "Needs the claude command. Adds APM for all your projects.",
+    "clientInfoName": "claude-code"
+  },
+  {
+    "id": "cursor",
+    "name": "Cursor",
+    "kind": "deeplink",
+    "url": "cursor://anysphere.cursor-deeplink/mcp/install?name=apm&config=eyJjb21tYW5kIjoicG0iLCJhcmdzIjpbIm1jcCIsInNlcnZlIiwiLS1jbGllbnQiLCJjdXJzb3IiXX0=",
+    "restart": "Cursor asks you to install APM when the link opens. You can check it in Cursor Settings, under MCP.",
+    "clientInfoName": "cursor-vscode"
+  },
+  {
+    "id": "vscode",
+    "name": "VS Code",
+    "kind": "cli",
+    "argv": [
+      "code",
+      "--add-mcp",
+      "{\"name\":\"apm\",\"command\":\"pm\",\"args\":[\"mcp\",\"serve\",\"--client\",\"vscode\"]}"
+    ],
+    "url": "vscode:mcp/install?%7B%22name%22%3A%22apm%22%2C%22command%22%3A%22pm%22%2C%22args%22%3A%5B%22mcp%22%2C%22serve%22%2C%22--client%22%2C%22vscode%22%5D%7D",
+    "restart": "VS Code asks you to trust APM the first time it starts. Run MCP: List Servers and start APM, or open Chat in Agent mode.",
+    "notes": "Needs the code command. On a Mac, run Shell Command: Install 'code' command in PATH in VS Code first.",
+    "clientInfoName": "Visual Studio Code"
+  },
+  {
+    "id": "codex",
+    "name": "Codex",
+    "kind": "cli",
+    "argv": [
+      "codex",
+      "mcp",
+      "add",
+      "apm",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "codex"
+    ],
+    "restart": "Start a new Codex session and type /mcp to check it. In the IDE extension or the ChatGPT desktop app, restart MCP servers in settings.",
+    "notes": "Covers the Codex CLI, the IDE extension and the ChatGPT desktop app, which share one config.",
+    "clientInfoName": "codex-mcp-client"
+  },
+  {
+    "id": "chatgpt-desktop",
+    "name": "ChatGPT desktop app",
+    "kind": "cli",
+    "aliasOf": "codex",
+    "argv": [
+      "codex",
+      "mcp",
+      "add",
+      "apm",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "codex"
+    ],
+    "restart": "In the ChatGPT desktop app, open Settings > MCP servers and restart. Type /mcp in the composer to check it.",
+    "notes": "The ChatGPT desktop app uses Codex's MCP settings, so this runs Codex's setup. Needs the codex command.",
+    "clientInfoName": "codex-mcp-client"
+  },
+  {
+    "id": "gemini-cli",
+    "name": "Gemini CLI",
+    "kind": "cli",
+    "argv": [
+      "gemini",
+      "mcp",
+      "add",
+      "--scope",
+      "user",
+      "apm",
+      "pm",
+      "--",
+      "mcp",
+      "serve",
+      "--client",
+      "gemini-cli"
+    ],
+    "restart": "Start a new Gemini CLI session. Type /mcp to check it.",
+    "clientInfoName": "gemini-cli-mcp-client"
+  },
+  {
+    "id": "copilot-cli",
+    "name": "GitHub Copilot CLI",
+    "kind": "cli",
+    "argv": [
+      "copilot",
+      "mcp",
+      "add",
+      "apm",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "copilot-cli"
+    ],
+    "restart": "APM is available right away. Type /mcp in Copilot to check it.",
+    "clientInfoName": "github-copilot-developer"
+  },
+  {
+    "id": "claude-desktop",
+    "name": "Claude Desktop",
+    "kind": "file",
+    "restart": "Quit Claude Desktop fully and open it again. APM then shows under + > Connectors.",
+    "notes": "Claude Desktop doesn't see your shell's PATH, so pm writes its full path.",
+    "configFiles": {
+      "darwin": "~/Library/Application Support/Claude/claude_desktop_config.json",
+      "win32": "%APPDATA%\\Claude\\claude_desktop_config.json"
+    },
+    "configFormat": "json",
+    "configKey": "mcpServers",
+    "entry": {
+      "command": "pm",
+      "args": [
+        "mcp",
+        "serve",
+        "--client",
+        "claude-desktop"
+      ]
+    },
+    "clientInfoName": "claude-ai"
+  },
+  {
+    "id": "windsurf",
+    "name": "Windsurf (Devin Desktop)",
+    "kind": "cli",
+    "argv": [
+      "devin",
+      "mcp",
+      "add",
+      "-s",
+      "user",
+      "apm",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "windsurf"
+    ],
+    "restart": "Restart Devin Desktop or start a new Devin session, then check the MCP list in the agent panel.",
+    "notes": "Formerly Windsurf. Needs the devin command.",
+    "clientInfoName": "windsurf-client"
+  },
+  {
+    "id": "antigravity",
+    "name": "Antigravity",
+    "kind": "file",
+    "restart": "In the agent panel, open ... > MCP Servers > Manage MCP Servers and refresh. In the CLI, type /mcp.",
+    "configFiles": {
+      "darwin": "~/.gemini/config/mcp_config.json",
+      "linux": "~/.gemini/config/mcp_config.json",
+      "win32": "%USERPROFILE%\\.gemini\\config\\mcp_config.json"
+    },
+    "configFormat": "json",
+    "configKey": "mcpServers",
+    "entry": {
+      "command": "pm",
+      "args": [
+        "mcp",
+        "serve",
+        "--client",
+        "antigravity"
+      ]
+    },
+    "clientInfoName": "antigravity-client"
+  },
+  {
+    "id": "cline",
+    "name": "Cline",
+    "kind": "cli",
+    "argv": [
+      "cline",
+      "mcp",
+      "add",
+      "apm",
+      "--yes",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "cline"
+    ],
+    "restart": "Open MCP Servers in the Cline panel to check it. The Cline CLI picks it up on its next run.",
+    "notes": "Needs the Cline CLI (cline).",
+    "clientInfoName": "Cline"
+  },
+  {
+    "id": "junie",
+    "name": "Junie",
+    "kind": "file",
+    "restart": "Run /mcp in Junie to check that APM is on.",
+    "configFiles": {
+      "darwin": "~/.junie/mcp/mcp.json",
+      "linux": "~/.junie/mcp/mcp.json",
+      "win32": "%USERPROFILE%\\.junie\\mcp\\mcp.json"
+    },
+    "configFormat": "json",
+    "configKey": "mcpServers",
+    "entry": {
+      "command": "pm",
+      "args": [
+        "mcp",
+        "serve",
+        "--client",
+        "junie"
+      ]
+    }
+  },
+  {
+    "id": "zed",
+    "name": "Zed",
+    "kind": "file",
+    "restart": "Check Settings > AI > MCP Servers. A green dot means APM is running.",
+    "notes": "Zed's settings file usually has comments. If it does, pm shows the entry to add instead of changing the file.",
+    "configFiles": {
+      "darwin": "~/.config/zed/settings.json",
+      "linux": "$XDG_CONFIG_HOME/zed/settings.json",
+      "win32": "%APPDATA%\\Zed\\settings.json"
+    },
+    "configFormat": "jsonc",
+    "configKey": "context_servers",
+    "entry": {
+      "command": "pm",
+      "args": [
+        "mcp",
+        "serve",
+        "--client",
+        "zed"
+      ],
+      "env": {}
+    },
+    "clientInfoName": "Zed"
+  },
+  {
+    "id": "opencode",
+    "name": "OpenCode",
+    "kind": "file",
+    "restart": "Restart OpenCode. opencode mcp list shows APM and whether it's connected.",
+    "configFiles": {
+      "darwin": "~/.config/opencode/opencode.json",
+      "linux": "~/.config/opencode/opencode.json",
+      "win32": "%USERPROFILE%\\.config\\opencode\\opencode.json"
+    },
+    "configFormat": "json",
+    "configKey": "mcp",
+    "entry": {
+      "type": "local",
+      "command": [
+        "pm",
+        "mcp",
+        "serve",
+        "--client",
+        "opencode"
+      ],
+      "enabled": true
+    },
+    "clientInfoName": "opencode"
+  },
+  {
+    "id": "kilo-code",
+    "name": "Kilo Code",
+    "kind": "file",
+    "restart": "Reload the editor window or restart the kilo CLI. APM shows under Settings > Agent Behaviour > MCP Servers.",
+    "notes": "If the file has comments, pm shows the entry to add instead of changing it.",
+    "configFiles": {
+      "darwin": "~/.config/kilo/kilo.jsonc",
+      "linux": "~/.config/kilo/kilo.jsonc",
+      "win32": "%USERPROFILE%\\.config\\kilo\\kilo.jsonc"
+    },
+    "configFormat": "jsonc",
+    "configKey": "mcp",
+    "entry": {
+      "type": "local",
+      "command": [
+        "pm",
+        "mcp",
+        "serve",
+        "--client",
+        "kilo-code"
+      ],
+      "enabled": true
+    },
+    "clientInfoName": "Kilo-Code"
+  },
+  {
+    "id": "amp",
+    "name": "Amp",
+    "kind": "cli",
+    "argv": [
+      "amp",
+      "mcp",
+      "add",
+      "apm",
+      "--",
+      "pm",
+      "mcp",
+      "serve",
+      "--client",
+      "amp"
+    ],
+    "restart": "Start a new Amp thread or restart the CLI. amp mcp doctor shows APM's status.",
+    "clientInfoName": "amp-mcp-client"
+  },
+  {
+    "id": "factory-droid",
+    "name": "Factory Droid",
+    "kind": "cli",
+    "argv": [
+      "droid",
+      "mcp",
+      "add",
+      "apm",
+      "pm mcp serve --client factory-droid"
+    ],
+    "restart": "Droid picks APM up right away. Type /mcp to check it.",
+    "clientInfoName": "factory-cli"
+  },
+  {
+    "id": "warp",
+    "name": "Warp",
+    "kind": "file",
+    "restart": "Warp starts APM on its own. Check Settings > Agents > MCP servers.",
+    "configFiles": {
+      "darwin": "~/.warp/.mcp.json",
+      "linux": "~/.warp/.mcp.json",
+      "win32": "%USERPROFILE%\\.warp\\.mcp.json"
+    },
+    "configFormat": "json",
+    "configKey": "mcpServers",
+    "entry": {
+      "command": "pm",
+      "args": [
+        "mcp",
+        "serve",
+        "--client",
+        "warp"
+      ]
+    }
+  },
+  {
+    "id": "qwen-code",
+    "name": "Qwen Code",
+    "kind": "cli",
+    "argv": [
+      "qwen",
+      "mcp",
+      "add",
+      "--scope",
+      "user",
+      "apm",
+      "pm",
+      "--",
+      "mcp",
+      "serve",
+      "--client",
+      "qwen-code"
+    ],
+    "restart": "Start a new Qwen Code session. Type /mcp to check it."
+  },
+  {
+    "id": "lm-studio",
+    "name": "LM Studio",
+    "kind": "deeplink",
+    "url": "lmstudio://add_mcp?name=apm&config=eyJjb21tYW5kIjoicG0iLCJhcmdzIjpbIm1jcCIsInNlcnZlIiwiLS1jbGllbnQiLCJsbS1zdHVkaW8iXX0%3D",
+    "restart": "LM Studio asks you to confirm the install. Then turn APM on in the chat sidebar.",
+    "notes": "Needs LM Studio 0.3.17 or later."
+  }
+]
