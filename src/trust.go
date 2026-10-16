@@ -1,9 +1,7 @@
 package apm
 
 import (
-	"fmt"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
@@ -20,15 +18,6 @@ type SecretTelemetry struct {
 	UpdatedBy      string    `json:"updated_by,omitempty"`
 	LastAccessedBy string    `json:"last_accessed_by,omitempty"`
 	Source         string    `json:"source,omitempty"`
-}
-
-type SecretTrustScore struct {
-	Category   string
-	Identifier string
-	Space      string
-	Score      int
-	Risk       string
-	Reasons    []string
 }
 
 func secretTelemetryKey(category, identifier, space string) string {
@@ -111,94 +100,4 @@ func (v *Vault) RemoveSecretTelemetry(category, identifier string) {
 		return
 	}
 	delete(v.SecretTelemetry, secretTelemetryKey(category, identifier, v.CurrentSpace))
-}
-
-func trustRiskLabel(score int) string {
-	switch {
-	case score >= 80:
-		return "low"
-	case score >= 55:
-		return "medium"
-	case score >= 35:
-		return "high"
-	default:
-		return "critical"
-	}
-}
-
-func (v *Vault) ComputeSecretTrustScores() []SecretTrustScore {
-	v.ensureSecretTelemetry()
-	if len(v.SecretTelemetry) == 0 {
-		return nil
-	}
-
-	now := time.Now()
-	scores := make([]SecretTrustScore, 0, len(v.SecretTelemetry))
-	for key, t := range v.SecretTelemetry {
-		category, identifier, space := parseSecretTelemetryKey(key)
-		score := 100
-		reasons := []string{}
-
-		if t.Exposed {
-			score -= 45
-			reasons = append(reasons, "secret marked as exposed")
-		}
-
-		if !t.LastRotation.IsZero() {
-			days := int(now.Sub(t.LastRotation).Hours() / 24)
-			switch {
-			case days > 365:
-				score -= 35
-				reasons = append(reasons, "rotation older than 365 days")
-			case days > 180:
-				score -= 20
-				reasons = append(reasons, "rotation older than 180 days")
-			case days > 90:
-				score -= 10
-				reasons = append(reasons, "rotation older than 90 days")
-			}
-		}
-
-		if t.AccessCount > 200 {
-			score -= 20
-			reasons = append(reasons, "high access frequency")
-		} else if t.AccessCount > 75 {
-			score -= 10
-			reasons = append(reasons, "elevated access frequency")
-		}
-
-		switch strings.ToLower(t.Privilege) {
-		case "critical", "root", "admin":
-			score -= 15
-			reasons = append(reasons, "high-privilege secret")
-		case "elevated":
-			score -= 8
-			reasons = append(reasons, "elevated privilege secret")
-		}
-
-		if score < 0 {
-			score = 0
-		}
-		if score > 100 {
-			score = 100
-		}
-
-		scores = append(scores, SecretTrustScore{
-			Category:   category,
-			Identifier: identifier,
-			Space:      space,
-			Score:      score,
-			Risk:       trustRiskLabel(score),
-			Reasons:    reasons,
-		})
-	}
-
-	sort.Slice(scores, func(i, j int) bool {
-		if scores[i].Score == scores[j].Score {
-			return fmt.Sprintf("%s/%s", scores[i].Category, scores[i].Identifier) < fmt.Sprintf("%s/%s", scores[j].Category, scores[j].Identifier)
-		}
-		return scores[i].Score < scores[j].Score
-	})
-
-	return scores
 }

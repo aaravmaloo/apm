@@ -235,6 +235,7 @@ func (a *mcpAccess) check(ctx context.Context, req *mcp.CallToolRequest, perm st
 	}
 	if a.token != nil {
 		if !hasPermission(a.token.Permissions, perm) {
+			LogAction("MCP_SCOPE_DENIED", fmt.Sprintf("Assistant '%s' was refused %s: outside its permissions", a.name(), perm))
 			return mcpError("Denied")
 		}
 	} else if res := a.checkGrant(ctx, req, perm, policy); res != nil {
@@ -277,6 +278,7 @@ func (a *mcpAccess) checkGrant(ctx context.Context, req *mcp.CallToolRequest, pe
 		return mcpError(fmt.Sprintf("Could not read APM's allowed assistants: %v", err))
 	}
 	if !hasPermission(g.Perms, perm) {
+		LogAction("MCP_SCOPE_DENIED", fmt.Sprintf("Assistant '%s' was refused %s: outside its permissions", g.Name, perm))
 		return mcpError(fmt.Sprintf("Denied. %s isn't allowed to use %s. You can allow it in APM settings.", g.Name, perm))
 	}
 	a.touch(false)

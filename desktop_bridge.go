@@ -51,7 +51,7 @@ var bridgeHTTPStatus = map[string]int{
 	"vault_newer":         423,
 	"wrong_password":      401,
 	"cooldown":            429,
-	"breach_lock":         423,
+	"recovery_required":   423,
 	"no_vault":            404,
 	"touchid_unavailable": 400,
 	"touchid_failed":      400,
@@ -788,16 +788,18 @@ func (s *desktopServer) bridgeStatusView() map[string]any {
 		"items":       0,
 		"touchId":     map[string]any{"available": s.touchIDAvailable(), "configured": s.touchIDConfigured()},
 		"cooldown":    0,
-		"left":        6 - src.GetFailureCount(),
+		"left":        0,
+		"failures":    0,
 		"settings":    nil,
 		"spaces":      []map[string]any{},
 		"activeSpace": "",
 	}
-	if wait := time.Until(s.cooldownUntil); wait > 0 {
-		res["cooldown"] = int((wait + time.Second - 1) / time.Second)
-	}
-	if left := res["left"].(int); left < 0 {
-		res["left"] = 0
+	// left is how many wrong passwords can still be entered before a wait.
+	wait, failures := src.UnlockWait()
+	res["cooldown"] = (&src.ErrUnlockCooldown{Wait: wait}).WaitSeconds()
+	res["failures"] = failures
+	if free := 3 - failures; free > 0 {
+		res["left"] = free
 	}
 	if !unlocked {
 		return res
@@ -839,11 +841,11 @@ func bridgeUnlock(b *desktopBridge, c *bridgeCtx) (map[string]any, error) {
 		return nil, rpcErr("invalid", "Enter your master password.")
 	}
 	params, _ := json.Marshal(map[string]any{"password": in.Password})
-	res, err := hVaultUnlock(s, params)
+	res, err := s.unlockWithPassword(params, src.UnlockSourceExtension)
 	if err != nil {
 		return nil, err
 	}
-	s.emit("vault.unlocked", map[string]any{"snapshot": snapshotFromResult(res), "via": "browser"})
+	s.emit("vault.unlocked", map[string]any{"snapshot": snapshotFromResult(res), "via": "browser", "failedSince": failedSinceFromResult(res)})
 	return map[string]any{"status": s.bridgeStatusView()}, nil
 }
 
@@ -855,7 +857,7 @@ func bridgeUnlockTouchID(b *desktopBridge, c *bridgeCtx) (map[string]any, error)
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.emit("vault.unlocked", map[string]any{"snapshot": snapshotFromResult(res), "via": "browser-touchid"})
+	s.emit("vault.unlocked", map[string]any{"snapshot": snapshotFromResult(res), "via": "browser-touchid", "failedSince": failedSinceFromResult(res)})
 	return map[string]any{"status": s.bridgeStatusView()}, nil
 }
 
@@ -875,6 +877,14 @@ func snapshotFromResult(res any) any {
 		if snap, ok := m["snapshot"]; ok {
 			return snap
 		}
+	}
+	return nil
+}
+
+// failedSinceFromResult is the wrong passwords an unlock result reports, or nil.
+func failedSinceFromResult(res any) any {
+	if m, ok := res.(map[string]any); ok {
+		return m["failedSince"]
 	}
 	return nil
 }

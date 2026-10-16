@@ -78,7 +78,8 @@ APM supports **25 structured secret types** with validated fields and type-speci
 - Dual AEAD ciphers: AES-256-GCM and XChaCha20-Poly1305
 - HMAC-SHA256 double-layer integrity check
 - Four tunable security profiles: `standard`, `hardened`, `paranoid`, `legacy`
-- Per-secret trust scoring (0–100) based on age, access, and privilege level
+- Watchtower (`pm watchtower`): a 0–100 security score with weak, reused, old, breached (opt-in, k-anonymous) and exposed passwords, expiring items, missing two-factor and passkeys, risky keys and setup checks, plus per-item trust scores and an activity review
+- Wrong passwords add a growing wait (never a permanent lock), shared by the CLI, app and extension
 - Tamper-evident audit log stored outside the vault
 
 **Vault**
@@ -259,6 +260,14 @@ As of now, I DO NOT plan to abandon/retire the project. It will remain functiona
 > Always back up your vault before trying Canary releases.
 P.S. For some releases, some tiers may not be released depending on how fast and easy they are to ship without creating more than necessary tiers.
 ---
+
+# AI Usage
+Developing APM and maintaining the entire suite is not easy to do all at once. Hence, we use **25%** AI generated code (mostly UI changes and non-critical & non-cryptographical changes). However, at APM, we have some policies for using AI; listed below.
+- AI is only used to develop small features and features that do not mess with vault
+- AI edits must be treated with care and reviewed carefully
+- AI edits must be tested thoroughly
+These policies make sure we use AI responsibly and make APM better for everyone! 
+
 
 ### Documentation
 

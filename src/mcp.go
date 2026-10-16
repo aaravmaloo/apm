@@ -971,7 +971,9 @@ func ServeMCP(opts MCPServeOptions, vaultPath string, transport mcp.Transport) e
 			}
 			vault.Profile = args.Profile
 			vault.CurrentProfileParams = &p
-			saveVault(vault, masterPwd, vaultPath)
+			if err := saveVault(vault, masterPwd, vaultPath); err != nil {
+				return mcpError("Vault Error: " + err.Error()), nil
+			}
 			LogAction("MCP_PROFILE_CHANGED", fmt.Sprintf("Changed profile to %s", args.Profile))
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Profile updated"}}}, nil
 		}
@@ -1018,7 +1020,9 @@ func ServeMCP(opts MCPServeOptions, vaultPath string, transport mcp.Transport) e
 				}
 			}
 			vault.Spaces = append(vault.Spaces, args.Name)
-			saveVault(vault, masterPwd, vaultPath)
+			if err := saveVault(vault, masterPwd, vaultPath); err != nil {
+				return mcpError("Vault Error: " + err.Error()), nil
+			}
 			LogAction("MCP_SPACE_ADDED", fmt.Sprintf("Added space %s", args.Name))
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "Space added"}}}, nil
 		case "switch":
@@ -1037,7 +1041,9 @@ func ServeMCP(opts MCPServeOptions, vaultPath string, transport mcp.Transport) e
 			} else {
 				vault.CurrentSpace = args.Name
 			}
-			saveVault(vault, masterPwd, vaultPath)
+			if err := saveVault(vault, masterPwd, vaultPath); err != nil {
+				return mcpError("Vault Error: " + err.Error()), nil
+			}
 			LogAction("MCP_SPACE_SWITCHED", fmt.Sprintf("Switched to space %s", args.Name))
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Switched to %s", args.Name)}}}, nil
 		}
@@ -1175,6 +1181,9 @@ func ServeMCP(opts MCPServeOptions, vaultPath string, transport mcp.Transport) e
 		if r := mcpRefuseNewer(vault); r != nil {
 			return r, nil
 		}
+		if vault.readOnly {
+			return mcpError("Vault Error: " + ErrMCPReadOnly.Error()), nil
+		}
 		cm, err := GetCloudProvider(args.Provider, context.Background(), vault.CloudCredentials, vault.CloudToken, "apm_public")
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Cloud Init Error"}}}, nil
@@ -1300,7 +1309,14 @@ func mcpRefuseNewer(v *Vault) *mcp.CallToolResult {
 	return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: "Vault Error: " + ErrVaultNewer.Error()}}}
 }
 
+// ErrMCPReadOnly is returned when an assistant tries to change a vault opened
+// through a read-only session.
+var ErrMCPReadOnly = errors.New("the pm session is read-only, so this change was not saved. Unlock with 'pm unlock' to allow changes")
+
 func saveVault(vault *Vault, masterPwd string, path string) error {
+	if vault.readOnly {
+		return ErrMCPReadOnly
+	}
 	data, err := EncryptVault(vault, masterPwd)
 	if err != nil {
 		return err
@@ -1400,6 +1416,7 @@ func unlockVaultForMCP(vaultPath string) (*Vault, string, error) {
 		if decErr != nil {
 			return nil, "", decErr
 		}
+		vault.readOnly = eph.Scope == "read"
 		return vault, eph.MasterPassword, nil
 	}
 
@@ -1408,14 +1425,12 @@ func unlockVaultForMCP(vaultPath string) (*Vault, string, error) {
 		return nil, "", err
 	}
 
-	if session.ReadOnly {
-		return GetDecoyVault(), session.MasterPassword, nil
-	}
-
 	vault, err := DecryptVault(data, session.MasterPassword, 1)
 	if err != nil {
 		return nil, "", err
 	}
+	// A read-only session reads the real vault; saveVault refuses to write it.
+	vault.readOnly = session.ReadOnly
 
 	return vault, session.MasterPassword, nil
 }

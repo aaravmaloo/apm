@@ -8,10 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
-	"os"
-	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -243,73 +240,6 @@ func ValidateMasterPassword(password string) error {
 	}
 
 	return nil
-}
-
-// apmStateDir holds the failed-unlock counter and the anomaly log, next to
-// the vault like pm desktop keeps them, so the app and the CLI share one
-// counter. It used to be the binary's folder, but pm often lives in an
-// admin-owned one such as /usr/local/bin, where a counter it can't save never
-// reaches the lockout.
-func apmStateDir() string {
-	if d := strings.TrimSpace(os.Getenv("APM_STATE_DIR")); d != "" {
-		return d
-	}
-	if v := strings.TrimSpace(os.Getenv("APM_VAULT_PATH")); v != "" && filepath.IsAbs(v) {
-		return filepath.Dir(v)
-	}
-	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".apm")
-	}
-	return legacyStateDir()
-}
-
-// legacyStateDir is where pm 11 and older kept its state: next to the binary.
-func legacyStateDir() string {
-	exe, _ := os.Executable()
-	return filepath.Dir(exe)
-}
-
-func failureFiles() []string {
-	files := []string{filepath.Join(apmStateDir(), ".apm_lock")}
-	if strings.TrimSpace(os.Getenv("APM_STATE_DIR")) == "" {
-		if old := filepath.Join(legacyStateDir(), ".apm_lock"); old != files[0] {
-			files = append(files, old)
-		}
-	}
-	return files
-}
-
-func readFailureCount(path string) int {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return 0
-	}
-	count, _ := strconv.Atoi(strings.TrimSpace(string(data)))
-	return count
-}
-
-// GetFailureCount also reads a counter left next to the binary by an older
-// pm, so updating doesn't hand out a fresh set of attempts.
-func GetFailureCount() int {
-	count := 0
-	for _, path := range failureFiles() {
-		if n := readFailureCount(path); n > count {
-			count = n
-		}
-	}
-	return count
-}
-
-func TrackFailure() {
-	path := failureFiles()[0]
-	_ = os.MkdirAll(filepath.Dir(path), 0700)
-	_ = os.WriteFile(path, []byte(strconv.Itoa(GetFailureCount()+1)), 0600)
-}
-
-func ClearFailures() {
-	for _, path := range failureFiles() {
-		os.Remove(path)
-	}
 }
 
 func GenerateRandomWords() (string, error) {

@@ -234,8 +234,8 @@ func ApplyMCPTransaction(vault *Vault, tool string, raw json.RawMessage) (string
 }
 
 // openVaultForMCPApply opens the vault through the pm session for writing an
-// approved change. A read-only session yields a decoy vault, which must never
-// be saved over the real file, so it counts as not being able to open it.
+// approved change. A read-only session cannot write, so it counts as not being
+// able to open it.
 func openVaultForMCPApply(vaultPath string) (*Vault, string, error) {
 	session, err := GetSession()
 	if err == nil && session.ReadOnly {

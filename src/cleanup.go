@@ -7,11 +7,11 @@ import (
 
 // CleanupIssue represents a single issue found during vault cleanup.
 type CleanupIssue struct {
-	Severity  string // "info", "warning", "error"
-	Section   string // e.g. "entries", "totp", "documents"
-	Message   string
-	AutoFix   bool          // true if APM can safely remove this
-	RemoveFn  func(v *Vault) // nil if no auto-fix available
+	Severity string // "info", "warning", "error"
+	Section  string // e.g. "entries", "totp", "documents"
+	Message  string
+	AutoFix  bool           // true if APM can safely remove this
+	RemoveFn func(v *Vault) // nil if no auto-fix available
 }
 
 // RunCleanup scans the vault and returns all discovered issues.
@@ -232,19 +232,6 @@ func checkDeprecatedFields(v *Vault) []CleanupIssue {
 			AutoFix:  true,
 			RemoveFn: func(v *Vault) {
 				v.Spaces = nil
-			},
-		})
-	}
-
-	// Check for failed attempts tracking that's stale
-	if v.FailedAttempts > 0 && !v.EmergencyMode {
-		issues = append(issues, CleanupIssue{
-			Severity: "info",
-			Section:  "security",
-			Message:  fmt.Sprintf("Stale failed attempts counter (%d) — can be reset", v.FailedAttempts),
-			AutoFix:  true,
-			RemoveFn: func(v *Vault) {
-				v.FailedAttempts = 0
 			},
 		})
 	}

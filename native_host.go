@@ -315,7 +315,7 @@ func (h *nativeHost) adoptSession(path string) {
 	}
 	res, err := hVaultUnlockSession(s, nil)
 	if err == nil {
-		s.emit("vault.unlocked", map[string]any{"snapshot": snapshotFromResult(res), "via": "session"})
+		s.emit("vault.unlocked", map[string]any{"snapshot": snapshotFromResult(res), "via": "session", "failedSince": failedSinceFromResult(res)})
 	}
 	s.mu.Unlock()
 }

@@ -8,7 +8,7 @@ This page lists the capabilities that are implemented in the current codebase.
 - 25 structured personal secret types
 - Spaces for compartmentalizing entries inside one vault
 - Interactive search, details, editing, deletion, and TOTP access
-- Password generation, audit logging, trust scoring, and health scoring
+- Password generation, audit logging, and Watchtower: a vault-wide security score, trust scores, an opt-in breach check and activity review
 
 ## Crypto and profiles
 

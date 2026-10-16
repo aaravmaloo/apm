@@ -67,7 +67,9 @@ func readLineOpts(opts tty.LineOptions) (string, error) {
 }
 
 // promptLine prints prompt and reads one trimmed line. Esc cancels the
-// command. EOF and read errors return "".
+// command. EOF and read errors return "". Prompts go where internal/tty
+// writes: stdout on a terminal, stderr when stdout is piped or redirected, so
+// machine-readable output (--json) never contains them.
 func promptLine(prompt string) string {
 	s, err := readLineOpts(tty.LineOptions{Prompt: prompt})
 	if errors.Is(err, tty.ErrCanceled) {
@@ -88,7 +90,7 @@ func promptPassword(prompt string) (string, error) {
 	interactive := tty.Interactive()
 	s, err := tty.ReadLine(tty.LineOptions{Prompt: prompt, Hidden: true})
 	if !interactive {
-		fmt.Println() // the line ends here, as the echo would have ended it
+		tty.Printf("\n") // the line ends here, as the echo would have ended it
 	}
 	if err = exitOnInputError(err); err != nil {
 		if errors.Is(err, tty.ErrCanceled) {
@@ -115,7 +117,7 @@ func readPassword() (string, error) {
 // terminal (y, n, Enter for the default, Esc for no), a line otherwise (blank
 // or EOF for the default).
 func promptConfirm(question string, defaultYes bool) bool {
-	fmt.Print(question)
+	tty.Printf("%s", question)
 	ok, err := tty.Confirm(defaultYes)
 	if err = exitOnInputError(err); err != nil {
 		return defaultYes && errors.Is(err, io.EOF)
@@ -127,7 +129,7 @@ func promptConfirm(question string, defaultYes bool) bool {
 // answer: on a terminal y/n answer, Enter takes the default and Esc returns
 // cancelled. Without a terminal it reads a line like promptConfirm.
 func confirmOrCancel(question string, defaultYes bool) (yes, cancelled bool) {
-	fmt.Print(question)
+	tty.Printf("%s", question)
 	if !tty.Interactive() {
 		ok, err := tty.Confirm(defaultYes)
 		if err != nil {
@@ -176,7 +178,7 @@ func confirmOrCancel(question string, defaultYes bool) (yes, cancelled bool) {
 // pressEnterToContinue waits before going back to a screen. Enter, Esc,
 // Space and q all continue.
 func pressEnterToContinue() {
-	fmt.Print("\nPress Enter to continue...")
+	tty.Printf("\nPress Enter to continue...")
 	_ = exitOnInputError(tty.Pause())
 }
 

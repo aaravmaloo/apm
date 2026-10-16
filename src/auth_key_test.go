@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -347,5 +347,3 @@ func TestImportFromJSONEncryptedNoPassword(t *testing.T) {
 		t.Fatal("expected error when importing encrypted file without password")
 	}
 }
-
-

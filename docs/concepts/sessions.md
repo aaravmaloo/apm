@@ -151,8 +151,7 @@ pm session revoke ID # Revoke a specific session
 | `pm get` edit/delete actions | ✅ | ❌ | ❌ |
 | `pm totp`       |        ✅         |      ✅       |      ✅       |
 | `pm cloud sync` |        ✅         |      ❌       |      ❌       |
-| `pm health`     |        ✅         |      ✅       |      ✅       |
-| `pm trust`      |        ✅         |      ✅       |      ✅       |
+| `pm watchtower` |        ✅         |      ✅       |      ✅       |
 | `pm audit`      |        ❌         |      ✅       |      ✅       |
 | `pm info`       |        ❌         |      ✅       |      ✅       |
 | Autofill daemon |        ✅         |      ✅       |      ❌       |

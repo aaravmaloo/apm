@@ -29,9 +29,9 @@ func Delete() error { return ErrNotAvailable }
 // Status returns a status map indicating Touch ID is not available.
 func Status() map[string]interface{} {
 	return map[string]interface{}{
-		"available":   false,
-		"configured":  false,
-		"platform":    "unknown",
+		"available":  false,
+		"configured": false,
+		"platform":   "unknown",
 	}
 }
 

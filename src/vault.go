@@ -28,7 +28,10 @@ const CurrentVersion = 4
 // to write. It is stored inside the encrypted payload. Bump it whenever the
 // vault gains data an older engine would drop on save. Absent/0 means a vault
 // from before revisions existed, which is always safe to open and write.
-const VaultFormatRevision = 1
+//
+// 2: Watchtower state (dismissals, score history, activity, known devices,
+// breach cache) and the lockout setting.
+const VaultFormatRevision = 2
 
 // ErrVaultNewer is returned when saving a vault last written by a newer engine.
 // That vault may hold data this engine does not know, and saving would drop it.
@@ -316,6 +319,10 @@ type RecoveryData struct {
 	SecurityLevel          int               `json:"security_level,omitempty"`
 	AlertEmail             string            `json:"alert_email,omitempty"`
 	EmailHint              string            `json:"email_hint,omitempty"`
+	// LockoutAfter is the opt-in number of wrong passwords after which the
+	// vault only opens with recovery. It sits in the header so it can be read
+	// before unlock.
+	LockoutAfter int `json:"lockout_after,omitempty"`
 }
 
 type AudioEntry struct {
@@ -374,10 +381,6 @@ type Vault struct {
 	CloudFileID                string                 `json:"cloud_file_id,omitempty"`
 	CloudCredentials           []byte                 `json:"cloud_credentials,omitempty"`
 	CloudToken                 []byte                 `json:"cloud_token,omitempty"`
-	FailedAttempts             uint8                  `json:"failed_attempts,omitempty"`
-	EmergencyMode              bool                   `json:"emergency_mode,omitempty"`
-	DecoyMode                  bool                   `json:"decoy_mode,omitempty"`
-	DecoySessionCount          int                    `json:"decoy_session_count,omitempty"`
 	Profile                    string                 `json:"profile,omitempty"`
 	AutocompleteWindowDisabled bool                   `json:"autocomplete_window_disabled,omitempty"`
 
@@ -420,6 +423,12 @@ type Vault struct {
 	RecoveryPasskeyCred    []byte                     `json:"recovery_passkey_cred,omitempty"`
 	Desktop                *DesktopState              `json:"desktop,omitempty"`
 	FormatRevision         int                        `json:"format_revision,omitempty"`
+	LockoutAfter           int                        `json:"lockout_after,omitempty"`
+	Watchtower             *WatchtowerState           `json:"watchtower,omitempty"`
+
+	// readOnly marks a vault opened through a read-only session. Saves made
+	// through the MCP server refuse it.
+	readOnly bool
 }
 
 // IsNewerFormat reports whether the vault was last written by a newer engine.
@@ -553,6 +562,7 @@ func encryptVaultPayload(vault *Vault, masterPassword string) ([]byte, error) {
 	rec.AlertsEnabled = vault.AlertsEnabled
 	rec.SecurityLevel = vault.SecurityLevel
 	rec.AlertEmail = vault.AlertEmail
+	rec.LockoutAfter = vault.LockoutAfter
 
 	encRec, _ := json.Marshal(rec)
 	recLenBytes := make([]byte, 2)
@@ -998,7 +1008,11 @@ func (v *Vault) SetRecoveryEmail(email string) {
 	v.RecoveryEmail = email
 }
 
+// ClearRecoveryInfo removes every recovery method. The opt-in lockout goes
+// with them: once it tripped, nothing could open the vault any more. The
+// unlock guard's count stays, since the vault and its password are the same.
 func (v *Vault) ClearRecoveryInfo() {
+	v.LockoutAfter = 0
 	v.RecoveryEmail = ""
 	v.RecoveryHash = nil
 	v.RecoverySlot = nil
@@ -2262,43 +2276,4 @@ func (v *Vault) SearchAll(query string) []SearchResult {
 		}
 	}
 	return results
-}
-
-func GetDecoyVault() *Vault {
-	v := &Vault{
-		Salt:   make([]byte, 16),
-		Spaces: []string{"default", "work", "personal"},
-	}
-	rand.Read(v.Salt)
-
-	for i := 0; i < 15; i++ {
-		acc, _ := GenerateRandomWords()
-		user, _ := GenerateRandomWords()
-		pass, _ := GenerateRandomHex(16)
-		v.Entries = append(v.Entries, Entry{
-			Account:  acc,
-			Username: strings.ToLower(user),
-			Password: pass,
-			Space:    "default",
-		})
-	}
-
-	for i := 0; i < 5; i++ {
-		acc, _ := GenerateRandomWords()
-		sec, _ := GenerateRandomHex(20)
-		v.TOTPEntries = append(v.TOTPEntries, TOTPEntry{
-			Account: acc,
-			Secret:  sec,
-		})
-	}
-
-	for i := 0; i < 5; i++ {
-		name, _ := GenerateRandomWords()
-		v.SecureNotes = append(v.SecureNotes, SecureNoteEntry{
-			Name:    name,
-			Content: "This is a decoy note containing sensitive-looking information for testing purposes.",
-		})
-	}
-
-	return v
 }

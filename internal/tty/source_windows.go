@@ -239,7 +239,7 @@ func (c *winConsole) flushInput() error {
 }
 
 func (c *winConsole) enableOutputVT() (func(), bool) {
-	h := windows.Handle(os.Stdout.Fd())
+	h := windows.Handle(outputFile().Fd())
 	var mode uint32
 	if err := windows.GetConsoleMode(h, &mode); err != nil {
 		return func() {}, false

@@ -112,8 +112,6 @@ func CreateLockingSession(password string, duration time.Duration, readonly bool
 	return nil
 }
 
-
-
 func GetSession() (*Session, error) {
 	sessionFile := getSessionFile()
 	if _, err := os.Stat(sessionFile); os.IsNotExist(err) {

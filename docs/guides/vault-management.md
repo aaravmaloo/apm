@@ -143,41 +143,82 @@ APM generates a high-entropy password using cryptographically secure randomness.
 
 ---
 
-## Vault Health and Trust
-
-### Health Dashboard
+## Watchtower
 
 ```bash
-pm health
+pm watchtower
 ```
 
-Produces a numeric score (0–100) based on:
+Watchtower checks every item in the vault and the vault's own setup, and scores the vault from 0 to 100 (grade A to F). It looks for:
 
-- **Encryption profile** — Hardened/Paranoid profiles earn bonus points; Legacy loses points
-- **Alert configuration** — Enabled alerts earn points
-- **Weak secrets** — Passwords shorter than 8 characters are penalized
-- **High-risk secrets** — Trust scores below 55 (high risk) or 35 (critical) add penalties
+- **Weak passwords**: common passwords, words with l33t spellings, keyboard runs like `qwerty`, sequences, repeats, dates and years, and passwords that contain the username or site name. Empty passwords don't count.
+- **Reused passwords**: the same password, or almost the same (`Summer2023!` and `Summer2024!`), across all spaces. Findings for one shared password share a group.
+- **Breached passwords** (opt-in, see below), **exposed** items, and passwords **not changed in 6 months**.
+- **Expiring** cards, certificates, documents, licenses and cloud credentials (30 days ahead), and passports and IDs (180 days ahead).
+- Logins on **plain http://** sites, sites that offer **two-factor** or **passkeys** you haven't set up, weak or unprotected **SSH keys**, weak **certificates**, **open or WEP Wi-Fi**, used-up **recovery codes**, and live **API keys** pasted into notes.
+- **Setup**: encryption profile, alerts, account recovery, auto-lock, Touch ID, audit log integrity, AI assistant access and the breach check.
 
-### Trust Scores
+The score counts the share of items affected in each category, so a few problems in a big vault don't sink it. Each finding shows how many points fixing it gives back.
+
+| Flag                 | What it does                                          |
+| :------------------- | :---------------------------------------------------- |
+| `--all`              | List every finding, not only the top 10               |
+| `--kind <kind>`      | Only one kind, for example `--kind reused`            |
+| `--space <space>`    | Only items in one space                               |
+| `--json`             | The full report, as the desktop app reads it          |
+| `--fail-under <N>`   | Exit 1 when the score is below N, for scripts and CI  |
+| `--show-dismissed`   | Also list dismissed findings                          |
+
+Accept a finding with `pm watchtower ignore <finding-id> [--reason "..."] [--days N]` and bring it back with `pm watchtower restore <finding-id>`. Dismissed findings don't count against the score.
+
+### Breach check
 
 ```bash
-pm trust
+pm watchtower breach on
+pm watchtower breach check
 ```
 
-Every secret gets a trust score based on:
+The breach check is off until you turn it on. It asks Have I Been Pwned's Pwned Passwords service about each password with k-anonymity: only the first 5 characters of the password's SHA-1 hash leave your computer, and the reply is padded. Unchanged passwords are checked again after a week. `pm watchtower breach off` turns it off and forgets the results.
 
-| Factor                 | Penalty | Threshold             |
-| :--------------------- | :------ | :-------------------- |
-| Marked as exposed      | −45     | Any                   |
-| No rotation > 365 days | −35     | Last rotation too old |
-| No rotation > 180 days | −20     | Last rotation aging   |
-| No rotation > 90 days  | −10     | Last rotation recent  |
-| Access count > 200     | −20     | High frequency        |
-| Access count > 75      | −10     | Elevated frequency    |
-| Privilege: critical    | −15     | Root/admin secrets    |
-| Privilege: elevated    | −8      | Elevated access       |
+### Trust scores
 
-Risk levels: **Low** (≥80), **Medium** (≥55), **High** (≥35), **Critical** (<35)
+```bash
+pm watchtower trust
+```
+
+Every item gets a trust score:
+
+| Factor                       | Penalty |
+| :--------------------------- | :------ |
+| Marked as exposed            | −45     |
+| Not rotated in over a year   | −35     |
+| Not rotated in 6 months      | −20     |
+| Not rotated in 90 days       | −10     |
+| More than 200 uses           | −20     |
+| More than 75 uses            | −10     |
+| Privilege: critical/root/admin | −15   |
+| Privilege: elevated          | −8      |
+
+Risk levels: **Low** (≥80), **Medium** (≥55), **High** (≥35), **Critical** (<35).
+
+Mark an item with `pm watchtower mark <item> --exposed` (or `--not-exposed`) and `--privilege standard|elevated|admin|root|critical`. Privileged items get higher-severity findings, and an AI assistant reading one for the first time shows up as activity.
+
+### Activity
+
+```bash
+pm watchtower activity
+pm watchtower activity ack --all
+```
+
+Activity lists unusual events: wrong passwords before an unlock, an unlock on a new device or at an hour you don't usually unlock, many secrets revealed in a short time, exports, assistants reading privileged items, being refused or reading many items quickly, a changed audit log, the vault file changed outside APM, the wrong-password counter reset, the clock moving back, and weakened security settings. Events are kept inside the encrypted vault. `ack <event-id>` (or `--all`) marks them as you; for an unusual hour it also teaches APM that hour. With alerts and anomaly detection on, high and critical events are emailed.
+
+---
+
+## Wrong passwords
+
+Wrong master passwords never lock the vault for good, and the right password always opens it. The first 3 are free, then each one adds a wait before the next try: 30 seconds after the 4th, 1 minute after the 5th, 5 minutes after the 6th, 15 minutes after the 7th and 1 hour from the 8th on. The CLI, the desktop app and the browser extension share the count. After the next unlock, pm shows how many wrong passwords were entered and from where.
+
+`pm auth lockout <N>` (5 or more) makes the vault need recovery after N wrong passwords in a row. It is off by default; set up recovery first.
 
 ---
 

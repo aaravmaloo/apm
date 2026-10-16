@@ -77,6 +77,10 @@ func main() {
 		Use:     "pm",
 		Short:   "A simple password manager CLI",
 		Version: Version,
+		// --vault is parsed by now, so the unlock guard follows the vault in use.
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			src.SetStateVaultPath(vaultPath)
+		},
 	}
 	// `pm --version` prints the bare version so scripts can parse it.
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
@@ -774,6 +778,7 @@ func main() {
 
 			// The session keeps its own read-only flag: a newer vault is read-only
 			// only until pm is updated, so it must not persist into the session.
+			quietUnlockLine = true
 			masterPassword, vault, readonly, err := unlockVaultCredentials()
 			if err != nil {
 				fmt.Println(err)
@@ -985,84 +990,13 @@ func main() {
 		},
 	}
 
-	var healthCmd = &cobra.Command{
-		Use:   "health",
-		Short: "Security health dashboard",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			score, report := src.CalculateHealth(vault)
-			fmt.Println("\nAPM SECURITY HEALTH DASHBOARD")
-			fmt.Println("=============================")
-			fmt.Printf("OVERALL SCORE: %d/100\n\n", score)
-			for _, r := range report {
-				fmt.Printf("- %s\n", r)
-			}
-			detailed, _ := cmd.Flags().GetBool("detailed")
-			if detailed {
-				scores := vault.ComputeSecretTrustScores()
-				if len(scores) == 0 {
-					fmt.Println("\nNo per-secret trust telemetry yet.")
-				} else {
-					fmt.Println("\nTop Secret Risks")
-					fmt.Println("----------------")
-					limit := 10
-					if len(scores) < limit {
-						limit = len(scores)
-					}
-					for i := 0; i < limit; i++ {
-						s := scores[i]
-						space := s.Space
-						if space == "" {
-							space = "default"
-						}
-						fmt.Printf("%2d. [%s] %s/%s (space=%s) score=%d\n", i+1, strings.ToUpper(s.Risk), s.Category, s.Identifier, space, s.Score)
-					}
-				}
-			}
-			src.LogAction("HEALTH_CHECK", fmt.Sprintf("Score: %d", score))
-		},
-	}
-	healthCmd.Flags().Bool("detailed", false, "Include per-secret trust score details")
-
-	var trustCmd = &cobra.Command{
-		Use:   "trust",
-		Short: "View trust scores for individual secrets",
-		Run: func(cmd *cobra.Command, args []string) {
-			_, vault, _, err := src_unlockVault()
-			if err != nil {
-				return
-			}
-			scores := vault.ComputeSecretTrustScores()
-			if len(scores) == 0 {
-				fmt.Println("No trust telemetry available yet. Access or mutate entries to build trust data.")
-				return
-			}
-			fmt.Println("Secret Trust Scores")
-			fmt.Println("===================")
-			for _, s := range scores {
-				space := s.Space
-				if space == "" {
-					space = "default"
-				}
-				fmt.Printf("[%s] %-12s %-28s space=%-12s score=%3d", strings.ToUpper(s.Risk), s.Category, s.Identifier, space, s.Score)
-				if len(s.Reasons) > 0 {
-					fmt.Printf(" | %s", strings.Join(s.Reasons, "; "))
-				}
-				fmt.Println()
-			}
-			src.LogAction("TRUST_VIEWED", fmt.Sprintf("Displayed %d trust scores", len(scores)))
-		},
-	}
-
 	var logsCmd = &cobra.Command{
 		Use:   "logs",
 		Short: "View signed and verified vault logs",
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			limit, _ := cmd.Flags().GetInt("limit")
@@ -1245,6 +1179,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, _, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -1269,6 +1204,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, _, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -1294,6 +1230,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, _, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -1322,6 +1259,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, _, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -2473,6 +2411,7 @@ func main() {
 			target := strings.ToLower(strings.TrimSpace(args[0]))
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -2498,6 +2437,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 
@@ -2535,6 +2475,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			_, vault, _, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 
@@ -2559,6 +2500,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -2633,6 +2575,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			masterPassword, vault, readonly, err := src_unlockVault()
 			if err != nil {
+				reportUnlockError(err)
 				return
 			}
 			if readonly {
@@ -3016,8 +2959,8 @@ func main() {
 	cleanupCmd.Flags().BoolP("yes", "y", false, "Auto-apply all fixes without prompting")
 	cleanupCmd.Flags().Bool("dry-run", false, "Scan only, don't make any changes")
 
-	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, logsCmd, lgitCmd, trustCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, healthCmd, policyCmd, spaceCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, loadedCmd, cleanupCmd, injectcmd.BuildInjectCmd(src_unlockVault))
-	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd, authTouchIDCmd)
+	rootCmd.AddCommand(addCmd, getCmd, genCmd, modeCmd, sessionCmd, cinfoCmd, logsCmd, lgitCmd, totpCmd, importCmd, exportCmd, infoCmd, cloudCmd, policyCmd, spaceCmd, setupCmd, unlockCmd, lockCmd, profileCmd, compromiseCmd, authCmd, loadedCmd, cleanupCmd, injectcmd.BuildInjectCmd(src_unlockVault))
+	authCmd.AddCommand(authEmailCmd, authResetCmd, authChangeCmd, authRecoverCmd, authAlertsCmd, authLevelCmd, authQuorumSetupCmd, authQuorumRecoverCmd, authPasskeyCmd, authCodesCmd, authTouchIDCmd, newAuthLockoutCmd())
 	authPasskeyCmd.AddCommand(authPasskeyRegisterCmd, authPasskeyVerifyCmd, authPasskeyDisableCmd)
 	authCodesCmd.AddCommand(authCodesGenerateCmd, authCodesStatusCmd)
 	authTouchIDCmd.AddCommand(authTouchIDSetupCmd, authTouchIDStatusCmd, authTouchIDRemoveCmd, authTouchIDTestCmd)
@@ -3034,7 +2977,7 @@ func main() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(mcpCmd)
 	rootCmd.AddCommand(newDesktopCmd())
-	rootCmd.AddCommand(newExtensionCmd(), newAutolockCmd())
+	rootCmd.AddCommand(newExtensionCmd(), newAutolockCmd(), newWatchtowerCmd())
 	totpCmd.AddCommand(newTOTPLinkCmd(), newTOTPUnlinkCmd())
 
 	rootCmd.PersistentFlags().StringVarP(&vaultPath, "vault", "v", vaultPath, "Vault file path")
@@ -3545,8 +3488,6 @@ func unlockVaultCredentials() (string, *src.Vault, bool, error) {
 		return "", nil, false, fmt.Errorf("Vault not found. Run 'pm setup'.")
 	}
 
-	localFailures := src.GetFailureCount()
-
 	if ephID := strings.TrimSpace(os.Getenv("APM_EPHEMERAL_ID")); ephID != "" {
 		eph, err := src.ValidateEphemeralSession(ephID, os.Getpid(), strings.TrimSpace(os.Getenv("APM_EPHEMERAL_AGENT")))
 		if err == nil {
@@ -3565,16 +3506,9 @@ func unlockVaultCredentials() (string, *src.Vault, bool, error) {
 	if session, err := src.GetSession(); err == nil {
 		data, err := src.LoadVault(vaultPath)
 		if err == nil {
-
-			// Repeated failures with a read-only session intentionally divert into
-			// the decoy vault rather than confirming the real vault is still usable.
-			if session.ReadOnly && localFailures >= 6 {
-				return session.MasterPassword, src.GetDecoyVault(), true, nil
-			}
-
 			vault, err := src.DecryptVault(data, session.MasterPassword, 1)
 			if err == nil {
-				if vault.NeedsRepair && !vault.IsNewerFormat() {
+				if vault.NeedsRepair && !vault.IsNewerFormat() && !session.ReadOnly {
 					updatedData, _ := src.EncryptVault(vault, session.MasterPassword)
 					src.SaveVault(vaultPath, updatedData)
 				}
@@ -3589,39 +3523,9 @@ func unlockVaultCredentials() (string, *src.Vault, bool, error) {
 		return "", nil, false, err
 	}
 
-	src.LogAccess("ATTEMPT")
-	alerts := src.CheckAnomalies(nil)
-	if len(alerts) > 0 {
-		color.Red("\nΓÜá SECURITY WARNING: Unusual activity detected!")
-		for _, a := range alerts {
-			color.Red("  - %s", a)
-		}
-		fmt.Println()
-	}
-
 	for i := 0; i < 3; i++ {
-		localFailures = src.GetFailureCount()
-		costMultiplier := 1
-		if localFailures >= 6 {
-
-			if localFailures >= 9 {
-				color.HiRed("\n[SECURITY BREACH NOTIFICATION]")
-				color.Red("Multiple failed unlock attempts detected. This system has been locked for your protection.")
-				color.Red("Please contact security administrator or use your physical recovery key.")
-				return "", nil, false, fmt.Errorf("vault permanently locked due to suspected breach")
-			}
-
-			pass, err := promptPassword(fmt.Sprintf("Master Password (attempt %d/3): ", i+1))
-			if err != nil {
-				return "", nil, false, err
-			}
-
-			src.TrackFailure()
-			decoy := defaultLockPolicy()
-			color.Cyan(decoy.unlockedLine())
-
-			_ = decoy.startSession(pass, true)
-			return pass, src.GetDecoyVault(), true, nil
+		if err := src.CheckUnlockAllowed(data); err != nil {
+			return "", nil, false, cliGuardError(err, data)
 		}
 
 		var pass string
@@ -3629,13 +3533,13 @@ func unlockVaultCredentials() (string, *src.Vault, bool, error) {
 		var usedTouchID bool
 
 		// Try Touch ID first if configured
-		if strings.TrimSpace(os.Getenv("APM_DESKTOP_NO_TOUCHID")) == "" && touchid.IsConfigured() {
+		if i == 0 && strings.TrimSpace(os.Getenv("APM_DESKTOP_NO_TOUCHID")) == "" && touchid.IsConfigured() {
 			if p, terr := touchid.GetPassword(); terr == nil {
 				pass = p
 				usedTouchID = true
-				fmt.Println("  Unlocked via Touch ID")
+				unlockNote(fmt.Sprintf, "  Unlocked via Touch ID")
 			} else if terr != touchid.ErrAuthFailed {
-				color.Yellow("Touch ID error: %v — falling back to password\n", terr)
+				unlockNote(color.YellowString, "Touch ID error: %v — falling back to password", terr)
 			}
 		}
 
@@ -3646,33 +3550,30 @@ func unlockVaultCredentials() (string, *src.Vault, bool, error) {
 			}
 		}
 
-		vault, err := src.DecryptVault(data, pass, costMultiplier)
+		vault, err := src.DecryptVault(data, pass, 1)
 
 		// Touch ID provided a stale password: unlock with the current password,
 		// but NEVER rewrite the Keychain item implicitly here. The stored
 		// credential is only written by an explicit `pm auth touchid setup` or a
 		// master-password change — create once, read afterwards.
 		if err != nil && usedTouchID {
-			color.Yellow("\n  Touch ID password is outdated. Run 'pm auth touchid setup' to refresh it.\n")
-			newPass, rErr := promptPassword(fmt.Sprintf("  Master Password: "))
+			unlockNote(color.YellowString, "\n  Touch ID password is outdated. Run 'pm auth touchid setup' to refresh it.\n")
+			newPass, rErr := promptPassword("  Master Password: ")
 			if rErr == nil {
-				if newVault, dErr := src.DecryptVault(data, newPass, costMultiplier); dErr == nil {
-					pass = newPass
-					vault = newVault
-					err = nil // clear the error so we proceed to success
-				}
+				pass = newPass
+				vault, err = src.DecryptVault(data, newPass, 1)
 			}
 		}
 
 		if err == nil {
-			src.LogAccess("UNLOCK")
-			vault.FailedAttempts = 0
-			vault.EmergencyMode = false
-			src.ClearFailures()
-
-			if vault.AlertsEnabled && vault.AnomalyDetectionEnabled && len(alerts) > 0 {
-				src.SendAlert(vault, src.LevelCritical, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
+			via := "password"
+			if usedTouchID {
+				via = "Touch ID"
 			}
+			failed := src.RecordUnlockSuccess()
+			touch := touchid.IsConfigured()
+			events := src.RecordUnlockActivity(vault, src.UnlockActivity{Source: src.UnlockSourceCLI, Via: via, FailedSince: failed, TouchID: &touch})
+			src.LogAction("VAULT_UNLOCKED", "CLI unlock via "+via)
 
 			// A vault from a newer pm opens read-only and is not rewritten.
 			if !vault.IsNewerFormat() {
@@ -3682,27 +3583,97 @@ func unlockVaultCredentials() (string, *src.Vault, bool, error) {
 
 			policy := lockPolicyOf(vault)
 			_ = policy.startSession(pass, false)
-			color.Cyan(policy.unlockedLine())
+			if !quietUnlockLine {
+				unlockNote(color.CyanString, "%s", policy.unlockedLine())
+			}
+			printUnlockActivity(vault, failed, events)
 
 			return pass, vault, false, nil
 		}
 
-		src.LogAccess("FAIL")
-		src.TrackFailure()
-
-		if rec, err := src.GetVaultRecoveryInfo(data); err == nil && rec.AlertsEnabled && rec.AlertEmail != "" {
-			tempVault := &src.Vault{
-				AlertEmail:    rec.AlertEmail,
-				AlertsEnabled: rec.AlertsEnabled,
-				SecurityLevel: rec.SecurityLevel,
-			}
-			src.SendAlert(tempVault, src.LevelCritical, "BREACH ATTEMPT", fmt.Sprintf("Failed unlock attempt %d/3 detected from %s.", i+1, runtime.GOOS))
+		src.LogAction("UNLOCK_FAILED", "Incorrect master password (CLI)")
+		guardErr := src.RecordUnlockFailure(src.UnlockSourceCLI, data)
+		var wrong *src.ErrWrongPassword
+		if errors.As(guardErr, &wrong) && wrong.Wait == 0 {
+			unlockNote(color.RedString, "Wrong password.")
+			continue
 		}
-
-		fmt.Printf("Error: %v\n", err)
+		return "", nil, false, cliGuardError(guardErr, data)
 	}
 
 	return "", nil, false, fmt.Errorf("too many failed attempts")
+}
+
+// quietUnlockLine is set by pm unlock, which prints its own "Vault unlocked"
+// line with the session limits it was given.
+var quietUnlockLine bool
+
+// unlockNote prints a line about the unlock itself on stderr, so it never
+// mixes with what the command prints (pm watchtower --json, pm get x > file).
+func unlockNote(c func(format string, a ...interface{}) string, format string, a ...interface{}) {
+	fmt.Fprintln(os.Stderr, c(format, a...))
+}
+
+// reportUnlockError prints why the unlock failed, on stderr, for commands
+// that have no message of their own for it.
+func reportUnlockError(err error) {
+	fmt.Fprintln(os.Stderr, color.RedString("%v", err))
+}
+
+// unlockGuardError is a guard error worded for the terminal. The unlock
+// returns it without printing it, and the command prints it once, like any
+// other reason the unlock failed.
+type unlockGuardError struct {
+	msg string
+	err error
+}
+
+func (e *unlockGuardError) Error() string { return e.msg }
+func (e *unlockGuardError) Unwrap() error { return e.err }
+
+// cliGuardError words a guard error for pm. When the vault needs recovery it
+// names the command that works for this vault. vaultData may be nil.
+func cliGuardError(err error, vaultData []byte) error {
+	var rec *src.ErrRecoveryRequired
+	if !errors.As(err, &rec) {
+		return err
+	}
+	how := "run 'pm auth recover'"
+	if info, ok := src.ParseVaultHeaderRecovery(vaultData); ok {
+		key := len(info.EmailHash) > 0 && len(info.KeyHash) > 0 && len(info.DEKSlot) > 0
+		quorum := info.RecoveryShareThreshold >= 2 && len(info.RecoveryShareHashes) > 0
+		switch {
+		case key && quorum:
+			how = "run 'pm auth recover' (recovery key) or 'pm auth quorum-recover' (trustee shares)"
+		case quorum:
+			how = "run 'pm auth quorum-recover'"
+		}
+	}
+	return &unlockGuardError{msg: fmt.Sprintf("%d wrong passwords. This vault now needs recovery to open: %s.", rec.Failures, how), err: err}
+}
+
+// printUnlockActivity is the short note after an unlock: wrong passwords
+// since the last one, and how much new activity there is to review.
+func printUnlockActivity(v *src.Vault, failed *src.FailedSince, events []src.ActivityEvent) {
+	if failed != nil && failed.Count > 0 {
+		sources := strings.Join(failed.Sources, ", ")
+		if sources == "" {
+			sources = "unknown"
+		}
+		noun := "wrong passwords"
+		if failed.Count == 1 {
+			noun = "wrong password"
+		}
+		unlockNote(color.YellowString, "%d %s since your last unlock (last: %s, %s).", failed.Count, noun, src.HumanWhen(failed.Last, time.Now()), sources)
+	}
+	_, unack := src.ListActivity(v, 0, false)
+	if unack > 0 {
+		noun := "events"
+		if unack == 1 {
+			noun = "event"
+		}
+		unlockNote(color.YellowString, "%d new security %s. Run 'pm watchtower activity' to review.", unack, noun)
+	}
 }
 
 type ScoredResult struct {
@@ -4713,18 +4684,12 @@ func displayEntryMetadata(v *src.Vault, res src.SearchResult) {
 		lastUpdatedBy = "Unknown"
 	}
 
-	var trustScore *src.SecretTrustScore
-	for _, s := range v.ComputeSecretTrustScores() {
-		if s.Category == category && s.Identifier == res.Identifier && (s.Space == res.Space || (s.Space == "" && res.Space == "")) {
-			copyScore := s
-			trustScore = &copyScore
-			break
-		}
-	}
-
+	var trustScore *src.TrustScore
 	name, kind := res.Identifier, res.Type
 	if ref, ok := refForResult(v, res); ok {
 		name, kind = itemTitle(ref), kindOf(ref).Label
+		ts := src.ItemTrust(v, ref)
+		trustScore = &ts
 	}
 	fmt.Printf("Metadata: %s (%s)\n", name, kind)
 	fmt.Println("--------------------------------------------------")
@@ -4759,9 +4724,13 @@ func displayEntryMetadata(v *src.Vault, res src.SearchResult) {
 		fmt.Println("Exposure Flag:        Unknown")
 	}
 	if trustScore != nil {
-		fmt.Printf("Trust Score:          %d (%s)\n", trustScore.Score, strings.ToUpper(trustScore.Risk))
+		fmt.Printf("Trust Score:          %d (%s risk)\n", trustScore.Score, trustScore.Level)
 		if len(trustScore.Reasons) > 0 {
-			fmt.Printf("Trust Factors:        %s\n", strings.Join(trustScore.Reasons, "; "))
+			factors := make([]string, 0, len(trustScore.Reasons))
+			for _, r := range trustScore.Reasons {
+				factors = append(factors, fmt.Sprintf("%s (%d)", r.Text, r.Delta))
+			}
+			fmt.Printf("Trust Factors:        %s\n", strings.Join(factors, "; "))
 		}
 	} else {
 		fmt.Println("Trust Score:          Not computed yet")
@@ -5528,7 +5497,10 @@ var authRecoverCmd = &cobra.Command{
 			color.Yellow("Recovery is not configured for this vault. Run 'pm auth email [id]' to set it up.")
 			return
 		}
-		if len(info.ObfuscatedKey) == 0 {
+		// The typed recovery key is checked against the key hash and opens the
+		// data key slot, as in the desktop app. The masked copy of the key in
+		// the header isn't needed, and a password unlock drops it on save.
+		if len(info.KeyHash) == 0 || len(info.DEKSlot) == 0 {
 			color.Red("Recovery record found but key is missing. Manual recovery required.")
 			return
 		}
@@ -5679,8 +5651,6 @@ var authRecoverCmd = &cobra.Command{
 			return
 		}
 
-		src.ClearFailures()
-
 		color.HiGreen("Cryptographic verification successful! DEK unlocked.")
 
 		newPass, _ := promptPassword("enter new master passwod: ")
@@ -5697,8 +5667,8 @@ var authRecoverCmd = &cobra.Command{
 			return
 		}
 
-		vault.FailedAttempts = 0
-		vault.EmergencyMode = false
+		failed := src.RecordUnlockSuccess()
+		src.RecordUnlockActivity(vault, src.UnlockActivity{Source: src.UnlockSourceCLI, Via: "recovery", FailedSince: failed})
 		if usedRecoveryCodeIndex >= 0 {
 			src.MarkRecoveryCodeUsed(vault, usedRecoveryCodeIndex)
 		}
@@ -5942,6 +5912,7 @@ var authResetCmd = &cobra.Command{
 		}
 		exitIfVaultNewer(vault)
 
+		lockout := vault.LockoutAfter
 		vault.ClearRecoveryInfo()
 		data, err := src.EncryptVault(vault, pass)
 		if err == nil {
@@ -5952,6 +5923,10 @@ var authResetCmd = &cobra.Command{
 		} else {
 			src.SendAlert(vault, src.LevelSettings, "RECOVERY RESET", "Recovery email and associated metadata have been cleared.")
 			color.Green("Recovery email and records removed successfully.\n")
+			if lockout > 0 {
+				src.LogAction("SETTINGS_CHANGED", "lockout after 0")
+				color.Yellow("Lockout off: without recovery, nothing could open the vault after %d wrong passwords. Wrong passwords only add a wait before the next try.", lockout)
+			}
 		}
 	},
 }
@@ -6120,8 +6095,8 @@ var authQuorumRecoverCmd = &cobra.Command{
 			color.Red("Error decrypting vault with recovered DEK: %v", err)
 			return
 		}
-		vault.FailedAttempts = 0
-		vault.EmergencyMode = false
+		failed := src.RecordUnlockSuccess()
+		src.RecordUnlockActivity(vault, src.UnlockActivity{Source: src.UnlockSourceCLI, Via: "recovery", FailedSince: failed})
 
 		newData, err := src.EncryptVault(vault, newPass)
 		if err != nil {
@@ -6133,7 +6108,6 @@ var authQuorumRecoverCmd = &cobra.Command{
 			return
 		}
 		syncTouchIDCredential(newPass)
-		src.ClearFailures()
 		src.LogAction("RECOVERY_QUORUM_SUCCESS", "Vault recovered with quorum shares")
 		color.Green("Vault recovered successfully with trustee quorum.")
 	},
@@ -6841,17 +6815,21 @@ var confirmMCPPresence = func(what []string) error {
 		}
 		color.Yellow("Touch ID isn't working (%v). Use your master password.", err)
 	}
-	pass, err := promptPassword("Master password: ")
-	if err != nil {
-		return errors.New("No password entered. Nothing changed.")
-	}
 	data, err := src.LoadVault(vaultPath)
 	if err != nil {
 		return fmt.Errorf("Could not read the vault: %v", err)
 	}
+	// This check is a password try like an unlock, so it shares the guard.
+	if err := src.CheckUnlockAllowed(data); err != nil {
+		return fmt.Errorf("%v Nothing changed.", err)
+	}
+	pass, err := promptPassword("Master password: ")
+	if err != nil {
+		return errors.New("No password entered. Nothing changed.")
+	}
 	if _, err := src.DecryptVault(data, pass, 1); err != nil {
 		src.LogAction("MCP_SETTINGS_DENIED", "Wrong master password when loosening MCP settings")
-		return errors.New("Wrong master password. Nothing changed.")
+		return fmt.Errorf("%v Nothing changed.", src.RecordUnlockFailure(src.UnlockSourceCLI, data))
 	}
 	return nil
 }

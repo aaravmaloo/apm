@@ -126,6 +126,15 @@ func init() {
 		"bridge.pairRespond":        {fn: hBridgePairRespond},
 		"icons.get":                 {fn: hIconsGet},
 		"icons.clear":               {fn: hIconsClear},
+		"watchtower.scan":           {fn: hWatchtowerScan},
+		"watchtower.dismiss":        {fn: hWatchtowerDismiss},
+		"watchtower.restore":        {fn: hWatchtowerRestore},
+		"watchtower.breach":         {fn: hWatchtowerBreach},
+		"watchtower.breachCheck":    {fn: hWatchtowerBreachCheck, long: true},
+		"watchtower.markExposed":    {fn: hWatchtowerMarkExposed},
+		"activity.list":             {fn: hActivityList},
+		"activity.ack":              {fn: hActivityAck},
+		"activity.ackAll":           {fn: hActivityAckAll},
 	}
 }
 
@@ -170,16 +179,16 @@ func hVaultStatus(s *desktopServer, p json.RawMessage) (any, error) {
 		"path":       s.vaultPath,
 		"touchId":    map[string]any{"available": s.touchIDAvailable(), "configured": s.touchIDConfigured()},
 		"cliSession": false,
-		"failures":   src.GetFailureCount(),
+		"failures":   0,
 		"cooldown":   0,
 		"recovery":   headerRecoveryView(src.RecoveryData{}, false),
 		"profile":    nil,
 		"size":       int64(0),
 		"modified":   int64(0),
 	}
-	if wait := time.Until(s.cooldownUntil); wait > 0 {
-		res["cooldown"] = int((wait + time.Second - 1) / time.Second)
-	}
+	wait, failures := src.UnlockWait()
+	res["failures"] = failures
+	res["cooldown"] = (&src.ErrUnlockCooldown{Wait: wait}).WaitSeconds()
 	// The revision lives inside the encrypted payload, so it is only known
 	// once the vault is unlocked; while locked newerFormat stays false.
 	s.formatView(res)
@@ -205,22 +214,20 @@ func hVaultStatus(s *desktopServer, p json.RawMessage) (any, error) {
 }
 
 func (s *desktopServer) finishUnlock(password string, v *src.Vault, via string, createSession bool) map[string]any {
-	src.LogAccess("UNLOCK")
-	alerts := src.CheckAnomalies(nil)
-	v.FailedAttempts = 0
-	v.EmergencyMode = false
-	src.ClearFailures()
-	s.wrongStreak = 0
-	s.cooldownUntil = time.Time{}
-	if v.AlertsEnabled && v.AnomalyDetectionEnabled && len(alerts) > 0 {
-		src.SendAlert(v, src.LevelCritical, "ANOMALY", fmt.Sprintf("Unusual activity detected during unlock: %v", alerts))
-	}
+	failed := src.RecordUnlockSuccess()
 	s.vault = v
 	s.password = password
 	s.rec = nil
-	// A vault from a newer pm opens read-only and is never repaired here.
-	if v.NeedsRepair && !v.IsNewerFormat() {
-		_ = s.save("Repaired vault format")
+	touch := s.touchIDConfigured()
+	src.RecordUnlockActivity(v, src.UnlockActivity{Source: s.unlockSource, Via: via, FailedSince: failed, TouchID: &touch})
+	// A vault from a newer pm opens read-only and is never written here. The
+	// unlock's activity is saved with it.
+	if !v.IsNewerFormat() && !s.isReadonly() {
+		if v.NeedsRepair {
+			_ = s.save("Repaired vault format")
+		} else {
+			_ = s.saveQuiet()
+		}
 	}
 	if data, err := os.ReadFile(s.vaultPath); err == nil {
 		s.lastWriteHash = sha256Hex(data)
@@ -233,53 +240,65 @@ func (s *desktopServer) finishUnlock(password string, v *src.Vault, via string, 
 		details += " via " + via
 	}
 	src.LogAction("VAULT_UNLOCKED", details)
-	if len(alerts) > 0 {
-		src.LogAction("ANOMALY", strings.Join(alerts, "; "))
+	var since any
+	if failed != nil {
+		since = failed
 	}
-	return map[string]any{"ok": true, "snapshot": s.snapshot()}
+	return map[string]any{"ok": true, "snapshot": s.snapshot(), "failedSince": since}
 }
 
+// guardAttempt refuses a password try while the unlock guard asks to wait,
+// or when the vault's opt-in lockout needs recovery.
 func (s *desktopServer) guardAttempt() error {
 	if !src.VaultExists(s.vaultPath) {
 		return rpcErr("no_vault", "No vault found at "+s.vaultPath+".")
 	}
-	if wait := time.Until(s.cooldownUntil); wait > 0 {
-		secs := int((wait + time.Second - 1) / time.Second)
-		return rpcErrData("cooldown", fmt.Sprintf("Too many attempts. Try again in %d seconds.", secs), map[string]any{"wait": secs})
+	data, _ := src.LoadVault(s.vaultPath)
+	return guardRPCError(src.CheckUnlockAllowed(data))
+}
+
+// guardRPCError turns an unlock guard error into the RPC error the app shows.
+func guardRPCError(err error) error {
+	var cool *src.ErrUnlockCooldown
+	var rec *src.ErrRecoveryRequired
+	var wrong *src.ErrWrongPassword
+	switch {
+	case err == nil:
+		return nil
+	case errors.As(err, &cool):
+		return rpcErrData("cooldown", cool.Error(), map[string]any{"wait": cool.WaitSeconds(), "failures": cool.Failures})
+	case errors.As(err, &rec):
+		return rpcErrData("recovery_required", "There have been "+fmt.Sprint(rec.Failures)+" wrong passwords. This vault now needs recovery to open.", map[string]any{"failures": rec.Failures, "after": rec.After})
+	case errors.As(err, &wrong):
+		msg := "That master password is not correct."
+		if wrong.Wait > 0 {
+			msg += " Try again in " + src.HumanWait(wrong.Wait) + "."
+		}
+		return rpcErrData("wrong_password", msg, map[string]any{"failures": wrong.Failures, "wait": wrong.WaitSeconds()})
 	}
-	if src.GetFailureCount() >= 6 {
-		return rpcErr("breach_lock", "This vault is locked after repeated failed attempts. Use recovery to regain access.")
-	}
-	return nil
+	return err
 }
 
 func (s *desktopServer) registerFailure(data []byte) error {
-	src.LogAccess("FAIL")
-	src.TrackFailure()
-	src.LogAction("UNLOCK_FAILED", "Incorrect master password")
-	if rec, err := src.GetVaultRecoveryInfo(data); err == nil && rec.AlertsEnabled && rec.AlertEmail != "" {
-		src.SendAlert(&src.Vault{AlertEmail: rec.AlertEmail, AlertsEnabled: rec.AlertsEnabled, SecurityLevel: rec.SecurityLevel}, src.LevelCritical, "BREACH ATTEMPT", "Failed desktop unlock attempt detected.")
-	}
-	failures := src.GetFailureCount()
-	left := 6 - failures
-	if left <= 0 {
-		return rpcErrData("breach_lock", "This vault is locked after repeated failed attempts. Use recovery to regain access.", map[string]any{"left": 0})
-	}
-	s.wrongStreak++
-	if s.wrongStreak%3 == 0 {
-		s.cooldownUntil = time.Now().Add(30 * time.Second)
-		return rpcErrData("cooldown", "Too many attempts. Try again in 30 seconds.", map[string]any{"wait": 30, "left": left})
-	}
-	return rpcErrData("wrong_password", "That master password is not correct.", map[string]any{"left": left})
+	src.LogAction("UNLOCK_FAILED", "Incorrect master password ("+s.unlockSource+")")
+	return guardRPCError(src.RecordUnlockFailure(s.unlockSource, data))
 }
 
 func hVaultUnlock(s *desktopServer, p json.RawMessage) (any, error) {
+	return s.unlockWithPassword(p, src.UnlockSourceDesktop)
+}
+
+// unlockWithPassword opens the vault with a typed password. source says
+// whether it came from the app or the browser extension.
+func (s *desktopServer) unlockWithPassword(p json.RawMessage, source string) (any, error) {
 	var in struct {
 		Password string `json:"password"`
 	}
 	if err := decodeParams(p, &in); err != nil {
 		return nil, err
 	}
+	s.unlockSource = source
+	defer func() { s.unlockSource = src.UnlockSourceDesktop }()
 	if err := s.guardAttempt(); err != nil {
 		return nil, err
 	}
@@ -344,9 +363,6 @@ func hVaultUnlockSession(s *desktopServer, p json.RawMessage) (any, error) {
 	if err != nil || sess == nil {
 		return nil, rpcErr("locked", "There is no active CLI session.")
 	}
-	if sess.ReadOnly && src.GetFailureCount() >= 6 {
-		return nil, rpcErr("breach_lock", "This vault is locked after repeated failed attempts. Use recovery to regain access.")
-	}
 	data, err := src.LoadVault(s.vaultPath)
 	if err != nil {
 		return nil, err
@@ -356,15 +372,16 @@ func hVaultUnlockSession(s *desktopServer, p json.RawMessage) (any, error) {
 		_ = src.KillSession()
 		return nil, rpcErr("locked", "The CLI session no longer matches this vault.")
 	}
-	res := s.finishUnlock(sess.MasterPassword, v, "CLI session", false)
+	var readonlyUntil time.Time
 	if sess.ReadOnly {
-		s.readonlyUntil = sess.Expiry
-		if s.readonlyUntil.IsZero() {
-			s.readonlyUntil = time.Now().AddDate(1, 0, 0)
+		readonlyUntil = sess.Expiry
+		if readonlyUntil.IsZero() {
+			readonlyUntil = time.Now().AddDate(1, 0, 0)
 		}
-		res["snapshot"] = s.snapshot()
 	}
-	return res, nil
+	// finishUnlock must see the session as read-only so it doesn't write.
+	s.readonlyUntil = readonlyUntil
+	return s.finishUnlock(sess.MasterPassword, v, "CLI session", false), nil
 }
 
 func hVaultLock(s *desktopServer, p json.RawMessage) (any, error) {
@@ -550,6 +567,8 @@ func hVaultMeta(s *desktopServer, p json.RawMessage) (any, error) {
 		SecurityLevel *int    `json:"securityLevel"`
 		Anomaly       *bool   `json:"anomaly"`
 		ActiveSpace   *string `json:"activeSpace"`
+		LockoutAfter  *int    `json:"lockoutAfter"`
+		BreachCheck   *bool   `json:"breachCheck"`
 	}
 	if err := decodeParams(p, &in); err != nil {
 		return nil, err
@@ -585,6 +604,22 @@ func hVaultMeta(s *desktopServer, p json.RawMessage) (any, error) {
 	if in.Anomaly != nil {
 		v.AnomalyDetectionEnabled = *in.Anomaly
 		changed = append(changed, "anomaly detection")
+	}
+	if in.LockoutAfter != nil {
+		if err := src.ValidateLockoutAfter(*in.LockoutAfter); err != nil {
+			return nil, rpcErr("invalid", "Lockout must be off or between 5 and 100 wrong passwords.")
+		}
+		// The same rule as pm auth lockout: only a recovery key (with its
+		// email) or trustee shares open the vault once the lockout trips.
+		if *in.LockoutAfter > 0 && !src.LockoutRecoveryReady(v) {
+			return nil, rpcErrData("invalid", "Set up a recovery key or trustee shares first. Recovery codes and a recovery passkey can't open the vault on their own.", map[string]any{"needRecovery": true})
+		}
+		v.LockoutAfter = *in.LockoutAfter
+		changed = append(changed, "lockout")
+	}
+	if in.BreachCheck != nil {
+		src.SetBreachCheck(v, *in.BreachCheck)
+		changed = append(changed, "breach check")
 	}
 	if in.ActiveSpace != nil {
 		sp := normalizeSpaceParam(*in.ActiveSpace)
@@ -2109,6 +2144,9 @@ func hRecoveryReset(s *desktopServer, p json.RawMessage) (any, error) {
 	if err := s.requireWritable(); err != nil {
 		return nil, err
 	}
+	// Clearing recovery also turns the opt-in lockout off: nothing could open
+	// the vault after it tripped.
+	lockout := s.vault.LockoutAfter
 	s.vault.ClearRecoveryInfo()
 	d := s.desktop()
 	d.RecoveryKeyCreated = time.Time{}
@@ -2119,6 +2157,9 @@ func hRecoveryReset(s *desktopServer, p json.RawMessage) (any, error) {
 	}
 	src.SendAlert(s.vault, src.LevelSettings, "RECOVERY RESET", "Recovery email and associated metadata have been cleared.")
 	src.LogAction("RECOVERY_RESET", "Recovery email and records removed")
+	if lockout > 0 {
+		src.LogAction("SETTINGS_CHANGED", "lockout")
+	}
 	return s.withSnapshot(nil), nil
 }
 
@@ -2394,8 +2435,6 @@ func hRecoverReset(s *desktopServer, p json.RawMessage) (any, error) {
 		if err != nil {
 			return nil, rpcErr("internal", "Could not open the vault with the recovered key: "+err.Error())
 		}
-		v.FailedAttempts = 0
-		v.EmergencyMode = false
 		if r.usedCodeIndex >= 0 {
 			src.MarkRecoveryCodeUsed(v, r.usedCodeIndex)
 		}
@@ -2406,7 +2445,6 @@ func hRecoverReset(s *desktopServer, p json.RawMessage) (any, error) {
 		if err := s.writeVault(data, true, "Master password reset with recovery"); err != nil {
 			return nil, err
 		}
-		src.ClearFailures()
 		src.SendAlert(v, src.LevelCritical, "RECOVERY SUCCESS", "Vault has been successfully recovered and master password reset.")
 		if r.via == "quorum" {
 			src.LogAction("RECOVERY_QUORUM_SUCCESS", "Vault recovered with quorum shares")

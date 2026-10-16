@@ -162,7 +162,6 @@ func (cfg IgnoreConfig) ShouldIgnoreEntry(space, entryType, name, provider strin
 	return false
 }
 
-
 func (cfg IgnoreConfig) MiscIgnoreEnabled(name string) bool {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
@@ -299,7 +298,6 @@ func (cfg IgnoreConfig) FilterVaultForProvider(vault *Vault, provider string) *V
 			return !cfg.ShouldIgnoreEntry("", entryType, h.Identifier, provider)
 		})
 	}
-
 
 	return &clone
 }

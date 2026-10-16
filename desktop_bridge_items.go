@@ -503,7 +503,8 @@ func (ix *bridgeIndex) health(ref src.VaultItemRef) any {
 			reused = append(reused, bridgeTitle(o))
 		}
 	}
-	return map[string]any{"weak": jsLength(pw) < 8 || score <= 1, "reused": reused, "bits": bits, "score": score}
+	weak := src.PasswordStrength(pw, toStr(ix.fields[ref.ID]["username"]), bridgeTitle(ref)).Weak()
+	return map[string]any{"weak": weak, "reused": reused, "bits": bits, "score": score}
 }
 
 func appendUniqueURL(list []string, vals ...string) []string {

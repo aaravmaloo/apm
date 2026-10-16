@@ -139,8 +139,7 @@ type desktopServer struct {
 	vault         *src.Vault
 	readonlyUntil time.Time
 	lastWriteHash string
-	cooldownUntil time.Time
-	wrongStreak   int
+	unlockSource  string
 	rec           *recoverState
 	emailSetup    *emailSetupState
 	diffs         map[string][]src.VaultDiffChange
@@ -194,6 +193,8 @@ func newDesktopServer(out io.Writer) *desktopServer {
 		touchAvail: -1,
 		touchConf:  -1,
 		touchWait:  map[int64]chan touchReply{},
+
+		unlockSource: src.UnlockSourceDesktop,
 	}
 	if out != nil {
 		s.frames = newFrameQueue(out)
@@ -673,6 +674,13 @@ func (s *desktopServer) onVaultFileChanged() {
 		return
 	}
 	s.lastWriteHash = hash
+	// pm records each save in the vault's local history, and the app and MCP
+	// log what they change. A change with neither came from somewhere else.
+	// The event is saved with the next write.
+	head, _ := src.GetLGitHead()
+	if (head == nil || head.DataHash != hash) && !src.RecentAuditActivity(time.Now(), time.Minute) {
+		src.RecordExternalModification(v, "")
+	}
 	s.vault = v
 	s.emit("vault.changed", map[string]any{"snapshot": s.snapshot()})
 }
@@ -1662,6 +1670,8 @@ func (s *desktopServer) snapshot() map[string]any {
 			"alerts":        v.AlertsEnabled,
 			"alertEmail":    v.AlertEmail,
 			"anomaly":       v.AnomalyDetectionEnabled,
+			"breachCheck":   src.BreachEnabled(v),
+			"lockoutAfter":  v.LockoutAfter,
 			"policy":        v.ActivePolicy.Name,
 			"activeSpace":   v.CurrentSpace,
 			"version":       Version,

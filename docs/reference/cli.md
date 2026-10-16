@@ -164,8 +164,13 @@ Stricter changes apply at once. Looser ones (resume, `--approve-with any`, a lon
 
 ### Auditing and diagnostics
 
-- `pm health`
-- `pm trust`
+- `pm watchtower [--all] [--kind <kind>] [--space <space>] [--json] [--fail-under N] [--show-dismissed]`
+- `pm watchtower ignore <finding-id> [--reason "..."] [--days N]` and `pm watchtower restore <finding-id>`
+- `pm watchtower trust [--json]`
+- `pm watchtower mark <item> [--exposed | --not-exposed] [--privilege <level>]`
+- `pm watchtower breach on|off|check`
+- `pm watchtower activity [--all] [--json]` and `pm watchtower activity ack <event-id> | --all`
+- `pm auth lockout [N|off]`
 - `pm audit`
 - `pm loaded`
 - `pm compromise`

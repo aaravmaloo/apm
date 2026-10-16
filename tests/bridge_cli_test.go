@@ -242,7 +242,7 @@ func TestBridgeCLI_ServeLockedAndPairing(t *testing.T) {
 	}
 	p.waitFor(t, "Vault unlocked from the browser.")
 	status := b.ok("GET", "/api/status", nil)
-	want := []string{"activeSpace", "cooldown", "exists", "items", "left", "name", "ok", "readonly", "settings", "spaces", "touchId", "unlocked", "version"}
+	want := []string{"activeSpace", "cooldown", "exists", "failures", "items", "left", "name", "ok", "readonly", "settings", "spaces", "touchId", "unlocked", "version"}
 	if got := keysOf(status); strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Fatalf("serve status keys = %v", got)
 	}

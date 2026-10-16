@@ -13,6 +13,8 @@ type UnlockResult struct {
 	Vault          *Vault
 	ReadOnly       bool
 	IsEphemeral    bool
+	// FailedSince lists the wrong passwords entered since the last unlock.
+	FailedSince *FailedSince
 }
 
 // AttemptUnlockWithSession tries to unlock the vault using existing sessions or ephemeral IDs
@@ -28,6 +30,7 @@ func AttemptUnlockWithSession(vaultPath string) (*UnlockResult, error) {
 			if lerr == nil {
 				vault, derr := DecryptVault(data, eph.MasterPassword, 1)
 				if derr == nil {
+					vault.readOnly = eph.Scope == "read"
 					return &UnlockResult{
 						MasterPassword: eph.MasterPassword,
 						Vault:          vault,
@@ -42,22 +45,13 @@ func AttemptUnlockWithSession(vaultPath string) (*UnlockResult, error) {
 	if session, err := GetSession(); err == nil {
 		data, err := LoadVault(vaultPath)
 		if err == nil {
-			localFailures := GetFailureCount()
-			if session.ReadOnly && localFailures >= 6 {
-				return &UnlockResult{
-					MasterPassword: session.MasterPassword,
-					Vault:          GetDecoyVault(),
-					ReadOnly:       true,
-					IsEphemeral:    false,
-				}, nil
-			}
-
 			vault, err := DecryptVault(data, session.MasterPassword, 1)
 			if err == nil {
-				if vault.NeedsRepair && !vault.IsNewerFormat() {
+				if vault.NeedsRepair && !vault.IsNewerFormat() && !session.ReadOnly {
 					updatedData, _ := EncryptVault(vault, session.MasterPassword)
 					SaveVault(vaultPath, updatedData)
 				}
+				vault.readOnly = session.ReadOnly
 				return &UnlockResult{
 					MasterPassword: session.MasterPassword,
 					Vault:          vault,
@@ -72,48 +66,25 @@ func AttemptUnlockWithSession(vaultPath string) (*UnlockResult, error) {
 	return nil, fmt.Errorf("no active session")
 }
 
-// UnlockWithPassword attempts to unlock the vault with the provided password
+// UnlockWithPassword attempts to unlock the vault with the provided password.
+// Wrong passwords go through the unlock guard, which may ask to wait before
+// the next try. The right password always opens the real vault.
 func UnlockWithPassword(vaultPath, password string) (*UnlockResult, error) {
 	data, err := LoadVault(vaultPath)
 	if err != nil {
 		return nil, err
 	}
-
-	localFailures := GetFailureCount()
-	if localFailures >= 9 {
-		return nil, fmt.Errorf("vault permanently locked due to suspected breach")
-	}
-
-	if localFailures >= 6 {
-
-		TrackFailure()
-		CreateSession(password, 1*time.Hour, true, 15*time.Minute)
-		return &UnlockResult{
-			MasterPassword: password,
-			Vault:          GetDecoyVault(),
-			ReadOnly:       true,
-			IsEphemeral:    false,
-		}, nil
+	if err := CheckUnlockAllowed(data); err != nil {
+		return nil, err
 	}
 
 	vault, err := DecryptVault(data, password, 1)
 	if err != nil {
-		TrackFailure()
-
-		if rec, err := GetVaultRecoveryInfo(data); err == nil && rec.AlertsEnabled && rec.AlertEmail != "" {
-			tempVault := &Vault{
-				AlertEmail:    rec.AlertEmail,
-				AlertsEnabled: rec.AlertsEnabled,
-				SecurityLevel: rec.SecurityLevel,
-			}
-			SendAlert(tempVault, LevelCritical, "BREACH ATTEMPT", fmt.Sprintf("Failed unlock attempt detected"))
-		}
-		return nil, err
+		return nil, RecordUnlockFailure(UnlockSourceCLI, data)
 	}
 
-	ClearFailures()
-	vault.FailedAttempts = 0
-	vault.EmergencyMode = false
+	failed := RecordUnlockSuccess()
+	RecordUnlockActivity(vault, UnlockActivity{Source: UnlockSourceCLI, Via: "password", FailedSince: failed})
 
 	// A vault from a newer engine opens read-only, so it is not rewritten here.
 	if !vault.IsNewerFormat() {
@@ -128,5 +99,6 @@ func UnlockWithPassword(vaultPath, password string) (*UnlockResult, error) {
 		Vault:          vault,
 		ReadOnly:       false,
 		IsEphemeral:    false,
+		FailedSince:    failed,
 	}, nil
 }

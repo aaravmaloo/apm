@@ -7,8 +7,8 @@ import (
 
 func TestRunCleanupNoIssues(t *testing.T) {
 	v := &Vault{
-		Spaces:  []string{"default"},
-		Entries: []Entry{{Account: "test", Username: "user", Password: "pass"}},
+		Spaces:                     []string{"default"},
+		Entries:                    []Entry{{Account: "test", Username: "user", Password: "pass"}},
 		AutocompleteWindowDisabled: true,
 	}
 
@@ -101,26 +101,6 @@ func TestRunCleanupOrphanedSpace(t *testing.T) {
 	}
 }
 
-func TestRunCleanupStaleFailedAttempts(t *testing.T) {
-	v := &Vault{
-		Spaces:         []string{"default"},
-		FailedAttempts: 3,
-		EmergencyMode:  false,
-	}
-
-	issues := RunCleanup(v)
-	found := false
-	for _, iss := range issues {
-		if iss.Section == "security" && iss.AutoFix {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatal("expected auto-fixable stale failed attempts issue")
-	}
-}
-
 func TestRunCleanupCorruptedEntry(t *testing.T) {
 	v := &Vault{
 		Spaces:  []string{"default"},
@@ -160,7 +140,7 @@ func TestRunCleanupEmptySpacesList(t *testing.T) {
 
 func TestRunCleanupAutoFix(t *testing.T) {
 	v := &Vault{
-		Spaces:         []string{"default"},
+		Spaces: []string{"default"},
 		Entries: []Entry{
 			{Account: "keep", Username: "u", Password: "p"},
 			{Account: "", Username: "", Password: ""},
@@ -182,5 +162,3 @@ func TestRunCleanupAutoFix(t *testing.T) {
 		t.Fatal("entries not in expected order after fix")
 	}
 }
-
-

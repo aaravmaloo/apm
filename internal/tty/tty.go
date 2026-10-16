@@ -21,13 +21,14 @@ type console interface {
 	makeRaw() (restore func() error, err error)
 	// flushInput discards input queued in the OS and in the console.
 	flushInput() error
-	// enableOutputVT prepares stdout for escape sequences (Windows:
-	// ENABLE_VIRTUAL_TERMINAL_PROCESSING) and reports whether they work.
+	// enableOutputVT prepares the output (see outputFile) for escape
+	// sequences (Windows: ENABLE_VIRTUAL_TERMINAL_PROCESSING) and reports
+	// whether they work.
 	enableOutputVT() (restore func(), ok bool)
 }
 
 // terminal holds all state. The package-level functions use one instance
-// bound to os.Stdin/os.Stdout; tests build their own.
+// bound to os.Stdin and outputFile(); tests build their own.
 type terminal struct {
 	con      console       // nil when stdin is not interactive
 	out      io.Writer     // where prompts and echo go
@@ -56,12 +57,24 @@ var (
 	osExit  = os.Exit
 )
 
+// outputFile is where prompts, their echo and full-screen views go: stdout
+// when it is a terminal, otherwise stderr. A piped or redirected command
+// (pm watchtower --json | jq, pm get x > file) then keeps its output clean,
+// and the prompt still reaches the person at the terminal.
+func outputFile() *os.File {
+	if term.IsTerminal(int(os.Stdout.Fd())) {
+		return os.Stdout
+	}
+	return os.Stderr
+}
+
 func get() *terminal {
 	stdOnce.Do(func() {
 		con, noHidden := openConsole()
+		out := outputFile()
 		std = &terminal{
-			out:      os.Stdout,
-			outTTY:   term.IsTerminal(int(os.Stdout.Fd())),
+			out:      out,
+			outTTY:   term.IsTerminal(int(out.Fd())),
 			noHidden: noHidden,
 			lines:    bufio.NewReader(os.Stdin),
 			sizeFn:   osSize,

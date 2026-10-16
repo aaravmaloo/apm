@@ -17,10 +17,10 @@ graph TB
         C[session.go — Sessions]
         D[security.go — Profiles & Alerts]
         E[policy.go — Policy Engine]
-        F[trust.go — Trust Scoring]
-        G[health.go — Health Dashboard]
+        F[watchtower*.go — Watchtower Scan & Trust]
+        G[unlock_guard.go — Wrong-Password Backoff]
         H[audit.go — Audit Log]
-        I[anomaly.go — Anomaly Detection]
+        I[activity.go — Activity & Anomalies]
         K[portability.go — Import/Export]
         L[apmignore.go — Ignore Rules]
         N[recovery_*.go — Recovery Subsystem]
@@ -72,10 +72,11 @@ The domain layer contains all business logic. It operates entirely in memory aft
 | `ephemeral_session.go` | Delegated sessions with host/PID/agent binding   |
 | `security.go`          | Profile management, alerts, email masking        |
 | `policy.go`            | YAML policy loading and enforcement              |
-| `trust.go`             | Per-secret trust scoring (telemetry + risk)      |
-| `health.go`            | Vault health scoring algorithm                   |
+| `trust.go`             | Per-secret telemetry (access, rotation, flags)   |
+| `watchtower*.go`       | Watchtower checks, scoring, trust, breach check  |
+| `unlock_guard.go`      | Shared wrong-password backoff and lockout        |
 | `audit.go`             | Tamper-evident audit logging                     |
-| `anomaly.go`           | Unusual activity time detection                  |
+| `activity.go`          | Activity events and anomaly detection            |
 | `portability.go`       | JSON, CSV, TXT import/export                     |
 | `apmignore.go`         | Ignore rule parsing and filtering                |
 | `recovery_passkey.go`  | WebAuthn passkey recovery                        |

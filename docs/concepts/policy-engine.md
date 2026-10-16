@@ -74,8 +74,8 @@ The `rotation_policy` section enforces credential rotation schedules:
 
 When rotation is enforced:
 
-- `pm health` includes rotation status in the health score
-- `pm trust` penalizes secrets that haven't been rotated on schedule
+- `pm watchtower` lists passwords that haven't been changed in 6 months
+- `pm watchtower trust` penalizes secrets that haven't been rotated on schedule
 - APM can display warnings for secrets approaching their rotation date
 
 ---
